@@ -22,10 +22,21 @@ function PlayMDTSound(soundType)
     end
 
     local sound = MDTSounds[soundType]
-    exports.ps_lib:PlaySound({
-        audioName = sound.audioName,
-        audioRef = sound.audioRef
-    })
+    local played = false
+
+    if GetResourceState('ps_lib') == 'started' then
+        local ok = pcall(function()
+            exports.ps_lib:PlaySound({
+                audioName = sound.audioName,
+                audioRef = sound.audioRef
+            })
+        end)
+        played = ok
+    end
+
+    if not played then
+        PlaySoundFrontend(-1, sound.audioName, sound.audioRef, true)
+    end
 
     ps.debug('Playing MDT sound:', soundType)
 end
