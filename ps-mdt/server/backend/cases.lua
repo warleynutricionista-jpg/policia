@@ -18,7 +18,7 @@ end
 
 local function getOfficerDisplayName(src)
     local callsign = ps.getMetadata(src, 'callsign')
-    local name = ps.getPlayerName(src) or 'Unknown'
+    local name = ps.getPlayerName(src) or 'Desconhecido'
     if callsign and callsign ~= '' then
         return callsign .. ' ' .. name
     end
@@ -562,7 +562,7 @@ ps.registerCallback(resourceName .. ':server:addEvidenceItem', function(source, 
     })
 
     if not evidenceId then
-        return { success = false, error = 'Failed to add evidence' }
+        return { success = false, error = 'Falha ao adicionar a evidência' }
     end
 
     MySQL.insert.await([[
@@ -662,7 +662,7 @@ ps.registerCallback(resourceName .. ':server:updateEvidenceItem', function(sourc
 
     local success = MySQL.update.await(('UPDATE mdt_evidence_items SET %s WHERE id = ?'):format(table.concat(updates, ', ')), values)
     if not success then
-        return { success = false, error = 'Failed to update evidence' }
+        return { success = false, error = 'Falha ao atualizar a evidência' }
     end
 
     MySQL.insert.await([[
@@ -715,7 +715,7 @@ ps.registerCallback(resourceName .. ':server:deleteEvidenceItem', function(sourc
 
     local success = MySQL.query.await('DELETE FROM mdt_evidence_items WHERE id = ?', { evidenceId })
     if not success then
-        return { success = false, error = 'Failed to delete evidence' }
+        return { success = false, error = 'Falha ao excluir a evidência' }
     end
 
     if ps.auditLog then

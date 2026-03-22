@@ -23,7 +23,7 @@ local resourceName = tostring(GetCurrentResourceName())
 
 local function formatLabel(value)
     if not value or value == '' then
-        return 'Unknown'
+        return 'Desconhecido'
     end
     local formatted = tostring(value)
     formatted = formatted:gsub("^%l", string.upper)
@@ -109,7 +109,7 @@ ps.registerCallback(resourceName .. ':server:GetVehicles', function(source)
             type = bolo.type,
             notes = bolo.notes or '',
             status = bolo.status,
-            plate = bolo.subject_id or 'Unknown',
+            plate = bolo.subject_id or 'Desconhecido',
             image = bolo.image or 'https://docs.fivem.net/vehicles/elegy.webp',
         })
     end
@@ -127,9 +127,9 @@ ps.registerCallback(resourceName .. ':server:GetVehicles', function(source)
             model = v.vehicle,
             label = vehicleData and vehicleData.name or 'Veículo desconhecido',
             plate = plate,
-            owner = ps.getPlayerNameByIdentifier(v.citizenid) or 'Unknown',
-            class = formatLabel(vehicleData and vehicleData.category or 'Unknown'),
-            type = formatLabel(vehicleData and vehicleData.type or 'Unknown'),
+            owner = ps.getPlayerNameByIdentifier(v.citizenid) or 'Desconhecido',
+            class = formatLabel(vehicleData and vehicleData.category or 'Desconhecido'),
+            type = formatLabel(vehicleData and vehicleData.type or 'Desconhecido'),
             flags = flags,
             image = (v.image and v.image ~= '' and v.image) or ('https://docs.fivem.net/vehicles/' .. v.vehicle .. '.webp'),
             seenIn = reportCount,
@@ -290,9 +290,9 @@ ps.registerCallback(resourceName .. ':server:GetVehicle', function(source, plate
             label = vehicleData and vehicleData.name or 'Veículo desconhecido',
             brand = vehicleData and vehicleData.brand or nil,
             plate = plateUpper,
-            owner = ps.getPlayerNameByIdentifier(row.citizenid) or 'Unknown',
-            class = formatLabel(vehicleData and vehicleData.category or 'Unknown'),
-            type = formatLabel(vehicleData and vehicleData.type or 'Unknown'),
+            owner = ps.getPlayerNameByIdentifier(row.citizenid) or 'Desconhecido',
+            class = formatLabel(vehicleData and vehicleData.category or 'Desconhecido'),
+            type = formatLabel(vehicleData and vehicleData.type or 'Desconhecido'),
             image = (row.image and row.image ~= '' and row.image) or ('https://docs.fivem.net/vehicles/' .. row.vehicle .. '.webp'),
             information = row.information or '',
             points = tonumber(row.points) or 0,

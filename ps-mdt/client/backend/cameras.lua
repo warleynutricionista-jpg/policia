@@ -25,7 +25,7 @@ RegisterNUICallback('viewCamera', function(data, cb)
         CloseMDT()
         cb({ success = true })
     else
-        cb({ success = false, message = result and result.error or 'Failed to view camera' })
+        cb({ success = false, message = result and result.error or 'Falha ao visualizar a câmera' })
     end
 
 end)

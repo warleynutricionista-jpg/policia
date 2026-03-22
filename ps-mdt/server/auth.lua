@@ -134,9 +134,9 @@ local function SendDutyWebhook(officerName, citizenid, action, jobName)
             title = title,
             color = color,
             fields = {
-                { name = 'Officer', value = officerName or 'Unknown', inline = true },
+                { name = 'Oficial', value = officerName or 'Desconhecido', inline = true },
                 { name = 'Citizen ID', value = citizenid or 'N/A', inline = true },
-                { name = 'Department', value = jobName or 'Unknown', inline = true },
+                { name = 'Department', value = jobName or 'Desconhecido', inline = true },
                 { name = 'Time', value = os.date('%Y-%m-%d %H:%M:%S'), inline = false },
             },
             timestamp = timestamp,
@@ -151,9 +151,9 @@ RegisterNetEvent('ps-mdt:server:trackLogin', function()
         ps.auditLog(src, 'mdt_login', 'profile', ps.getIdentifier(src), {})
     end
     -- Discord webhook
-    local officerName = ps.getPlayerName(src) or 'Unknown'
+    local officerName = ps.getPlayerName(src) or 'Desconhecido'
     local citizenid = ps.getIdentifier(src) or 'N/A'
-    local jobName = ps.getJobName(src) or 'Unknown'
+    local jobName = ps.getJobName(src) or 'Desconhecido'
     SendDutyWebhook(officerName, citizenid, 'login', jobName)
 end)
 
@@ -164,9 +164,9 @@ RegisterNetEvent('ps-mdt:server:trackLogout', function()
         ps.auditLog(src, 'mdt_logout', 'profile', ps.getIdentifier(src), {})
     end
     -- Discord webhook
-    local officerName = ps.getPlayerName(src) or 'Unknown'
+    local officerName = ps.getPlayerName(src) or 'Desconhecido'
     local citizenid = ps.getIdentifier(src) or 'N/A'
-    local jobName = ps.getJobName(src) or 'Unknown'
+    local jobName = ps.getJobName(src) or 'Desconhecido'
     SendDutyWebhook(officerName, citizenid, 'logout', jobName)
 end)
 

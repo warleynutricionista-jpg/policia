@@ -9,7 +9,7 @@ local function getActorData(src)
     end
 
     local citizenid = ps.getIdentifier(src)
-    local name = ps.getPlayerName(src) or 'Unknown'
+    local name = ps.getPlayerName(src) or 'Desconhecido'
     local callsign = ps.getMetadata(src, 'callsign')
     if callsign and callsign ~= '' then
         name = callsign .. ' ' .. name

@@ -225,10 +225,10 @@ updateCameraControls = function()
 
     -- Show help text
     ShowCameraHelpNotification(
-        'Camera View' ..
-        '~n~Mouse Wheel: Zoom In/Out (FOV: ' .. string.format('%.0f', currentFov) .. ')' ..
-        '~n~Mouse: Rotate Camera View' ..
-        '~n~Press ~INPUT_FRONTEND_PAUSE_ALTERNATE~ Exit Camera'
+        'Visualização da Câmera' ..
+        '~n~Roda do Mouse: Aproximar/Afastar (FOV: ' .. string.format('%.0f', currentFov) .. ')' ..
+        '~n~Mouse: Girar Visão da Câmera' ..
+        '~n~Pressione ~INPUT_FRONTEND_PAUSE_ALTERNATE~ para Sair da Câmera'
     )
 end
 
@@ -356,7 +356,7 @@ end
 
 -- Show camera placement menu
 function CameraPlacement.showPlacementMenu()
-    local input = lib.inputDialog('Camera Placement System', {
+    local input = lib.inputDialog('Sistema de Posicionamento de Câmeras', {
         {
             type = 'input',
             label = 'ID da Câmera',
@@ -464,10 +464,10 @@ RegisterNetEvent(resourceName .. ':client:receiveCameraList', function(cameras)
         table.insert(options, {
             title = camera.camLabel,
             description = string.format('ID: %s | Modelo: %s | Criada: %s | Visualizadores: %d',
-                camera.camId, camera.model, camera.isSpawned and 'Yes' or 'No', camera.viewerCount),
+                camera.camId, camera.model, camera.isSpawned and 'Sim' or 'Não', camera.viewerCount),
             metadata = {
                 'ID da Câmera: ' .. camera.camId,
-                'Coordinates: ' .. string.format('%.2f, %.2f, %.2f', camera.coords.x, camera.coords.y, camera.coords.z),
+                'Coordenadas: ' .. string.format('%.2f, %.2f, %.2f', camera.coords.x, camera.coords.y, camera.coords.z),
             },
             onSelect = function()
                 CameraPlacement.showCameraActions(camera)
@@ -540,7 +540,7 @@ function CameraPlacement.showCameraActions(camera)
         onSelect = function()
             local alert = lib.alertDialog({
                 header = 'Excluir Câmera',
-                content = 'Are you sure you want to delete camera "' .. camera.camLabel .. '"?\n\nThis action cannot be undone.',
+                content = 'Tem certeza de que deseja excluir a câmera "' .. camera.camLabel .. '"?\n\nEsta ação não pode ser desfeita.',
                 centered = true,
                 cancel = true
             })
@@ -553,7 +553,7 @@ function CameraPlacement.showCameraActions(camera)
 
     lib.registerContext({
         id = 'camera_actions',
-        title = camera.camLabel .. ' - Actions',
+        title = camera.camLabel .. ' - Ações',
         menu = 'camera_management',
         options = options
     })
@@ -649,7 +649,7 @@ end
 
 -- Create camera with gizmo placement
 function CameraPlacement.createWithGizmo()
-    local input = lib.inputDialog('Create Camera with Gizmo', {
+    local input = lib.inputDialog('Criar Câmera com Gizmo', {
         {
             type = 'input',
             label = 'ID da Câmera',

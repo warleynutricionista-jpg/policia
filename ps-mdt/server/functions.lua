@@ -81,7 +81,7 @@ function EnsureProfileExists(citizenid)
         local success = MySQL.insert.await([[
             INSERT INTO mdt_profiles (citizenid, fullname, callsign)
             VALUES(?, ?, ?)
-        ]], { citizenid, fullname ~= '' and fullname or 'Unknown', callsign })
+        ]], { citizenid, fullname ~= '' and fullname or 'Desconhecido', callsign })
 
         if success then
             ps.debug('Auto-created MDT profile for (QBox offline): ' .. citizenid)
@@ -104,7 +104,7 @@ function EnsureProfileExists(citizenid)
     local success = MySQL.insert.await([[
         INSERT INTO mdt_profiles (citizenid, fullname, callsign)
         VALUES(?, ?, ?)
-    ]], { citizenid, fullname ~= '' and fullname or 'Unknown', callsign })
+    ]], { citizenid, fullname ~= '' and fullname or 'Desconhecido', callsign })
 
     if success then
         ps.debug('Auto-created MDT profile for: ' .. citizenid)
@@ -144,7 +144,7 @@ function EnsureProfileData(citizenid, fullname, callsign, badgeNumber, rank, dep
         VALUES (?, ?, ?, ?, ?, ?)
     ]], {
         citizenid,
-        fullname or 'Unknown',
+        fullname or 'Desconhecido',
         callsign,
         badgeNumber,
         rank,
@@ -245,7 +245,7 @@ function GetWarrantStatus(plate)
     local ownerCid = MySQL.scalar.await('SELECT citizenid FROM player_vehicles WHERE UPPER(REPLACE(plate, \' \', \'\')) = ? LIMIT 1', { plate })
     if not ownerCid then return false, "", "" end
 
-    local ownerName = ps.getPlayerNameByIdentifier(ownerCid) or "Unknown"
+    local ownerName = ps.getPlayerNameByIdentifier(ownerCid) or "Desconhecido"
 
     local warrantRow = MySQL.single.await([[
         SELECT reportid

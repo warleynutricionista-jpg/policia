@@ -511,7 +511,7 @@ ps.registerCallback(resourceName .. ':server:getAwardsData', function(source, pa
     if not citizenid then return nil end
 
     -- Get officer info
-    local playerName = ps.getName(src) or 'Unknown'
+    local playerName = ps.getName(src) or 'Desconhecido'
     local jobData = ps.getJobData(src)
     local callsign = ''
     local rank = ''
@@ -657,7 +657,7 @@ ps.registerCallback(resourceName .. ':server:getAwardsData', function(source, pa
 
         leaderboard[#leaderboard + 1] = {
             rank = i,
-            name = row.authorplaintext or 'Unknown',
+            name = row.authorplaintext or 'Desconhecido',
             callsign = '',
             department = '',
             reports = reports,

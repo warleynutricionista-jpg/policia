@@ -2180,23 +2180,23 @@ const he = {
       GET_JOB_DATA: "getJobData",
       GET_REPORT_STATISTICS: "getReportStatistics",
       GET_TIME_STATISTICS: "getTimeStatistics",
-      GET_ACTIVE_WARRANTS: "getActiveWarrants",
+      GET_ACTIVE_WARRANTS: "getAtivoWarrants",
       GET_BULLETINS: "getBulletins",
       CREATE_BULLETIN: "createBulletin",
       DELETE_BULLETIN: "deleteBulletin",
       GET_RECENT_REPORTS: "getRecentReports",
-      GET_ACTIVE_BOLOS: "getActiveBolos",
-      GET_ACTIVE_UNITS: "getActiveUnits",
+      GET_ACTIVE_BOLOS: "getAtivoBolos",
+      GET_ACTIVE_UNITS: "getAtivoUnits",
       GET_RECENT_DISPATCHES: "getRecentDispatches",
       GET_USAGE_METRICS: "getUsageMetrics",
       UPDATE_JOB_DATA: "updateJobData",
       UPDATE_REPORT_STATISTICS: "updateReportStatistics",
       UPDATE_TIME_STATISTICS: "updateTimeStatistics",
-      UPDATE_ACTIVE_WARRANTS: "updateActiveWarrants",
+      UPDATE_ACTIVE_WARRANTS: "updateAtivoWarrants",
       UPDATE_BULLETINS: "updateBulletins",
       UPDATE_RECENT_REPORTS: "updateRecentReports",
-      UPDATE_ACTIVE_BOLOS: "updateActiveBolos",
-      UPDATE_ACTIVE_UNITS: "updateActiveUnits",
+      UPDATE_ACTIVE_BOLOS: "updateAtivoBolos",
+      UPDATE_ACTIVE_UNITS: "updateAtivoUnits",
       UPDATE_RECENT_DISPATCHES: "updateRecentDispatches",
       UPDATE_USAGE_METRICS: "updateUsageMetrics",
     },
@@ -2237,7 +2237,7 @@ const he = {
       UPDATE_REPORTS: "updateReports",
       UPLOAD_EVIDENCE_IMAGE: "uploadEvidenceImage",
       GENERATE_REPORT_ID: "generateReportId",
-      SEARCH_VEHICLES_FOR_REPORT: "searchVehiclesForReport",
+      SEARCH_VEHICLES_FOR_REPORT: "searchVeículosForReport",
     },
     CITIZEN: {
       GET_CITIZENS: "getCitizens",
@@ -2259,18 +2259,18 @@ const he = {
       ADD_SUSPECT_FINGERPRINT: "addSuspectFingerprint",
     },
     VEHICLE: {
-      GET_VEHICLES: "getVehicles",
-      SEARCH_VEHICLES: "searchVehicles",
-      GET_VEHICLE: "getVehicle",
-      UPDATE_VEHICLE: "updateVehicle",
-      GET_REPORTS_BY_PLATE: "getReportsByPlate",
+      GET_VEHICLES: "getVeículos",
+      SEARCH_VEHICLES: "searchVeículos",
+      GET_VEHICLE: "getVeículo",
+      UPDATE_VEHICLE: "updateVeículo",
+      GET_REPORTS_BY_PLATE: "getReportsByPlaca",
     },
     WEAPON: {
-      GET_WEAPONS: "getWeapons",
-      SEARCH_WEAPONS: "searchWeapons",
-      GET_WEAPON: "getWeapon",
-      GET_WEAPON_HISTORY: "getWeaponOwnershipHistory",
-      UPDATE_WEAPON: "updateWeapon",
+      GET_WEAPONS: "getArmas",
+      SEARCH_WEAPONS: "searchArmas",
+      GET_WEAPON: "getArma",
+      GET_WEAPON_HISTORY: "getArmaProprietárioshipHistory",
+      UPDATE_WEAPON: "updateArma",
     },
     CHARGE: {
       GET_CHARGES: "getCharges",
@@ -2285,9 +2285,9 @@ const he = {
       UPDATE_ROSTER: "updateRoster",
       ADD_OFFICER: "addOfficer",
       REMOVE_OFFICER: "removeOfficer",
-      GET_ACTIVE_UNITS: "getActiveUnits",
+      GET_ACTIVE_UNITS: "getAtivoUnits",
       GET_OFFICER_TAGS: "getOfficerTags",
-      UPDATE_OFFICER_CERTIFICATIONS: "updateOfficerCertifications",
+      UPDATE_OFFICER_CERTIFICATIONS: "updateOfficerCertificações",
       GET_JOB_GRADES: "getJobGrades",
       PROMOTE_OFFICER: "promoteOfficer",
       FIRE_OFFICER: "fireOfficer",
@@ -2392,21 +2392,21 @@ const he = {
     "copyToClipboard",
   ];
 function T1(n) {
-  if (n == null) return { isValid: !0, sanitized: n };
+  if (n == null) return { isVálido: !0, sanitized: n };
   if (typeof n == "object")
     try {
       const e = JSON.stringify(n);
       return e.length > k1.MAX_NUI_MESSAGE_SIZE
-        ? { isValid: !1, sanitized: {}, message: "Invalid data" }
+        ? { isVálido: !1, sanitized: {}, message: "Invalid data" }
         : jd(e)
-          ? { isValid: !1, sanitized: {}, message: "Invalid data" }
-          : { isValid: !0, sanitized: n };
+          ? { isVálido: !1, sanitized: {}, message: "Invalid data" }
+          : { isVálido: !0, sanitized: n };
     } catch {
-      return { isValid: !1, sanitized: {}, message: "Invalid data" };
+      return { isVálido: !1, sanitized: {}, message: "Invalid data" };
     }
   return typeof n == "string" && jd(n)
-    ? { isValid: !1, sanitized: "", message: "Invalid data" }
-    : { isValid: !0, sanitized: n };
+    ? { isVálido: !1, sanitized: "", message: "Invalid data" }
+    : { isVálido: !0, sanitized: n };
 }
 function mp(n) {
   return !(!n || typeof n != "string" || !x1.includes(n) || jd(n));
@@ -2444,7 +2444,7 @@ function ts(n, e) {
     const { action: i, data: r } = s.data;
     if (!mp(i) || !E1.isAllowed(i)) return;
     const l = T1(r);
-    l.isValid && i === n && e(l.sanitized);
+    l.isVálido && i === n && e(l.sanitized);
   };
   (kn(() => {
     window.addEventListener("message", t);
@@ -2547,11 +2547,11 @@ const Ud = [
     { name: "Evidence", icon: "inventory_2" },
     { name: "BOLOs", icon: "notification_important" },
     { name: "Warrants", icon: "gavel" },
-    { name: "Vehicles", icon: "directions_car" },
-    { name: "Weapons", icon: "security" },
-    { name: "Charges", icon: "balance" },
+    { name: "Veículos", icon: "directions_car" },
+    { name: "Armas", icon: "security" },
+    { name: "Infrações", icon: "balance" },
     { name: "Awards", icon: "emoji_events" },
-    { name: "Roster", icon: "group" },
+    { name: "Escala", icon: "group" },
     { name: "Map", icon: "map" },
     { name: "Cameras", icon: "videocam" },
     { name: "Bodycams", icon: "video_camera_front" },
@@ -2562,7 +2562,7 @@ const Ud = [
     "Dashboard",
     "Citizens",
     "Reports",
-    "Roster",
+    "Escala",
     "Map",
     "Bodycams",
     "Preferences",
@@ -2592,15 +2592,15 @@ const Qo = {
     Dashboard: "dashboard",
     Citizens: "citizens",
     BOLOs: "bolos",
-    Vehicles: "vehicles",
-    Weapons: "weapons",
+    Veículos: "vehicles",
+    Armas: "weapons",
     Cases: "cases",
     Evidence: "evidence",
     Reports: "reports",
     Warrants: "warrants",
-    Charges: "charges",
+    Infrações: "charges",
     Awards: "awards",
-    Roster: "roster",
+    Escala: "roster",
     Map: "map",
     Cameras: "cameras",
     Bodycams: "bodycams",
@@ -2633,22 +2633,22 @@ const Qo = {
     offDutyLoadingDuration: 2e3,
   },
   B1 = {
-    dashboard: "Dashboard",
-    citizens: "Citizens",
+    dashboard: "Painel",
+    citizens: "Cidadãos",
     bolos: "BOLOs",
-    vehicles: "Vehicles",
-    weapons: "Weapons",
+    vehicles: "Veículos",
+    weapons: "Armas",
     cases: "Casos",
-    evidence: "Evidence",
+    evidence: "Evidências",
     reports: "Relatórios",
     warrants: "Mandados",
-    charges: "Charges",
+    charges: "Infrações",
     awards: "Premiações",
-    roster: "Roster",
+    roster: "Escala",
     map: "Mapa",
-    cameras: "Cameras",
+    cameras: "Câmeras",
     bodycams: "Bodycams",
-    management: "Settings",
+    management: "Configurações",
     settings: "Preferences",
   },
   F1 = [],
@@ -2682,14 +2682,14 @@ const Qo = {
       job: {
         name: "police",
         label: "Aplicação da Lei",
-        grade: { name: "Oficial", level: 1 },
+        grade: { name: "Officer", level: 1 },
         onduty: !0,
         isboss: !1,
       },
       charinfo: { firstname: "Mus", lastname: "Tashe" },
       metadata: { callsign: "69-420" },
     },
-    isLEO: !0,
+    isPolicial: !0,
     onDuty: !0,
     permissions: [],
     isBoss: !0,
@@ -2714,7 +2714,7 @@ function H1() {
           rank:
             ((Z = (q = o(s).job) == null ? void 0 : q.grade) == null
               ? void 0
-              : Z.name) || "Unknown",
+              : Z.name) || "Desconhecido",
           firstName: ((K = o(s).charinfo) == null ? void 0 : K.firstname) || "",
           lastName: ((re = o(s).charinfo) == null ? void 0 : re.lastname) || "",
           id:
@@ -2724,7 +2724,7 @@ function H1() {
           department: ((Q = o(s).job) == null ? void 0 : Q.label) || "",
         }
       : {
-          rank: "Loading...",
+          rank: "Carregando...",
           firstName: "",
           lastName: "",
           id: "",
@@ -2744,13 +2744,13 @@ function H1() {
       return;
     }
     (y(s, q.playerData, !0),
-      y(i, q.isLEO || !1, !0),
+      y(i, q.isPolicial || !1, !0),
       y(r, q.onDuty || !1, !0),
       y(n, q.authorized || !1, !0),
       y(u, q.permissions || [], !0),
       y(h, q.isBoss || !1, !0),
       y(m, q.jobType || "leo", !0),
-      y(t, g(q.authorized || !1, q.isLEO || !1), !0));
+      y(t, g(q.authorized || !1, q.isPolicial || !1), !0));
   }
   function k(q) {
     (w(q), y(e, !1), O());
@@ -2837,7 +2837,7 @@ function H1() {
     get playerData() {
       return o(s);
     },
-    get isLEO() {
+    get isPolicial() {
       return o(i);
     },
     get onDuty() {
@@ -2892,15 +2892,15 @@ const wi = {
       "Dashboard",
       "Citizens",
       "BOLOs",
-      "Vehicles",
-      "Weapons",
+      "Veículos",
+      "Armas",
       "Cases",
       "Evidence",
       "Reports",
       "Warrants",
-      "Charges",
+      "Infrações",
       "Awards",
-      "Roster",
+      "Escala",
       "Map",
       "Cameras",
       "Bodycams",
@@ -2967,7 +2967,7 @@ function Sp(n) {
     : wp(n.id)
       ? xp(n.instanceName)
         ? kp(n.currentTab)
-          ? typeof n.isActive != "boolean"
+          ? typeof n.isAtivo != "boolean"
             ? (console.warn(Hs.INVALID_BOOLEAN), !1)
             : Tp(n.data)
               ? !0
@@ -3010,10 +3010,10 @@ function Z1(n) {
       console.warn(
         "MDT: Some saved instances were corrupted and have been removed",
       ),
-    e.filter((s) => s.isActive).length !== 1 &&
+    e.filter((s) => s.isAtivo).length !== 1 &&
       (console.warn("MDT: Fixed invalid active instance state"),
       e.forEach((s, i) => {
-        s.isActive = i === 0;
+        s.isAtivo = i === 0;
       })),
     e
   );
@@ -3082,8 +3082,8 @@ function Q1() {
   let n = F("Dashboard"),
     e = F(Qe([]));
   if ((y(e, $1(), !0), o(e).length)) {
-    for (const t of o(e)) ((t.currentTab = "Dashboard"), (t.isActive = !1));
-    ((o(e)[0].isActive = !0), y(n, "Dashboard"));
+    for (const t of o(e)) ((t.currentTab = "Dashboard"), (t.isAtivo = !1));
+    ((o(e)[0].isAtivo = !0), y(n, "Dashboard"));
   }
   return (
     Pn(() => {
@@ -3092,7 +3092,7 @@ function Q1() {
           id: "instance-1",
           instanceName: "Instância 1",
           currentTab: "Dashboard",
-          isActive: !0,
+          isAtivo: !0,
           data: void 0,
         });
     }),
@@ -3106,12 +3106,12 @@ function Q1() {
       get instances() {
         return o(e);
       },
-      setActiveTab(t) {
+      setAtivoTab(t) {
         y(n, Ty0[t] || t, !0);
       },
-      getActiveComponent() {
+      getAtivoComponent() {
         try {
-          const t = this.getActiveInstance();
+          const t = this.getAtivoInstance();
           if (t) {
             const i = Qo[Ty0[t.currentTab] || t.currentTab];
             return (
@@ -3145,23 +3145,23 @@ function Q1() {
         const s = o(e).find((i) => i.id === t);
         return s == null ? void 0 : s.currentTab;
       },
-      getActiveInstanceTab() {
-        const t = this.getActiveInstance();
+      getAtivoInstanceTab() {
+        const t = this.getAtivoInstance();
         return (t == null ? void 0 : t.currentTab) || o(n);
       },
       addInstance(t, s, i) {
         if (!K1(t, s)) return;
         if (o(e).find((u) => u.id === t)) {
-          this.setActiveInstance(t);
+          this.setAtivoInstance(t);
           return;
         }
         const l = Zf(i);
-        o(e).forEach((u) => (u.isActive = !1));
+        o(e).forEach((u) => (u.isAtivo = !1));
         const c = {
           id: t,
           instanceName: s,
           currentTab: o(n),
-          isActive: !0,
+          isAtivo: !0,
           data: l,
         };
         o(e).push(c);
@@ -3173,22 +3173,22 @@ function Q1() {
           return;
         }
         const i = o(e)[s];
-        if ((o(e).splice(s, 1), i.isActive && o(e).length > 0)) {
+        if ((o(e).splice(s, 1), i.isAtivo && o(e).length > 0)) {
           const r = Math.max(0, s - 1);
-          o(e)[r].isActive = !0;
+          o(e)[r].isAtivo = !0;
         }
       },
-      setActiveInstance(t) {
+      setAtivoInstance(t) {
         if (!o(e).find((i) => i.id === t)) {
           console.warn(`MDT: Instance '${t}' not found`);
           return;
         }
         o(e).forEach((i) => {
-          i.isActive = i.id === t;
+          i.isAtivo = i.id === t;
         });
       },
-      getActiveInstance() {
-        return o(e).find((t) => t.isActive);
+      getAtivoInstance() {
+        return o(e).find((t) => t.isAtivo);
       },
       hasInstance(t) {
         return o(e).some((s) => s.id === t);
@@ -3394,10 +3394,10 @@ function ay(n, e) {
     s = et(() => O1(t())),
     i = F(!1);
   function r(w) {
-    const k = e.tabService.getActiveInstance();
+    const k = e.tabService.getAtivoInstance();
     k
       ? e.tabService.setInstanceTab(k.id, w.name)
-      : e.tabService.setActiveTab(w.name);
+      : e.tabService.setAtivoTab(w.name);
   }
   var l = ry();
   let c;
@@ -3424,7 +3424,7 @@ function ay(n, e) {
             C(B, B1[Qo[o(k).name]] || o(k).name));
         },
         [
-          () => ({ active: e.tabService.getActiveInstanceTab() === o(k).name }),
+          () => ({ active: e.tabService.getAtivoInstanceTab() === o(k).name }),
           () => ({ hide: o(i) }),
         ],
       ),
@@ -3508,7 +3508,7 @@ function fy(n, e) {
         C(c, o(t)),
         C(h, B1[Qo[e.instance.currentTab]] || e.instance.currentTab));
     },
-    [() => ({ active: e.instance.isActive })],
+    [() => ({ active: e.instance.isAtivo })],
   ),
     x(n, s),
     qt());
@@ -3591,7 +3591,7 @@ function Sy(n, e) {
   const t = 10;
   let s = et(() => e.tabService.instances.length < t);
   function i(w) {
-    e.tabService.setActiveInstance(w);
+    e.tabService.setAtivoInstance(w);
   }
   function r(w) {
     e.tabService.removeInstance(w);
@@ -3767,7 +3767,7 @@ function Oy(n, e) {
                 z(
                   V,
                   (K) => {
-                    e.authService.isLEO && !e.authService.onDuty
+                    e.authService.isPolicial && !e.authService.onDuty
                       ? K(q)
                       : K(Z, !1);
                   },
@@ -3778,7 +3778,7 @@ function Oy(n, e) {
           z(
             R,
             (V) => {
-              e.authService.isLEO ? V(D, !1) : V(U);
+              e.authService.isPolicial ? V(D, !1) : V(U);
             },
             B,
           );
@@ -3838,13 +3838,13 @@ function Dy() {
 }
 function Ly() {
   const n = {
-    jobInfo: { rank: "Loading...", payRate: "$0/hr" },
+    jobInfo: { rank: "Carregando...", payRate: "$0/hr" },
     reportsInfo: { totalThisWeek: 0, changeFromLastWeek: 0 },
     weeklyTimeData: [],
     activeWarrants: [],
     recentReports: [],
     activeBolos: [],
-    bulletins: [{ id: 1, content: "Loading..." }],
+    bulletins: [{ id: 1, content: "Carregando..." }],
     activeUnits: { count: 0 },
     recentDispatches: [],
     usageMetrics: {
@@ -3916,7 +3916,7 @@ function Ly() {
       y(I, 0));
   }
   function K() {
-    o(m) && o(m).length > 1 && o(m)[0].content !== "Loading..." && q();
+    o(m) && o(m).length > 1 && o(m)[0].content !== "Carregando..." && q();
   }
   function re() {
     (ts(he.DASHBOARD.UPDATE_JOB_DATA, (oe) => {
@@ -4243,7 +4243,7 @@ var Gy = E("<button></button>"),
     '<div class="pager svelte-o013ra"><button class="pager-btn svelte-o013ra"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg></button> <span class="pager-info svelte-o013ra"> </span> <button class="pager-btn svelte-o013ra"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg></button></div>',
   ),
   ub = E(
-    '<div class="column svelte-o013ra"><div class="panel svelte-o013ra"><div class="panel-header svelte-o013ra"><span class="panel-title svelte-o013ra">Warrants</span> <span class="panel-count svelte-o013ra"> </span></div> <div class="panel-body svelte-o013ra"><!></div> <!></div> <div class="panel svelte-o013ra"><div class="panel-header svelte-o013ra"><span class="panel-title svelte-o013ra">BOLOs</span> <span class="panel-count svelte-o013ra"> </span></div> <div class="panel-body svelte-o013ra"><!></div> <!></div></div>',
+    '<div class="column svelte-o013ra"><div class="panel svelte-o013ra"><div class="panel-header svelte-o013ra"><span class="panel-title svelte-o013ra">Mandados</span> <span class="panel-count svelte-o013ra"> </span></div> <div class="panel-body svelte-o013ra"><!></div> <!></div> <div class="panel svelte-o013ra"><div class="panel-header svelte-o013ra"><span class="panel-title svelte-o013ra">BOLOs</span> <span class="panel-count svelte-o013ra"> </span></div> <div class="panel-body svelte-o013ra"><!></div> <!></div></div>',
   ),
   fb = E('<div class="empty-state svelte-o013ra">No recent reports</div>'),
   hb = E('<button class="load-more-btn svelte-o013ra">Load more</button>'),
@@ -4259,7 +4259,7 @@ var Gy = E("<button></button>"),
     '<div><button class="dispatch-btn svelte-o013ra"><div class="priority-bar svelte-o013ra"></div> <div class="item-left svelte-o013ra"><span class="item-name svelte-o013ra"> </span> <span class="item-meta svelte-o013ra"> </span></div></button> <!></div>',
   ),
   bb = E(
-    '<div class="dashboard svelte-o013ra"><div class="top-section svelte-o013ra"><div class="stats-strip svelte-o013ra"><div class="stat-item svelte-o013ra"><div class="stat-icon rank-icon svelte-o013ra"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg></div> <div class="stat-content svelte-o013ra"><span class="stat-value svelte-o013ra"> </span> <span class="stat-label svelte-o013ra"> </span></div></div> <div class="stat-divider svelte-o013ra"></div> <div class="stat-item svelte-o013ra"><div class="stat-icon reports-icon svelte-o013ra"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg></div> <div class="stat-content svelte-o013ra"><span class="stat-value svelte-o013ra"> <span><!> </span></span> <span class="stat-label svelte-o013ra">Reports this week</span></div></div> <div class="stat-divider svelte-o013ra"></div> <div class="stat-item svelte-o013ra"><div class="stat-icon units-icon svelte-o013ra"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 00-3-3.87"></path><path d="M16 3.13a4 4 0 010 7.75"></path></svg></div> <div class="stat-content svelte-o013ra"><span class="stat-value svelte-o013ra"> <span class="stat-badge svelte-o013ra">On Duty</span></span> <span class="stat-label svelte-o013ra">Active units</span></div></div> <div class="stat-divider svelte-o013ra"></div> <div class="stat-item bulletin-item svelte-o013ra"><div class="stat-icon bulletin-icon svelte-o013ra"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17H2a3 3 0 006 0h8a3 3 0 006 0zm0 0V5a2 2 0 00-2-2H4a2 2 0 00-2 2v12"></path></svg></div> <div class="stat-content bulletin-content svelte-o013ra"><!></div></div> <div class="stat-divider svelte-o013ra"></div> <div class="quick-actions svelte-o013ra"><button class="qa-btn qa-duty svelte-o013ra" title="Alternar Serviço"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"></path></svg></button> <button class="qa-btn qa-signout svelte-o013ra" title="Sair"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg></button></div></div></div> <div class="main-grid svelte-o013ra"><!> <div class="column svelte-o013ra"><div class="panel svelte-o013ra"><div class="panel-header svelte-o013ra"><span class="panel-title svelte-o013ra">Recent Reports</span> <span class="panel-count svelte-o013ra"> </span></div> <div class="panel-body svelte-o013ra"><!></div> <!></div></div> <div class="column svelte-o013ra"><div class="panel svelte-o013ra"><div class="panel-header svelte-o013ra"><span class="panel-title svelte-o013ra">Dispatches</span> <span class="panel-count svelte-o013ra"> </span></div> <div class="panel-body svelte-o013ra"></div></div></div></div></div>',
+    '<div class="dashboard svelte-o013ra"><div class="top-section svelte-o013ra"><div class="stats-strip svelte-o013ra"><div class="stat-item svelte-o013ra"><div class="stat-icon rank-icon svelte-o013ra"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg></div> <div class="stat-content svelte-o013ra"><span class="stat-value svelte-o013ra"> </span> <span class="stat-label svelte-o013ra"> </span></div></div> <div class="stat-divider svelte-o013ra"></div> <div class="stat-item svelte-o013ra"><div class="stat-icon reports-icon svelte-o013ra"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg></div> <div class="stat-content svelte-o013ra"><span class="stat-value svelte-o013ra"> <span><!> </span></span> <span class="stat-label svelte-o013ra">Reports this week</span></div></div> <div class="stat-divider svelte-o013ra"></div> <div class="stat-item svelte-o013ra"><div class="stat-icon units-icon svelte-o013ra"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 00-3-3.87"></path><path d="M16 3.13a4 4 0 010 7.75"></path></svg></div> <div class="stat-content svelte-o013ra"><span class="stat-value svelte-o013ra"> <span class="stat-badge svelte-o013ra">On Duty</span></span> <span class="stat-label svelte-o013ra">Ativo units</span></div></div> <div class="stat-divider svelte-o013ra"></div> <div class="stat-item bulletin-item svelte-o013ra"><div class="stat-icon bulletin-icon svelte-o013ra"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17H2a3 3 0 006 0h8a3 3 0 006 0zm0 0V5a2 2 0 00-2-2H4a2 2 0 00-2 2v12"></path></svg></div> <div class="stat-content bulletin-content svelte-o013ra"><!></div></div> <div class="stat-divider svelte-o013ra"></div> <div class="quick-actions svelte-o013ra"><button class="qa-btn qa-duty svelte-o013ra" title="Alternar Serviço"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"></path></svg></button> <button class="qa-btn qa-signout svelte-o013ra" title="Sair"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg></button></div></div></div> <div class="main-grid svelte-o013ra"><!> <div class="column svelte-o013ra"><div class="panel svelte-o013ra"><div class="panel-header svelte-o013ra"><span class="panel-title svelte-o013ra">Relatórios recentes</span> <span class="panel-count svelte-o013ra"> </span></div> <div class="panel-body svelte-o013ra"><!></div> <!></div></div> <div class="column svelte-o013ra"><div class="panel svelte-o013ra"><div class="panel-header svelte-o013ra"><span class="panel-title svelte-o013ra">Dispatches</span> <span class="panel-count svelte-o013ra"> </span></div> <div class="panel-body svelte-o013ra"></div></div></div></div></div>',
   );
 function kb(n, e) {
   Vt(e, !0);
@@ -4283,13 +4283,13 @@ function kb(n, e) {
       i.destroy();
     }));
   function T(ae) {
-    e.tabService.setActiveTab("BOLOs");
-    const _e = e.tabService.getActiveInstance();
+    e.tabService.setAtivoTab("BOLOs");
+    const _e = e.tabService.getAtivoInstance();
     _e && e.tabService.setInstanceTab(_e.id, "BOLOs");
   }
   function A(ae) {
-    (qa(ae), e.tabService.setActiveTab("Relatórios"));
-    const _e = e.tabService.getActiveInstance();
+    (qa(ae), e.tabService.setAtivoTab("Relatórios"));
+    const _e = e.tabService.getAtivoInstance();
     _e && e.tabService.setInstanceTab(_e.id, "Relatórios");
   }
   function I(ae) {
@@ -4331,8 +4331,8 @@ function kb(n, e) {
   }
   function D(ae) {
     if (!ae) return;
-    (qa(ae), e.tabService.setActiveTab("Relatórios"));
-    const _e = e.tabService.getActiveInstance();
+    (qa(ae), e.tabService.setAtivoTab("Relatórios"));
+    const _e = e.tabService.getAtivoInstance();
     _e && e.tabService.setInstanceTab(_e.id, "Relatórios");
   }
   function V(ae) {
@@ -4813,10 +4813,10 @@ var wb = (n, e, t) => {
   ),
   Sb = (n, e) => y(e, !0),
   Eb = E(
-    '<button class="action-btn delete-btn svelte-2iyf5w" type="button" aria-label="Excluir relatório">Delete</button>',
+    '<button class="action-btn delete-btn svelte-2iyf5w" type="button" aria-label="Excluir relatório">Excluir</button>',
   ),
   Cb = E(
-    '<div class="editor-header svelte-2iyf5w"><span class="report-title svelte-2iyf5w"> </span> <div class="header-actions svelte-2iyf5w"><!> <button class="action-btn cancel-btn svelte-2iyf5w" type="button" aria-label="Cancelar edição do relatório">Cancel</button> <button class="action-btn save-btn svelte-2iyf5w" type="button"> </button></div></div>',
+    '<div class="editor-header svelte-2iyf5w"><span class="report-title svelte-2iyf5w"> </span> <div class="header-actions svelte-2iyf5w"><!> <button class="action-btn cancel-btn svelte-2iyf5w" type="button" aria-label="Cancelar edição do relatório">Cancelar</button> <button class="action-btn save-btn svelte-2iyf5w" type="button"> </button></div></div>',
   );
 function Ab(n, e) {
   Vt(e, !0);
@@ -4872,7 +4872,7 @@ function Ab(n, e) {
       (_.disabled = t()),
       (g.disabled = t() || s()),
       Rn(g, "aria-label", t() ? "Salvando relatório" : "Salvar relatório"),
-      C(w, t() ? "Saving..." : "Salvar Relatório"));
+      C(w, t() ? "Salvando..." : "Salvar Relatório"));
   }),
     x(n, r),
     qt());
@@ -5089,7 +5089,7 @@ var qb = (n, e, t) => e(o(t).name),
     '<div class="dropdown-empty svelte-11fvpbb">No more tags available</div>',
   ),
   Hb = E(
-    '<div class="dropdown svelte-11fvpbb"><div class="dropdown-header svelte-11fvpbb">Available Tags</div> <!> <!></div>',
+    '<div class="dropdown svelte-11fvpbb"><div class="dropdown-header svelte-11fvpbb">Etiquetas disponíveis</div> <!> <!></div>',
   ),
   Gb = E(
     '<div class="tag svelte-11fvpbb"><span class="tag-dot svelte-11fvpbb"></span> <span class="tag-text svelte-11fvpbb"> </span> <button class="remove-btn svelte-11fvpbb" aria-label="Remover tag"><svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg></button></div>',
@@ -6252,7 +6252,7 @@ var c2 = E('<div class="search-status svelte-uh22ad">Searching...</div>'),
   h2 = E('<div class="search-results svelte-uh22ad"></div>'),
   v2 = E('<div class="search-status svelte-uh22ad">No vehicles found</div>'),
   p2 = E(
-    '<div class="search-area svelte-uh22ad"><input type="text" placeholder="Search by plate, owner name..." class="search-input svelte-uh22ad"/> <!></div>',
+    '<div class="search-area svelte-uh22ad"><input type="text" placeholder="Buscar por placa, nome do proprietário..." class="search-input svelte-uh22ad"/> <!></div>',
   ),
   m2 = (n, e, t) => e.onRemove(o(t).plate),
   _2 = (n, e, t) => e.onIssueBolo(o(t)),
@@ -6443,7 +6443,7 @@ function k2(n, e) {
       (H(() => {
         (C(V, o(O).plate),
           C(q, o(O).vehicle_label),
-          C(re, `Owner: ${o(O).owner_name ?? ""}`));
+          C(re, `Proprietário: ${o(O).owner_name ?? ""}`));
       }),
         x(P, R));
     },
@@ -11236,7 +11236,7 @@ const tu = !Qs && /Chrome\/(\d+)/.exec(ta),
   Os = !!tu,
   am = tu ? +tu[1] : 0,
   Gs = !Qs && !!$i && /Apple Computer/.test($i.vendor),
-  Do = Gs && (/Mobile\/\w+/.test(ta) || (!!$i && $i.maxTouchPoints > 2)),
+  Do = Gs && (/Mobile\/\w+/.test(ta) || (!!$i && $i.maxTouchPontos > 2)),
   mi = Do || ($i ? /Mac/.test($i.platform) : !1),
   Sk = $i ? /Win/.test($i.platform) : !1,
   pr = /Android \d/.test(ta),
@@ -11359,7 +11359,7 @@ function lm(n, e) {
 }
 let co = null;
 function Ok(n) {
-  if (n.setActive) return n.setActive();
+  if (n.setAtivo) return n.setAtivo();
   if (co) return n.focus(co);
   let e = om(n);
   (n.focus(
@@ -20080,7 +20080,7 @@ class pS extends Ex {
   getAttributes(e) {
     return RT(this.state, e);
   }
-  isActive(e, t) {
+  isAtivo(e, t) {
     const s = typeof e == "string" ? e : null,
       i = typeof e == "string" ? t : e;
     return zT(this.state, s, i);
@@ -20680,7 +20680,7 @@ const _S = /^\s*>\s$/,
           key: new Ki("codeBlockVSCodeHandler"),
           props: {
             handlePaste: (n, e) => {
-              if (!e.clipboardData || this.editor.isActive(this.type.name))
+              if (!e.clipboardData || this.editor.isAtivo(this.type.name))
                 return !1;
               const t = e.clipboardData.getData("text/plain"),
                 s = e.clipboardData.getData("vscode-editor-data"),
@@ -22170,7 +22170,7 @@ const u_ = d_(!1, !0),
           (n) =>
           ({ editor: e, commands: t }) =>
             this.options.alignments.includes(n)
-              ? e.isActive({ textAlign: n })
+              ? e.isAtivo({ textAlign: n })
                 ? t.unsetTextAlign()
                 : t.setTextAlign(n)
               : !1,
@@ -22414,18 +22414,18 @@ function BE(n, e) {
           (j = Re(re, 1, "toolbar-btn svelte-tzcou4", null, j, X)));
       },
       [
-        () => ({ active: e.editor.isActive("bold") }),
-        () => ({ active: e.editor.isActive("italic") }),
-        () => ({ active: e.editor.isActive("underline") }),
-        () => ({ active: e.editor.isActive("highlight") }),
-        () => ({ active: e.editor.isActive({ textAlign: "left" }) }),
-        () => ({ active: e.editor.isActive({ textAlign: "center" }) }),
-        () => ({ active: e.editor.isActive({ textAlign: "right" }) }),
-        () => ({ active: e.editor.isActive("bulletList") }),
-        () => ({ active: e.editor.isActive("orderedList") }),
-        () => ({ active: e.editor.isActive("heading", { level: 1 }) }),
-        () => ({ active: e.editor.isActive("heading", { level: 2 }) }),
-        () => ({ active: e.editor.isActive("heading", { level: 3 }) }),
+        () => ({ active: e.editor.isAtivo("bold") }),
+        () => ({ active: e.editor.isAtivo("italic") }),
+        () => ({ active: e.editor.isAtivo("underline") }),
+        () => ({ active: e.editor.isAtivo("highlight") }),
+        () => ({ active: e.editor.isAtivo({ textAlign: "left" }) }),
+        () => ({ active: e.editor.isAtivo({ textAlign: "center" }) }),
+        () => ({ active: e.editor.isAtivo({ textAlign: "right" }) }),
+        () => ({ active: e.editor.isAtivo("bulletList") }),
+        () => ({ active: e.editor.isAtivo("orderedList") }),
+        () => ({ active: e.editor.isAtivo("heading", { level: 1 }) }),
+        () => ({ active: e.editor.isAtivo("heading", { level: 2 }) }),
+        () => ({ active: e.editor.isAtivo("heading", { level: 3 }) }),
       ],
     ),
     x(n, t),
@@ -22714,8 +22714,8 @@ function h_() {
       return (n.reports.set(M, se), se);
     } catch (J) {
       return (
-        console.error("Failed to load report:", J),
-        (n.lastError = "Failed to load report"),
+        console.error("Falha ao carregar o relatório:", J),
+        (n.lastError = "Falha ao carregar o relatório"),
         { ...O(), reportId: M }
       );
     } finally {
@@ -22734,13 +22734,13 @@ function h_() {
         const W =
           (se == null ? void 0 : se.message) ||
           (se == null ? void 0 : se.error) ||
-          "Save operation failed";
+          "Falha ao salvar";
         throw new Error(W);
       }
     } catch (J) {
       throw (
         (n.lastError =
-          J instanceof Error ? J.message : "Falha ao salvar report"),
+          J instanceof Error ? J.message : "Falha ao salvar o relatório"),
         J
       );
     } finally {
@@ -22804,7 +22804,7 @@ function h_() {
     return Te(
       he.SENTENCING.GIVE_CITATION,
       { citizenId: M, fine: J, reportId: se },
-      { success: !0, message: "Citation given" },
+      { success: !0, message: "Citação aplicada" },
     );
   }
   async function m() {
@@ -22892,9 +22892,9 @@ function h_() {
             fullName:
               (Y == null ? void 0 : Y.name) ||
               (Y == null ? void 0 : Y.fullname) ||
-              "Unknown",
+              "Desconhecido",
             badgeId: (Y == null ? void 0 : Y.badgeId) || "",
-            type: (Y == null ? void 0 : Y.type) || "Oficial",
+            type: (Y == null ? void 0 : Y.type) || "Officer",
             notes: (Y == null ? void 0 : Y.notes) || "",
           })
         : X === "victim"
@@ -22904,7 +22904,7 @@ function h_() {
               fullName:
                 (Y == null ? void 0 : Y.name) ||
                 (Y == null ? void 0 : Y.fullname) ||
-                "Unknown",
+                "Desconhecido",
               type: (Y == null ? void 0 : Y.type) || "Victim",
             })
           : W.suspects.push({
@@ -22913,9 +22913,9 @@ function h_() {
               fullName:
                 (Y == null ? void 0 : Y.name) ||
                 (Y == null ? void 0 : Y.fullname) ||
-                "Unknown",
+                "Desconhecido",
               notes: (Y == null ? void 0 : Y.notes) || "",
-              warrantActive: (Y == null ? void 0 : Y.warrantActive) || !1,
+              warrantAtivo: (Y == null ? void 0 : Y.warrantAtivo) || !1,
               profileImage: (Y == null ? void 0 : Y.image) || void 0,
             });
     }
@@ -23005,7 +23005,7 @@ function h_() {
       try {
         return await t(M);
       } catch (J) {
-        throw (console.error("Failed to load report:", J), J);
+        throw (console.error("Falha ao carregar o relatório:", J), J);
       }
     else return O();
   }
@@ -23042,7 +23042,7 @@ function h_() {
       citizenid: J.citizenid || "",
       fullName: J.fullName,
       notes: "",
-      warrantActive: !1,
+      warrantAtivo: !1,
       profileImage: J.image || void 0,
       fingerprint: J.fingerprint || void 0,
     };
@@ -23152,8 +23152,8 @@ function h_() {
     addEvidence: j,
     removeEvidence: Q,
     removeImageFromEvidence: $,
-    addVehicle: te,
-    removeVehicle: ee,
+    addVeículo: te,
+    removeVeículo: ee,
     updateItemInArray: D,
     formatDate: oe,
     formatTime: ue,
@@ -23169,8 +23169,8 @@ function v_() {
       return ((n.results = c), c);
     } catch (l) {
       return (
-        console.error("Failed to search officers:", l),
-        (n.lastError = "Failed to search officers"),
+        console.error("Falha ao buscar oficiais:", l),
+        (n.lastError = "Falha ao buscar oficiais"),
         (n.results = []),
         []
       );
@@ -23186,8 +23186,8 @@ function v_() {
       return ((n.results = c), c);
     } catch (l) {
       return (
-        console.error("Failed to search players:", l),
-        (n.lastError = "Failed to search players"),
+        console.error("Falha ao buscar jogadores:", l),
+        (n.lastError = "Falha ao buscar jogadores"),
         (n.results = []),
         []
       );
@@ -23281,8 +23281,8 @@ function m_() {
       throw new Error("Falha no envio");
     } catch (D) {
       throw (
-        console.error("Failed to upload image:", D),
-        (n.lastError = "Failed to upload image"),
+        console.error("Falha ao enviar a imagem:", D),
+        (n.lastError = "Falha ao enviar a imagem"),
         D
       );
     } finally {
@@ -23398,13 +23398,13 @@ function m_() {
         ? {
             valid: !1,
             error:
-              "File size too large. Please upload images smaller than 10MB.",
+              "Arquivo muito grande. Envie imagens menores que 10 MB.",
           }
         : { valid: !0 }
       : {
           valid: !1,
           error:
-            "Invalid file type. Please upload JPEG, PNG, GIF, or WebP images.",
+            "Tipo de arquivo inválido. Envie imagens JPEG, PNG, GIF ou WebP.",
         };
   }
   return {
@@ -23456,8 +23456,8 @@ function __() {
         (n.page = U),
         (n.hasMore = !!V.hasMore));
     } catch (V) {
-      (console.error("Failed to load cases:", V),
-        (n.lastError = "Failed to load cases"));
+      (console.error("Falha ao carregar os casos:", V),
+        (n.lastError = "Falha ao carregar os casos"));
     } finally {
       n.isLoading = !1;
     }
@@ -23467,11 +23467,11 @@ function __() {
     try {
       const D = await Te(he.CASE.GET_CASE, { caseId: U });
       if (D.success && D.data) return ((n.selectedCase = D.data), D.data);
-      throw new Error("Case not found");
+      throw new Error("Caso não encontrado");
     } catch (D) {
       return (
-        console.error("Failed to load case:", D),
-        (n.lastError = "Failed to load case"),
+        console.error("Falha ao carregar o caso:", D),
+        (n.lastError = "Falha ao carregar o caso"),
         null
       );
     } finally {
@@ -23487,7 +23487,7 @@ function __() {
       );
     } catch (G) {
       return (
-        console.error("Failed to load evidence page:", G),
+        console.error("Falha ao carregar a página de evidências:", G),
         { success: !1 }
       );
     }
@@ -23498,7 +23498,7 @@ function __() {
       return await Te(he.CASE.CREATE_CASE, U, { success: !0 });
     } catch (D) {
       return (
-        console.error("Failed to create case:", D),
+        console.error("Falha ao criar o caso:", D),
         (n.lastError = "Falha ao criar o caso"),
         { success: !1 }
       );
@@ -23516,7 +23516,7 @@ function __() {
         )
       ).success;
     } catch (V) {
-      return (console.error("Failed to link report:", V), !1);
+      return (console.error("Falha ao vincular o relatório:", V), !1);
     }
   }
   async function l(U, D) {
@@ -23529,7 +23529,7 @@ function __() {
         )
       ).success;
     } catch (V) {
-      return (console.error("Failed to unlink report:", V), !1);
+      return (console.error("Falha ao desvincular o relatório:", V), !1);
     }
   }
   async function c(U, D) {
@@ -23542,7 +23542,7 @@ function __() {
         )
       ).success;
     } catch (V) {
-      return (console.error("Failed to update case:", V), !1);
+      return (console.error("Falha ao atualizar o caso:", V), !1);
     }
   }
   async function u(U) {
@@ -23550,7 +23550,7 @@ function __() {
       return (await Te(he.CASE.DELETE_CASE, { caseId: U }, { success: !0 }))
         .success;
     } catch (D) {
-      return (console.error("Failed to delete case:", D), !1);
+      return (console.error("Falha ao excluir case:", D), !1);
     }
   }
   async function h(U, D, V) {
@@ -23563,7 +23563,7 @@ function __() {
         )
       ).success;
     } catch (G) {
-      return (console.error("Failed to assign officer:", G), !1);
+      return (console.error("Falha ao atribuir o oficial:", G), !1);
     }
   }
   async function m(U, D) {
@@ -23576,7 +23576,7 @@ function __() {
         )
       ).success;
     } catch (V) {
-      return (console.error("Failed to remove officer:", V), !1);
+      return (console.error("Falha ao remover o oficial:", V), !1);
     }
   }
   async function _(U, D) {
@@ -23587,7 +23587,7 @@ function __() {
         { success: !0 },
       );
     } catch (V) {
-      return (console.error("Failed to add attachment:", V), { success: !1 });
+      return (console.error("Falha ao adicionar o anexo:", V), { success: !1 });
     }
   }
   async function g(U) {
@@ -23596,7 +23596,7 @@ function __() {
         (await Te(he.CASE.GET_EVIDENCE_CUSTODY, { evidenceId: U }, [])) || []
       );
     } catch (D) {
-      return (console.error("Failed to load evidence custody:", D), []);
+      return (console.error("Falha ao carregar a custódia da evidência:", D), []);
     }
   }
   async function w(U, D) {
@@ -23608,7 +23608,7 @@ function __() {
       );
     } catch (V) {
       return (
-        console.error("Failed to upload attachment:", V),
+        console.error("Falha ao enviar o anexo:", V),
         { success: !1 }
       );
     }
@@ -23621,7 +23621,7 @@ function __() {
         { success: !0 },
       );
     } catch (V) {
-      return (console.error("Failed to add evidence:", V), { success: !1 });
+      return (console.error("Falha ao adicionar a evidência:", V), { success: !1 });
     }
   }
   async function T(U, D) {
@@ -23634,7 +23634,7 @@ function __() {
         )
       ).success;
     } catch (V) {
-      return (console.error("Failed to update evidence:", V), !1);
+      return (console.error("Falha ao atualizar a evidência:", V), !1);
     }
   }
   async function A(U, D, V) {
@@ -23647,7 +23647,7 @@ function __() {
         )
       ).success;
     } catch (G) {
-      return (console.error("Failed to transfer evidence:", G), !1);
+      return (console.error("Falha ao transferir a evidência:", G), !1);
     }
   }
   async function I(U) {
@@ -23660,7 +23660,7 @@ function __() {
         )
       ).success;
     } catch (D) {
-      return (console.error("Failed to delete evidence:", D), !1);
+      return (console.error("Falha ao excluir evidence:", D), !1);
     }
   }
   async function P(U) {
@@ -23673,7 +23673,7 @@ function __() {
         )
       ).success;
     } catch (D) {
-      return (console.error("Failed to remove attachment:", D), !1);
+      return (console.error("Falha ao remover o anexo:", D), !1);
     }
   }
   async function O(U, D) {
@@ -23685,7 +23685,7 @@ function __() {
       );
     } catch (V) {
       return (
-        console.error("Failed to add evidence image:", V),
+        console.error("Falha ao adicionar a imagem da evidência:", V),
         { success: !1 }
       );
     }
@@ -23696,7 +23696,7 @@ function __() {
         await Te(he.CASE.REMOVE_EVIDENCE_IMAGE, { imageId: U }, { success: !0 })
       ).success;
     } catch (D) {
-      return (console.error("Failed to remove evidence image:", D), !1);
+      return (console.error("Falha ao remover a imagem da evidência:", D), !1);
     }
   }
   async function B(U, D = 1, V = 10) {
@@ -23710,7 +23710,7 @@ function __() {
       );
     } catch (G) {
       return (
-        console.error("Failed to load audit logs:", G),
+        console.error("Falha ao carregar os logs de auditoria:", G),
         { items: [], total: 0 }
       );
     }
@@ -23766,8 +23766,8 @@ function sC() {
       return ((n.availableTags = _), _);
     } catch (h) {
       return (
-        console.error("Failed to load tags:", h),
-        (n.lastError = "Failed to load available tags"),
+        console.error("Falha ao carregar as etiquetas:", h),
+        (n.lastError = "Falha ao carregar as etiquetas disponíveis"),
         (n.availableTags = []),
         []
       );
@@ -23797,15 +23797,15 @@ function sC() {
   function u(h) {
     return h.trim()
       ? h.length > 50
-        ? { valid: !1, error: "Tag cannot be longer than 50 characters" }
+        ? { valid: !1, error: "A etiqueta não pode ter mais de 50 caracteres" }
         : /^[a-zA-Z0-9\s\-_]+$/.test(h)
           ? { valid: !0 }
           : {
               valid: !1,
               error:
-                "Tag can only contain letters, numbers, spaces, hyphens, and underscores",
+                "A etiqueta só pode conter letras, números, espaços, hífens e underlines",
             }
-      : { valid: !1, error: "Tag cannot be empty" };
+      : { valid: !1, error: "A etiqueta não pode estar vazia" };
   }
   return {
     get state() {
@@ -24134,8 +24134,8 @@ function hC(n, e) {
     s = et(() => t() === "ems");
   function i(ne) {
     if (!e.tabService) return;
-    e.tabService.setActiveTab(ne);
-    const ce = e.tabService.getActiveInstance();
+    e.tabService.setAtivoTab(ne);
+    const ce = e.tabService.getAtivoInstance();
     ce && e.tabService.setInstanceTab(ce.id, ne);
   }
   const r = h_(),
@@ -24165,7 +24165,7 @@ function hC(n, e) {
       );
       Array.isArray(ne) && y(P, ne, !0);
     } catch (ne) {
-      console.error("Failed to load report templates:", ne);
+      console.error("Falha ao carregar o relatório templates:", ne);
     }
   }
   function B(ne) {
@@ -24174,19 +24174,19 @@ function hC(n, e) {
   function U() {
     const ne = B(o(g).type);
     if (ne.length === 0) {
-      I("Nenhum modelo configurado for this report type", "error");
+      I("Nenhum modelo configurado para este tipo de relatório", "error");
       return;
     }
     if (ne.length === 1) {
       (j.handleContentUpdate(ne[0].content),
-        I(`Template "${ne[0].name}" inserted`));
+        I(`Modelo "${ne[0].name}" inserido`));
       return;
     }
     y(O, !o(O));
   }
   function D(ne) {
     (j.handleContentUpdate(ne.content),
-      I(`Template "${ne.name}" inserted`),
+      I(`Modelo "${ne.name}" inserido`),
       y(O, !1));
   }
   let V = F(void 0);
@@ -24282,12 +24282,12 @@ function hC(n, e) {
   async function Q(ne) {
     if (ne.citizenid) {
       if (!o(g).reportId) {
-        I("Save the report before issuing warrants", "error");
+        I("Salve o relatório antes de emitir mandados", "error");
         return;
       }
       try {
         (await r.issueWarrant(o(g).reportId, ne.citizenid),
-          j.handleUpdateSuspect({ ...ne, warrantActive: !0 }),
+          j.handleUpdateSuspect({ ...ne, warrantAtivo: !0 }),
           await Te(he.DASHBOARD.GET_ACTIVE_WARRANTS),
           I(`Warrant issued for ${ne.fullName}`));
       } catch (ce) {
@@ -24311,7 +24311,7 @@ function hC(n, e) {
             h.state.activeSearch === "victims") &&
           (await l.searchPlayers(h.state.searchQuery));
     } catch {
-      I("Search failed", "error");
+      I("Falha na busca", "error");
     }
   }
   async function te(ne, ce) {
@@ -24319,7 +24319,7 @@ function hC(n, e) {
       const de = await r.sendToJail(ne, ce);
       I(de.message || `Sent to jail for ${ce} months`);
     } catch {
-      I("Failed to send to jail", "error");
+      I("Falha ao enviar para a prisão", "error");
     }
   }
   async function ee(ne, ce) {
@@ -24327,14 +24327,14 @@ function hC(n, e) {
       const de = await r.giveCitation(ne, ce, o(g).reportId);
       I(de.message || `Citation issued: $${ce.toLocaleString()}`);
     } catch {
-      I("Failed to issue citation", "error");
+      I("Falha ao aplicar a citação", "error");
     }
   }
   async function oe() {
     try {
       y(w, await r.getCharges(), !0);
     } catch {
-      I("Failed to load penal codes", "error");
+      I("Falha ao carregar o código penal", "error");
     }
   }
   async function ue() {
@@ -24350,7 +24350,7 @@ function hC(n, e) {
   async function M(ne) {
     if (ne.citizenid) {
       if (!o(g).reportId) {
-        I("Save the report before issuing a BOLO", "error");
+        I("Salve o relatório antes de emitir um BOLO", "error");
         return;
       }
       try {
@@ -24360,45 +24360,45 @@ function hC(n, e) {
             subjectName: ne.fullName,
             reportId: o(g).reportId ? Number(o(g).reportId) : void 0,
             notes:
-              `BOLO issued from report ${o(g).reportId || "(unsaved)"}. ${o(g).title || ""}`.trim(),
+              `BOLO issued from report ${o(g).reportId || "(não salvo)"}. ${o(g).title || ""}`.trim(),
           },
           de = await Te(he.CITIZEN.CREATE_BOLO, ce);
         de != null && de.success
           ? I(`BOLO issued for ${ne.fullName}`)
           : I(
-              (de == null ? void 0 : de.message) || "Failed to issue BOLO",
+              (de == null ? void 0 : de.message) || "Falha ao emitir o BOLO",
               "error",
             );
       } catch {
-        I("Failed to issue BOLO", "error");
+        I("Falha ao emitir o BOLO", "error");
       }
     }
   }
   async function J(ne) {
     if (ne.plate) {
       if (!o(g).reportId) {
-        I("Save the report before issuing a BOLO", "error");
+        I("Salve o relatório antes de emitir um BOLO", "error");
         return;
       }
       try {
         const ce = {
             type: "vehicle",
             subjectId: ne.plate,
-            subjectName: `${ne.plate} - ${ne.vehicle_label || "Unknown Vehicle"}`,
+            subjectName: `${ne.plate} - ${ne.vehicle_label || "Veículo desconhecido"}`,
             reportId: o(g).reportId ? Number(o(g).reportId) : void 0,
             notes:
-              `Vehicle BOLO issued from report ${o(g).reportId || "(unsaved)"}. ${o(g).title || ""}. Owner: ${ne.owner_name || "Unknown"}.`.trim(),
+              `Veículo BOLO issued from report ${o(g).reportId || "(não salvo)"}. ${o(g).title || ""}. Proprietário: ${ne.owner_name || "Desconhecido"}.`.trim(),
           },
           de = await Te(he.CITIZEN.CREATE_BOLO, ce);
         de != null && de.success
-          ? I(`Vehicle BOLO issued for ${ne.plate}`)
+          ? I(`Veículo BOLO issued for ${ne.plate}`)
           : I(
               (de == null ? void 0 : de.message) ||
-                "Failed to issue vehicle BOLO",
+                "Falha ao emitir o BOLO do veículo",
               "error",
             );
       } catch {
-        I("Failed to issue vehicle BOLO", "error");
+        I("Falha ao emitir o BOLO do veículo", "error");
       }
     }
   }
@@ -24408,7 +24408,7 @@ function hC(n, e) {
         const ce = await Te(
           he.CITIZEN.TRIGGER_SUSPECT_MUGSHOT,
           { citizenid: ne.citizenid },
-          { success: !0, message: "Mugshot captured", imageUrl: "" },
+          { success: !0, message: "Foto de ficha capturada", imageUrl: "" },
         );
         if (ce.success) {
           if (ce.imageUrl) {
@@ -24422,10 +24422,10 @@ function hC(n, e) {
               }),
               y(g, { ...o(g) }, !0));
           }
-          I(ce.message || `Mugshot captured for ${ne.fullName}`);
-        } else I(ce.message || "Failed to capture mugshot", "error");
+          I(ce.message || `Foto de ficha capturada for ${ne.fullName}`);
+        } else I(ce.message || "Falha ao capturar a foto de ficha", "error");
       } catch {
-        I("Failed to capture mugshot", "error");
+        I("Falha ao capturar a foto de ficha", "error");
       }
   }
   async function W(ne) {
@@ -24436,7 +24436,7 @@ function hC(n, e) {
           { citizenid: ne.citizenid },
           {
             success: !0,
-            message: "Fingerprint added",
+            message: "Impressão digital adicionada",
             fingerprint: "AB-1234-5678",
           },
         );
@@ -24450,10 +24450,10 @@ function hC(n, e) {
               fingerprint: ce.fingerprint,
             }),
             y(g, { ...o(g) }, !0)),
-            I(`Fingerprint added for ${ne.fullName}: ${ce.fingerprint}`));
-        } else I(ce.message || "Failed to add fingerprint", "error");
+            I(`Impressão digital adicionada for ${ne.fullName}: ${ce.fingerprint}`));
+        } else I(ce.message || "Falha ao adicionar a impressão digital", "error");
       } catch {
-        I("Failed to add fingerprint", "error");
+        I("Falha ao adicionar a impressão digital", "error");
       }
   }
   let Y = F(void 0),
@@ -24469,13 +24469,13 @@ function hC(n, e) {
     const ce = ne.target,
       de = (be = ce.files) == null ? void 0 : be[0];
     if (!(!de || !o(X) || o(ve))) {
-      (y(ve, !0), I("Uploading photo..."));
+      (y(ve, !0), I("Enviando foto..."));
       try {
         const le = await Mc(de),
           Se = await Te(
             he.CITIZEN.UPLOAD_SUSPECT_PHOTO,
             { citizenid: o(X), image: le },
-            { success: !0, message: "Photo uploaded", imageUrl: le },
+            { success: !0, message: "Foto enviada", imageUrl: le },
           );
         if (Se.success) {
           const ze = o(g).involved.suspects.findIndex(
@@ -24487,10 +24487,10 @@ function hC(n, e) {
               profileImage: Se.imageUrl || le,
             }),
             y(g, { ...o(g) }, !0)),
-            I(Se.message || "Photo uploaded successfully"));
-        } else I(Se.message || "Failed to upload photo", "error");
+            I(Se.message || "Foto enviada successfully"));
+        } else I(Se.message || "Falha ao enviar a foto", "error");
       } catch {
-        I("Failed to upload photo", "error");
+        I("Falha ao enviar a foto", "error");
       } finally {
         y(ve, !1);
       }
@@ -24516,7 +24516,7 @@ function hC(n, e) {
         h.closeImageUpload();
       } catch (de) {
         I(
-          (de == null ? void 0 : de.message) || "Failed to upload image",
+          (de == null ? void 0 : de.message) || "Falha ao enviar a imagem",
           "error",
         );
       } finally {
@@ -24550,7 +24550,7 @@ function hC(n, e) {
   }
   async function xt() {
     if (!o(g).tags || o(g).tags.length === 0) {
-      I("At least one tag is required before saving", "error");
+      I("Pelo menos uma etiqueta é obrigatória antes de salvar", "error");
       return;
     }
     try {
@@ -24569,7 +24569,7 @@ function hC(n, e) {
         (h.state.selectedEvidenceId = ""),
         e.onClose());
     } catch (ne) {
-      const ce = (ne == null ? void 0 : ne.message) || "Falha ao salvar report";
+      const ce = (ne == null ? void 0 : ne.message) || "Falha ao salvar o relatório";
       (I(ce, "error"), y(A, !1), y(T, !0));
     }
   }
@@ -24795,10 +24795,10 @@ function hC(n, e) {
               return o(g).vehicles;
             },
             onAdd: (ht) => {
-              y(g, r.addVehicle(o(g), ht), !0);
+              y(g, r.addVeículo(o(g), ht), !0);
             },
             onRemove: (ht) => {
-              y(g, r.removeVehicle(o(g), ht), !0);
+              y(g, r.removeVeículo(o(g), ht), !0);
             },
             onIssueBolo: J,
           });
@@ -24845,12 +24845,12 @@ function hC(n, e) {
         le = f(be),
         Se = v(be, 2);
       ((Se.__click = [cC]),
-        H(() => C(le, `Failed to load report: ${o(ce).message ?? ""}`)),
+        H(() => C(le, `Falha ao carregar o relatório: ${o(ce).message ?? ""}`)),
         x(ne, de));
     },
   );
   var vt = v(fe, 2);
-  const Ot = et(() => (o(s) ? "Search EMS" : "Buscar Oficiais"));
+  const Ot = et(() => (o(s) ? "Buscar EMS" : "Buscar Oficiais"));
   lc(vt, {
     get show() {
       return h.state.showOfficerSearch;
@@ -24874,7 +24874,7 @@ function hC(n, e) {
     get show() {
       return h.state.showSuspectSearch;
     },
-    title: "Search Suspects",
+    title: "Buscar suspeitos",
     get searchResults() {
       return l.state.results;
     },
@@ -24887,7 +24887,7 @@ function hC(n, e) {
     onClose: () => h.closeSuspectSearch(),
   });
   var rt = v(pt, 2);
-  const ut = et(() => (o(s) ? "Search Patients" : "Search Victims"));
+  const ut = et(() => (o(s) ? "Buscar pacientes" : "Buscar vítimas"));
   lc(rt, {
     get show() {
       return h.state.showVictimSearch;
@@ -24987,7 +24987,7 @@ function sa(n, e) {
           x(R, B));
       },
       T = (R) => {
-        var B = fs("0 entries");
+        var B = fs("0 registros");
         x(R, B);
       };
     z(w, (R) => {
@@ -25100,13 +25100,13 @@ var AC = E('<option class="svelte-m52oq0"> </option>'),
     (y(e, ""), y(t, ""), y(s, ""), y(i, ""), r());
   },
   MC = E(
-    '<div class="empty-state svelte-m52oq0"><div class="loading-spinner svelte-m52oq0"></div> Loading reports...</div>',
+    '<div class="empty-state svelte-m52oq0"><div class="loading-spinner svelte-m52oq0"></div> Carregando relatórios...</div>',
   ),
   OC = E(
-    '<button class="topbar-btn btn-primary svelte-m52oq0" style="margin-top: 12px;">Create First Report</button>',
+    '<button class="topbar-btn btn-primary svelte-m52oq0" style="margin-top: 12px;">Criar primeiro relatório</button>',
   ),
   PC = E(
-    '<div class="empty-state svelte-m52oq0"><div class="empty-content svelte-m52oq0"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.3; margin-bottom: 12px;" class="svelte-m52oq0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" class="svelte-m52oq0"></path><polyline points="14 2 14 8 20 8" class="svelte-m52oq0"></polyline><line x1="16" y1="13" x2="8" y2="13" class="svelte-m52oq0"></line><line x1="16" y1="17" x2="8" y2="17" class="svelte-m52oq0"></line><polyline points="10 9 9 9 8 9" class="svelte-m52oq0"></polyline></svg> <span class="empty-title svelte-m52oq0">No Reports Found</span> <span class="empty-sub svelte-m52oq0"> </span> <!></div></div>',
+    '<div class="empty-state svelte-m52oq0"><div class="empty-content svelte-m52oq0"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.3; margin-bottom: 12px;" class="svelte-m52oq0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" class="svelte-m52oq0"></path><polyline points="14 2 14 8 20 8" class="svelte-m52oq0"></polyline><line x1="16" y1="13" x2="8" y2="13" class="svelte-m52oq0"></line><line x1="16" y1="17" x2="8" y2="17" class="svelte-m52oq0"></line><polyline points="10 9 9 9 8 9" class="svelte-m52oq0"></polyline></svg> <span class="empty-title svelte-m52oq0">Nenhum relatório encontrado</span> <span class="empty-sub svelte-m52oq0"> </span> <!></div></div>',
   ),
   NC = (n, e, t) => e(o(t).id),
   DC = E('<span class="tag-more svelte-m52oq0"> </span>'),
@@ -25115,7 +25115,7 @@ var AC = E('<option class="svelte-m52oq0"> </option>'),
     '<button class="report-row svelte-m52oq0"><span class="col-title svelte-m52oq0"> </span> <span class="col-id mono svelte-m52oq0"> </span> <span class="col-author svelte-m52oq0"> </span> <span class="col-type svelte-m52oq0"><span> </span></span> <span class="col-date svelte-m52oq0"> </span> <span class="col-date svelte-m52oq0"> </span> <span class="col-tag svelte-m52oq0"><!></span></button>',
   ),
   zC = E(
-    '<div class="reports-page svelte-m52oq0"><div class="topbar svelte-m52oq0"><div class="topbar-left svelte-m52oq0"><div class="search-box svelte-m52oq0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-m52oq0"><circle cx="11" cy="11" r="8" class="svelte-m52oq0"></circle><line x1="21" y1="21" x2="16.65" y2="16.65" class="svelte-m52oq0"></line></svg> <input type="text" placeholder="Buscar por título, autor, ID, tipo ou tag..." class="svelte-m52oq0"/></div></div> <div class="topbar-right svelte-m52oq0"><input type="date" class="filter-input svelte-m52oq0" aria-label="Filtrar data inicial"/> <input type="date" class="filter-input svelte-m52oq0" aria-label="Filtrar data final"/> <select class="filter-select svelte-m52oq0" aria-label="Filtrar tipo de relatório"><option class="svelte-m52oq0">All Types</option><!></select> <input type="text" placeholder="Author" class="filter-input filter-author svelte-m52oq0" aria-label="Filtrar autor"/> <button class="topbar-btn svelte-m52oq0">Apply</button> <button class="topbar-btn svelte-m52oq0">Clear</button> <button class="topbar-btn btn-primary svelte-m52oq0">New Report</button></div></div> <div class="analytics-strip svelte-m52oq0"><div class="stat-item svelte-m52oq0"><svg class="stat-icon stat-icon-blue svelte-m52oq0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" class="svelte-m52oq0"></path><polyline points="14 2 14 8 20 8" class="svelte-m52oq0"></polyline></svg> <span class="stat-value svelte-m52oq0"> </span> <span class="stat-label svelte-m52oq0">Incidents</span></div> <div class="stat-divider svelte-m52oq0"></div> <div class="stat-item svelte-m52oq0"><svg class="stat-icon stat-icon-red svelte-m52oq0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" class="svelte-m52oq0"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07" class="svelte-m52oq0"></line></svg> <span class="stat-value svelte-m52oq0"> </span> <span class="stat-label svelte-m52oq0">Prisões</span></div> <div class="stat-divider svelte-m52oq0"></div> <div class="stat-item svelte-m52oq0"><svg class="stat-icon stat-icon-amber svelte-m52oq0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" class="svelte-m52oq0"></path><line x1="12" y1="9" x2="12" y2="13" class="svelte-m52oq0"></line><line x1="12" y1="17" x2="12.01" y2="17" class="svelte-m52oq0"></line></svg> <span class="stat-value svelte-m52oq0"> </span> <span class="stat-label svelte-m52oq0">Warrants</span></div></div> <div class="list-panel svelte-m52oq0"><div class="list-header svelte-m52oq0"><span class="svelte-m52oq0">Título</span> <span class="svelte-m52oq0">Report ID</span> <span class="svelte-m52oq0">Author</span> <span class="svelte-m52oq0">Tipo</span> <span class="svelte-m52oq0">Created</span> <span class="svelte-m52oq0">Updated</span> <span class="svelte-m52oq0">Tag</span></div> <div class="list-body svelte-m52oq0"><!></div> <!></div></div>',
+    '<div class="reports-page svelte-m52oq0"><div class="topbar svelte-m52oq0"><div class="topbar-left svelte-m52oq0"><div class="search-box svelte-m52oq0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-m52oq0"><circle cx="11" cy="11" r="8" class="svelte-m52oq0"></circle><line x1="21" y1="21" x2="16.65" y2="16.65" class="svelte-m52oq0"></line></svg> <input type="text" placeholder="Buscar por título, autor, ID, tipo ou tag..." class="svelte-m52oq0"/></div></div> <div class="topbar-right svelte-m52oq0"><input type="date" class="filter-input svelte-m52oq0" aria-label="Filtrar data inicial"/> <input type="date" class="filter-input svelte-m52oq0" aria-label="Filtrar data final"/> <select class="filter-select svelte-m52oq0" aria-label="Filtrar tipo de relatório"><option class="svelte-m52oq0">Todos os tipos</option><!></select> <input type="text" placeholder="Autor" class="filter-input filter-author svelte-m52oq0" aria-label="Filtrar autor"/> <button class="topbar-btn svelte-m52oq0">Aplicar</button> <button class="topbar-btn svelte-m52oq0">Limpar</button> <button class="topbar-btn btn-primary svelte-m52oq0">Novo relatório</button></div></div> <div class="analytics-strip svelte-m52oq0"><div class="stat-item svelte-m52oq0"><svg class="stat-icon stat-icon-blue svelte-m52oq0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" class="svelte-m52oq0"></path><polyline points="14 2 14 8 20 8" class="svelte-m52oq0"></polyline></svg> <span class="stat-value svelte-m52oq0"> </span> <span class="stat-label svelte-m52oq0">Ocorrências</span></div> <div class="stat-divider svelte-m52oq0"></div> <div class="stat-item svelte-m52oq0"><svg class="stat-icon stat-icon-red svelte-m52oq0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" class="svelte-m52oq0"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07" class="svelte-m52oq0"></line></svg> <span class="stat-value svelte-m52oq0"> </span> <span class="stat-label svelte-m52oq0">Prisões</span></div> <div class="stat-divider svelte-m52oq0"></div> <div class="stat-item svelte-m52oq0"><svg class="stat-icon stat-icon-amber svelte-m52oq0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" class="svelte-m52oq0"></path><line x1="12" y1="9" x2="12" y2="13" class="svelte-m52oq0"></line><line x1="12" y1="17" x2="12.01" y2="17" class="svelte-m52oq0"></line></svg> <span class="stat-value svelte-m52oq0"> </span> <span class="stat-label svelte-m52oq0">Mandados</span></div></div> <div class="list-panel svelte-m52oq0"><div class="list-header svelte-m52oq0"><span class="svelte-m52oq0">Título</span> <span class="svelte-m52oq0">ID do relatório</span> <span class="svelte-m52oq0">Autor</span> <span class="svelte-m52oq0">Tipo</span> <span class="svelte-m52oq0">Criado em</span> <span class="svelte-m52oq0">Atualizado em</span> <span class="svelte-m52oq0">Tag</span></div> <div class="list-body svelte-m52oq0"><!></div> <!></div></div>',
   );
 function BC(n, e) {
   Vt(e, !0);
@@ -25349,8 +25349,8 @@ function BC(n, e) {
                       C(
                         Ie,
                         o(h)
-                          ? "No reports match your search criteria."
-                          : "No reports have been created yet.",
+                          ? "Nenhum relatório corresponde aos critérios de busca."
+                          : "Nenhum relatório foi criado ainda.",
                       ),
                     ),
                       x(Be, Ve));
@@ -25515,15 +25515,15 @@ function BC(n, e) {
 }
 nn(["click"]);
 function FC(n, e) {
-  (qa("new"), e.tabService.setActiveTab("Relatórios"));
-  const t = e.tabService.getActiveInstance();
+  (qa("new"), e.tabService.setAtivoTab("Relatórios"));
+  const t = e.tabService.getAtivoInstance();
   t && e.tabService.setInstanceTab(t.id, "Relatórios");
 }
 var VC = E(
     '<div class="empty-state svelte-z6kjjz"><div class="loading-spinner svelte-z6kjjz"></div> <p class="svelte-z6kjjz">Loading warrants...</p></div>',
   ),
   qC = E(
-    '<div class="empty-state svelte-z6kjjz"><p class="empty-title svelte-z6kjjz">No Warrants Found</p> <p class="empty-sub svelte-z6kjjz"> </p></div>',
+    '<div class="empty-state svelte-z6kjjz"><p class="empty-title svelte-z6kjjz">Nenhum mandado encontrado</p> <p class="empty-sub svelte-z6kjjz"> </p></div>',
   ),
   jC = (n, e, t) => e(o(t).reportid),
   UC = E('<span class="pill pill-red svelte-z6kjjz"> </span>'),
@@ -25536,7 +25536,7 @@ var VC = E(
     '<button class="table-row svelte-z6kjjz"><span class="cell-name svelte-z6kjjz"> </span> <span class="cell-id svelte-z6kjjz"> </span> <span class="cell-report svelte-z6kjjz"> </span> <span class="svelte-z6kjjz"><!></span> <span class="svelte-z6kjjz"><!></span> <span class="svelte-z6kjjz"><!></span> <span class="cell-date svelte-z6kjjz"> </span> <span class="cell-action svelte-z6kjjz"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-z6kjjz"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" class="svelte-z6kjjz"></path><polyline points="15 3 21 3 21 9" class="svelte-z6kjjz"></polyline><line x1="10" y1="14" x2="21" y2="3" class="svelte-z6kjjz"></line></svg></span></button>',
   ),
   KC = E(
-    '<div class="warrants-page svelte-z6kjjz"><div class="topbar svelte-z6kjjz"><input type="text" placeholder="Buscar por nome, ID ou relatório..." class="search-input svelte-z6kjjz"/> <div class="topbar-actions svelte-z6kjjz"><span class="result-count svelte-z6kjjz"> </span> <button class="btn-secondary svelte-z6kjjz"> </button> <button class="btn-primary svelte-z6kjjz">New Warrant</button></div></div> <div class="list-panel svelte-z6kjjz"><div class="table-header svelte-z6kjjz"><span class="svelte-z6kjjz">Name</span> <span class="svelte-z6kjjz">Citizen ID</span> <span class="svelte-z6kjjz">Relatório</span> <span class="svelte-z6kjjz">Felonies</span> <span class="svelte-z6kjjz">Misdemeanors</span> <span class="svelte-z6kjjz">Infractions</span> <span class="svelte-z6kjjz">Expires</span> <span class="svelte-z6kjjz"></span></div> <div class="table-body svelte-z6kjjz"><!></div></div></div>',
+    '<div class="warrants-page svelte-z6kjjz"><div class="topbar svelte-z6kjjz"><input type="text" placeholder="Buscar por nome, ID ou relatório..." class="search-input svelte-z6kjjz"/> <div class="topbar-actions svelte-z6kjjz"><span class="result-count svelte-z6kjjz"> </span> <button class="btn-secondary svelte-z6kjjz"> </button> <button class="btn-primary svelte-z6kjjz">Novo mandado</button></div></div> <div class="list-panel svelte-z6kjjz"><div class="table-header svelte-z6kjjz"><span class="svelte-z6kjjz">Nome</span> <span class="svelte-z6kjjz">ID do cidadão</span> <span class="svelte-z6kjjz">Relatório</span> <span class="svelte-z6kjjz">Crimes graves</span> <span class="svelte-z6kjjz">Delitos</span> <span class="svelte-z6kjjz">Infrações</span> <span class="svelte-z6kjjz">Expira em</span> <span class="svelte-z6kjjz"></span></div> <div class="table-body svelte-z6kjjz"><!></div></div></div>',
   );
 function YC(n, e) {
   Vt(e, !0);
@@ -25554,7 +25554,7 @@ function YC(n, e) {
         : o(t);
     });
   function l(D) {
-    if (!D) return "Unknown";
+    if (!D) return "Desconhecido";
     const V = new Date(D);
     return Number.isNaN(V.getTime())
       ? D
@@ -25566,8 +25566,8 @@ function YC(n, e) {
   }
   function c(D) {
     if (!D) return;
-    (qa(String(D)), e.tabService.setActiveTab("Relatórios"));
-    const V = e.tabService.getActiveInstance();
+    (qa(String(D)), e.tabService.setAtivoTab("Relatórios"));
+    const V = e.tabService.getAtivoInstance();
     V && e.tabService.setInstanceTab(V.id, "Relatórios");
   }
   async function u() {
@@ -25576,7 +25576,7 @@ function YC(n, e) {
       const D = await Te(he.DASHBOARD.GET_ACTIVE_WARRANTS);
       y(t, Array.isArray(D) ? D : [], !0);
     } catch {
-      (un.error("Failed to load warrants"), y(t, [], !0));
+      (un.error("Falha ao carregar os mandados"), y(t, [], !0));
     } finally {
       y(s, !1);
     }
@@ -25616,8 +25616,8 @@ function YC(n, e) {
                 C(
                   j,
                   o(i)
-                    ? "No warrants match your search criteria."
-                    : "No active warrants available.",
+                    ? "Nenhum mandado corresponde aos critérios de busca."
+                    : "Nenhum mandado ativo disponível.",
                 ),
               ),
                 x(Z, K));
@@ -25717,9 +25717,9 @@ function YC(n, e) {
     });
   }
   (H(() => {
-    (C(k, `${o(r).length ?? ""} warrant${o(r).length !== 1 ? "s" : ""}`),
+    (C(k, `${o(r).length ?? ""} mandado${o(r).length !== 1 ? "s" : ""}`),
       (T.disabled = o(s)),
-      C(A, o(s) ? "Loading..." : "Refresh"));
+      C(A, o(s) ? "Carregando..." : "Atualizar"));
   }),
     bt(
       _,
@@ -25734,7 +25734,7 @@ var QC = E('<span class="col-actions svelte-1va5ksl"></span>'),
   XC = (n, e, t) => e(n, o(t)),
   eA = (n, e, t) => e(o(t)),
   tA = E(
-    '<div class="charge-row editing svelte-1va5ksl"><span class="col-code"><span class="code-tag svelte-1va5ksl"> </span></span> <span class="col-label svelte-1va5ksl"><input type="text" class="edit-input svelte-1va5ksl" placeholder="Nome da acusação"/></span> <span class="col-desc svelte-1va5ksl"><input type="text" class="edit-input svelte-1va5ksl" placeholder="Descrição"/></span> <span class="col-fine svelte-1va5ksl"><input type="number" class="edit-input edit-number svelte-1va5ksl" min="0"/></span> <span class="col-time svelte-1va5ksl"><input type="number" class="edit-input edit-number svelte-1va5ksl" min="0"/></span> <span class="col-actions svelte-1va5ksl"><button class="btn-save svelte-1va5ksl"> </button> <button class="btn-cancel svelte-1va5ksl">Cancel</button></span></div>',
+    '<div class="charge-row editing svelte-1va5ksl"><span class="col-code"><span class="code-tag svelte-1va5ksl"> </span></span> <span class="col-label svelte-1va5ksl"><input type="text" class="edit-input svelte-1va5ksl" placeholder="Nome da acusação"/></span> <span class="col-desc svelte-1va5ksl"><input type="text" class="edit-input svelte-1va5ksl" placeholder="Descrição"/></span> <span class="col-fine svelte-1va5ksl"><input type="number" class="edit-input edit-number svelte-1va5ksl" min="0"/></span> <span class="col-time svelte-1va5ksl"><input type="number" class="edit-input edit-number svelte-1va5ksl" min="0"/></span> <span class="col-actions svelte-1va5ksl"><button class="btn-save svelte-1va5ksl"> </button> <button class="btn-cancel svelte-1va5ksl">Cancelar</button></span></div>',
   ),
   nA = (n, e, t, s) => e() && t(o(s)),
   sA = E('<span class="code-tag svelte-1va5ksl"> </span>'),
@@ -26032,7 +26032,7 @@ var dA = E(
     '<div class="empty-state svelte-1ume92p"><div class="loading-spinner svelte-1ume92p"></div> <p class="svelte-1ume92p">Loading charges...</p></div>',
   ),
   fA = E(
-    '<div class="empty-state svelte-1ume92p"><p class="empty-title svelte-1ume92p">No Charges Found</p> <p class="empty-sub svelte-1ume92p"> </p></div>',
+    '<div class="empty-state svelte-1ume92p"><p class="empty-title svelte-1ume92p">Nenhuma infração encontrada</p> <p class="empty-sub svelte-1ume92p"> </p></div>',
   ),
   hA = E("<!> <!> <!>", 1),
   vA = E(
@@ -26160,7 +26160,7 @@ function pA(n, e) {
         (ue) => {
           (($ = Re(Q, 1, "btn-edit svelte-1ume92p", null, $, ue)),
             C(ee, o(l) ? "check" : "edit"),
-            C(oe, ` ${o(l) ? "Done" : "Edit Charges"}`));
+            C(oe, ` ${o(l) ? "Done" : "Editar infrações"}`));
         },
         [() => ({ active: o(l) })],
       ),
@@ -26187,8 +26187,8 @@ function pA(n, e) {
                 C(
                   M,
                   o(i)
-                    ? "No charges match your search criteria."
-                    : "No charges have been loaded yet.",
+                    ? "Nenhuma infração corresponde aos critérios de busca."
+                    : "Nenhuma infração foi carregada ainda.",
                 ),
               ),
                 x(ee, oe));
@@ -26280,9 +26280,9 @@ function pA(n, e) {
     });
   }
   (H(() => {
-    (C(B, `${o(h).length ?? ""} charge${o(h).length !== 1 ? "s" : ""}`),
+    (C(B, `${o(h).length ?? ""} infração${o(h).length !== 1 ? "ões" : ""}`),
       (U.disabled = o(r)),
-      C(D, o(r) ? "Loading..." : "Refresh"));
+      C(D, o(r) ? "Carregando..." : "Atualizar"));
   }),
     bt(
       P,
@@ -26314,10 +26314,10 @@ async function uv(n, e, t, s, i, r, l) {
           o(r) || l());
       } else
         un.error(
-          (u == null ? void 0 : u.message) || "Failed to update certifications",
+          (u == null ? void 0 : u.message) || "Falha ao atualizar as certificações",
         );
     } catch {
-      un.error("Failed to update certifications");
+      un.error("Falha ao atualizar as certificações");
     } finally {
       y(t, !1);
     }
@@ -26340,11 +26340,11 @@ async function _A(n, e, t, s, i, r) {
               : c.name) || `Grade ${o(t)}`,
           m = o(r).findIndex((_) => _.citizenid === o(e).citizenid);
         (m !== -1 && (o(r)[m].rank = h),
-          un.success(u.message || `Rank updated to ${h}`));
+          un.success(u.message || `Patente atualizada para ${h}`));
       } else
-        un.error((u == null ? void 0 : u.message) || "Failed to update rank");
+        un.error((u == null ? void 0 : u.message) || "Falha ao atualizar a patente");
     } catch {
-      un.error("Failed to update rank");
+      un.error("Falha ao atualizar a patente");
     } finally {
       y(s, !1);
     }
@@ -26362,13 +26362,13 @@ async function gA(n, e, t, s, i, r) {
             o(s).filter((u) => u.citizenid !== o(e).citizenid),
             !0,
           ),
-          un.success(c.message || "Officer has been terminated"),
+          un.success(c.message || "O oficial foi desligado"),
           i())
         : un.error(
-            (c == null ? void 0 : c.message) || "Failed to terminate officer",
+            (c == null ? void 0 : c.message) || "Falha ao desligar o oficial",
           );
     } catch {
-      un.error("Failed to terminate officer");
+      un.error("Falha ao desligar o oficial");
     } finally {
       (y(t, !1), y(r, !1));
     }
@@ -26388,13 +26388,13 @@ async function yA(n, e, t, s, i) {
         (c !== -1 &&
           ((o(i)[c].callsign = o(t).trim()),
           (o(i)[c].badgeNumber = o(t).trim())),
-          un.success(l.message || `Callsign updated to ${o(t).trim()}`));
+          un.success(l.message || `Indicativo atualizado para ${o(t).trim()}`));
       } else
         un.error(
-          (l == null ? void 0 : l.message) || "Failed to update callsign",
+          (l == null ? void 0 : l.message) || "Falha ao atualizar o indicativo",
         );
     } catch {
-      un.error("Failed to update callsign");
+      un.error("Falha ao atualizar o indicativo");
     } finally {
       y(s, !1);
     }
@@ -26408,7 +26408,7 @@ var bA = (n, e) => e("callsign"),
     '<div class="empty-state svelte-1eitkin"><div class="loading-spinner svelte-1eitkin"></div> <p class="svelte-1eitkin">Loading roster...</p></div>',
   ),
   SA = E(
-    '<div class="empty-state svelte-1eitkin"><p class="empty-title svelte-1eitkin">No Officers Found</p> <p class="empty-sub svelte-1eitkin"> </p></div>',
+    '<div class="empty-state svelte-1eitkin"><p class="empty-title svelte-1eitkin">Nenhum oficial encontrado</p> <p class="empty-sub svelte-1eitkin"> </p></div>',
   ),
   EA = (n, e, t) => e(o(t)),
   CA = E('<span class="cert-tag svelte-1eitkin"> </span>'),
@@ -26423,7 +26423,7 @@ var bA = (n, e) => e("callsign"),
   PA = E('<div class="units-list svelte-1eitkin"></div>'),
   NA = (n) => n.stopPropagation(),
   DA = E(
-    '<div class="no-tags svelte-1eitkin"><span class="material-icons no-tags-icon svelte-1eitkin">label_off</span> <p class="svelte-1eitkin">No certifications available.</p> <p class="no-tags-hint svelte-1eitkin">Create officer tags in Management &gt; Tags</p></div>',
+    '<div class="no-tags svelte-1eitkin"><span class="material-icons no-tags-icon svelte-1eitkin">label_off</span> <p class="svelte-1eitkin">Nenhuma certificação disponível.</p> <p class="no-tags-hint svelte-1eitkin">Crie etiquetas de oficiais em Configurações &gt; Etiquetas</p></div>',
   ),
   LA = (n, e, t) => e(o(t).name),
   RA = E('<span class="material-icons svelte-1eitkin">check_circle</span>'),
@@ -26435,7 +26435,7 @@ var bA = (n, e) => e("callsign"),
   ),
   FA = E('<div class="cert-grid svelte-1eitkin"></div>'),
   VA = E(
-    '<div class="modal-overlay svelte-1eitkin"><div class="modal-container svelte-1eitkin"><div class="modal-header svelte-1eitkin"><div class="modal-title-area svelte-1eitkin"><span class="modal-title svelte-1eitkin">Manage Certifications</span> <span class="modal-subtitle svelte-1eitkin"> </span></div> <button class="modal-close svelte-1eitkin"><span class="material-icons svelte-1eitkin">close</span></button></div> <div class="modal-body svelte-1eitkin"><!></div> <div class="modal-footer svelte-1eitkin"><button class="btn-cancel svelte-1eitkin">Cancel</button> <button class="btn-save svelte-1eitkin"> </button></div></div></div>',
+    '<div class="modal-overlay svelte-1eitkin"><div class="modal-container svelte-1eitkin"><div class="modal-header svelte-1eitkin"><div class="modal-title-area svelte-1eitkin"><span class="modal-title svelte-1eitkin">Gerenciar certificações</span> <span class="modal-subtitle svelte-1eitkin"> </span></div> <button class="modal-close svelte-1eitkin"><span class="material-icons svelte-1eitkin">close</span></button></div> <div class="modal-body svelte-1eitkin"><!></div> <div class="modal-footer svelte-1eitkin"><button class="btn-cancel svelte-1eitkin">Cancelar</button> <button class="btn-save svelte-1eitkin"> </button></div></div></div>',
   ),
   qA = (n) => n.stopPropagation(),
   jA = (n, e, t) => {
@@ -26448,10 +26448,10 @@ var bA = (n, e) => e("callsign"),
     (y(e, "certs"), y(t, !1));
   },
   GA = E(
-    '<button><span class="material-icons boss-tab-icon svelte-1eitkin">verified</span> Certifications</button>',
+    '<button><span class="material-icons boss-tab-icon svelte-1eitkin">verified</span> Certificações</button>',
   ),
   WA = E(
-    '<div class="no-tags svelte-1eitkin"><p class="svelte-1eitkin">No grades available for this department.</p></div>',
+    '<div class="no-tags svelte-1eitkin"><p class="svelte-1eitkin">Nenhuma patente disponível para este departamento.</p></div>',
   ),
   ZA = (n, e, t) => y(e, o(t).grade, !0),
   $A = E('<span class="grade-current svelte-1eitkin">Current</span>'),
@@ -26461,21 +26461,21 @@ var bA = (n, e) => e("callsign"),
   ),
   YA = (n, e) => y(e, !0),
   QA = E(
-    '<button class="btn-fire svelte-1eitkin"><span class="material-icons svelte-1eitkin">person_remove</span> Terminate Officer</button>',
+    '<button class="btn-fire svelte-1eitkin"><span class="material-icons svelte-1eitkin">person_remove</span> Desligar oficial</button>',
   ),
   XA = (n, e) => y(e, !1),
   eI = E(
-    '<div class="fire-confirm svelte-1eitkin"><p class="fire-warning svelte-1eitkin">Are you sure you want to terminate <strong class="svelte-1eitkin"> </strong>?</p> <div class="fire-actions svelte-1eitkin"><button class="btn-cancel svelte-1eitkin">Cancel</button> <button class="btn-fire-confirm svelte-1eitkin"> </button></div></div>',
+    '<div class="fire-confirm svelte-1eitkin"><p class="fire-warning svelte-1eitkin">Tem certeza de que deseja desligar <strong class="svelte-1eitkin"> </strong>?</p> <div class="fire-actions svelte-1eitkin"><button class="btn-cancel svelte-1eitkin">Cancelar</button> <button class="btn-fire-confirm svelte-1eitkin"> </button></div></div>',
   ),
   tI = E(
-    '<div class="boss-section svelte-1eitkin"><label class="boss-label svelte-1eitkin">Change Rank</label> <p class="boss-hint svelte-1eitkin">Select a new rank for this officer. Officer must be online.</p> <div class="grade-grid svelte-1eitkin"><!></div></div> <div class="boss-divider svelte-1eitkin"></div> <div class="boss-section svelte-1eitkin"><label class="boss-label boss-label-danger svelte-1eitkin">Terminate Officer</label> <p class="boss-hint svelte-1eitkin">Remove this officer from the department. This sets their job to unemployed.</p> <!></div>',
+    '<div class="boss-section svelte-1eitkin"><label class="boss-label svelte-1eitkin">Alterar patente</label> <p class="boss-hint svelte-1eitkin">Selecione uma nova patente para este oficial. O oficial precisa estar online.</p> <div class="grade-grid svelte-1eitkin"><!></div></div> <div class="boss-divider svelte-1eitkin"></div> <div class="boss-section svelte-1eitkin"><label class="boss-label boss-label-danger svelte-1eitkin">Desligar oficial</label> <p class="boss-hint svelte-1eitkin">Remova este oficial do departamento. Isso definirá seu emprego como desempregado.</p> <!></div>',
     1,
   ),
   nI = E(
-    `<div class="boss-section svelte-1eitkin"><label class="boss-label svelte-1eitkin">Edit Callsign</label> <p class="boss-hint svelte-1eitkin">Update this officer's callsign/badge number. Officer must be online.</p> <div class="callsign-input-row svelte-1eitkin"><input type="text" class="callsign-input svelte-1eitkin" placeholder="Enter callsign..." maxlength="10"/></div></div>`,
+    `<div class="boss-section svelte-1eitkin"><label class="boss-label svelte-1eitkin">Editar indicativo</label> <p class="boss-hint svelte-1eitkin">Atualize o indicativo/número de crachá deste oficial. O oficial precisa estar online.</p> <div class="callsign-input-row svelte-1eitkin"><input type="text" class="callsign-input svelte-1eitkin" placeholder="Digite o indicativo..." maxlength="10"/></div></div>`,
   ),
   sI = E(
-    '<div class="no-tags svelte-1eitkin"><span class="material-icons no-tags-icon svelte-1eitkin">label_off</span> <p class="svelte-1eitkin">No certifications available.</p> <p class="no-tags-hint svelte-1eitkin">Create officer tags in Management &gt; Tags</p></div>',
+    '<div class="no-tags svelte-1eitkin"><span class="material-icons no-tags-icon svelte-1eitkin">label_off</span> <p class="svelte-1eitkin">Nenhuma certificação disponível.</p> <p class="no-tags-hint svelte-1eitkin">Crie etiquetas de oficiais em Configurações &gt; Etiquetas</p></div>',
   ),
   iI = (n, e, t) => e(o(t).name),
   rI = E('<span class="material-icons svelte-1eitkin">check_circle</span>'),
@@ -26487,16 +26487,16 @@ var bA = (n, e) => e("callsign"),
   ),
   lI = E('<div class="cert-grid svelte-1eitkin"></div>'),
   cI = E(
-    '<div class="boss-section svelte-1eitkin"><label class="boss-label svelte-1eitkin">Manage Certifications</label> <!></div>',
+    '<div class="boss-section svelte-1eitkin"><label class="boss-label svelte-1eitkin">Gerenciar certificações</label> <!></div>',
   ),
   dI = E('<button class="btn-save svelte-1eitkin"> </button>'),
   uI = E('<button class="btn-save svelte-1eitkin"> </button>'),
   fI = E('<button class="btn-save svelte-1eitkin"> </button>'),
   hI = E(
-    '<div class="modal-overlay svelte-1eitkin"><div class="boss-panel svelte-1eitkin"><div class="modal-header svelte-1eitkin"><div class="modal-title-area svelte-1eitkin"><span class="modal-title svelte-1eitkin">Officer Management</span> <span class="modal-subtitle svelte-1eitkin"> </span></div> <button class="modal-close svelte-1eitkin"><span class="material-icons svelte-1eitkin">close</span></button></div> <div class="boss-tabs svelte-1eitkin"><button><span class="material-icons boss-tab-icon svelte-1eitkin">military_tech</span> Rank</button> <button><span class="material-icons boss-tab-icon svelte-1eitkin">badge</span> Callsign</button> <!></div> <div class="boss-body svelte-1eitkin"><!></div> <div class="modal-footer svelte-1eitkin"><button class="btn-cancel svelte-1eitkin">Close</button> <!></div></div></div>',
+    '<div class="modal-overlay svelte-1eitkin"><div class="boss-panel svelte-1eitkin"><div class="modal-header svelte-1eitkin"><div class="modal-title-area svelte-1eitkin"><span class="modal-title svelte-1eitkin">Gerenciamento do oficial</span> <span class="modal-subtitle svelte-1eitkin"> </span></div> <button class="modal-close svelte-1eitkin"><span class="material-icons svelte-1eitkin">close</span></button></div> <div class="boss-tabs svelte-1eitkin"><button><span class="material-icons boss-tab-icon svelte-1eitkin">military_tech</span> Patente</button> <button><span class="material-icons boss-tab-icon svelte-1eitkin">badge</span> Indicativo</button> <!></div> <div class="boss-body svelte-1eitkin"><!></div> <div class="modal-footer svelte-1eitkin"><button class="btn-cancel svelte-1eitkin">Fechar</button> <!></div></div></div>',
   ),
   vI = E(
-    '<div class="roster-page svelte-1eitkin"><div class="topbar svelte-1eitkin"><input type="text" placeholder="Search by callsign, name or rank..." class="search-input svelte-1eitkin"/> <div class="topbar-right svelte-1eitkin"><span class="result-count svelte-1eitkin"> </span> <button class="btn-secondary svelte-1eitkin"> </button></div></div> <div class="content-area svelte-1eitkin"><div class="list-panel svelte-1eitkin"><div class="table-header svelte-1eitkin"><button class="col-header sortable svelte-1eitkin"> </button> <button class="col-header sortable svelte-1eitkin"> </button> <button class="col-header sortable svelte-1eitkin"> </button> <span class="col-header svelte-1eitkin">Dept</span> <button class="col-header sortable svelte-1eitkin"> </button> <span class="col-header svelte-1eitkin">Certifications</span></div> <div class="table-body svelte-1eitkin"><!></div></div> <div class="units-panel svelte-1eitkin"><div class="units-header svelte-1eitkin"><span class="units-label svelte-1eitkin">Active Units</span> <span class="units-count svelte-1eitkin"> </span></div> <!></div></div></div> <!> <!>',
+    '<div class="roster-page svelte-1eitkin"><div class="topbar svelte-1eitkin"><input type="text" placeholder="Buscar por indicativo, nome ou patente..." class="search-input svelte-1eitkin"/> <div class="topbar-right svelte-1eitkin"><span class="result-count svelte-1eitkin"> </span> <button class="btn-secondary svelte-1eitkin"> </button></div></div> <div class="content-area svelte-1eitkin"><div class="list-panel svelte-1eitkin"><div class="table-header svelte-1eitkin"><button class="col-header sortable svelte-1eitkin"> </button> <button class="col-header sortable svelte-1eitkin"> </button> <button class="col-header sortable svelte-1eitkin"> </button> <span class="col-header svelte-1eitkin">Depto.</span> <button class="col-header sortable svelte-1eitkin"> </button> <span class="col-header svelte-1eitkin">Certificações</span></div> <div class="table-body svelte-1eitkin"><!></div></div> <div class="units-panel svelte-1eitkin"><div class="units-header svelte-1eitkin"><span class="units-label svelte-1eitkin">Unidades ativas</span> <span class="units-count svelte-1eitkin"> </span></div> <!></div></div></div> <!> <!>',
     1,
   );
 function pI(n, e) {
@@ -26947,7 +26947,7 @@ function pI(n, e) {
           `${o(u).firstName ?? ""} ${o(u).lastName ?? ""} - ${o(u).callsign ?? ""}`,
         ),
           (Lt.disabled = o(_) || o(h).length === 0),
-          C(Ft, o(_) ? "Saving..." : "Save"));
+          C(Ft, o(_) ? "Salvando..." : "Save"));
       }),
         x(le, Se));
     };
@@ -27225,7 +27225,7 @@ function pI(n, e) {
             var Mt = f(kt);
             (H(() => {
               ((kt.disabled = o(P)),
-                C(Mt, o(P) ? "Saving..." : "Atualizar Patente"));
+                C(Mt, o(P) ? "Salvando..." : "Atualizar Patente"));
             }),
               x(at, kt));
           },
@@ -27238,7 +27238,7 @@ function pI(n, e) {
                   (H(
                     (tt) => {
                       ((Me.disabled = tt),
-                        C(ot, o(P) ? "Saving..." : "Salvar Indicativo"));
+                        C(ot, o(P) ? "Salvando..." : "Salvar Indicativo"));
                     },
                     [() => o(P) || !o(I).trim()],
                   ),
@@ -27252,7 +27252,7 @@ function pI(n, e) {
                       var wt = f(Le);
                       (H(() => {
                         ((Le.disabled = o(_) || o(h).length === 0),
-                          C(wt, o(_) ? "Saving..." : "Salvar Certificações"));
+                          C(wt, o(_) ? "Salvando..." : "Salvar Certificações"));
                       }),
                         x(tt, Le));
                     };
@@ -27300,12 +27300,12 @@ function pI(n, e) {
   }
   (H(
     (le, Se, ze, Ne) => {
-      (C(W, `${o(D).length ?? ""} officer${o(D).length !== 1 ? "s" : ""}`),
+      (C(W, `${o(D).length ?? ""} oficial${o(D).length !== 1 ? "is" : ""}`),
         (Y.disabled = o(i)),
-        C(X, o(i) ? "Loading..." : "Refresh"),
-        C(Je, `Callsign${le ?? ""}`),
-        C(ke, `Name${Se ?? ""}`),
-        C(xt, `Rank${ze ?? ""}`),
+        C(X, o(i) ? "Carregando..." : "Atualizar"),
+        C(Je, `Indicativo${le ?? ""}`),
+        C(ke, `Nome${Se ?? ""}`),
+        C(xt, `Patente${ze ?? ""}`),
         C(qe, `Status${Ne ?? ""}`),
         C(rt, o(s).length));
     },
@@ -27897,7 +27897,7 @@ function gI() {
                 ie = S.y > d.y && b.y < p.y;
               return N && ie;
             },
-            isValid: function () {
+            isVálido: function () {
               return !!(this.min && this.max);
             },
             pad: function (a) {
@@ -28038,7 +28038,7 @@ function gI() {
                     this._northEast.equals(a.getNorthEast(), d))
                 : !1;
             },
-            isValid: function () {
+            isVálido: function () {
               return !!(this._southWest && this._northEast);
             },
           };
@@ -28252,7 +28252,7 @@ function gI() {
             return p || "M0 0";
           }
           var qe = document.documentElement.style,
-            fe = "ActiveXObject" in window,
+            fe = "AtivoXObject" in window,
             ge = fe && !document.addEventListener,
             Oe = "msLaunchUri" in navigator && !("documentMode" in document),
             Ge = Ct("webkit"),
@@ -29044,7 +29044,7 @@ function gI() {
                 return { center: we, zoom: S };
               },
               fitBounds: function (a, d) {
-                if (((a = W(a)), !a.isValid()))
+                if (((a = W(a)), !a.isVálido()))
                   throw new Error("Bounds are not valid.");
                 var p = this._getBoundsCenterZoom(a, d);
                 return this.setView(p.center, p.zoom, d);
@@ -29172,7 +29172,7 @@ function gI() {
                   (a = W(a)),
                   this.listens("moveend", this._panInsideMaxBounds) &&
                     this.off("moveend", this._panInsideMaxBounds),
-                  a.isValid()
+                  a.isVálido()
                     ? ((this.options.maxBounds = a),
                       this._loaded && this._panInsideMaxBounds(),
                       this.on("moveend", this._panInsideMaxBounds))
@@ -32007,8 +32007,8 @@ function gI() {
               var a = new M();
               ((this._rings = []),
                 this._projectLatlngs(this._latlngs, this._rings, a),
-                this._bounds.isValid() &&
-                  a.isValid() &&
+                this._bounds.isVálido() &&
+                  a.isVálido() &&
                   ((this._rawPxBounds = a), this._updateBounds()));
             },
             _updateBounds: function () {
@@ -32032,7 +32032,7 @@ function gI() {
                 d.push(ie);
               } else for (N = 0; N < S; N++) this._projectLatlngs(a[N], d, p);
             },
-            _clipPoints: function () {
+            _clipPontos: function () {
               var a = this._renderer._bounds;
               if (
                 ((this._parts = []),
@@ -32064,7 +32064,7 @@ function gI() {
                           (d[S].push(me[1]), S++)));
               }
             },
-            _simplifyPoints: function () {
+            _simplifyPontos: function () {
               for (
                 var a = this._parts,
                   d = this.options.smoothFactor,
@@ -32077,8 +32077,8 @@ function gI() {
             },
             _update: function () {
               this._map &&
-                (this._clipPoints(),
-                this._simplifyPoints(),
+                (this._clipPontos(),
+                this._simplifyPontos(),
                 this._updatePath());
             },
             _updatePath: function () {
@@ -32136,7 +32136,7 @@ function gI() {
                 ? this._latlngs[0]
                 : this._latlngs[0][0];
             },
-            _clipPoints: function () {
+            _clipPontos: function () {
               var a = this._renderer._bounds,
                 d = this.options.weight,
                 p = new ee(d, d);
@@ -33675,7 +33675,7 @@ function gI() {
                   for (var tn = S.min.y; tn <= S.max.y; tn++)
                     for (var yn = S.min.x; yn <= S.max.x; yn++) {
                       var Vs = new ee(yn, tn);
-                      if (((Vs.z = this._tileZoom), !!this._isValidTile(Vs))) {
+                      if (((Vs.z = this._tileZoom), !!this._isVálidoTile(Vs))) {
                         var ds = this._tiles[this._tileCoordsToKey(Vs)];
                         ds ? (ds.current = !0) : ie.push(Vs);
                       }
@@ -33696,7 +33696,7 @@ function gI() {
                 }
               }
             },
-            _isValidTile: function (a) {
+            _isVálidoTile: function (a) {
               var d = this._map.options.crs;
               if (!d.infinite) {
                 var p = this._globalTileRange;
@@ -35119,7 +35119,7 @@ function gI() {
                   (this._holdTimeout = setTimeout(
                     l(function () {
                       (this._cancel(),
-                        this._isTapValid() &&
+                        this._isTapVálido() &&
                           (an(document, "touchend", Zn),
                           an(
                             document,
@@ -35157,7 +35157,7 @@ function gI() {
               var d = a.touches[0];
               this._newPos = new ee(d.clientX, d.clientY);
             },
-            _isTapValid: function () {
+            _isTapVálido: function () {
               return (
                 this._newPos.distanceTo(this._startPos) <=
                 this._map.options.tapTolerance
@@ -35386,7 +35386,7 @@ const ti = mI(al);
 var yI = (n, e) => y(e, "dot"),
   bI = (n, e) => y(e, "badge"),
   kI = E(
-    '<div class="map-page svelte-gi5lcv"><div class="map-wrapper svelte-gi5lcv"><div class="map-controls svelte-gi5lcv"><span class="controls-header svelte-gi5lcv">Tracking</span> <div class="controls-group svelte-gi5lcv"><label class="control-toggle svelte-gi5lcv"><input type="checkbox" class="svelte-gi5lcv"/> <span class="toggle-label">Officers</span></label> <label class="control-toggle svelte-gi5lcv"><input type="checkbox" class="svelte-gi5lcv"/> <span class="toggle-label">Vehicles</span></label> <label class="control-toggle svelte-gi5lcv"><input type="checkbox" class="svelte-gi5lcv"/> <span class="toggle-label">Bodycams</span></label></div> <div class="controls-divider svelte-gi5lcv"></div> <div class="controls-group svelte-gi5lcv"><span class="controls-label svelte-gi5lcv">Style</span> <div class="segment svelte-gi5lcv"><button type="button">Dots</button> <button type="button">Badges</button></div></div> <div class="controls-divider svelte-gi5lcv"></div> <div class="legend svelte-gi5lcv"><span class="legend-item officer svelte-gi5lcv">Officer</span> <span class="legend-item vehicle svelte-gi5lcv">Vehicle</span> <span class="legend-item bodycam svelte-gi5lcv">Bodycam</span></div></div> <div class="map-container svelte-gi5lcv"></div></div></div>',
+    '<div class="map-page svelte-gi5lcv"><div class="map-wrapper svelte-gi5lcv"><div class="map-controls svelte-gi5lcv"><span class="controls-header svelte-gi5lcv">Tracking</span> <div class="controls-group svelte-gi5lcv"><label class="control-toggle svelte-gi5lcv"><input type="checkbox" class="svelte-gi5lcv"/> <span class="toggle-label">Officers</span></label> <label class="control-toggle svelte-gi5lcv"><input type="checkbox" class="svelte-gi5lcv"/> <span class="toggle-label">Veículos</span></label> <label class="control-toggle svelte-gi5lcv"><input type="checkbox" class="svelte-gi5lcv"/> <span class="toggle-label">Bodycams</span></label></div> <div class="controls-divider svelte-gi5lcv"></div> <div class="controls-group svelte-gi5lcv"><span class="controls-label svelte-gi5lcv">Style</span> <div class="segment svelte-gi5lcv"><button type="button">Dots</button> <button type="button">Badges</button></div></div> <div class="controls-divider svelte-gi5lcv"></div> <div class="legend svelte-gi5lcv"><span class="legend-item officer svelte-gi5lcv">Officer</span> <span class="legend-item vehicle svelte-gi5lcv">Veículo</span> <span class="legend-item bodycam svelte-gi5lcv">Bodycam</span></div></div> <div class="map-container svelte-gi5lcv"></div></div></div>',
   );
 function wI(n, e) {
   Vt(e, !0);
@@ -35465,7 +35465,7 @@ function wI(n, e) {
           for (const ye of ve.vehicles || []) {
             const xe = I(ye.coords);
             if (!xe) continue;
-            const je = `Vehicle ${ye.plate || ""}`.trim();
+            const je = `Veículo ${ye.plate || ""}`.trim();
             A("vehicle", xe, je).addTo(_);
           }
         if (o(u))
@@ -35631,7 +35631,7 @@ async function CI(n, e, t, s) {
       const i = await Te(
         he.CITIZEN.TRIGGER_SUSPECT_MUGSHOT,
         { citizenid: o(e).citizenid },
-        { success: !0, message: "Mugshot captured", imageUrl: "" },
+        { success: !0, message: "Foto de ficha capturada", imageUrl: "" },
       );
       i.success
         ? (i.imageUrl &&
@@ -35644,10 +35644,10 @@ async function CI(n, e, t, s) {
               ),
               !0,
             )),
-          un.success(i.message || "Mugshot captured"))
-        : un.error(i.message || "Failed to capture mugshot");
+          un.success(i.message || "Foto de ficha capturada"))
+        : un.error(i.message || "Falha ao capturar a foto de ficha");
     } catch {
-      un.error("Failed to capture mugshot");
+      un.error("Falha ao capturar a foto de ficha");
     }
 }
 function hv(n, e) {
@@ -35659,7 +35659,7 @@ var AI = E("<span> </span>"),
   OI = E('<div class="copy-toast svelte-h1hdsn"> </div>'),
   PI = E('<img alt="Profile" class="svelte-h1hdsn"/>'),
   NI = E(
-    '<div class="no-photo-placeholder svelte-h1hdsn"><svg width="40" height="40" fill="currentColor" viewBox="0 0 24 24" class="svelte-h1hdsn"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" class="svelte-h1hdsn"></path></svg> <span class="svelte-h1hdsn">No Photo</span></div>',
+    '<div class="no-photo-placeholder svelte-h1hdsn"><svg width="40" height="40" fill="currentColor" viewBox="0 0 24 24" class="svelte-h1hdsn"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" class="svelte-h1hdsn"></path></svg> <span class="svelte-h1hdsn">Sem foto</span></div>',
   ),
   DI = E(
     '<div class="profile-photo-actions svelte-h1hdsn"><button class="photo-action-btn svelte-h1hdsn" title="Enviar foto"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-h1hdsn"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" class="svelte-h1hdsn"></path><polyline points="17 8 12 3 7 8" class="svelte-h1hdsn"></polyline><line x1="12" y1="3" x2="12" y2="15" class="svelte-h1hdsn"></line></svg> Upload</button> <button class="photo-action-btn svelte-h1hdsn" title="Take mugshot"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-h1hdsn"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" class="svelte-h1hdsn"></path><circle cx="12" cy="13" r="4" class="svelte-h1hdsn"></circle></svg> Take Mugshot</button></div>',
@@ -35676,10 +35676,10 @@ var AI = E("<span> </span>"),
     );
   },
   zI = E(
-    '<div class="panel svelte-h1hdsn"><div class="panel-title svelte-h1hdsn">Notes</div> <div class="notes-text svelte-h1hdsn"> </div></div>',
+    '<div class="panel svelte-h1hdsn"><div class="panel-title svelte-h1hdsn">Observações</div> <div class="notes-text svelte-h1hdsn"> </div></div>',
   ),
   BI = E(
-    '<div class="panel-caution caution-danger svelte-h1hdsn">PROCEED WITH CAUTION</div>',
+    '<div class="panel-caution caution-danger svelte-h1hdsn">PROCEDA COM CAUTELA</div>',
   ),
   FI = (n, e, t) => e(o(t).reportid),
   VI = E(
@@ -35689,7 +35689,7 @@ var AI = E("<span> </span>"),
   jI = E("<!> <!>", 1),
   UI = E('<div class="empty-msg svelte-h1hdsn">No active warrants</div>'),
   HI = E(
-    '<div class="panel-caution caution-warning svelte-h1hdsn">PROCEED WITH CAUTION</div>',
+    '<div class="panel-caution caution-warning svelte-h1hdsn">PROCEDA COM CAUTELA</div>',
   ),
   GI = E('<span class="sitem-secondary svelte-h1hdsn"> </span>'),
   WI = (n, e, t) => e(o(t).id),
@@ -35714,7 +35714,7 @@ var AI = E("<span> </span>"),
     '<button class="issue-license-btn svelte-h1hdsn"><span class="material-icons svelte-h1hdsn" style="font-size: 12px;">add</span> Issue License</button>',
   ),
   rM = E(
-    '<div class="sitem svelte-h1hdsn"><div class="sitem-info svelte-h1hdsn"><span class="sitem-primary svelte-h1hdsn"> </span> <span class="sitem-secondary svelte-h1hdsn"> </span></div> <span class="license-status license-active svelte-h1hdsn">Active</span></div>',
+    '<div class="sitem svelte-h1hdsn"><div class="sitem-info svelte-h1hdsn"><span class="sitem-primary svelte-h1hdsn"> </span> <span class="sitem-secondary svelte-h1hdsn"> </span></div> <span class="license-status license-active svelte-h1hdsn">Ativo</span></div>',
   ),
   aM = E('<div class="empty-msg svelte-h1hdsn">No licenses</div>'),
   oM = (n, e) => Ps(e, -1),
@@ -35731,7 +35731,7 @@ var AI = E("<span> </span>"),
   vM = E(
     '<div class="section-pager svelte-h1hdsn"><button class="spager-btn svelte-h1hdsn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="svelte-h1hdsn"><polyline points="15 18 9 12 15 6" class="svelte-h1hdsn"></polyline></svg></button> <span class="spager-info svelte-h1hdsn"> </span> <button class="spager-btn svelte-h1hdsn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="svelte-h1hdsn"><polyline points="9 18 15 12 9 6" class="svelte-h1hdsn"></polyline></svg></button></div>',
   ),
-  pM = E('<span class="badge badge-red svelte-h1hdsn">Scratched</span>'),
+  pM = E('<span class="badge badge-red svelte-h1hdsn">Danificado</span>'),
   mM = E('<span class="badge badge-green svelte-h1hdsn">Intact</span>'),
   _M = E(
     '<div class="sitem svelte-h1hdsn"><div class="sitem-info svelte-h1hdsn"><span class="sitem-primary svelte-h1hdsn"> </span> <span class="sitem-secondary svelte-h1hdsn"> </span></div> <!></div>',
@@ -35767,28 +35767,28 @@ var AI = E("<span> </span>"),
     '<div class="center-msg svelte-h1hdsn"><div class="spinner svelte-h1hdsn"></div><span class="svelte-h1hdsn">Loading vehicle...</span></div>',
   ),
   RM = E(
-    '<div class="vd-row svelte-h1hdsn"><span class="vd-label svelte-h1hdsn">Owner</span><span class="vd-value svelte-h1hdsn"> </span></div>',
+    '<div class="vd-row svelte-h1hdsn"><span class="vd-label svelte-h1hdsn">Proprietário</span><span class="vd-value svelte-h1hdsn"> </span></div>',
   ),
   zM = E(
-    '<div class="vd-row svelte-h1hdsn"><span class="vd-label svelte-h1hdsn">Class</span><span class="vd-value svelte-h1hdsn"> </span></div>',
+    '<div class="vd-row svelte-h1hdsn"><span class="vd-label svelte-h1hdsn">Classe</span><span class="vd-value svelte-h1hdsn"> </span></div>',
   ),
   BM = E(
     '<div class="vd-row svelte-h1hdsn"><span class="vd-label svelte-h1hdsn">Status</span><span> </span></div>',
   ),
   FM = E(
-    '<div class="vd-row svelte-h1hdsn"><span class="vd-label svelte-h1hdsn">Points</span><span> </span></div>',
+    '<div class="vd-row svelte-h1hdsn"><span class="vd-label svelte-h1hdsn">Pontos</span><span> </span></div>',
   ),
   VM = E(
-    '<div class="vd-row svelte-h1hdsn"><span class="vd-label svelte-h1hdsn">Stolen</span><span class="vd-value accent-red svelte-h1hdsn">Yes</span></div>',
+    '<div class="vd-row svelte-h1hdsn"><span class="vd-label svelte-h1hdsn">Roubado</span><span class="vd-value accent-red svelte-h1hdsn">Yes</span></div>',
   ),
   qM = E(
-    '<div class="vd-row svelte-h1hdsn"><span class="vd-label svelte-h1hdsn">BOLO</span><span class="vd-value svelte-h1hdsn" style="color: #fbbf24;">Active</span></div>',
+    '<div class="vd-row svelte-h1hdsn"><span class="vd-label svelte-h1hdsn">BOLO</span><span class="vd-value svelte-h1hdsn" style="color: #fbbf24;">Ativo</span></div>',
   ),
   jM = E(
-    '<div class="vd-row vd-notes svelte-h1hdsn"><span class="vd-label svelte-h1hdsn">Notes</span><span class="vd-value svelte-h1hdsn"> </span></div>',
+    '<div class="vd-row vd-notes svelte-h1hdsn"><span class="vd-label svelte-h1hdsn">Observações</span><span class="vd-value svelte-h1hdsn"> </span></div>',
   ),
   UM = E(
-    '<div class="modal-header svelte-h1hdsn"><h3 class="svelte-h1hdsn">Vehicle Details</h3> <button class="modal-close svelte-h1hdsn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-h1hdsn"><line x1="18" y1="6" x2="6" y2="18" class="svelte-h1hdsn"></line><line x1="6" y1="6" x2="18" y2="18" class="svelte-h1hdsn"></line></svg></button></div> <div class="modal-body svelte-h1hdsn"><div class="vd-row svelte-h1hdsn"><span class="vd-label svelte-h1hdsn">Plate</span><span class="vd-value mono svelte-h1hdsn"> </span></div> <div class="vd-row svelte-h1hdsn"><span class="vd-label svelte-h1hdsn">Vehicle</span><span class="vd-value svelte-h1hdsn"> </span></div> <!> <!> <!> <!> <!> <!> <!></div>',
+    '<div class="modal-header svelte-h1hdsn"><h3 class="svelte-h1hdsn">Detalhes do veículo</h3> <button class="modal-close svelte-h1hdsn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-h1hdsn"><line x1="18" y1="6" x2="6" y2="18" class="svelte-h1hdsn"></line><line x1="6" y1="6" x2="18" y2="18" class="svelte-h1hdsn"></line></svg></button></div> <div class="modal-body svelte-h1hdsn"><div class="vd-row svelte-h1hdsn"><span class="vd-label svelte-h1hdsn">Placa</span><span class="vd-value mono svelte-h1hdsn"> </span></div> <div class="vd-row svelte-h1hdsn"><span class="vd-label svelte-h1hdsn">Veículo</span><span class="vd-value svelte-h1hdsn"> </span></div> <!> <!> <!> <!> <!> <!> <!></div>',
     1,
   ),
   HM = E(
@@ -35805,7 +35805,7 @@ var AI = E("<span> </span>"),
     '<div class="modal-overlay svelte-h1hdsn"><div class="modal-card svelte-h1hdsn"><div class="modal-header svelte-h1hdsn"><h3 class="svelte-h1hdsn">Manage Licenses</h3> <button class="modal-close svelte-h1hdsn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-h1hdsn"><line x1="18" y1="6" x2="6" y2="18" class="svelte-h1hdsn"></line><line x1="6" y1="6" x2="18" y2="18" class="svelte-h1hdsn"></line></svg></button></div> <div class="modal-body license-modal-body svelte-h1hdsn"></div></div></div>',
   ),
   YM = E(
-    '<div class="profile-view svelte-h1hdsn"><div class="profile-topbar svelte-h1hdsn"><button class="back-btn svelte-h1hdsn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-h1hdsn"><path d="M19 12H5M12 19l-7-7 7-7" class="svelte-h1hdsn"></path></svg> Back</button> <div class="profile-identity svelte-h1hdsn"><span class="profile-name svelte-h1hdsn"> </span> <span class="profile-cid svelte-h1hdsn"> </span></div> <!> <!></div> <div class="pstats-row svelte-h1hdsn"><div class="pstat svelte-h1hdsn"><span class="pstat-val svelte-h1hdsn"> </span><span class="pstat-lbl svelte-h1hdsn">Properties</span></div> <div class="pstat svelte-h1hdsn"><span class="pstat-val svelte-h1hdsn"> </span><span class="pstat-lbl svelte-h1hdsn">Vehicles</span></div> <div class="pstat svelte-h1hdsn"><span class="pstat-val accent-red svelte-h1hdsn"> </span><span class="pstat-lbl svelte-h1hdsn">Prisões</span></div> <div class="pstat svelte-h1hdsn"><span class="pstat-val svelte-h1hdsn"> </span><span class="pstat-lbl svelte-h1hdsn">Jobs</span></div></div> <div class="profile-body svelte-h1hdsn"><div class="profile-sidebar svelte-h1hdsn"><div class="panel svelte-h1hdsn"><div class="profile-img svelte-h1hdsn"><!></div> <!></div> <div class="panel detail-panel svelte-h1hdsn"><div class="detail-row svelte-h1hdsn"><span class="dlabel svelte-h1hdsn">Gender</span><span class="dvalue svelte-h1hdsn"> </span></div> <div class="detail-row svelte-h1hdsn"><span class="dlabel svelte-h1hdsn">DOB</span><span class="dvalue svelte-h1hdsn"> </span></div> <div class="detail-row svelte-h1hdsn"><span class="dlabel svelte-h1hdsn">Phone</span> <span class="dvalue clickable svelte-h1hdsn"> </span></div> <div class="detail-row svelte-h1hdsn"><span class="dlabel svelte-h1hdsn">Fingerprint</span> <span class="dvalue clickable svelte-h1hdsn"> </span></div> <div class="detail-row svelte-h1hdsn"><span class="dlabel svelte-h1hdsn">Occupations</span><span class="dvalue svelte-h1hdsn"> </span></div></div></div> <div class="profile-main svelte-h1hdsn"><!> <div class="sections-grid svelte-h1hdsn"><div><div class="panel-title svelte-h1hdsn">Active Warrants <span> </span></div> <!> <div class="section-list svelte-h1hdsn"><!></div></div> <div><div class="panel-title svelte-h1hdsn">Active BOLOs <span> </span></div> <!> <div class="section-list svelte-h1hdsn"><!></div></div> <div class="panel svelte-h1hdsn"><div class="panel-title svelte-h1hdsn">Vehicles <span class="cnt svelte-h1hdsn"> </span></div> <div class="section-list svelte-h1hdsn"><!></div> <!></div> <div class="panel svelte-h1hdsn"><div class="panel-title svelte-h1hdsn">Licenses <span class="cnt svelte-h1hdsn"> </span> <!></div> <div class="section-list svelte-h1hdsn"><!></div> <!></div> <div class="panel svelte-h1hdsn"><div class="panel-title svelte-h1hdsn">Properties <span class="cnt svelte-h1hdsn"> </span></div> <div class="section-list svelte-h1hdsn"><!></div> <!></div> <div class="panel svelte-h1hdsn"><div class="panel-title svelte-h1hdsn">Weapons <span class="cnt svelte-h1hdsn"> </span></div> <div class="section-list svelte-h1hdsn"><!></div> <!></div> <div class="panel svelte-h1hdsn"><div class="panel-title svelte-h1hdsn">Evidence <span class="cnt svelte-h1hdsn"> </span></div> <div class="section-list svelte-h1hdsn"><!></div> <!></div> <div class="panel svelte-h1hdsn"><div class="panel-title svelte-h1hdsn">Linked Reports <span class="cnt svelte-h1hdsn"> </span></div> <div class="section-list svelte-h1hdsn"><!></div> <!></div></div></div></div></div> <!> <!>',
+    '<div class="profile-view svelte-h1hdsn"><div class="profile-topbar svelte-h1hdsn"><button class="back-btn svelte-h1hdsn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-h1hdsn"><path d="M19 12H5M12 19l-7-7 7-7" class="svelte-h1hdsn"></path></svg> Voltar</button> <div class="profile-identity svelte-h1hdsn"><span class="profile-name svelte-h1hdsn"> </span> <span class="profile-cid svelte-h1hdsn"> </span></div> <!> <!></div> <div class="pstats-row svelte-h1hdsn"><div class="pstat svelte-h1hdsn"><span class="pstat-val svelte-h1hdsn"> </span><span class="pstat-lbl svelte-h1hdsn">Properties</span></div> <div class="pstat svelte-h1hdsn"><span class="pstat-val svelte-h1hdsn"> </span><span class="pstat-lbl svelte-h1hdsn">Veículos</span></div> <div class="pstat svelte-h1hdsn"><span class="pstat-val accent-red svelte-h1hdsn"> </span><span class="pstat-lbl svelte-h1hdsn">Prisões</span></div> <div class="pstat svelte-h1hdsn"><span class="pstat-val svelte-h1hdsn"> </span><span class="pstat-lbl svelte-h1hdsn">Jobs</span></div></div> <div class="profile-body svelte-h1hdsn"><div class="profile-sidebar svelte-h1hdsn"><div class="panel svelte-h1hdsn"><div class="profile-img svelte-h1hdsn"><!></div> <!></div> <div class="panel detail-panel svelte-h1hdsn"><div class="detail-row svelte-h1hdsn"><span class="dlabel svelte-h1hdsn">Gender</span><span class="dvalue svelte-h1hdsn"> </span></div> <div class="detail-row svelte-h1hdsn"><span class="dlabel svelte-h1hdsn">DOB</span><span class="dvalue svelte-h1hdsn"> </span></div> <div class="detail-row svelte-h1hdsn"><span class="dlabel svelte-h1hdsn">Phone</span> <span class="dvalue clickable svelte-h1hdsn"> </span></div> <div class="detail-row svelte-h1hdsn"><span class="dlabel svelte-h1hdsn">Fingerprint</span> <span class="dvalue clickable svelte-h1hdsn"> </span></div> <div class="detail-row svelte-h1hdsn"><span class="dlabel svelte-h1hdsn">Occupations</span><span class="dvalue svelte-h1hdsn"> </span></div></div></div> <div class="profile-main svelte-h1hdsn"><!> <div class="sections-grid svelte-h1hdsn"><div><div class="panel-title svelte-h1hdsn">Mandado ativos <span> </span></div> <!> <div class="section-list svelte-h1hdsn"><!></div></div> <div><div class="panel-title svelte-h1hdsn">Ativo BOLOs <span> </span></div> <!> <div class="section-list svelte-h1hdsn"><!></div></div> <div class="panel svelte-h1hdsn"><div class="panel-title svelte-h1hdsn">Veículos <span class="cnt svelte-h1hdsn"> </span></div> <div class="section-list svelte-h1hdsn"><!></div> <!></div> <div class="panel svelte-h1hdsn"><div class="panel-title svelte-h1hdsn">Licenses <span class="cnt svelte-h1hdsn"> </span> <!></div> <div class="section-list svelte-h1hdsn"><!></div> <!></div> <div class="panel svelte-h1hdsn"><div class="panel-title svelte-h1hdsn">Properties <span class="cnt svelte-h1hdsn"> </span></div> <div class="section-list svelte-h1hdsn"><!></div> <!></div> <div class="panel svelte-h1hdsn"><div class="panel-title svelte-h1hdsn">Armas <span class="cnt svelte-h1hdsn"> </span></div> <div class="section-list svelte-h1hdsn"><!></div> <!></div> <div class="panel svelte-h1hdsn"><div class="panel-title svelte-h1hdsn">Evidence <span class="cnt svelte-h1hdsn"> </span></div> <div class="section-list svelte-h1hdsn"><!></div> <!></div> <div class="panel svelte-h1hdsn"><div class="panel-title svelte-h1hdsn">Relatórios vinculados <span class="cnt svelte-h1hdsn"> </span></div> <div class="section-list svelte-h1hdsn"><!></div> <!></div></div></div></div></div> <!> <!>',
     1,
   ),
   QM = E(
@@ -35828,11 +35828,11 @@ var AI = E("<span> </span>"),
     '<div class="center-msg svelte-h1hdsn"><span class="svelte-h1hdsn">No citizens match your search.</span></div>',
   ),
   oO = E(
-    '<div class="citizens-header svelte-h1hdsn"><span class="svelte-h1hdsn"></span> <span class="svelte-h1hdsn">Name</span> <span class="svelte-h1hdsn">Citizen ID</span> <span class="svelte-h1hdsn">Phone</span> <span class="svelte-h1hdsn">Gender</span> <span class="svelte-h1hdsn">DOB</span> <span class="svelte-h1hdsn">Stats</span> <span class="svelte-h1hdsn">Flags</span></div> <div class="citizens-table svelte-h1hdsn"></div> <!> <!>',
+    '<div class="citizens-header svelte-h1hdsn"><span class="svelte-h1hdsn"></span> <span class="svelte-h1hdsn">Nome</span> <span class="svelte-h1hdsn">ID do cidadão</span> <span class="svelte-h1hdsn">Phone</span> <span class="svelte-h1hdsn">Gender</span> <span class="svelte-h1hdsn">DOB</span> <span class="svelte-h1hdsn">Stats</span> <span class="svelte-h1hdsn">Sinalizações</span></div> <div class="citizens-table svelte-h1hdsn"></div> <!> <!>',
     1,
   ),
   lO = E(
-    '<div class="list-view svelte-h1hdsn"><div class="list-topbar svelte-h1hdsn"><div class="search-box svelte-h1hdsn"><svg width="14" height="14" fill="rgba(255,255,255,0.35)" viewBox="0 0 24 24" class="svelte-h1hdsn"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" class="svelte-h1hdsn"></path></svg> <input type="text" placeholder="Search by name, ID, or phone..." class="svelte-h1hdsn"/></div></div> <!></div>',
+    '<div class="list-view svelte-h1hdsn"><div class="list-topbar svelte-h1hdsn"><div class="search-box svelte-h1hdsn"><svg width="14" height="14" fill="rgba(255,255,255,0.35)" viewBox="0 0 24 24" class="svelte-h1hdsn"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" class="svelte-h1hdsn"></path></svg> <input type="text" placeholder="Buscar por nome, ID ou telefone..." class="svelte-h1hdsn"/></div></div> <!></div>',
   ),
   cO = E(
     '<div class="page svelte-h1hdsn"><!></div> <input type="file" accept="image/*" style="display:none" class="svelte-h1hdsn"/>',
@@ -35880,7 +35880,7 @@ function dO(n, e) {
     try {
       y(l, await Te(he.CITIZEN.GET_CITIZENS), !0);
     } catch {
-      (un.error("Failed to fetch citizens"), y(l, [], !0));
+      (un.error("Falha ao buscar cidadãos"), y(l, [], !0));
     }
     y(c, !1);
   }
@@ -35892,13 +35892,13 @@ function dO(n, e) {
     }));
   function A(fe) {
     switch (fe) {
-      case "Active Warrant":
+      case "Mandado ativo":
         return "flag-red";
-      case "Active Bolo":
+      case "BOLO ativo":
         return "flag-yellow";
       case "Violent":
         return "flag-orange";
-      case "Flight Risk":
+      case "Risco de fuga":
         return "flag-amber";
       default:
         return "";
@@ -35909,7 +35909,7 @@ function dO(n, e) {
     return ge.length ? ge.join(", ") : "None";
   }
   function P(fe) {
-    if (!fe) return "Unknown";
+    if (!fe) return "Desconhecido";
     const ge = typeof fe == "string" ? Number(fe) : fe;
     if (!isNaN(ge) && ge > 1e9) {
       const Oe = ge > 9999999999 ? ge : ge * 1e3;
@@ -35966,7 +35966,7 @@ function dO(n, e) {
           !0,
         ));
     } catch {
-      un.error("Failed to fetch citizen profile");
+      un.error("Falha ao buscar o perfil do cidadão");
     }
   }
   const U = 3;
@@ -36010,7 +36010,7 @@ function dO(n, e) {
           pt = await Te(
             he.CITIZEN.UPLOAD_SUSPECT_PHOTO,
             { citizenid: o(u).citizenid, image: Ot },
-            { success: !0, message: "Photo uploaded", imageUrl: Ot },
+            { success: !0, message: "Foto enviada", imageUrl: Ot },
           );
         pt.success
           ? (y(Q, !1),
@@ -36024,10 +36024,10 @@ function dO(n, e) {
               ),
               !0,
             ),
-            un.success(pt.message || "Photo uploaded"))
-          : un.error(pt.message || "Failed to upload photo");
+            un.success(pt.message || "Foto enviada"))
+          : un.error(pt.message || "Falha ao enviar a foto");
       } catch {
-        un.error("Failed to upload photo");
+        un.error("Falha ao enviar a foto");
       }
       ge.value = "";
     }
@@ -36035,13 +36035,13 @@ function dO(n, e) {
   let oe = F(null),
     ue = F(!1);
   function M(fe) {
-    (xI(fe), e.tabService.setActiveTab("BOLOs"));
-    const ge = e.tabService.getActiveInstance();
+    (xI(fe), e.tabService.setAtivoTab("BOLOs"));
+    const ge = e.tabService.getAtivoInstance();
     ge && e.tabService.setInstanceTab(ge.id, "BOLOs");
   }
   function J(fe) {
-    (qa(String(fe)), e.tabService.setActiveTab("Relatórios"));
-    const ge = e.tabService.getActiveInstance();
+    (qa(String(fe)), e.tabService.setAtivoTab("Relatórios"));
+    const ge = e.tabService.getAtivoInstance();
     ge && e.tabService.setInstanceTab(ge.id, "Relatórios");
   }
   async function se(fe) {
@@ -36051,9 +36051,9 @@ function dO(n, e) {
         const ge = await Te(he.VEHICLE.GET_VEHICLE, { plate: fe });
         ge != null && ge.vehicle
           ? y(oe, ge.vehicle, !0)
-          : y(oe, { plate: fe, vehicle: "Unknown" }, !0);
+          : y(oe, { plate: fe, vehicle: "Desconhecido" }, !0);
       } catch {
-        y(oe, { plate: fe, vehicle: "Unknown" }, !0);
+        y(oe, { plate: fe, vehicle: "Desconhecido" }, !0);
       }
       y(ue, !1);
     }
@@ -36367,7 +36367,7 @@ function dO(n, e) {
                     H(
                       (Hn) => {
                         (C(Un, `Report #${o(zt).reportid ?? ""}`),
-                          C(Fs, `Expires: ${Hn ?? ""}`));
+                          C(Fs, `Expira em: ${Hn ?? ""}`));
                       },
                       [() => P(o(zt).expirydate)],
                     ),
@@ -36486,7 +36486,7 @@ function dO(n, e) {
               (Fe(
                 Dt,
                 17,
-                () => re(o(u).ownedVehicles, o(D)),
+                () => re(o(u).ownedVeículos, o(D)),
                 nt,
                 (Ht, en) => {
                   var Rt = QI(),
@@ -36510,7 +36510,7 @@ function dO(n, e) {
               x(Ee, Ke);
             };
           z(Sr, (Ee) => {
-            o(u).ownedVehicles && o(u).ownedVehicles.length > 0
+            o(u).ownedVeículos && o(u).ownedVeículos.length > 0
               ? Ee(ra)
               : Ee(aa, !1);
           });
@@ -36532,14 +36532,14 @@ function dO(n, e) {
                     (Rt.disabled = jt));
                 },
                 [
-                  () => j(o(u).ownedVehicles),
-                  () => o(D) >= j(o(u).ownedVehicles),
+                  () => j(o(u).ownedVeículos),
+                  () => o(D) >= j(o(u).ownedVeículos),
                 ],
               ),
               x(Ee, Ke));
           };
           z(Er, (Ee) => {
-            j(o(u).ownedVehicles) > 1 && Ee(oa);
+            j(o(u).ownedVeículos) > 1 && Ee(oa);
           });
         }
         var nr = v(Si, 2),
@@ -36579,8 +36579,8 @@ function dO(n, e) {
                       C(
                         Un,
                         o(en).type === "state"
-                          ? "State License"
-                          : "Custom License",
+                          ? "Licença estadual"
+                          : "Licença personalizada",
                       ));
                   }),
                     x(Ht, Rt));
@@ -37045,7 +37045,7 @@ function dO(n, e) {
                             o(oe).label ||
                               o(oe).vehicle ||
                               o(oe).model ||
-                              "Unknown",
+                              "Desconhecido",
                           ));
                       }),
                         x(Tn, Un));
@@ -37097,7 +37097,7 @@ function dO(n, e) {
                 ((gs.__change = [$M, xe, jt]),
                   H(() => {
                     (C(Dn, o(jt).name),
-                      C(Wn, o(jt).type === "state" ? "State" : "Custom"),
+                      C(Wn, o(jt).type === "state" ? "Situação" : "Custom"),
                       Mu(gs, o(jt).active));
                   }),
                   x(zt, pn));
@@ -37137,7 +37137,7 @@ function dO(n, e) {
               ),
               C(
                 ia,
-                ((jt = o(u).ownedVehicles) == null ? void 0 : jt.length) || 0,
+                ((jt = o(u).ownedVeículos) == null ? void 0 : jt.length) || 0,
               ),
               C(Ds, o(X).length),
               C(
@@ -37363,10 +37363,10 @@ var fO = (n, e, t) => y(e, t, !0),
   hO = E("<button> </button>"),
   vO = (n, e) => y(e, !0),
   pO = E(
-    '<div class="center-msg svelte-6btwh2"><div class="spinner svelte-6btwh2"></div><span>Loading BOLOs...</span></div>',
+    '<div class="center-msg svelte-6btwh2"><div class="spinner svelte-6btwh2"></div><span>Carregando BOLOs...</span></div>',
   ),
   mO = E(
-    '<div class="center-msg svelte-6btwh2"><span>No BOLOs found.</span></div>',
+    '<div class="center-msg svelte-6btwh2"><span>Nenhum BOLO encontrado.</span></div>',
   ),
   _O = (n, e, t) => e(o(t).id),
   gO = E(
@@ -37396,7 +37396,7 @@ var fO = (n, e, t) => y(e, t, !0),
     '<div class="modal-field svelte-6btwh2"><span class="field-label svelte-6btwh2">Created</span><span class="field-value svelte-6btwh2"> </span></div>',
   ),
   AO = E(
-    '<div class="modal-notes svelte-6btwh2"><span class="field-label svelte-6btwh2">Notes</span> <p class="notes-body svelte-6btwh2"> </p></div>',
+    '<div class="modal-notes svelte-6btwh2"><span class="field-label svelte-6btwh2">Observações</span> <p class="notes-body svelte-6btwh2"> </p></div>',
   ),
   IO = (n, e, t) => {
     o(e) && t(o(e).id);
@@ -37413,7 +37413,7 @@ var fO = (n, e, t) => y(e, t, !0),
   NO = E('<button class="action-btn svelte-6btwh2">View Report</button>'),
   DO = (n, e) => y(e, null),
   LO = E(
-    '<div class="modal-backdrop svelte-6btwh2"><div class="modal svelte-6btwh2" role="dialog" aria-modal="true" tabindex="-1"><div class="modal-header svelte-6btwh2"><h3 class="svelte-6btwh2">BOLO Details</h3> <button class="close-btn svelte-6btwh2" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div> <div class="modal-body svelte-6btwh2"><div class="modal-top svelte-6btwh2"><span class="modal-name svelte-6btwh2"> </span> <span> </span></div> <div class="modal-grid svelte-6btwh2"><div class="modal-field svelte-6btwh2"><span class="field-label svelte-6btwh2">Tipo</span><span class="field-value svelte-6btwh2"> </span></div> <div class="modal-field svelte-6btwh2"><span class="field-label svelte-6btwh2">Report ID</span><span class="field-value svelte-6btwh2"> </span></div> <!> <!> <!></div> <!></div> <div class="modal-footer svelte-6btwh2"><div class="modal-footer-left svelte-6btwh2"><!> <button class="delete-btn svelte-6btwh2"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Delete</button></div> <div class="modal-footer-right svelte-6btwh2"><!> <button class="cancel-btn svelte-6btwh2">Close</button></div></div></div></div>',
+    '<div class="modal-backdrop svelte-6btwh2"><div class="modal svelte-6btwh2" role="dialog" aria-modal="true" tabindex="-1"><div class="modal-header svelte-6btwh2"><h3 class="svelte-6btwh2">BOLO Details</h3> <button class="close-btn svelte-6btwh2" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div> <div class="modal-body svelte-6btwh2"><div class="modal-top svelte-6btwh2"><span class="modal-name svelte-6btwh2"> </span> <span> </span></div> <div class="modal-grid svelte-6btwh2"><div class="modal-field svelte-6btwh2"><span class="field-label svelte-6btwh2">Tipo</span><span class="field-value svelte-6btwh2"> </span></div> <div class="modal-field svelte-6btwh2"><span class="field-label svelte-6btwh2">ID do relatório</span><span class="field-value svelte-6btwh2"> </span></div> <!> <!> <!></div> <!></div> <div class="modal-footer svelte-6btwh2"><div class="modal-footer-left svelte-6btwh2"><!> <button class="delete-btn svelte-6btwh2"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Excluir</button></div> <div class="modal-footer-right svelte-6btwh2"><!> <button class="cancel-btn svelte-6btwh2">Fechar</button></div></div></div></div>',
   ),
   RO = (n, e) => {
     n.target === n.currentTarget && y(e, !1);
@@ -37421,7 +37421,7 @@ var fO = (n, e, t) => y(e, t, !0),
   zO = (n, e) => y(e, !1),
   BO = (n, e) => y(e, !1),
   FO = E(
-    '<div class="modal-backdrop svelte-6btwh2"><div class="modal svelte-6btwh2" role="dialog" aria-modal="true" tabindex="-1"><div class="modal-header svelte-6btwh2"><h3 class="svelte-6btwh2">New BOLO</h3> <button class="close-btn svelte-6btwh2" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div> <div class="modal-body form-body svelte-6btwh2"><div class="form-group svelte-6btwh2"><span class="field-label svelte-6btwh2">Name</span><input class="form-input svelte-6btwh2" placeholder="Subject name"/></div> <div class="form-group svelte-6btwh2"><span class="field-label svelte-6btwh2">Tipo</span> <select class="form-input form-select svelte-6btwh2"><option>Citizen</option><option>Vehicle</option><option>Weapon</option><option>Property</option><option>Other</option></select></div> <div class="form-group svelte-6btwh2"><span class="field-label svelte-6btwh2">Subject ID</span><input class="form-input svelte-6btwh2" placeholder="Citizen ID / Plate / Serial"/></div> <div class="form-group svelte-6btwh2"><span class="field-label svelte-6btwh2">Report ID</span><input class="form-input svelte-6btwh2" type="number" placeholder="Link to report"/></div> <div class="form-group form-full svelte-6btwh2"><span class="field-label svelte-6btwh2">Notes</span><textarea class="form-input svelte-6btwh2" rows="4" placeholder="BOLO description and details..."></textarea></div></div> <div class="modal-footer svelte-6btwh2"><button class="cancel-btn svelte-6btwh2">Cancel</button> <button class="primary-btn svelte-6btwh2">Create BOLO</button></div></div></div>',
+    '<div class="modal-backdrop svelte-6btwh2"><div class="modal svelte-6btwh2" role="dialog" aria-modal="true" tabindex="-1"><div class="modal-header svelte-6btwh2"><h3 class="svelte-6btwh2">New BOLO</h3> <button class="close-btn svelte-6btwh2" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div> <div class="modal-body form-body svelte-6btwh2"><div class="form-group svelte-6btwh2"><span class="field-label svelte-6btwh2">Nome</span><input class="form-input svelte-6btwh2" placeholder="Nome do alvo"/></div> <div class="form-group svelte-6btwh2"><span class="field-label svelte-6btwh2">Tipo</span> <select class="form-input form-select svelte-6btwh2"><option>Cidadão</option><option>Veículo</option><option>Arma</option><option>Propriedade</option><option>Outro</option></select></div> <div class="form-group svelte-6btwh2"><span class="field-label svelte-6btwh2">Subject ID</span><input class="form-input svelte-6btwh2" placeholder="ID do cidadão / Placa / Série"/></div> <div class="form-group svelte-6btwh2"><span class="field-label svelte-6btwh2">ID do relatório</span><input class="form-input svelte-6btwh2" type="number" placeholder="Vincular ao relatório"/></div> <div class="form-group form-full svelte-6btwh2"><span class="field-label svelte-6btwh2">Observações</span><textarea class="form-input svelte-6btwh2" rows="4" placeholder="Descrição e detalhes do BOLO..."></textarea></div></div> <div class="modal-footer svelte-6btwh2"><button class="cancel-btn svelte-6btwh2">Cancelar</button> <button class="primary-btn svelte-6btwh2">Criar BOLO</button></div></div></div>',
   ),
   VO = E(
     '<div class="page svelte-6btwh2"><div class="topbar svelte-6btwh2"><div class="filters svelte-6btwh2"></div> <button class="new-btn svelte-6btwh2"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"></path></svg> New BOLO</button></div> <!></div> <!> <!>',
@@ -37441,7 +37441,7 @@ function qO(n, e) {
     try {
       y(t, await Te(he.CITIZEN.GET_BOLOS, { type: "all", status: "all" }), !0);
     } catch {
-      (un.error("Failed to fetch BOLOs"), y(t, [], !0));
+      (un.error("Falha ao buscar os BOLOs"), y(t, [], !0));
     }
     (y(i, !1), u());
   });
@@ -37485,13 +37485,13 @@ function qO(n, e) {
           y(t, [...o(t)], !0),
           ((te = o(l)) == null ? void 0 : te.id) === $ &&
             (o(l).status = "resolved"),
-          un.success("BOLO marked as resolved"));
+          un.success("BOLO marcado como resolvido"));
       } else
         un.error(
-          (ee == null ? void 0 : ee.message) || "Failed to resolve BOLO",
+          (ee == null ? void 0 : ee.message) || "Falha ao resolver o BOLO",
         );
     } catch {
-      un.error("Failed to resolve BOLO");
+      un.error("Falha ao resolver o BOLO");
     }
   }
   async function T($) {
@@ -37504,21 +37504,21 @@ function qO(n, e) {
             !0,
           ),
           y(l, null),
-          un.success("BOLO deleted"))
+          un.success("BOLO excluído"))
         : un.error(
-            (te == null ? void 0 : te.message) || "Failed to delete BOLO",
+            (te == null ? void 0 : te.message) || "Falha ao excluir BOLO",
           );
     } catch {
-      un.error("Failed to delete BOLO");
+      un.error("Falha ao excluir BOLO");
     }
   }
   function A($) {
     if ($ && $ !== "N/A") {
       qa(String($));
-      const te = e.tabService.getActiveInstance();
+      const te = e.tabService.getAtivoInstance();
       te
         ? e.tabService.setInstanceTab(te.id, "Relatórios")
-        : e.tabService.setActiveTab("Relatórios");
+        : e.tabService.setAtivoTab("Relatórios");
     }
   }
   function I($) {
@@ -37903,7 +37903,7 @@ async function UO(n, e, t, s, i, r) {
       if (!(l != null && l.success)) {
         y(
           i,
-          (l == null ? void 0 : l.message) || "Failed to update vehicle",
+          (l == null ? void 0 : l.message) || "Falha ao atualizar o veículo",
           !0,
         );
         return;
@@ -37920,7 +37920,7 @@ async function UO(n, e, t, s, i, r) {
           !0,
         ));
     } catch {
-      (un.error("Failed to update vehicle"), y(i, "Failed to update vehicle"));
+      (un.error("Falha ao atualizar o veículo"), y(i, "Falha ao atualizar o veículo"));
     } finally {
       y(t, !1);
     }
@@ -37932,11 +37932,11 @@ async function HO(n, e, t) {
     const s = await Te(he.VEHICLE.GET_VEHICLES);
     y(t, Array.isArray(s.vehicles) ? s.vehicles : [], !0);
   } catch {
-    (un.error("Failed to load vehicles"), y(t, [], !0));
+    (un.error("Falha ao carregar os veículos"), y(t, [], !0));
   }
   y(e, !1);
 }
-var GO = E('<span class="pill pill-red svelte-5bg8a5">Stolen</span>'),
+var GO = E('<span class="pill pill-red svelte-5bg8a5">Roubado</span>'),
   WO = E('<span class="pill pill-orange svelte-5bg8a5">BOLO</span>'),
   ZO = E(
     '<div class="topbar-info svelte-5bg8a5"><span class="topbar-name svelte-5bg8a5"> </span> <span class="topbar-plate svelte-5bg8a5"> </span></div> <div class="topbar-flags svelte-5bg8a5"><!> <!> <span> </span></div>',
@@ -37952,7 +37952,7 @@ var GO = E('<span class="pill pill-red svelte-5bg8a5">Stolen</span>'),
   ),
   QO = E("<span> </span>"),
   XO = E(
-    '<div class="section svelte-5bg8a5"><div class="section-title svelte-5bg8a5">Flags</div> <div class="flags-row svelte-5bg8a5"></div></div>',
+    '<div class="section svelte-5bg8a5"><div class="section-title svelte-5bg8a5">Sinalizações</div> <div class="flags-row svelte-5bg8a5"></div></div>',
   ),
   eP = E(
     '<div class="section svelte-5bg8a5"><div class="section-title svelte-5bg8a5">Information</div> <p class="section-text svelte-5bg8a5"> </p></div>',
@@ -37964,7 +37964,7 @@ var GO = E('<span class="pill pill-red svelte-5bg8a5">Stolen</span>'),
   sP = E(
     '<div class="section svelte-5bg8a5"><div class="section-title svelte-5bg8a5">Related BOLOs</div> <div class="bolos-list svelte-5bg8a5"></div></div>',
   ),
-  iP = E('<div class="section-empty svelte-5bg8a5">Loading reports...</div>'),
+  iP = E('<div class="section-empty svelte-5bg8a5">Carregando relatórios...</div>'),
   rP = (n, e, t) => e(o(t).id),
   aP = E(
     '<div class="linked-report-item svelte-5bg8a5"><div class="lr-info svelte-5bg8a5"><span class="lr-title svelte-5bg8a5"> </span> <span class="lr-meta svelte-5bg8a5"> </span></div> <button class="lr-view-btn svelte-5bg8a5">View</button></div>',
@@ -37974,10 +37974,10 @@ var GO = E('<span class="pill pill-red svelte-5bg8a5">Stolen</span>'),
     '<div class="section-empty svelte-5bg8a5">No reports linked to this vehicle</div>',
   ),
   cP = E(
-    '<div class="detail-scroll svelte-5bg8a5"><div class="info-grid svelte-5bg8a5"><div class="info-card svelte-5bg8a5"><div class="info-card-icon svelte-5bg8a5"><!></div> <div class="info-card-body svelte-5bg8a5"><span class="info-card-label svelte-5bg8a5">Owner</span> <span class="info-card-value svelte-5bg8a5"> </span></div></div> <div class="info-item svelte-5bg8a5"><span class="info-label svelte-5bg8a5">Plate</span><span class="info-value mono svelte-5bg8a5"> </span></div> <div class="info-item svelte-5bg8a5"><span class="info-label svelte-5bg8a5">Model</span><span class="info-value svelte-5bg8a5"> </span></div> <div class="info-item svelte-5bg8a5"><span class="info-label svelte-5bg8a5">Class</span><span class="info-value svelte-5bg8a5"> </span></div> <div class="info-item svelte-5bg8a5"><span class="info-label svelte-5bg8a5">Tipo</span><span class="info-value svelte-5bg8a5"> </span></div> <div class="info-item svelte-5bg8a5"><span class="info-label svelte-5bg8a5">Brand</span><span class="info-value svelte-5bg8a5"> </span></div> <div class="info-item svelte-5bg8a5"><span class="info-label svelte-5bg8a5">Reports</span><span class="info-value svelte-5bg8a5"> </span></div> <div class="info-item svelte-5bg8a5"><span class="info-label svelte-5bg8a5">Points</span><span> </span></div> <div class="info-item svelte-5bg8a5"><span class="info-label svelte-5bg8a5">State</span> <span> </span></div></div> <!> <!> <div class="section svelte-5bg8a5"><div class="section-title svelte-5bg8a5">DMV Updates</div> <div class="dmv-form svelte-5bg8a5"><div class="form-row svelte-5bg8a5"><label class="form-field svelte-5bg8a5"><span>Points</span> <input type="number" min="0" class="svelte-5bg8a5"/></label> <label class="form-field svelte-5bg8a5"><span>Status</span> <select class="svelte-5bg8a5"><option>Valid</option><option>Suspended</option><option>Expired</option><option>Impounded</option></select></label> <label class="form-field form-grow svelte-5bg8a5"><span>Reason</span> <input type="text" placeholder="Optional note" class="svelte-5bg8a5"/></label></div> <button class="save-btn svelte-5bg8a5" type="button"> </button></div></div> <!> <div class="section svelte-5bg8a5"><div class="section-title svelte-5bg8a5">Linked Reports <span class="report-count svelte-5bg8a5"> </span></div> <!></div></div>',
+    '<div class="detail-scroll svelte-5bg8a5"><div class="info-grid svelte-5bg8a5"><div class="info-card svelte-5bg8a5"><div class="info-card-icon svelte-5bg8a5"><!></div> <div class="info-card-body svelte-5bg8a5"><span class="info-card-label svelte-5bg8a5">Proprietário</span> <span class="info-card-value svelte-5bg8a5"> </span></div></div> <div class="info-item svelte-5bg8a5"><span class="info-label svelte-5bg8a5">Placa</span><span class="info-value mono svelte-5bg8a5"> </span></div> <div class="info-item svelte-5bg8a5"><span class="info-label svelte-5bg8a5">Modelo</span><span class="info-value svelte-5bg8a5"> </span></div> <div class="info-item svelte-5bg8a5"><span class="info-label svelte-5bg8a5">Classe</span><span class="info-value svelte-5bg8a5"> </span></div> <div class="info-item svelte-5bg8a5"><span class="info-label svelte-5bg8a5">Tipo</span><span class="info-value svelte-5bg8a5"> </span></div> <div class="info-item svelte-5bg8a5"><span class="info-label svelte-5bg8a5">Marca</span><span class="info-value svelte-5bg8a5"> </span></div> <div class="info-item svelte-5bg8a5"><span class="info-label svelte-5bg8a5">Relatórios</span><span class="info-value svelte-5bg8a5"> </span></div> <div class="info-item svelte-5bg8a5"><span class="info-label svelte-5bg8a5">Pontos</span><span> </span></div> <div class="info-item svelte-5bg8a5"><span class="info-label svelte-5bg8a5">Situação</span> <span> </span></div></div> <!> <!> <div class="section svelte-5bg8a5"><div class="section-title svelte-5bg8a5">Atualizações do DMV</div> <div class="dmv-form svelte-5bg8a5"><div class="form-row svelte-5bg8a5"><label class="form-field svelte-5bg8a5"><span>Pontos</span> <input type="number" min="0" class="svelte-5bg8a5"/></label> <label class="form-field svelte-5bg8a5"><span>Status</span> <select class="svelte-5bg8a5"><option>Válido</option><option>Suspenso</option><option>Expirado</option><option>Apreendido</option></select></label> <label class="form-field form-grow svelte-5bg8a5"><span>Motivo</span> <input type="text" placeholder="Observação opcional" class="svelte-5bg8a5"/></label></div> <button class="save-btn svelte-5bg8a5" type="button"> </button></div></div> <!> <div class="section svelte-5bg8a5"><div class="section-title svelte-5bg8a5">Relatórios vinculados <span class="report-count svelte-5bg8a5"> </span></div> <!></div></div>',
   ),
   dP = E(
-    '<div class="vehicles-page svelte-5bg8a5"><div class="topbar svelte-5bg8a5"><button class="back-btn svelte-5bg8a5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><polyline points="12 19 5 12 12 5"></polyline></svg> Back</button> <!></div> <!></div>',
+    '<div class="vehicles-page svelte-5bg8a5"><div class="topbar svelte-5bg8a5"><button class="back-btn svelte-5bg8a5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><polyline points="12 19 5 12 12 5"></polyline></svg> Voltar</button> <!></div> <!></div>',
   ),
   uP = (n, e, t) => {
     (y(e, "all"), y(t, 1));
@@ -38002,7 +38002,7 @@ var GO = E('<span class="pill pill-red svelte-5bg8a5">Stolen</span>'),
     '<button class="vehicle-row svelte-5bg8a5"><span class="col-name svelte-5bg8a5"> </span> <span class="col-plate mono svelte-5bg8a5"> </span> <span class="col-owner svelte-5bg8a5"> </span> <span class="col-class svelte-5bg8a5"> </span> <span> </span> <span class="col-status svelte-5bg8a5"><span> </span></span> <span class="col-flags svelte-5bg8a5"></span></button>',
   ),
   kP = E(
-    '<div class="vehicles-page svelte-5bg8a5"><div class="topbar svelte-5bg8a5"><div class="search-box svelte-5bg8a5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg> <input type="text" placeholder="Search vehicles by owner, plate, class..." class="svelte-5bg8a5"/></div> <button class="refresh-btn svelte-5bg8a5"> </button></div> <div class="filter-tabs svelte-5bg8a5"><button>All</button> <button>Active</button> <button>Garaged</button> <button>Impounded</button> <button>Stolen</button></div> <div class="list-panel svelte-5bg8a5"><div class="list-header svelte-5bg8a5"><span class="col-name svelte-5bg8a5">Vehicle</span> <span class="col-plate svelte-5bg8a5">Plate</span> <span class="col-owner svelte-5bg8a5">Owner</span> <span class="col-class svelte-5bg8a5">Class</span> <span class="col-points svelte-5bg8a5">Points</span> <span class="col-status svelte-5bg8a5">Status</span> <span class="col-flags svelte-5bg8a5">Flags</span></div> <div class="list-body svelte-5bg8a5"><!></div> <!></div></div>',
+    '<div class="vehicles-page svelte-5bg8a5"><div class="topbar svelte-5bg8a5"><div class="search-box svelte-5bg8a5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg> <input type="text" placeholder="Buscar veículos por proprietário, placa, classe..." class="svelte-5bg8a5"/></div> <button class="refresh-btn svelte-5bg8a5"> </button></div> <div class="filter-tabs svelte-5bg8a5"><button>Todas</button> <button>Ativo</button> <button>Guardado</button> <button>Apreendido</button> <button>Roubado</button></div> <div class="list-panel svelte-5bg8a5"><div class="list-header svelte-5bg8a5"><span class="col-name svelte-5bg8a5">Veículo</span> <span class="col-plate svelte-5bg8a5">Placa</span> <span class="col-owner svelte-5bg8a5">Proprietário</span> <span class="col-class svelte-5bg8a5">Classe</span> <span class="col-points svelte-5bg8a5">Pontos</span> <span class="col-status svelte-5bg8a5">Status</span> <span class="col-flags svelte-5bg8a5">Sinalizações</span></div> <div class="list-body svelte-5bg8a5"><!></div> <!></div></div>',
   );
 function wP(n, e) {
   Vt(e, !0);
@@ -38037,7 +38037,7 @@ function wP(n, e) {
                   var K;
                   return (
                     Z.status === "stolen" ||
-                    ((K = Z.flags) == null ? void 0 : K.includes("Stolen"))
+                    ((K = Z.flags) == null ? void 0 : K.includes("Roubado"))
                   );
                 })));
       const q = o(s).trim().toLowerCase();
@@ -38061,13 +38061,13 @@ function wP(n, e) {
   });
   function I(G) {
     switch (G) {
-      case "Stolen":
+      case "Roubado":
         return "pill pill-red";
-      case "Active Warrant":
+      case "Mandado ativo":
         return "pill pill-red";
       case "Bolo":
         return "pill pill-orange";
-      case "Flight Risk":
+      case "Risco de fuga":
         return "pill pill-orange";
       default:
         return "pill pill-grey";
@@ -38104,11 +38104,11 @@ function wP(n, e) {
           (h.reason = ""))
         : y(
             c,
-            (q == null ? void 0 : q.message) || "Failed to load vehicle",
+            (q == null ? void 0 : q.message) || "Falha ao carregar o veículo",
             !0,
           );
     } catch {
-      (un.error("Failed to load vehicle"), y(c, "Failed to load vehicle"));
+      (un.error("Falha ao carregar o veículo"), y(c, "Falha ao carregar o veículo"));
     } finally {
       y(l, !1);
     }
@@ -38128,8 +38128,8 @@ function wP(n, e) {
     }
   }
   function R(G) {
-    (qa(String(G)), e.tabService.setActiveTab("Relatórios"));
-    const q = e.tabService.getActiveInstance();
+    (qa(String(G)), e.tabService.setAtivoTab("Relatórios"));
+    const q = e.tabService.getAtivoInstance();
     q && e.tabService.setInstanceTab(q.id, "Relatórios");
   }
   kn(async () => {
@@ -38139,7 +38139,7 @@ function wP(n, e) {
         const G = await Te(he.VEHICLE.GET_VEHICLES);
         y(t, Array.isArray(G.vehicles) ? G.vehicles : [], !0);
       } catch {
-        (un.error("Failed to load vehicles"), y(t, [], !0));
+        (un.error("Falha ao carregar os veículos"), y(t, [], !0));
       }
       y(i, !1);
     }
@@ -38189,7 +38189,7 @@ function wP(n, e) {
                 (C(J, o(r).label),
                   C(W, o(r).plate),
                   Re(je, 1, `pill ${Pe ?? ""}`, "svelte-5bg8a5"),
-                  C(Je, o(r).status || "Valid"));
+                  C(Je, o(r).status || "Válido"));
               },
               [() => P(o(r).status || "valid")],
             ),
@@ -38427,7 +38427,7 @@ function wP(n, e) {
                               C(Ge, o(r).label),
                               C(pt, o(r).class),
                               C(Ae, o(r).type),
-                              C(ce, o(r).brand || "Unknown"),
+                              C(ce, o(r).brand || "Desconhecido"),
                               C(le, o(r).seenIn || 0),
                               (Ne = Re(
                                 ze,
@@ -38451,13 +38451,13 @@ function wP(n, e) {
                                 o(r).core_state === 0
                                   ? "Out"
                                   : o(r).core_state === 1
-                                    ? "Garaged"
+                                    ? "Guardado"
                                     : o(r).core_state === 2
                                       ? "Impounded"
-                                      : "Unknown",
+                                      : "Desconhecido",
                               ),
                               (Mt.disabled = o(u)),
-                              C(Pt, o(u) ? "Saving..." : "Save DMV"),
+                              C(Pt, o(u) ? "Salvando..." : "Salvar DMV"),
                               C(wt, o(m).length));
                           },
                           [
@@ -38551,8 +38551,8 @@ function wP(n, e) {
                       C(
                         ge,
                         o(s)
-                          ? "No vehicles match your search."
-                          : "No vehicles found.",
+                          ? "Nenhum veículo corresponde à sua busca."
+                          : "Nenhum veículo encontrado.",
                       ),
                     ),
                       x(qe, fe));
@@ -38621,7 +38621,7 @@ function wP(n, e) {
                                   `status-pill ${ae ?? ""}`,
                                   "svelte-5bg8a5",
                                 ),
-                                C(Ne, o(Ge).status || "Valid"));
+                                C(Ne, o(Ge).status || "Válido"));
                             },
                             [
                               () => ({ "accent-red": (o(Ge).points ?? 0) > 0 }),
@@ -38667,7 +38667,7 @@ function wP(n, e) {
           H(
             (ke, $e, xt, gt, qe) => {
               ((j.disabled = o(i)),
-                C(Q, o(i) ? "Loading..." : "Refresh"),
+                C(Q, o(i) ? "Carregando..." : "Atualizar"),
                 (ee = Re(te, 1, "filter-tab svelte-5bg8a5", null, ee, ke)),
                 (ue = Re(oe, 1, "filter-tab svelte-5bg8a5", null, ue, $e)),
                 (J = Re(M, 1, "filter-tab svelte-5bg8a5", null, J, xt)),
@@ -38705,11 +38705,11 @@ async function TP(n, e, t) {
     const s = await Te(he.WEAPON.GET_WEAPONS);
     y(t, Array.isArray(s.weapons) ? s.weapons : [], !0);
   } catch {
-    (un.error("Failed to load weapons"), y(t, [], !0));
+    (un.error("Falha ao carregar as armas"), y(t, [], !0));
   }
   y(e, !1);
 }
-var SP = E('<span class="pill pill-red svelte-16xawkm">Scratched</span>'),
+var SP = E('<span class="pill pill-red svelte-16xawkm">Danificado</span>'),
   EP = E("<span> </span>"),
   CP = E('<img alt="Arma" class="info-card-img svelte-16xawkm"/>'),
   AP = jo(
@@ -38720,7 +38720,7 @@ var SP = E('<span class="pill pill-red svelte-16xawkm">Scratched</span>'),
   ),
   MP = E("<span> </span>"),
   OP = E(
-    '<div class="section svelte-16xawkm"><div class="section-title svelte-16xawkm">Flags</div> <div class="flags-row svelte-16xawkm"></div></div>',
+    '<div class="section svelte-16xawkm"><div class="section-title svelte-16xawkm">Sinalizações</div> <div class="flags-row svelte-16xawkm"></div></div>',
   ),
   PP = E('<div class="section-empty svelte-16xawkm">Loading history...</div>'),
   NP = E(
@@ -38732,18 +38732,18 @@ var SP = E('<span class="pill pill-red svelte-16xawkm">Scratched</span>'),
   ),
   RP = E('<div class="history-list svelte-16xawkm"></div>'),
   zP = E(
-    '<div class="weapons-page svelte-16xawkm"><div class="topbar svelte-16xawkm"><button class="back-btn svelte-16xawkm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><polyline points="12 19 5 12 12 5"></polyline></svg> Back</button> <div class="topbar-info svelte-16xawkm"><span class="topbar-name svelte-16xawkm"> </span> <span class="topbar-serial svelte-16xawkm"> </span></div> <div class="topbar-flags svelte-16xawkm"><!> <!></div></div> <div class="detail-scroll svelte-16xawkm"><div class="info-grid svelte-16xawkm"><div class="info-card svelte-16xawkm"><div class="info-card-icon svelte-16xawkm"><!></div> <div class="info-card-body svelte-16xawkm"><span class="info-card-label svelte-16xawkm">Owner</span> <span class="info-card-value svelte-16xawkm"> </span></div></div> <div class="info-item svelte-16xawkm"><span class="info-label svelte-16xawkm">Série</span><span class="info-value mono svelte-16xawkm"> </span></div> <div class="info-item svelte-16xawkm"><span class="info-label svelte-16xawkm">Name</span><span class="info-value svelte-16xawkm"> </span></div> <div class="info-item svelte-16xawkm"><span class="info-label svelte-16xawkm">Class</span><span class="info-value svelte-16xawkm"> </span></div> <div class="info-item svelte-16xawkm"><span class="info-label svelte-16xawkm">Tipo</span><span class="info-value svelte-16xawkm"> </span></div> <div class="info-item svelte-16xawkm"><span class="info-label svelte-16xawkm">Tint</span><span class="info-value svelte-16xawkm"> </span></div> <div class="info-item svelte-16xawkm"><span class="info-label svelte-16xawkm">Reports</span><span class="info-value svelte-16xawkm"> </span></div> <div class="info-item svelte-16xawkm"><span class="info-label svelte-16xawkm">Scratched</span><span> </span></div> <div class="info-item svelte-16xawkm"><span class="info-label svelte-16xawkm">Model</span><span class="info-value mono svelte-16xawkm"> </span></div></div> <!> <!> <div class="section svelte-16xawkm"><div class="section-title svelte-16xawkm">Ownership History</div> <!></div></div></div>',
+    '<div class="weapons-page svelte-16xawkm"><div class="topbar svelte-16xawkm"><button class="back-btn svelte-16xawkm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><polyline points="12 19 5 12 12 5"></polyline></svg> Voltar</button> <div class="topbar-info svelte-16xawkm"><span class="topbar-name svelte-16xawkm"> </span> <span class="topbar-serial svelte-16xawkm"> </span></div> <div class="topbar-flags svelte-16xawkm"><!> <!></div></div> <div class="detail-scroll svelte-16xawkm"><div class="info-grid svelte-16xawkm"><div class="info-card svelte-16xawkm"><div class="info-card-icon svelte-16xawkm"><!></div> <div class="info-card-body svelte-16xawkm"><span class="info-card-label svelte-16xawkm">Proprietário</span> <span class="info-card-value svelte-16xawkm"> </span></div></div> <div class="info-item svelte-16xawkm"><span class="info-label svelte-16xawkm">Série</span><span class="info-value mono svelte-16xawkm"> </span></div> <div class="info-item svelte-16xawkm"><span class="info-label svelte-16xawkm">Nome</span><span class="info-value svelte-16xawkm"> </span></div> <div class="info-item svelte-16xawkm"><span class="info-label svelte-16xawkm">Classe</span><span class="info-value svelte-16xawkm"> </span></div> <div class="info-item svelte-16xawkm"><span class="info-label svelte-16xawkm">Tipo</span><span class="info-value svelte-16xawkm"> </span></div> <div class="info-item svelte-16xawkm"><span class="info-label svelte-16xawkm">Película</span><span class="info-value svelte-16xawkm"> </span></div> <div class="info-item svelte-16xawkm"><span class="info-label svelte-16xawkm">Relatórios</span><span class="info-value svelte-16xawkm"> </span></div> <div class="info-item svelte-16xawkm"><span class="info-label svelte-16xawkm">Danificado</span><span> </span></div> <div class="info-item svelte-16xawkm"><span class="info-label svelte-16xawkm">Modelo</span><span class="info-value mono svelte-16xawkm"> </span></div></div> <!> <!> <div class="section svelte-16xawkm"><div class="section-title svelte-16xawkm">Histórico de posse</div> <!></div></div></div>',
   ),
   BP = E('<div class="empty-state svelte-16xawkm">Loading weapons...</div>'),
   FP = E('<div class="empty-state svelte-16xawkm"> </div>'),
   VP = (n, e, t) => e(o(t).id),
-  qP = E('<span class="scratched-badge svelte-16xawkm">Scratched</span>'),
+  qP = E('<span class="scratched-badge svelte-16xawkm">Danificado</span>'),
   jP = E("<span> </span>"),
   UP = E(
     '<button class="weapon-row svelte-16xawkm"><span class="col-name svelte-16xawkm"> <!></span> <span class="col-serial mono svelte-16xawkm"> </span> <span class="col-owner svelte-16xawkm"> </span> <span class="col-class svelte-16xawkm"> </span> <span class="col-type svelte-16xawkm"> </span> <span class="col-tint svelte-16xawkm"> </span> <span class="col-flags svelte-16xawkm"></span></button>',
   ),
   HP = E(
-    '<div class="weapons-page svelte-16xawkm"><div class="topbar svelte-16xawkm"><div class="search-box svelte-16xawkm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg> <input type="text" placeholder="Search by name, serial, owner, class, tint or type..." class="svelte-16xawkm"/></div> <button class="refresh-btn svelte-16xawkm"> </button></div> <div class="list-panel svelte-16xawkm"><div class="list-header svelte-16xawkm"><span class="col-name svelte-16xawkm">Weapon</span> <span class="col-serial svelte-16xawkm">Série</span> <span class="col-owner svelte-16xawkm">Owner</span> <span class="col-class svelte-16xawkm">Class</span> <span class="col-type svelte-16xawkm">Tipo</span> <span class="col-tint svelte-16xawkm">Tint</span> <span class="col-flags svelte-16xawkm">Flags</span></div> <div class="list-body svelte-16xawkm"><!></div> <!></div></div>',
+    '<div class="weapons-page svelte-16xawkm"><div class="topbar svelte-16xawkm"><div class="search-box svelte-16xawkm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg> <input type="text" placeholder="Buscar por nome, série, proprietário, classe, película ou tipo..." class="svelte-16xawkm"/></div> <button class="refresh-btn svelte-16xawkm"> </button></div> <div class="list-panel svelte-16xawkm"><div class="list-header svelte-16xawkm"><span class="col-name svelte-16xawkm">Arma</span> <span class="col-serial svelte-16xawkm">Série</span> <span class="col-owner svelte-16xawkm">Proprietário</span> <span class="col-class svelte-16xawkm">Classe</span> <span class="col-type svelte-16xawkm">Tipo</span> <span class="col-tint svelte-16xawkm">Película</span> <span class="col-flags svelte-16xawkm">Sinalizações</span></div> <div class="list-body svelte-16xawkm"><!></div> <!></div></div>',
   );
 function GP(n, e) {
   Vt(e, !0);
@@ -38782,11 +38782,11 @@ function GP(n, e) {
   });
   function g(P) {
     switch (P) {
-      case "Active Warrant":
+      case "Mandado ativo":
       case "Dangerous":
         return "pill pill-red";
       case "Bolo":
-      case "Flight Risk":
+      case "Risco de fuga":
         return "pill pill-orange";
       default:
         return "pill pill-grey";
@@ -38798,13 +38798,13 @@ function GP(n, e) {
       y(c, !0);
       try {
         const R = await Te(
-          "getWeaponOwnershipHistory",
+          "getArmaProprietárioshipHistory",
           { serial: O.serial },
           [],
         );
         y(l, Array.isArray(R) ? R : [], !0);
       } catch {
-        (un.error("Failed to load weapon history"), y(l, [], !0));
+        (un.error("Falha ao carregar o histórico da arma"), y(l, [], !0));
       } finally {
         y(c, !1);
       }
@@ -38816,7 +38816,7 @@ function GP(n, e) {
       const P = await Te(he.WEAPON.GET_WEAPONS);
       y(t, Array.isArray(P.weapons) ? P.weapons : [], !0);
     } catch {
-      (un.error("Failed to load weapons"), y(t, [], !0));
+      (un.error("Falha ao carregar as armas"), y(t, [], !0));
     }
     y(i, !1);
   });
@@ -38991,7 +38991,7 @@ function GP(n, e) {
                         }
                         (H(
                           (at) => {
-                            (C(it, o(Ye).owner || "Unknown"),
+                            (C(it, o(Ye).owner || "Desconhecido"),
                               C(
                                 Tt,
                                 `${(o(Ye).weapon_model || "") ?? ""}
@@ -39066,8 +39066,8 @@ function GP(n, e) {
                       C(
                         M,
                         o(s)
-                          ? "No weapons match your search."
-                          : "No weapons found.",
+                          ? "Nenhuma arma corresponde à sua busca."
+                          : "Nenhuma arma encontrada.",
                       ),
                     ),
                       x(oe, ue));
@@ -39168,7 +39168,7 @@ function GP(n, e) {
           },
         }),
           H(() => {
-            ((D.disabled = o(i)), C(V, o(i) ? "Loading..." : "Refresh"));
+            ((D.disabled = o(i)), C(V, o(i) ? "Carregando..." : "Atualizar"));
           }),
           bt(
             U,
@@ -39249,7 +39249,7 @@ async function YP(n, e, t, s, i, r, l, c, u) {
       return;
     }
     if (!r.includes(o(t).type)) {
-      y(s, "Unsupported file type");
+      y(s, "Tipo de arquivo não suportado");
       return;
     }
     try {
@@ -39265,14 +39265,14 @@ async function YP(n, e, t, s, i, r, l, c, u) {
           })
         ).success
       ) {
-        y(s, "Failed to upload attachment");
+        y(s, "Falha ao enviar o anexo");
         return;
       }
       (y(t, null),
         y(c, { type: "document", url: "", label: "" }, !0),
         await u(o(e).case.id));
     } catch {
-      y(s, "Failed to upload attachment");
+      y(s, "Falha ao enviar o anexo");
     }
   }
 }
@@ -39292,7 +39292,7 @@ async function QP(n, e, t, s, i, r, l) {
       })
     ).success)
   ) {
-    y(s, "Failed to add evidence");
+    y(s, "Falha ao adicionar a evidência");
     return;
   }
   (y(
@@ -39319,7 +39319,7 @@ async function XP(n, e, t, s, i, r, l, c, u, h) {
       return;
     }
     if (!r.includes(o(t).type)) {
-      y(s, "Unsupported image type");
+      y(s, "Tipo de imagem não suportado");
       return;
     }
     try {
@@ -39336,14 +39336,14 @@ async function XP(n, e, t, s, i, r, l, c, u, h) {
           })
         ).success
       ) {
-        y(s, "Failed to upload evidence image");
+        y(s, "Falha ao enviar a imagem da evidência");
         return;
       }
       (y(t, null),
         y(c, ""),
         await u(((m = o(h)) == null ? void 0 : m.case.id) || 0));
     } catch {
-      y(s, "Failed to upload evidence image");
+      y(s, "Falha ao enviar a imagem da evidência");
     }
   }
 }
@@ -39358,7 +39358,7 @@ var e4 = E('<span class="topbar-title svelte-1ytieqa">New Case</span>'),
     '<p class="muted-text svelte-1ytieqa">All checklist items complete.</p>',
   ),
   r4 = E(
-    '<div class="detail-scroll svelte-1ytieqa"><div class="create-layout svelte-1ytieqa"><div class="create-main svelte-1ytieqa"><div class="section svelte-1ytieqa"><div class="section-title svelte-1ytieqa">Case Details</div> <input type="text" placeholder="Case Title" class="form-input title-input svelte-1ytieqa"/> <div class="field-row svelte-1ytieqa"><div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">Status</span> <select class="form-select svelte-1ytieqa"></select></div> <div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">Priority</span> <select class="form-select svelte-1ytieqa"></select></div> <div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">Department</span> <input class="form-input svelte-1ytieqa" placeholder="Optional"/></div></div> <div class="field-group svelte-1ytieqa" style="margin-top:12px;"><span class="field-label svelte-1ytieqa">Summary</span> <textarea rows="8" placeholder="Case summary and initial notes..." class="form-textarea svelte-1ytieqa"></textarea></div></div></div> <div class="create-side svelte-1ytieqa"><div class="section svelte-1ytieqa"><div class="section-title svelte-1ytieqa">Checklist</div> <ul class="checklist svelte-1ytieqa"><li><span class="checkmark svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><polyline points="20 6 9 17 4 12" class="svelte-1ytieqa"></polyline></svg></span> Assign primary officer</li> <li><span class="checkmark svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><polyline points="20 6 9 17 4 12" class="svelte-1ytieqa"></polyline></svg></span> Attach evidence</li> <li><span class="checkmark svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><polyline points="20 6 9 17 4 12" class="svelte-1ytieqa"></polyline></svg></span> Attach reports</li> <li><span class="checkmark svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><polyline points="20 6 9 17 4 12" class="svelte-1ytieqa"></polyline></svg></span> Set priority and status</li></ul></div> <div class="section svelte-1ytieqa"><div class="section-title svelte-1ytieqa">Next Actions</div> <p class="muted-text svelte-1ytieqa">After creation, open the case to manage officers, evidence, attachments, and audit logs.</p> <!></div> <button class="primary-btn create-btn svelte-1ytieqa" type="button">Criar Caso</button></div></div></div>',
+    '<div class="detail-scroll svelte-1ytieqa"><div class="create-layout svelte-1ytieqa"><div class="create-main svelte-1ytieqa"><div class="section svelte-1ytieqa"><div class="section-title svelte-1ytieqa">Detalhes do caso</div> <input type="text" placeholder="Título do caso" class="form-input title-input svelte-1ytieqa"/> <div class="field-row svelte-1ytieqa"><div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">Status</span> <select class="form-select svelte-1ytieqa"></select></div> <div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">Prioridade</span> <select class="form-select svelte-1ytieqa"></select></div> <div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">Departamento</span> <input class="form-input svelte-1ytieqa" placeholder="Opcional"/></div></div> <div class="field-group svelte-1ytieqa" style="margin-top:12px;"><span class="field-label svelte-1ytieqa">Resumo</span> <textarea rows="8" placeholder="Resumo do caso e observações iniciais..." class="form-textarea svelte-1ytieqa"></textarea></div></div></div> <div class="create-side svelte-1ytieqa"><div class="section svelte-1ytieqa"><div class="section-title svelte-1ytieqa">Checklist</div> <ul class="checklist svelte-1ytieqa"><li><span class="checkmark svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><polyline points="20 6 9 17 4 12" class="svelte-1ytieqa"></polyline></svg></span> Atribuir oficial principal</li> <li><span class="checkmark svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><polyline points="20 6 9 17 4 12" class="svelte-1ytieqa"></polyline></svg></span> Anexar evidências</li> <li><span class="checkmark svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><polyline points="20 6 9 17 4 12" class="svelte-1ytieqa"></polyline></svg></span> Anexar relatórios</li> <li><span class="checkmark svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><polyline points="20 6 9 17 4 12" class="svelte-1ytieqa"></polyline></svg></span> Definir prioridade e status</li></ul></div> <div class="section svelte-1ytieqa"><div class="section-title svelte-1ytieqa">Próximas ações</div> <p class="muted-text svelte-1ytieqa">Após a criação, abra o caso para gerenciar oficiais, evidências, anexos e logs de auditoria.</p> <!></div> <button class="primary-btn create-btn svelte-1ytieqa" type="button">Criar Caso</button></div></div></div>',
   ),
   a4 = (n, e) => e({ status: n.target.value }),
   o4 = E('<option class="svelte-1ytieqa"> </option>'),
@@ -39398,7 +39398,7 @@ var e4 = E('<span class="topbar-title svelte-1ytieqa">New Case</span>'),
   P4 = (n, e, t) => e(o(t).id, { stored: !o(t).stored }),
   N4 = (n, e, t) => e(o(t).id),
   D4 = E(
-    '<div class="list-item svelte-1ytieqa"><button class="evidence-select svelte-1ytieqa"><strong class="svelte-1ytieqa"> </strong> <span class="svelte-1ytieqa"> </span> <span class="svelte-1ytieqa"> </span></button> <span class="nav-link nav-link-sm svelte-1ytieqa" role="button" tabindex="-1">View in Evidence</span> <div class="evidence-actions svelte-1ytieqa"><button class="action-btn svelte-1ytieqa"> </button> <button class="remove-btn svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><line x1="18" y1="6" x2="6" y2="18" class="svelte-1ytieqa"></line><line x1="6" y1="6" x2="18" y2="18" class="svelte-1ytieqa"></line></svg> Remove</button></div></div>',
+    '<div class="list-item svelte-1ytieqa"><button class="evidence-select svelte-1ytieqa"><strong class="svelte-1ytieqa"> </strong> <span class="svelte-1ytieqa"> </span> <span class="svelte-1ytieqa"> </span></button> <span class="nav-link nav-link-sm svelte-1ytieqa" role="button" tabindex="-1">Ver em evidências</span> <div class="evidence-actions svelte-1ytieqa"><button class="action-btn svelte-1ytieqa"> </button> <button class="remove-btn svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><line x1="18" y1="6" x2="6" y2="18" class="svelte-1ytieqa"></line><line x1="6" y1="6" x2="18" y2="18" class="svelte-1ytieqa"></line></svg> Remove</button></div></div>',
   ),
   L4 = async (n, e, t, s, i, r, l) => {
     if ((y(e, Math.max(1, o(e) - 1), !0), o(t))) {
@@ -39438,7 +39438,7 @@ var e4 = E('<span class="topbar-title svelte-1ytieqa">New Case</span>'),
   ),
   G4 = E('<div class="custody-list svelte-1ytieqa"></div>'),
   W4 = E(
-    '<div class="section svelte-1ytieqa"><div class="section-title svelte-1ytieqa">Evidence Custody</div> <div class="transfer-row svelte-1ytieqa"><input class="form-input svelte-1ytieqa" placeholder="Transfer to Citizen ID"/> <input class="form-input svelte-1ytieqa" placeholder="Observações da transferência"/> <button class="action-btn svelte-1ytieqa">Transferir</button></div> <div class="upload-row svelte-1ytieqa"><input type="file" accept=".jpg,.jpeg,.png,.webp" class="file-input svelte-1ytieqa"/> <input class="form-input svelte-1ytieqa" placeholder="Rótulo da imagem"/> <button class="primary-btn svelte-1ytieqa">Upload Image</button></div> <!> <!></div>',
+    '<div class="section svelte-1ytieqa"><div class="section-title svelte-1ytieqa">Evidence Custody</div> <div class="transfer-row svelte-1ytieqa"><input class="form-input svelte-1ytieqa" placeholder="Transfer to ID do cidadão"/> <input class="form-input svelte-1ytieqa" placeholder="Observações da transferência"/> <button class="action-btn svelte-1ytieqa">Transferir</button></div> <div class="upload-row svelte-1ytieqa"><input type="file" accept=".jpg,.jpeg,.png,.webp" class="file-input svelte-1ytieqa"/> <input class="form-input svelte-1ytieqa" placeholder="Rótulo da imagem"/> <button class="primary-btn svelte-1ytieqa">Upload Image</button></div> <!> <!></div>',
   ),
   Z4 = E('<p class="muted-text svelte-1ytieqa">No audit entries found.</p>'),
   $4 = E(
@@ -39461,36 +39461,36 @@ var e4 = E('<span class="topbar-title svelte-1ytieqa">New Case</span>'),
     1,
   ),
   Q4 = E(
-    '<div class="detail-scroll svelte-1ytieqa"><div class="section svelte-1ytieqa"><div class="section-title svelte-1ytieqa">Case Information</div> <p class="summary-text svelte-1ytieqa"> </p> <div class="field-row svelte-1ytieqa"><div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">Status</span> <select class="form-select svelte-1ytieqa"></select></div> <div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">Priority</span> <select class="form-select svelte-1ytieqa"></select></div> <div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">Department</span> <input class="form-input svelte-1ytieqa"/></div> <div class="field-group field-group-actions svelte-1ytieqa"><button class="danger-btn svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><polyline points="3 6 5 6 21 6" class="svelte-1ytieqa"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" class="svelte-1ytieqa"></path></svg> Delete</button></div></div></div> <div class="section svelte-1ytieqa"><div class="section-header svelte-1ytieqa"><div class="section-title svelte-1ytieqa" style="margin-bottom:0;">Officers</div> <div class="inline-controls svelte-1ytieqa"><select class="form-select-sm svelte-1ytieqa"><option class="svelte-1ytieqa">Primary</option><option class="svelte-1ytieqa">Assisting</option><option class="svelte-1ytieqa">Supervisor</option></select> <button class="action-btn svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><line x1="12" y1="5" x2="12" y2="19" class="svelte-1ytieqa"></line><line x1="5" y1="12" x2="19" y2="12" class="svelte-1ytieqa"></line></svg> Add Officer</button></div></div> <!></div> <div class="section svelte-1ytieqa"><div class="section-header svelte-1ytieqa"><div class="section-title svelte-1ytieqa" style="margin-bottom:0;">Linked Reports</div> <div class="inline-controls svelte-1ytieqa"><input class="form-input-sm svelte-1ytieqa" placeholder="ID do Relatório"/> <button class="action-btn svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" class="svelte-1ytieqa"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" class="svelte-1ytieqa"></path></svg> Link</button></div></div> <!></div> <div class="section svelte-1ytieqa"><div class="section-title svelte-1ytieqa">Attachments</div> <div class="attachment-form svelte-1ytieqa"><select class="form-select svelte-1ytieqa"><option class="svelte-1ytieqa">Photo</option><option class="svelte-1ytieqa">Document</option><option class="svelte-1ytieqa">Other</option></select> <input class="form-input svelte-1ytieqa" placeholder="URL"/> <input class="form-input svelte-1ytieqa" placeholder="Label"/> <button class="action-btn svelte-1ytieqa">Add</button></div> <div class="upload-row svelte-1ytieqa"><input type="file" accept=".jpg,.jpeg,.png,.webp,.pdf" class="file-input svelte-1ytieqa"/> <!> <button class="primary-btn svelte-1ytieqa">Upload</button></div> <!> <!></div> <div class="section svelte-1ytieqa"><div class="section-title svelte-1ytieqa">Evidence</div> <div class="evidence-form-grid svelte-1ytieqa"><div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">Título</span> <input class="form-input svelte-1ytieqa"/></div> <div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">Tipo</span> <input class="form-input svelte-1ytieqa"/></div> <div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">Série</span> <input class="form-input svelte-1ytieqa"/></div> <div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">Local</span> <input class="form-input svelte-1ytieqa"/></div> <div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">Stash ID</span> <input class="form-input svelte-1ytieqa"/></div> <div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">Notes</span> <textarea rows="2" class="form-textarea svelte-1ytieqa"></textarea></div></div> <div class="evidence-actions-row svelte-1ytieqa"><label class="checkbox-label svelte-1ytieqa"><input type="checkbox" class="svelte-1ytieqa"/> Stored</label> <button class="primary-btn svelte-1ytieqa">Add Evidence</button></div> <!> <!></div> <!> <div class="section svelte-1ytieqa"><div class="section-title svelte-1ytieqa">Audit Log</div> <!></div></div>',
+    '<div class="detail-scroll svelte-1ytieqa"><div class="section svelte-1ytieqa"><div class="section-title svelte-1ytieqa">Informações do caso</div> <p class="summary-text svelte-1ytieqa"> </p> <div class="field-row svelte-1ytieqa"><div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">Status</span> <select class="form-select svelte-1ytieqa"></select></div> <div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">Prioridade</span> <select class="form-select svelte-1ytieqa"></select></div> <div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">Departamento</span> <input class="form-input svelte-1ytieqa"/></div> <div class="field-group field-group-actions svelte-1ytieqa"><button class="danger-btn svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><polyline points="3 6 5 6 21 6" class="svelte-1ytieqa"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" class="svelte-1ytieqa"></path></svg> Excluir</button></div></div></div> <div class="section svelte-1ytieqa"><div class="section-header svelte-1ytieqa"><div class="section-title svelte-1ytieqa" style="margin-bottom:0;">Oficiais</div> <div class="inline-controls svelte-1ytieqa"><select class="form-select-sm svelte-1ytieqa"><option class="svelte-1ytieqa">Principal</option><option class="svelte-1ytieqa">Apoio</option><option class="svelte-1ytieqa">Supervisor</option></select> <button class="action-btn svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><line x1="12" y1="5" x2="12" y2="19" class="svelte-1ytieqa"></line><line x1="5" y1="12" x2="19" y2="12" class="svelte-1ytieqa"></line></svg> Add Officer</button></div></div> <!></div> <div class="section svelte-1ytieqa"><div class="section-header svelte-1ytieqa"><div class="section-title svelte-1ytieqa" style="margin-bottom:0;">Relatórios vinculados</div> <div class="inline-controls svelte-1ytieqa"><input class="form-input-sm svelte-1ytieqa" placeholder="ID do Relatório"/> <button class="action-btn svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" class="svelte-1ytieqa"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" class="svelte-1ytieqa"></path></svg> Link</button></div></div> <!></div> <div class="section svelte-1ytieqa"><div class="section-title svelte-1ytieqa">Anexos</div> <div class="attachment-form svelte-1ytieqa"><select class="form-select svelte-1ytieqa"><option class="svelte-1ytieqa">Foto</option><option class="svelte-1ytieqa">Documento</option><option class="svelte-1ytieqa">Outro</option></select> <input class="form-input svelte-1ytieqa" placeholder="URL"/> <input class="form-input svelte-1ytieqa" placeholder="Rótulo"/> <button class="action-btn svelte-1ytieqa">Adicionar</button></div> <div class="upload-row svelte-1ytieqa"><input type="file" accept=".jpg,.jpeg,.png,.webp,.pdf" class="file-input svelte-1ytieqa"/> <!> <button class="primary-btn svelte-1ytieqa">Enviar</button></div> <!> <!></div> <div class="section svelte-1ytieqa"><div class="section-title svelte-1ytieqa">Evidências</div> <div class="evidence-form-grid svelte-1ytieqa"><div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">Título</span> <input class="form-input svelte-1ytieqa"/></div> <div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">Tipo</span> <input class="form-input svelte-1ytieqa"/></div> <div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">Série</span> <input class="form-input svelte-1ytieqa"/></div> <div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">Local</span> <input class="form-input svelte-1ytieqa"/></div> <div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">ID do depósito</span> <input class="form-input svelte-1ytieqa"/></div> <div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">Observações</span> <textarea rows="2" class="form-textarea svelte-1ytieqa"></textarea></div></div> <div class="evidence-actions-row svelte-1ytieqa"><label class="checkbox-label svelte-1ytieqa"><input type="checkbox" class="svelte-1ytieqa"/> Armazenada</label> <button class="primary-btn svelte-1ytieqa">Adicionar evidência</button></div> <!> <!></div> <!> <div class="section svelte-1ytieqa"><div class="section-title svelte-1ytieqa">Log de auditoria</div> <!></div></div>',
   ),
   X4 = E(
     '<div class="section empty-detail svelte-1ytieqa"><h3 class="svelte-1ytieqa">Select a case to view details</h3> <p class="svelte-1ytieqa">Use the list to open a case or create a new one.</p></div>',
   ),
   eN = E(
-    '<div class="topbar svelte-1ytieqa"><button class="back-btn svelte-1ytieqa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><polyline points="15 18 9 12 15 6" class="svelte-1ytieqa"></polyline></svg> Back</button> <!></div> <!>',
+    '<div class="topbar svelte-1ytieqa"><button class="back-btn svelte-1ytieqa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><polyline points="15 18 9 12 15 6" class="svelte-1ytieqa"></polyline></svg> Voltar</button> <!></div> <!>',
     1,
   ),
   tN = E('<option class="svelte-1ytieqa"> </option>'),
   nN = E('<option class="svelte-1ytieqa"> </option>'),
   sN = E(
-    '<div class="center-state svelte-1ytieqa"><div class="loading-spinner svelte-1ytieqa"></div> <p class="svelte-1ytieqa">Loading cases...</p></div>',
+    '<div class="center-state svelte-1ytieqa"><div class="loading-spinner svelte-1ytieqa"></div> <p class="svelte-1ytieqa">Carregando casos...</p></div>',
   ),
   iN = E(
-    '<button class="action-btn svelte-1ytieqa">Create First Case</button>',
+    '<button class="action-btn svelte-1ytieqa">Criar primeiro caso</button>',
   ),
   rN = E(
-    '<div class="center-state svelte-1ytieqa"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" class="svelte-1ytieqa"></path></svg> <h3 class="svelte-1ytieqa">No Cases Found</h3> <p class="svelte-1ytieqa"> </p> <!></div>',
+    '<div class="center-state svelte-1ytieqa"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" class="svelte-1ytieqa"></path></svg> <h3 class="svelte-1ytieqa">Nenhum caso encontrado</h3> <p class="svelte-1ytieqa"> </p> <!></div>',
   ),
   aN = (n, e, t) => e(o(t).id),
   oN = E(
     '<button class="table-row svelte-1ytieqa"><span class="col-title row-title svelte-1ytieqa"> </span> <span class="col-case row-case svelte-1ytieqa"> </span> <span class="col-status svelte-1ytieqa"><span> </span></span> <span class="col-priority svelte-1ytieqa"><span> </span></span> <span class="col-dept svelte-1ytieqa"> </span> <span class="col-officer svelte-1ytieqa"> </span> <span class="col-date svelte-1ytieqa"> </span> <span class="col-date svelte-1ytieqa"> </span></button>',
   ),
   lN = E(
-    '<div class="table-header svelte-1ytieqa"><span class="col-title svelte-1ytieqa">Título</span> <span class="col-case svelte-1ytieqa">Caso #</span> <span class="col-status svelte-1ytieqa">Status</span> <span class="col-priority svelte-1ytieqa">Priority</span> <span class="col-dept svelte-1ytieqa">Department</span> <span class="col-officer svelte-1ytieqa">Primary Officer</span> <span class="col-date svelte-1ytieqa">Created</span> <span class="col-date svelte-1ytieqa">Updated</span></div> <div class="table-body svelte-1ytieqa"></div>',
+    '<div class="table-header svelte-1ytieqa"><span class="col-title svelte-1ytieqa">Título</span> <span class="col-case svelte-1ytieqa">Caso #</span> <span class="col-status svelte-1ytieqa">Status</span> <span class="col-priority svelte-1ytieqa">Prioridade</span> <span class="col-dept svelte-1ytieqa">Departamento</span> <span class="col-officer svelte-1ytieqa">Primary Officer</span> <span class="col-date svelte-1ytieqa">Created</span> <span class="col-date svelte-1ytieqa">Updated</span></div> <div class="table-body svelte-1ytieqa"></div>',
     1,
   ),
   cN = E(
-    '<div class="topbar svelte-1ytieqa"><div class="search-box svelte-1ytieqa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><circle cx="11" cy="11" r="8" class="svelte-1ytieqa"></circle><line x1="21" y1="21" x2="16.65" y2="16.65" class="svelte-1ytieqa"></line></svg> <input type="text" placeholder="Search cases..." class="svelte-1ytieqa"/></div> <select class="form-select-sm svelte-1ytieqa"><option class="svelte-1ytieqa">All Status</option><!></select> <select class="form-select-sm svelte-1ytieqa"><option class="svelte-1ytieqa">All Priority</option><!></select> <div style="flex:1;" class="svelte-1ytieqa"></div> <button class="action-btn svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><line x1="12" y1="5" x2="12" y2="19" class="svelte-1ytieqa"></line><line x1="5" y1="12" x2="19" y2="12" class="svelte-1ytieqa"></line></svg> New Case</button> <button class="back-btn svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><polyline points="23 4 23 10 17 10" class="svelte-1ytieqa"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" class="svelte-1ytieqa"></path></svg> Refresh</button></div> <div class="list-panel svelte-1ytieqa"><!> <!></div>',
+    '<div class="topbar svelte-1ytieqa"><div class="search-box svelte-1ytieqa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><circle cx="11" cy="11" r="8" class="svelte-1ytieqa"></circle><line x1="21" y1="21" x2="16.65" y2="16.65" class="svelte-1ytieqa"></line></svg> <input type="text" placeholder="Search cases..." class="svelte-1ytieqa"/></div> <select class="form-select-sm svelte-1ytieqa"><option class="svelte-1ytieqa">All Status</option><!></select> <select class="form-select-sm svelte-1ytieqa"><option class="svelte-1ytieqa">All Prioridade</option><!></select> <div style="flex:1;" class="svelte-1ytieqa"></div> <button class="action-btn svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><line x1="12" y1="5" x2="12" y2="19" class="svelte-1ytieqa"></line><line x1="5" y1="12" x2="19" y2="12" class="svelte-1ytieqa"></line></svg> New Case</button> <button class="back-btn svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><polyline points="23 4 23 10 17 10" class="svelte-1ytieqa"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" class="svelte-1ytieqa"></path></svg> Atualizar</button></div> <div class="list-panel svelte-1ytieqa"><!> <!></div>',
     1,
   ),
   dN = E('<div class="cases-page svelte-1ytieqa"><!></div> <!>', 1);
@@ -39498,8 +39498,8 @@ function uN(n, e) {
   Vt(e, !0);
   function t(ae) {
     if (!e.tabService) return;
-    e.tabService.setActiveTab(ae);
-    const _e = e.tabService.getActiveInstance();
+    e.tabService.setAtivoTab(ae);
+    const _e = e.tabService.getAtivoInstance();
     _e && e.tabService.setInstanceTab(_e.id, ae);
   }
   const s = __(),
@@ -39538,7 +39538,7 @@ function uN(n, e) {
       primaryOfficer: !1,
       attachments: !1,
       reports: !1,
-      statusPriority: !0,
+      statusPrioridade: !0,
     }),
   );
   kn(async () => {
@@ -39591,7 +39591,7 @@ function uN(n, e) {
       ct = !!(ae.case.status && ae.case.priority);
     y(
       q,
-      { primaryOfficer: _e, attachments: Ie, reports: st, statusPriority: ct },
+      { primaryOfficer: _e, attachments: Ie, reports: st, statusPrioridade: ct },
       !0,
     );
   }
@@ -39682,13 +39682,13 @@ function uN(n, e) {
     case_attachment_uploaded: "Uploaded attachment",
     case_attachment_removed: "Removed attachment",
     evidence_added: "Added evidence",
-    evidence_updated: "Updated evidence",
-    evidence_deleted: "Deleted evidence",
+    evidence_updated: "Atualizou uma evidência",
+    evidence_deleted: "Excluiu uma evidência",
     evidence_transferred: "Transferred evidence",
     evidence_image_added: "Added evidence image",
     evidence_image_removed: "Removed evidence image",
     evidence_linked_case: "Linked evidence to case",
-    case_created_from_evidence: "Created case from evidence",
+    case_created_from_evidence: "Criou um caso a partir da evidência",
   };
   function $e(ae) {
     return ke[ae] || ae.replace(/_/g, " ");
@@ -39894,7 +39894,7 @@ function uN(n, e) {
                   o(q).primaryOfficer &&
                     o(q).attachments &&
                     o(q).reports &&
-                    o(q).statusPriority &&
+                    o(q).statusPrioridade &&
                     yt(Xe);
                 });
               }
@@ -39912,7 +39912,7 @@ function uN(n, e) {
                     () => ({ complete: o(q).primaryOfficer }),
                     () => ({ complete: o(q).attachments }),
                     () => ({ complete: o(q).reports }),
-                    () => ({ complete: o(q).statusPriority }),
+                    () => ({ complete: o(q).statusPrioridade }),
                   ],
                 ),
                 bt(
@@ -40050,7 +40050,7 @@ function uN(n, e) {
                                   ),
                                     C(
                                       bn,
-                                      `${o(wn).rank || "Oficial"}
+                                      `${o(wn).rank || "Officer"}
 											${o(wn).badge_number ? " - " + o(wn).badge_number : ""}`,
                                     ),
                                     C(Ls, o(wn).role));
@@ -41043,7 +41043,7 @@ var gN = (n, e) => {
     '<div class="form-group svelte-1m4fek"><span class="form-label svelte-1m4fek"> </span> <input class="form-input svelte-1m4fek"/></div>',
   ),
   QN = E(
-    '<div class="form-group svelte-1m4fek"><span class="form-label svelte-1m4fek">Plate Number</span> <input placeholder="Placa" class="form-input svelte-1m4fek"/></div>',
+    '<div class="form-group svelte-1m4fek"><span class="form-label svelte-1m4fek">Placa Number</span> <input placeholder="Placa" class="form-input svelte-1m4fek"/></div>',
   ),
   XN = E(
     '<div class="form-group svelte-1m4fek"><span class="form-label svelte-1m4fek">Quantity</span> <input placeholder="Quantidade / peso" class="form-input svelte-1m4fek"/></div>',
@@ -41052,7 +41052,7 @@ var gN = (n, e) => {
     '<div class="form-group svelte-1m4fek"><span class="form-label svelte-1m4fek">Stash ID</span> <input placeholder="LOCKER-001" class="form-input mono-input svelte-1m4fek"/></div>',
   ),
   tD = E(
-    '<label class="checkbox-label svelte-1m4fek"><input type="checkbox" class="svelte-1m4fek"/> <span class="svelte-1m4fek">Evidence is stored / secured</span></label>',
+    '<label class="checkbox-label svelte-1m4fek"><input type="checkbox" class="svelte-1m4fek"/> <span class="svelte-1m4fek">A evidência está armazenada / protegida</span></label>',
   ),
   nD = (n, e) => {
     const t = n.target;
@@ -41065,7 +41065,7 @@ var gN = (n, e) => {
   rD = E('<p class="error-text svelte-1m4fek"> </p>'),
   aD = (n, e) => y(e, !1),
   oD = E(
-    '<div class="modal-backdrop svelte-1m4fek" role="button" tabindex="-1"><div class="modal svelte-1m4fek" role="dialog" aria-modal="true"><div class="modal-header svelte-1m4fek"><h3 class="svelte-1m4fek">New Evidence</h3> <button class="close-btn svelte-1m4fek"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1m4fek"><line x1="18" y1="6" x2="6" y2="18" class="svelte-1m4fek"></line><line x1="6" y1="6" x2="18" y2="18" class="svelte-1m4fek"></line></svg></button></div> <div class="modal-body svelte-1m4fek"><div class="form-grid form-grid-4 svelte-1m4fek"><div class="form-group svelte-1m4fek"><span class="form-label svelte-1m4fek">Case ID</span> <input placeholder="Numérico ou CASO-..." class="form-input svelte-1m4fek"/></div> <div class="form-group svelte-1m4fek"><span class="form-label svelte-1m4fek">Report ID</span> <input placeholder="ID do Relatório" class="form-input svelte-1m4fek"/></div> <div class="form-group svelte-1m4fek"><span class="form-label svelte-1m4fek">Título</span> <input placeholder="Título da evidência" class="form-input svelte-1m4fek"/></div> <div class="form-group svelte-1m4fek"><span class="form-label svelte-1m4fek">Tipo</span> <select class="form-input svelte-1m4fek"><option class="svelte-1m4fek">Physical</option><option class="svelte-1m4fek">Digital</option><option class="svelte-1m4fek">Document</option><option class="svelte-1m4fek">Weapon</option><option class="svelte-1m4fek">Drug</option><option class="svelte-1m4fek">Vehicle</option><option class="svelte-1m4fek">Other</option></select></div></div> <div class="form-grid svelte-1m4fek"><!> <!> <!> <!></div> <div class="form-grid svelte-1m4fek"><div class="form-group svelte-1m4fek"><span class="form-label svelte-1m4fek">Local</span> <input placeholder="Local encontrado" class="form-input svelte-1m4fek"/></div> <!></div> <!> <div class="form-group svelte-1m4fek"><span class="form-label svelte-1m4fek">Notes</span> <textarea rows="4" placeholder="Observações adicionais..." class="form-input svelte-1m4fek"></textarea></div> <div class="form-group svelte-1m4fek"><span class="form-label svelte-1m4fek">Attach Images</span> <input type="file" accept=".jpg,.jpeg,.png,.webp" multiple class="file-input svelte-1m4fek"/> <!></div></div> <!> <div class="modal-footer svelte-1m4fek"><button class="cancel-btn svelte-1m4fek">Cancel</button> <button class="save-btn svelte-1m4fek">Create Evidence</button></div></div></div>',
+    '<div class="modal-backdrop svelte-1m4fek" role="button" tabindex="-1"><div class="modal svelte-1m4fek" role="dialog" aria-modal="true"><div class="modal-header svelte-1m4fek"><h3 class="svelte-1m4fek">Nova evidência</h3> <button class="close-btn svelte-1m4fek"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1m4fek"><line x1="18" y1="6" x2="6" y2="18" class="svelte-1m4fek"></line><line x1="6" y1="6" x2="18" y2="18" class="svelte-1m4fek"></line></svg></button></div> <div class="modal-body svelte-1m4fek"><div class="form-grid form-grid-4 svelte-1m4fek"><div class="form-group svelte-1m4fek"><span class="form-label svelte-1m4fek">ID do caso</span> <input placeholder="Numérico ou CASO-..." class="form-input svelte-1m4fek"/></div> <div class="form-group svelte-1m4fek"><span class="form-label svelte-1m4fek">ID do relatório</span> <input placeholder="ID do Relatório" class="form-input svelte-1m4fek"/></div> <div class="form-group svelte-1m4fek"><span class="form-label svelte-1m4fek">Título</span> <input placeholder="Título da evidência" class="form-input svelte-1m4fek"/></div> <div class="form-group svelte-1m4fek"><span class="form-label svelte-1m4fek">Tipo</span> <select class="form-input svelte-1m4fek"><option class="svelte-1m4fek">Física</option><option class="svelte-1m4fek">Digital</option><option class="svelte-1m4fek">Documento</option><option class="svelte-1m4fek">Arma</option><option class="svelte-1m4fek">Droga</option><option class="svelte-1m4fek">Veículo</option><option class="svelte-1m4fek">Outro</option></select></div></div> <div class="form-grid svelte-1m4fek"><!> <!> <!> <!></div> <div class="form-grid svelte-1m4fek"><div class="form-group svelte-1m4fek"><span class="form-label svelte-1m4fek">Local</span> <input placeholder="Local encontrado" class="form-input svelte-1m4fek"/></div> <!></div> <!> <div class="form-group svelte-1m4fek"><span class="form-label svelte-1m4fek">Observações</span> <textarea rows="4" placeholder="Observações adicionais..." class="form-input svelte-1m4fek"></textarea></div> <div class="form-group svelte-1m4fek"><span class="form-label svelte-1m4fek">Anexar imagens</span> <input type="file" accept=".jpg,.jpeg,.png,.webp" multiple class="file-input svelte-1m4fek"/> <!></div></div> <!> <div class="modal-footer svelte-1m4fek"><button class="cancel-btn svelte-1m4fek">Cancelar</button> <button class="save-btn svelte-1m4fek">Criar evidência</button></div></div></div>',
   ),
   lD = (n, e) => {
     n.key === "Escape" && e();
@@ -41075,15 +41075,15 @@ var gN = (n, e) => {
     '<div class="lightbox-overlay svelte-1m4fek"><div class="lightbox-content svelte-1m4fek"><div class="lightbox-header svelte-1m4fek"><span class="lightbox-label svelte-1m4fek"> </span> <button class="close-btn svelte-1m4fek"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1m4fek"><line x1="18" y1="6" x2="6" y2="18" class="svelte-1m4fek"></line><line x1="6" y1="6" x2="18" y2="18" class="svelte-1m4fek"></line></svg></button></div> <img class="lightbox-image svelte-1m4fek"/></div></div>',
   ),
   uD = E(
-    '<div class="evidence-page svelte-1m4fek"><div class="topbar svelte-1m4fek"><div class="search-box svelte-1m4fek"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1m4fek"><circle cx="11" cy="11" r="8" class="svelte-1m4fek"></circle><line x1="21" y1="21" x2="16.65" y2="16.65" class="svelte-1m4fek"></line></svg> <input type="text" placeholder="Buscar por título, série, local ou depósito..." class="svelte-1m4fek"/></div> <button class="action-btn svelte-1m4fek">Search</button> <button class="create-btn svelte-1m4fek">New Evidence</button></div> <!> <div class="main-grid svelte-1m4fek"><div class="list-panel svelte-1m4fek"><!> <!></div> <div class="detail-sidebar svelte-1m4fek"><!></div></div></div> <!> <!>',
+    '<div class="evidence-page svelte-1m4fek"><div class="topbar svelte-1m4fek"><div class="search-box svelte-1m4fek"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1m4fek"><circle cx="11" cy="11" r="8" class="svelte-1m4fek"></circle><line x1="21" y1="21" x2="16.65" y2="16.65" class="svelte-1m4fek"></line></svg> <input type="text" placeholder="Buscar por título, série, local ou depósito..." class="svelte-1m4fek"/></div> <button class="action-btn svelte-1m4fek">Search</button> <button class="create-btn svelte-1m4fek">Nova evidência</button></div> <!> <div class="main-grid svelte-1m4fek"><div class="list-panel svelte-1m4fek"><!> <!></div> <div class="detail-sidebar svelte-1m4fek"><!></div></div></div> <!> <!>',
     1,
   );
 function fD(n, e) {
   Vt(e, !0);
   function t(pe) {
     if (!e.tabService) return;
-    e.tabService.setActiveTab(pe);
-    const ne = e.tabService.getActiveInstance();
+    e.tabService.setAtivoTab(pe);
+    const ne = e.tabService.getAtivoInstance();
     ne && e.tabService.setInstanceTab(ne.id, pe);
   }
   const s = m_();
@@ -41114,45 +41114,45 @@ function fD(n, e) {
     Physical: {
       serial: !0,
       description: !0,
-      descriptionPlaceholder: "What is it? (e.g. Knife, Clothing, Bag)",
+      descriptionPlaceholder: "O que é? (ex.: Faca, roupa, bolsa)",
       stash: !0,
       stored: !0,
     },
     Digital: {
       description: !0,
       descriptionPlaceholder:
-        "Type of digital evidence (e.g. Phone records, CCTV footage)",
+        "Tipo de evidência digital (ex.: registros telefônicos, imagens de CCTV)",
     },
     Document: {
       serial: !0,
-      serialLabel: "Document #",
-      serialPlaceholder: "Document reference number",
+      serialLabel: "Documento nº",
+      serialPlaceholder: "Número de referência do documento",
       description: !0,
-      descriptionPlaceholder: "Document type (e.g. Bank statement, ID card)",
+      descriptionPlaceholder: "Tipo de documento (ex.: extrato bancário, documento de identidade)",
     },
-    Weapon: {
+    Arma: {
       serial: !0,
       serialLabel: "Número de Série",
-      serialPlaceholder: "Weapon serial number",
+      serialPlaceholder: "Número de série da arma",
       stash: !0,
       stored: !0,
     },
     Drug: {
       description: !0,
-      descriptionPlaceholder: "Substance type (e.g. Cocaine, Marijuana)",
+      descriptionPlaceholder: "Tipo de substância (ex.: Cocaína, maconha)",
       quantity: !0,
       stash: !0,
       stored: !0,
     },
-    Vehicle: {
+    Veículo: {
       plate: !0,
       description: !0,
-      descriptionPlaceholder: "Vehicle description (e.g. Red Sultan RS)",
+      descriptionPlaceholder: "Descrição do veículo (ex.: Sultan RS vermelho)",
     },
     Other: {
       serial: !0,
       description: !0,
-      descriptionPlaceholder: "Describe the evidence",
+      descriptionPlaceholder: "Descreva a evidência",
       stash: !0,
       stored: !0,
     },
@@ -41234,7 +41234,7 @@ function fD(n, e) {
     const pe = [];
     return (
       o(_).description.trim() && pe.push(o(_).description.trim()),
-      o(_).plateNumber.trim() && pe.push(`Plate: ${o(_).plateNumber.trim()}`),
+      o(_).plateNumber.trim() && pe.push(`Placa: ${o(_).plateNumber.trim()}`),
       o(_).quantity.trim() && pe.push(`Qty: ${o(_).quantity.trim()}`),
       o(_).notes.trim() && pe.push(o(_).notes.trim()),
       pe.join(" | ")
@@ -41258,7 +41258,7 @@ function fD(n, e) {
         (o(T).images = o(T).images.filter((ce) => ce.id !== pe)));
   }
   function W(pe) {
-    return pe ? "Stored" : "In Field";
+    return pe ? "Stored" : "Em campo";
   }
   kn(async () => {
     await ee(1);
@@ -41472,7 +41472,7 @@ function fD(n, e) {
                   {
                     var St = (on) => {
                         var Xe = fs();
-                        (H(() => C(Xe, o(tt).to_citizenid || "Unknown")),
+                        (H(() => C(Xe, o(tt).to_citizenid || "Desconhecido")),
                           x(on, Xe));
                       },
                       Gt = (on, Xe) => {
@@ -41649,7 +41649,7 @@ function fD(n, e) {
                   H(() => {
                     (Rn($t, "src", o(Le).url),
                       Rn($t, "alt", o(Le).label || "Evidence"),
-                      C(Gt, o(Le).label || "No label"));
+                      C(Gt, o(Le).label || "Sem rótulo"));
                   }),
                   x(tt, wt));
               },
@@ -41746,7 +41746,7 @@ function fD(n, e) {
             Rn(
               yt,
               "placeholder",
-              o(w).descriptionPlaceholder || "Describe the evidence",
+              o(w).descriptionPlaceholder || "Descreva a evidência",
             ),
           ),
             bt(
@@ -41768,8 +41768,8 @@ function fD(n, e) {
             Nt = f(yt),
             mt = v(yt, 2);
           (H(() => {
-            (C(Nt, o(w).serialLabel || "Serial #"),
-              Rn(mt, "placeholder", o(w).serialPlaceholder || "Serial number"));
+            (C(Nt, o(w).serialLabel || "Nº de série"),
+              Rn(mt, "placeholder", o(w).serialPlaceholder || "Número de série"));
           }),
             bt(
               mt,
@@ -41976,7 +41976,7 @@ var hD = E(
     '<div class="empty-state svelte-vryshn"><div class="loading-spinner svelte-vryshn"></div> <p class="svelte-vryshn">Loading cameras...</p></div>',
   ),
   vD = E(
-    '<div class="empty-state svelte-vryshn"><p class="empty-title svelte-vryshn">No Cameras Found</p> <p class="empty-sub svelte-vryshn"> </p></div>',
+    '<div class="empty-state svelte-vryshn"><p class="empty-title svelte-vryshn">Nenhuma câmera encontrada</p> <p class="empty-sub svelte-vryshn"> </p></div>',
   ),
   pD = (n, e, t) => e(t()),
   mD = E('<span class="pill pill-green svelte-vryshn">Online</span>'),
@@ -41991,7 +41991,7 @@ var hD = E(
     '<div class="camera-row svelte-vryshn"><span class="col-id svelte-vryshn"><span class="id-tag svelte-vryshn"> </span></span> <span class="col-label svelte-vryshn"> </span> <span class="col-status svelte-vryshn"><!></span> <span class="col-viewers svelte-vryshn"><!></span> <span class="col-action svelte-vryshn"><!></span></div>',
   ),
   xD = E(
-    '<div class="table-header svelte-vryshn"><span class="col-id svelte-vryshn">ID</span> <span class="col-label svelte-vryshn">Camera</span> <span class="col-status svelte-vryshn">Status</span> <span class="col-viewers svelte-vryshn">Viewers</span> <span class="col-action svelte-vryshn"></span></div> <!>',
+    '<div class="table-header svelte-vryshn"><span class="col-id svelte-vryshn">ID</span> <span class="col-label svelte-vryshn">Câmera</span> <span class="col-status svelte-vryshn">Status</span> <span class="col-viewers svelte-vryshn">Visualizadores</span> <span class="col-action svelte-vryshn"></span></div> <!>',
     1,
   ),
   TD = E(
@@ -42021,7 +42021,7 @@ function ED(n, e) {
     const Z = {};
     return (
       q.forEach((K) => {
-        const re = K.type || "Unknown";
+        const re = K.type || "Desconhecido";
         (Z[re] || (Z[re] = []), Z[re].push(K));
       }),
       Object.keys(Z).forEach((K) => {
@@ -42041,8 +42041,8 @@ function ED(n, e) {
     y(l, { ...o(l), [q]: !o(l)[q] }, !0);
   }
   function _(q) {
-    const Z = String(q || "Unknown").trim();
-    if (!Z) return "Unknown Cameras";
+    const Z = String(q || "Desconhecido").trim();
+    if (!Z) return "Câmeras desconhecidas";
     const re = Z.replace(/[_-]+/g, " ")
         .replace(/\s+/g, " ")
         .split(" ")
@@ -42053,7 +42053,7 @@ function ED(n, e) {
         )
         .join(" "),
       j = re.toLowerCase();
-    return /\bcameras?\b/.test(j) ? re : `${re} Cameras`;
+    return /\bcameras?\b/.test(j) ? re : `${re} Câmeras`;
   }
   async function g() {
     try {
@@ -42062,7 +42062,7 @@ function ED(n, e) {
       (y(t, q.data ?? (Array.isArray(q) ? q : []) ?? [], !0),
         y(r, u(o(c)), !0));
     } catch {
-      (un.error("Failed to load cameras"), y(t, [], !0), y(r, {}, !0));
+      (un.error("Falha ao carregar as câmeras"), y(t, [], !0), y(r, {}, !0));
     } finally {
       y(s, !1);
     }
@@ -42107,8 +42107,8 @@ function ED(n, e) {
                 C(
                   te,
                   o(i)
-                    ? "No cameras match your search criteria."
-                    : "No cameras have been loaded yet.",
+                    ? "Nenhuma câmera corresponde aos critérios de busca."
+                    : "Nenhuma câmera foi carregada ainda.",
                 ),
               ),
                 x(j, Q));
@@ -42245,7 +42245,7 @@ function ED(n, e) {
   (H(() => {
     (C(O, `${o(c).length ?? ""} camera${o(c).length !== 1 ? "s" : ""}`),
       (R.disabled = o(s)),
-      C(B, o(s) ? "Loading..." : "Refresh"));
+      C(B, o(s) ? "Carregando..." : "Atualizar"));
   }),
     bt(
       A,
@@ -42260,7 +42260,7 @@ var CD = E(
     '<div class="empty-state svelte-1gf8vj0"><div class="loading-spinner svelte-1gf8vj0"></div> <p class="svelte-1gf8vj0">Loading bodycams...</p></div>',
   ),
   AD = E(
-    '<div class="empty-state svelte-1gf8vj0"><p class="empty-title svelte-1gf8vj0">No Bodycams Found</p> <p class="empty-sub svelte-1gf8vj0"> </p></div>',
+    '<div class="empty-state svelte-1gf8vj0"><p class="empty-title svelte-1gf8vj0">Nenhuma bodycam encontrada</p> <p class="empty-sub svelte-1gf8vj0"> </p></div>',
   ),
   ID = E('<span class="pill pill-green svelte-1gf8vj0">Online</span>'),
   MD = E('<span class="pill pill-grey svelte-1gf8vj0">Offline</span>'),
@@ -42274,7 +42274,7 @@ var CD = E(
     '<div class="table-row svelte-1gf8vj0"><span class="col-callsign svelte-1gf8vj0"><span class="callsign-tag svelte-1gf8vj0"> </span></span> <span class="col-name svelte-1gf8vj0"> </span> <span class="col-rank svelte-1gf8vj0"> </span> <span class="col-status svelte-1gf8vj0"><!></span> <span class="col-viewers svelte-1gf8vj0"><!></span> <span class="col-action svelte-1gf8vj0"><!></span></div>',
   ),
   RD = E(
-    '<div class="bodycams-page svelte-1gf8vj0"><div class="topbar svelte-1gf8vj0"><input type="text" placeholder="Search by name, callsign or rank..." class="search-input svelte-1gf8vj0"/> <div class="topbar-right svelte-1gf8vj0"><span class="result-count svelte-1gf8vj0"> </span> <button class="btn-secondary svelte-1gf8vj0"> </button></div></div> <div class="list-panel svelte-1gf8vj0"><div class="table-header svelte-1gf8vj0"><span class="col-callsign svelte-1gf8vj0">Callsign</span> <span class="col-name svelte-1gf8vj0">Officer</span> <span class="col-rank svelte-1gf8vj0">Rank</span> <span class="col-status svelte-1gf8vj0">Status</span> <span class="col-viewers svelte-1gf8vj0">Viewers</span> <span class="col-action svelte-1gf8vj0"></span></div> <div class="table-body svelte-1gf8vj0"><!></div></div></div>',
+    '<div class="bodycams-page svelte-1gf8vj0"><div class="topbar svelte-1gf8vj0"><input type="text" placeholder="Buscar por nome, indicativo ou patente..." class="search-input svelte-1gf8vj0"/> <div class="topbar-right svelte-1gf8vj0"><span class="result-count svelte-1gf8vj0"> </span> <button class="btn-secondary svelte-1gf8vj0"> </button></div></div> <div class="list-panel svelte-1gf8vj0"><div class="table-header svelte-1gf8vj0"><span class="col-callsign svelte-1gf8vj0">Indicativo</span> <span class="col-name svelte-1gf8vj0">Oficial</span> <span class="col-rank svelte-1gf8vj0">Patente</span> <span class="col-status svelte-1gf8vj0">Status</span> <span class="col-viewers svelte-1gf8vj0">Visualizadores</span> <span class="col-action svelte-1gf8vj0"></span></div> <div class="table-body svelte-1gf8vj0"><!></div></div></div>',
   );
 function zD(n, e) {
   Vt(e, !0);
@@ -42298,7 +42298,7 @@ function zD(n, e) {
       const B = await Te(he.BODYCAM.GET_BODYCAMS, {}, []);
       y(t, B.data ?? (Array.isArray(B) ? B : []) ?? [], !0);
     } catch {
-      (un.error("Failed to load bodycams"), y(t, [], !0));
+      (un.error("Falha ao carregar as bodycams"), y(t, [], !0));
     } finally {
       y(s, !1);
     }
@@ -42337,7 +42337,7 @@ function zD(n, e) {
                   K,
                   o(i)
                     ? "Nenhum oficial corresponde aos critérios de busca."
-                    : "No officers with bodycams are currently on duty.",
+                    : "Nenhum oficial com bodycam está atualmente em serviço.",
                 ),
               ),
                 x(G, q));
@@ -42427,7 +42427,7 @@ function zD(n, e) {
   (H(() => {
     (C(w, `${o(r).length ?? ""} officer${o(r).length !== 1 ? "s" : ""}`),
       (k.disabled = o(s)),
-      C(T, o(s) ? "Loading..." : "Refresh"));
+      C(T, o(s) ? "Carregando..." : "Atualizar"));
   }),
     bt(
       m,
@@ -42441,7 +42441,7 @@ nn(["click"]);
 var BD = (n, e) => y(e, "stats"),
   FD = (n, e) => y(e, "leaderboard"),
   VD = E(
-    '<div class="loading-state svelte-4ousyi"><div class="loading-spinner svelte-4ousyi"></div> <p class="svelte-4ousyi">Loading...</p></div>',
+    '<div class="loading-state svelte-4ousyi"><div class="loading-spinner svelte-4ousyi"></div> <p class="svelte-4ousyi">Carregando...</p></div>',
   ),
   qD = E('<span class="award-date svelte-4ousyi"> </span>'),
   jD = E(
@@ -42457,17 +42457,17 @@ var BD = (n, e) => y(e, "stats"),
     '<div class="awards-section svelte-4ousyi"><div class="section-header svelte-4ousyi"><span class="section-title svelte-4ousyi"> </span></div> <div class="awards-list svelte-4ousyi"></div></div>',
   ),
   WD = E(
-    '<div class="empty-state svelte-4ousyi">No awards configured. Ask an admin to set some up in Settings.</div>',
+    '<div class="empty-state svelte-4ousyi">Nenhuma premiação configurada. Peça a um administrador para cadastrar algumas nas configurações.</div>',
   ),
   ZD = E(
-    '<div class="stats-view svelte-4ousyi"><div class="stats-grid svelte-4ousyi"><div class="stat-card svelte-4ousyi"><span class="material-icons stat-icon si-blue svelte-4ousyi">description</span> <span class="stat-value svelte-4ousyi"> </span> <span class="stat-label svelte-4ousyi">Reports</span></div> <div class="stat-card svelte-4ousyi"><span class="material-icons stat-icon si-red svelte-4ousyi">local_police</span> <span class="stat-value svelte-4ousyi"> </span> <span class="stat-label svelte-4ousyi">Prisões</span></div> <div class="stat-card svelte-4ousyi"><span class="material-icons stat-icon si-purple svelte-4ousyi">folder</span> <span class="stat-value svelte-4ousyi"> </span> <span class="stat-label svelte-4ousyi">Cases</span></div> <div class="stat-card svelte-4ousyi"><span class="material-icons stat-icon si-cyan svelte-4ousyi">inventory_2</span> <span class="stat-value svelte-4ousyi"> </span> <span class="stat-label svelte-4ousyi">Evidence</span></div> <div class="stat-card svelte-4ousyi"><span class="material-icons stat-icon si-orange svelte-4ousyi">notification_important</span> <span class="stat-value svelte-4ousyi"> </span> <span class="stat-label svelte-4ousyi">BOLOs</span></div> <div class="stat-card svelte-4ousyi"><span class="material-icons stat-icon si-amber svelte-4ousyi">gavel</span> <span class="stat-value svelte-4ousyi"> </span> <span class="stat-label svelte-4ousyi">Warrants</span></div> <div class="stat-card svelte-4ousyi"><span class="material-icons stat-icon si-green svelte-4ousyi">payments</span> <span class="stat-value svelte-4ousyi"> </span> <span class="stat-label svelte-4ousyi">Fined</span></div> <div class="stat-card svelte-4ousyi"><span class="material-icons stat-icon si-pink svelte-4ousyi">schedule</span> <span class="stat-value svelte-4ousyi"> </span> <span class="stat-label svelte-4ousyi">Meses de condenação</span></div></div> <!> <!> <!></div>',
+    '<div class="stats-view svelte-4ousyi"><div class="stats-grid svelte-4ousyi"><div class="stat-card svelte-4ousyi"><span class="material-icons stat-icon si-blue svelte-4ousyi">description</span> <span class="stat-value svelte-4ousyi"> </span> <span class="stat-label svelte-4ousyi">Relatórios</span></div> <div class="stat-card svelte-4ousyi"><span class="material-icons stat-icon si-red svelte-4ousyi">local_police</span> <span class="stat-value svelte-4ousyi"> </span> <span class="stat-label svelte-4ousyi">Prisões</span></div> <div class="stat-card svelte-4ousyi"><span class="material-icons stat-icon si-purple svelte-4ousyi">folder</span> <span class="stat-value svelte-4ousyi"> </span> <span class="stat-label svelte-4ousyi">Casos</span></div> <div class="stat-card svelte-4ousyi"><span class="material-icons stat-icon si-cyan svelte-4ousyi">inventory_2</span> <span class="stat-value svelte-4ousyi"> </span> <span class="stat-label svelte-4ousyi">Evidências</span></div> <div class="stat-card svelte-4ousyi"><span class="material-icons stat-icon si-orange svelte-4ousyi">notification_important</span> <span class="stat-value svelte-4ousyi"> </span> <span class="stat-label svelte-4ousyi">BOLOs</span></div> <div class="stat-card svelte-4ousyi"><span class="material-icons stat-icon si-amber svelte-4ousyi">gavel</span> <span class="stat-value svelte-4ousyi"> </span> <span class="stat-label svelte-4ousyi">Mandados</span></div> <div class="stat-card svelte-4ousyi"><span class="material-icons stat-icon si-green svelte-4ousyi">payments</span> <span class="stat-value svelte-4ousyi"> </span> <span class="stat-label svelte-4ousyi">Total multado</span></div> <div class="stat-card svelte-4ousyi"><span class="material-icons stat-icon si-pink svelte-4ousyi">schedule</span> <span class="stat-value svelte-4ousyi"> </span> <span class="stat-label svelte-4ousyi">Meses de condenação</span></div></div> <!> <!> <!></div>',
   ),
   $D = E(
     '<div><span class="col-rank svelte-4ousyi"> </span> <span class="col-name svelte-4ousyi"><span class="officer-callsign svelte-4ousyi"> </span> <span class="officer-name svelte-4ousyi"> </span></span> <span class="col-dept svelte-4ousyi"> </span> <span class="col-stat svelte-4ousyi"> </span> <span class="col-stat svelte-4ousyi"> </span> <span class="col-stat svelte-4ousyi"> </span> <span class="col-stat svelte-4ousyi"> </span> <span class="col-stat svelte-4ousyi"> </span> <span class="col-stat svelte-4ousyi"> </span> <span class="col-score svelte-4ousyi"> </span></div>',
   ),
   JD = E('<div class="empty-state svelte-4ousyi">No leaderboard data.</div>'),
   KD = E(
-    '<div class="leaderboard-view svelte-4ousyi"><div class="leaderboard-controls svelte-4ousyi"><span class="sort-label svelte-4ousyi">Sort by</span> <select class="sort-select svelte-4ousyi"><option class="svelte-4ousyi">Overall</option><option class="svelte-4ousyi">Reports</option><option class="svelte-4ousyi">Prisões</option><option class="svelte-4ousyi">Warrants</option><option class="svelte-4ousyi">Fined</option><option class="svelte-4ousyi">Months</option></select></div> <div class="leaderboard-table svelte-4ousyi"><div class="table-header svelte-4ousyi"><span class="col-rank svelte-4ousyi">#</span> <span class="col-name svelte-4ousyi">Officer</span> <span class="col-dept svelte-4ousyi">Dept</span> <span class="col-stat svelte-4ousyi">Reports</span> <span class="col-stat svelte-4ousyi">Prisões</span> <span class="col-stat svelte-4ousyi">Cases</span> <span class="col-stat svelte-4ousyi">Warrants</span> <span class="col-stat svelte-4ousyi">Fined</span> <span class="col-stat svelte-4ousyi">Months</span> <span class="col-score svelte-4ousyi">Score</span></div> <!></div></div>',
+    '<div class="leaderboard-view svelte-4ousyi"><div class="leaderboard-controls svelte-4ousyi"><span class="sort-label svelte-4ousyi">Ordenar por</span> <select class="sort-select svelte-4ousyi"><option class="svelte-4ousyi">Geral</option><option class="svelte-4ousyi">Relatórios</option><option class="svelte-4ousyi">Prisões</option><option class="svelte-4ousyi">Mandados</option><option class="svelte-4ousyi">Total multado</option><option class="svelte-4ousyi">Meses</option></select></div> <div class="leaderboard-table svelte-4ousyi"><div class="table-header svelte-4ousyi"><span class="col-rank svelte-4ousyi">#</span> <span class="col-name svelte-4ousyi">Officer</span> <span class="col-dept svelte-4ousyi">Departamento</span> <span class="col-stat svelte-4ousyi">Relatórios</span> <span class="col-stat svelte-4ousyi">Prisões</span> <span class="col-stat svelte-4ousyi">Casos</span> <span class="col-stat svelte-4ousyi">Mandados</span> <span class="col-stat svelte-4ousyi">Total multado</span> <span class="col-stat svelte-4ousyi">Meses</span> <span class="col-score svelte-4ousyi">Pontuação</span></div> <!></div></div>',
   ),
   YD = E(
     '<div class="awards-page svelte-4ousyi"><div class="awards-topbar svelte-4ousyi"><div class="tab-buttons svelte-4ousyi"><button>My Stats & Awards</button> <button>Leaderboard</button></div></div> <!></div>',
@@ -42487,8 +42487,8 @@ function QD(n, e) {
         evidence: 0,
         bolos: 0,
         warrants: 0,
-        totalFined: 0,
-        totalMonths: 0,
+        totalMultado: 0,
+        totalMeses: 0,
         citations: 0,
       }),
     ),
@@ -42528,8 +42528,8 @@ function QD(n, e) {
         evidence: 56,
         bolos: 34,
         warrants: 18,
-        totalFined: 285e3,
-        totalMonths: 342,
+        totalMultado: 285e3,
+        totalMeses: 342,
         citations: 67,
       },
       !0,
@@ -42539,8 +42539,8 @@ function QD(n, e) {
         [
           {
             id: 1,
-            name: "First Report",
-            description: "File your first incident report",
+            name: "Primeiro relatório",
+            description: "Registre seu primeiro relatório de ocorrência",
             icon: "description",
             category: "Relatórios",
             goalType: "reports",
@@ -42552,7 +42552,7 @@ function QD(n, e) {
           {
             id: 2,
             name: "50 Relatórios registrados",
-            description: "File 50 incident reports",
+            description: "Registre 50 relatórios de ocorrência",
             icon: "description",
             category: "Relatórios",
             goalType: "reports",
@@ -42564,7 +42564,7 @@ function QD(n, e) {
           {
             id: 3,
             name: "100 Relatórios registrados",
-            description: "File 100 incident reports",
+            description: "Registre 100 relatórios de ocorrência",
             icon: "description",
             category: "Relatórios",
             goalType: "reports",
@@ -42576,7 +42576,7 @@ function QD(n, e) {
           {
             id: 4,
             name: "500 Relatórios registrados",
-            description: "File 500 incident reports",
+            description: "Registre 500 relatórios de ocorrência",
             icon: "description",
             category: "Relatórios",
             goalType: "reports",
@@ -42586,8 +42586,8 @@ function QD(n, e) {
           },
           {
             id: 5,
-            name: "First Arrest",
-            description: "File your first arrest report",
+            name: "Primeira prisão",
+            description: "Registre seu primeiro relatório de prisão",
             icon: "local_police",
             category: "Prisões",
             goalType: "arrests",
@@ -42599,7 +42599,7 @@ function QD(n, e) {
           {
             id: 6,
             name: "50 Prisões",
-            description: "File 50 arrest reports",
+            description: "Registre 50 relatórios de prisão",
             icon: "local_police",
             category: "Prisões",
             goalType: "arrests",
@@ -42611,7 +42611,7 @@ function QD(n, e) {
           {
             id: 7,
             name: "200 Prisões",
-            description: "File 200 arrest reports",
+            description: "Registre 200 relatórios de prisão",
             icon: "local_police",
             category: "Prisões",
             goalType: "arrests",
@@ -42621,8 +42621,8 @@ function QD(n, e) {
           },
           {
             id: 8,
-            name: "Case Worker",
-            description: "Work on 25 cases",
+            name: "Responsável por casos",
+            description: "Trabalhe em 25 casos",
             icon: "folder",
             category: "Casos",
             goalType: "cases",
@@ -42635,7 +42635,7 @@ function QD(n, e) {
             name: "50 Evidências registradas",
             description: "Log 50 pieces of evidence",
             icon: "inventory_2",
-            category: "Evidence",
+            category: "Evidências",
             goalType: "evidence",
             goalAmount: 50,
             progress: 50,
@@ -42645,7 +42645,7 @@ function QD(n, e) {
           {
             id: 10,
             name: "25 BOLOs emitidos",
-            description: "Issue 25 BOLOs",
+            description: "Emita 25 BOLOs",
             icon: "notification_important",
             category: "BOLOs",
             goalType: "bolos",
@@ -42657,7 +42657,7 @@ function QD(n, e) {
           {
             id: 11,
             name: "10 Mandados emitidos",
-            description: "Issue 10 warrants",
+            description: "Emita 10 mandados",
             icon: "gavel",
             category: "Mandados",
             goalType: "warrants",
@@ -42668,11 +42668,11 @@ function QD(n, e) {
           },
           {
             id: 12,
-            name: "$100K Fined",
-            description: "Fine citizens a total of $100,000",
+            name: "$100 mil em multas",
+            description: "Aplique um total de $100.000 em multas a cidadãos",
             icon: "payments",
-            category: "Fines",
-            goalType: "totalFined",
+            category: "Multas",
+            goalType: "totalMultado",
             goalAmount: 1e5,
             progress: 1e5,
             earned: !0,
@@ -42680,11 +42680,11 @@ function QD(n, e) {
           },
           {
             id: 13,
-            name: "$500K Fined",
-            description: "Fine citizens a total of $500,000",
+            name: "$500 mil em multas",
+            description: "Aplique um total de $500.000 em multas a cidadãos",
             icon: "payments",
-            category: "Fines",
-            goalType: "totalFined",
+            category: "Multas",
+            goalType: "totalMultado",
             goalAmount: 5e5,
             progress: 285e3,
             earned: !1,
@@ -42692,10 +42692,10 @@ function QD(n, e) {
           {
             id: 14,
             name: "500 Meses de condenação",
-            description: "Sentence a total of 500 months",
+            description: "Aplique um total de 500 meses de pena",
             icon: "schedule",
-            category: "Sentencing",
-            goalType: "totalMonths",
+            category: "Sentenças",
+            goalType: "totalMeses",
             goalAmount: 500,
             progress: 342,
             earned: !1,
@@ -42715,8 +42715,8 @@ function QD(n, e) {
             arrests: 198,
             cases: 45,
             warrants: 38,
-            totalFined: 62e4,
-            totalMonths: 890,
+            totalMultado: 62e4,
+            totalMeses: 890,
             score: 2450,
             isCurrentUser: !1,
           },
@@ -42729,8 +42729,8 @@ function QD(n, e) {
             arrests: 156,
             cases: 52,
             warrants: 29,
-            totalFined: 445e3,
-            totalMonths: 678,
+            totalMultado: 445e3,
+            totalMeses: 678,
             score: 2180,
             isCurrentUser: !1,
           },
@@ -42743,8 +42743,8 @@ function QD(n, e) {
             arrests: 134,
             cases: 38,
             warrants: 35,
-            totalFined: 39e4,
-            totalMonths: 545,
+            totalMultado: 39e4,
+            totalMeses: 545,
             score: 1920,
             isCurrentUser: !1,
           },
@@ -42757,8 +42757,8 @@ function QD(n, e) {
             arrests: 112,
             cases: 31,
             warrants: 22,
-            totalFined: 356e3,
-            totalMonths: 412,
+            totalMultado: 356e3,
+            totalMeses: 412,
             score: 1650,
             isCurrentUser: !1,
           },
@@ -42771,8 +42771,8 @@ function QD(n, e) {
             arrests: 89,
             cases: 23,
             warrants: 18,
-            totalFined: 285e3,
-            totalMonths: 342,
+            totalMultado: 285e3,
+            totalMeses: 342,
             score: 1280,
             isCurrentUser: !0,
           },
@@ -42785,8 +42785,8 @@ function QD(n, e) {
             arrests: 78,
             cases: 19,
             warrants: 15,
-            totalFined: 21e4,
-            totalMonths: 298,
+            totalMultado: 21e4,
+            totalMeses: 298,
             score: 1120,
             isCurrentUser: !1,
           },
@@ -42799,8 +42799,8 @@ function QD(n, e) {
             arrests: 67,
             cases: 15,
             warrants: 12,
-            totalFined: 178e3,
-            totalMonths: 234,
+            totalMultado: 178e3,
+            totalMeses: 234,
             score: 980,
             isCurrentUser: !1,
           },
@@ -42813,8 +42813,8 @@ function QD(n, e) {
             arrests: 54,
             cases: 12,
             warrants: 9,
-            totalFined: 145e3,
-            totalMonths: 189,
+            totalMultado: 145e3,
+            totalMeses: 189,
             score: 810,
             isCurrentUser: !1,
           },
@@ -42827,8 +42827,8 @@ function QD(n, e) {
             arrests: 43,
             cases: 8,
             warrants: 7,
-            totalFined: 112e3,
-            totalMonths: 156,
+            totalMultado: 112e3,
+            totalMeses: 156,
             score: 690,
             isCurrentUser: !1,
           },
@@ -42841,8 +42841,8 @@ function QD(n, e) {
             arrests: 35,
             cases: 6,
             warrants: 5,
-            totalFined: 89e3,
-            totalMonths: 120,
+            totalMultado: 89e3,
+            totalMeses: 120,
             score: 540,
             isCurrentUser: !1,
           },
@@ -43033,8 +43033,8 @@ function QD(n, e) {
                     C(fe, ut));
                 },
                 [
-                  () => g(o(i).totalFined),
-                  () => o(i).totalMonths.toLocaleString(),
+                  () => g(o(i).totalMultado),
+                  () => o(i).totalMeses.toLocaleString(),
                 ],
               ),
                 x(K, re));
@@ -43054,9 +43054,9 @@ function QD(n, e) {
                   var J = v(M);
                   J.value = J.__value = "warrants";
                   var se = v(J);
-                  se.value = se.__value = "totalFined";
+                  se.value = se.__value = "totalMultado";
                   var W = v(se);
-                  W.value = W.__value = "totalMonths";
+                  W.value = W.__value = "totalMeses";
                   var Y = v(te, 2),
                     X = v(f(Y), 2);
                   (Fe(
@@ -43109,12 +43109,12 @@ function QD(n, e) {
                             C(ut, o(ye).cases),
                             C(pe, o(ye).warrants),
                             C(ce, Ne),
-                            C(be, o(ye).totalMonths),
+                            C(be, o(ye).totalMeses),
                             C(Se, Be));
                         },
                         [
                           () => ({ "current-user": o(ye).isCurrentUser }),
-                          () => g(o(ye).totalFined),
+                          () => g(o(ye).totalMultado),
                           () => o(ye).score.toLocaleString(),
                         ],
                       ),
@@ -43171,18 +43171,18 @@ nn(["click"]);
 const ol = [
   {
     key: "citizens",
-    label: "Citizens",
+    label: "Cidadãos",
     icon: "people",
     permissions: [
       {
         key: "citizens_search",
-        label: "Search Citizens",
-        description: "Search and view citizen profiles",
+        label: "Buscar cidadãos",
+        description: "Buscar e visualizar perfis de cidadãos",
       },
       {
         key: "citizens_edit_licenses",
-        label: "Edit Licenses",
-        description: "Issue, revoke, and manage citizen licenses",
+        label: "Editar licenças",
+        description: "Emitir, revogar e gerenciar licenças de cidadãos",
       },
     ],
   },
@@ -43193,42 +43193,42 @@ const ol = [
     permissions: [
       {
         key: "bolos_view",
-        label: "View BOLOs",
-        description: "View active BOLOs and details",
+        label: "Ver BOLOs",
+        description: "Ver BOLOs ativos e detalhes",
       },
       {
         key: "bolos_create",
-        label: "Create BOLOs",
-        description: "Create new BOLOs",
+        label: "Criar BOLOs",
+        description: "Criar novos BOLOs",
       },
     ],
   },
   {
     key: "vehicles",
-    label: "Vehicles",
+    label: "Veículos",
     icon: "directions_car",
     permissions: [
       {
         key: "vehicles_search",
-        label: "Search Vehicles",
-        description: "Search and view vehicle records",
+        label: "Buscar veículos",
+        description: "Buscar e visualizar registros de veículos",
       },
       {
         key: "vehicles_edit_dmv",
-        label: "Edit DMV Status",
-        description: "Update points, status, and notes",
+        label: "Editar situação do DMV",
+        description: "Atualizar pontos, status e observações",
       },
     ],
   },
   {
     key: "weapons",
-    label: "Weapons",
+    label: "Armas",
     icon: "security",
     permissions: [
       {
         key: "weapons_search",
-        label: "Search Weapons",
-        description: "Search and view weapon records",
+        label: "Buscar armas",
+        description: "Buscar e visualizar registros de armas",
       },
     ],
   },
@@ -43239,50 +43239,50 @@ const ol = [
     permissions: [
       {
         key: "cases_view",
-        label: "View Cases",
-        description: "View and search cases",
+        label: "Ver casos",
+        description: "Ver e buscar casos",
       },
       {
         key: "cases_create",
-        label: "Create Cases",
-        description: "Create new cases",
+        label: "Criar casos",
+        description: "Criar novos casos",
       },
       {
         key: "cases_edit",
-        label: "Edit Cases",
-        description: "Edit case details and assignments",
+        label: "Editar casos",
+        description: "Editar detalhes e atribuições do caso",
       },
       {
         key: "cases_delete",
-        label: "Delete Cases",
-        description: "Delete cases from the system",
+        label: "Excluir casos",
+        description: "Excluir casos do sistema",
       },
     ],
   },
   {
     key: "evidence",
-    label: "Evidence",
+    label: "Evidências",
     icon: "inventory_2",
     permissions: [
       {
         key: "evidence_view",
-        label: "View Evidence",
-        description: "View and search evidence",
+        label: "Ver evidências",
+        description: "Ver e buscar evidências",
       },
       {
         key: "evidence_create",
         label: "Criar Evidência",
-        description: "Create new evidence entries",
+        description: "Criar novos registros de evidência",
       },
       {
         key: "evidence_transfer",
-        label: "Transfer Custody",
-        description: "Transfer evidence between officers",
+        label: "Transferir custódia",
+        description: "Transferir evidências entre oficiais",
       },
       {
         key: "evidence_upload",
-        label: "Upload Images",
-        description: "Upload images to evidence",
+        label: "Enviar imagens",
+        description: "Enviar imagens para a evidência",
       },
     ],
   },
@@ -43293,18 +43293,18 @@ const ol = [
     permissions: [
       {
         key: "reports_view",
-        label: "View Reports",
-        description: "View and search reports",
+        label: "Ver relatórios",
+        description: "Ver e buscar relatórios",
       },
       {
         key: "reports_create",
-        label: "Create Reports",
-        description: "Create and edit reports",
+        label: "Criar relatórios",
+        description: "Criar e editar relatórios",
       },
       {
         key: "reports_delete",
-        label: "Delete Reports",
-        description: "Delete reports from the system",
+        label: "Excluir relatórios",
+        description: "Excluir relatórios do sistema",
       },
     ],
   },
@@ -43315,35 +43315,35 @@ const ol = [
     permissions: [
       {
         key: "warrants_view",
-        label: "View Warrants",
-        description: "View active warrants",
+        label: "Ver mandados",
+        description: "Ver mandados ativos",
       },
       {
         key: "warrants_issue",
-        label: "Issue Warrants",
-        description: "Issue warrants on suspects",
+        label: "Emitir mandados",
+        description: "Emitir mandados para suspeitos",
       },
       {
         key: "warrants_close",
-        label: "Close Warrants",
-        description: "Close active warrants",
+        label: "Encerrar mandados",
+        description: "Encerrar mandados ativos",
       },
     ],
   },
   {
     key: "charges",
-    label: "Charges",
+    label: "Infrações",
     icon: "gavel",
     permissions: [
       {
         key: "charges_view",
-        label: "View Charges",
-        description: "View penal code charges",
+        label: "Ver infrações",
+        description: "Ver infrações do código penal",
       },
       {
         key: "charges_edit",
-        label: "Edit Charges",
-        description: "Edit fine amounts and jail time",
+        label: "Editar infrações",
+        description: "Editar valores de multa e tempo de prisão",
       },
     ],
   },
@@ -43354,30 +43354,30 @@ const ol = [
     permissions: [
       {
         key: "dispatch_attach",
-        label: "Attach to Calls",
-        description: "Attach or detach from dispatch calls",
+        label: "Anexar-se a chamadas",
+        description: "Anexar-se ou sair de chamadas do despacho",
       },
       {
         key: "dispatch_route",
-        label: "Route to Calls",
-        description: "Set GPS route to dispatch calls",
+        label: "Traçar rota para chamadas",
+        description: "Definir rota de GPS para chamadas do despacho",
       },
     ],
   },
   {
     key: "cameras",
-    label: "Cameras & Bodycams",
+    label: "Câmeras e Bodycams",
     icon: "videocam",
     permissions: [
       {
         key: "cameras_view",
-        label: "View Cameras",
-        description: "Access security camera feeds",
+        label: "Ver câmeras",
+        description: "Acessar transmissões das câmeras de segurança",
       },
       {
         key: "bodycams_view",
-        label: "View Bodycams",
-        description: "Access officer bodycam footage",
+        label: "Ver bodycams",
+        description: "Acessar imagens das bodycams dos oficiais",
       },
     ],
   },
@@ -43388,25 +43388,25 @@ const ol = [
     permissions: [
       {
         key: "notes_edit_department",
-        label: "Edit Department Notes",
-        description: "Edit shared department notes",
+        label: "Editar observações do departamento",
+        description: "Editar observações compartilhadas do departamento",
       },
     ],
   },
   {
     key: "roster",
-    label: "Roster",
+    label: "Escala",
     icon: "group",
     permissions: [
       {
         key: "roster_manage_certifications",
-        label: "Manage Certifications",
-        description: "Add or remove officer certifications",
+        label: "Gerenciar certificações",
+        description: "Adicionar ou remover certificações de oficiais",
       },
       {
         key: "roster_manage_officers",
-        label: "Manage Officers",
-        description: "Promote, demote, fire officers and edit callsigns",
+        label: "Gerenciar oficiais",
+        description: "Promover, rebaixar, demitir oficiais e editar indicativos",
       },
     ],
   },
@@ -43417,28 +43417,28 @@ const ol = [
     permissions: [
       {
         key: "management_permissions",
-        label: "Manage Permissions",
-        description: "Edit role permissions",
+        label: "Gerenciar permissões",
+        description: "Editar permissões dos cargos",
       },
       {
         key: "management_bulletins",
-        label: "Manage Bulletins",
-        description: "Create and delete bulletins",
+        label: "Gerenciar boletins",
+        description: "Criar e excluir boletins",
       },
       {
         key: "management_activity",
-        label: "View Activity Log",
-        description: "View audit activity log",
+        label: "Ver registro de atividades",
+        description: "Ver registro de auditoria de atividades",
       },
       {
         key: "management_tags",
-        label: "Manage Tags",
-        description: "Create and delete profile tags",
+        label: "Gerenciar etiquetas",
+        description: "Criar e excluir etiquetas de perfil",
       },
       {
         key: "management_tracking",
-        label: "Manage Tracking",
-        description: "Configure audit tracking settings",
+        label: "Gerenciar rastreamento",
+        description: "Configurar rastreamento de auditoria",
       },
     ],
   },
@@ -43524,7 +43524,7 @@ function XD() {
           }),
           c(`Permissions saved for ${A.label}`));
       } catch {
-        c("Falha ao salvar permissions", "error");
+        c("Falha ao salvar as permissões", "error");
       } finally {
         y(r, !1);
       }
@@ -43539,9 +43539,9 @@ function XD() {
             grade: T.key,
             permissions: T.permissions || [],
           }));
-      c("All permissions saved");
+      c("Todas as permissões foram salvas");
     } catch {
-      c("Falha ao salvar permissions", "error");
+      c("Falha ao salvar as permissões", "error");
     } finally {
       y(r, !1);
     }
@@ -43581,10 +43581,10 @@ function XD() {
 var eL = E("<div> </div>"),
   tL = E('<span class="job-tag svelte-rn011y"> </span>'),
   nL = E(
-    '<div class="empty-state svelte-rn011y"><div class="loading-spinner svelte-rn011y"></div> <p class="svelte-rn011y">Loading permissions...</p></div>',
+    '<div class="empty-state svelte-rn011y"><div class="loading-spinner svelte-rn011y"></div> <p class="svelte-rn011y">Carregando permissões...</p></div>',
   ),
   sL = E(
-    '<div class="empty-state svelte-rn011y"><p class="svelte-rn011y">No roles available</p></div>',
+    '<div class="empty-state svelte-rn011y"><p class="svelte-rn011y">Nenhum cargo disponível</p></div>',
   ),
   iL = (n, e, t) => y(e, o(t).key, !0),
   rL = E('<span class="boss-tag svelte-rn011y">All</span>'),
@@ -43798,7 +43798,7 @@ function gL(n, e) {
                             [
                               () => ({ "all-on": h(o(Y).key) }),
                               () =>
-                                h(o(Y).key) ? "Disable All" : "Enable All",
+                                h(o(Y).key) ? "Desativar tudo" : "Ativar tudo",
                             ],
                           ),
                             x(gt, qe));
@@ -43850,7 +43850,7 @@ function gL(n, e) {
                       var ve = f(X);
                       (H(() => {
                         ((X.disabled = l.isSaving),
-                          C(ve, l.isSaving ? "Saving..." : "Save Permissions"));
+                          C(ve, l.isSaving ? "Salvando..." : "Salvar permissões"));
                       }),
                         x(W, Y));
                     };
@@ -43894,21 +43894,21 @@ async function yL(n, e, t, s, i, r, l, c) {
         { success: !1 },
       );
       h && h.success
-        ? (l("Bulletin posted"), y(t, ""), y(e, ""), await c())
+        ? (l("Boletim publicado"), y(t, ""), y(e, ""), await c())
         : l(
-            (h == null ? void 0 : h.message) || "Failed to post bulletin",
+            (h == null ? void 0 : h.message) || "Falha ao publicar o boletim",
             "error",
           );
     } catch (h) {
-      (console.error("Failed to create bulletin:", h),
-        l("Failed to post bulletin", "error"));
+      (console.error("Falha ao criar o boletim:", h),
+        l("Falha ao publicar o boletim", "error"));
     } finally {
       y(r, !1);
     }
 }
 var bL = E("<div> </div>"),
   kL = E(
-    '<div class="empty-state svelte-anoxbx"><div class="loading-spinner svelte-anoxbx"></div> <p class="svelte-anoxbx">Loading bulletins...</p></div>',
+    '<div class="empty-state svelte-anoxbx"><div class="loading-spinner svelte-anoxbx"></div> <p class="svelte-anoxbx">Carregando boletins...</p></div>',
   ),
   wL = E(
     '<span class="bulletin-title svelte-anoxbx"> </span> <p class="bulletin-text svelte-anoxbx"> </p>',
@@ -43917,15 +43917,15 @@ var bL = E("<div> </div>"),
   xL = E('<p class="bulletin-text svelte-anoxbx"> </p>'),
   TL = (n, e, t) => e(o(t).id),
   SL = E(
-    '<button class="delete-btn svelte-anoxbx" aria-label="Delete bulletin"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-anoxbx"><line x1="18" y1="6" x2="6" y2="18" class="svelte-anoxbx"></line><line x1="6" y1="6" x2="18" y2="18" class="svelte-anoxbx"></line></svg></button>',
+    '<button class="delete-btn svelte-anoxbx" aria-label="Excluir boletim"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-anoxbx"><line x1="18" y1="6" x2="6" y2="18" class="svelte-anoxbx"></line><line x1="6" y1="6" x2="18" y2="18" class="svelte-anoxbx"></line></svg></button>',
   ),
   EL = E(
     '<div class="bulletin-row svelte-anoxbx"><div class="bulletin-body svelte-anoxbx"><!></div> <!></div>',
   ),
-  CL = E('<div class="empty-state svelte-anoxbx">No bulletins posted.</div>'),
+  CL = E('<div class="empty-state svelte-anoxbx">Nenhum boletim publicado.</div>'),
   AL = E('<div class="bulletins-list svelte-anoxbx"></div>'),
   IL = E(
-    '<div class="bulletins-panel svelte-anoxbx"><!> <div class="new-bulletin svelte-anoxbx"><div class="bulletin-fields svelte-anoxbx"><input class="bulletin-title-input svelte-anoxbx" type="text" placeholder="Title (e.g. TRAINING, BOLO REMINDER)"/> <textarea class="bulletin-input svelte-anoxbx" placeholder="Write a bulletin..." rows="2"></textarea></div> <button class="btn-post svelte-anoxbx"> </button></div> <!></div>',
+    '<div class="bulletins-panel svelte-anoxbx"><!> <div class="new-bulletin svelte-anoxbx"><div class="bulletin-fields svelte-anoxbx"><input class="bulletin-title-input svelte-anoxbx" type="text" placeholder="Título (ex.: TREINAMENTO, LEMBRETE DE BOLO)"/> <textarea class="bulletin-input svelte-anoxbx" placeholder="Escreva um boletim..." rows="2"></textarea></div> <button class="btn-post svelte-anoxbx"> </button></div> <!></div>',
   );
 function ML(n, e) {
   Vt(e, !0);
@@ -43947,7 +43947,7 @@ function ML(n, e) {
       const G = await Te(he.DASHBOARD.GET_BULLETINS, {}, []);
       y(t, Array.isArray(G) ? G : [], !0);
     } catch (G) {
-      (console.error("Failed to load bulletins:", G), y(t, [], !0));
+      (console.error("Falha ao carregar os boletins:", G), y(t, [], !0));
     } finally {
       y(r, !1);
     }
@@ -43972,14 +43972,14 @@ function ML(n, e) {
           { success: !1 },
         );
         q && q.success
-          ? (u("Bulletin deleted"), await h())
+          ? (u("Boletim excluído"), await h())
           : u(
-              (q == null ? void 0 : q.message) || "Failed to delete bulletin",
+              (q == null ? void 0 : q.message) || "Falha ao excluir o boletim",
               "error",
             );
       } catch (q) {
-        (console.error("Failed to delete bulletin:", q),
-          u("Failed to delete bulletin", "error"));
+        (console.error("Falha ao excluir o boletim:", q),
+          u("Falha ao excluir o boletim", "error"));
       }
   }
   kn(() => {
@@ -44091,7 +44091,7 @@ function ML(n, e) {
 }
 nn(["click"]);
 var OL = E(
-    '<div class="empty-state svelte-egp8sh"><div class="loading-spinner svelte-egp8sh"></div> <p class="svelte-egp8sh">Loading activity...</p></div>',
+    '<div class="empty-state svelte-egp8sh"><div class="loading-spinner svelte-egp8sh"></div> <p class="svelte-egp8sh">Carregando atividades...</p></div>',
   ),
   PL = E('<span class="activity-entity svelte-egp8sh"> </span>'),
   NL = E(
@@ -44100,51 +44100,51 @@ var OL = E(
   DL = E('<div class="empty-state svelte-egp8sh"> </div>'),
   LL = E('<div class="activity-list svelte-egp8sh"></div> <!>', 1),
   RL = E(
-    '<div class="activity-panel svelte-egp8sh"><div class="activity-topbar svelte-egp8sh"><input type="text" placeholder="Search activity..." class="search-input svelte-egp8sh"/> <span class="result-count svelte-egp8sh"> </span></div> <!></div>',
+    '<div class="activity-panel svelte-egp8sh"><div class="activity-topbar svelte-egp8sh"><input type="text" placeholder="Buscar atividades..." class="search-input svelte-egp8sh"/> <span class="result-count svelte-egp8sh"> </span></div> <!></div>',
   );
 function zL(n, e) {
   Vt(e, !0);
   const t = {
-      mdt_login: "Logged into MDT",
-      mdt_logout: "Logged out of MDT",
-      report_created: "Created a report",
-      report_updated: "Updated a report",
-      report_deleted: "Deleted a report",
-      warrant_issued: "Issued a warrant",
-      warrant_closed: "Closed a warrant",
-      case_created: "Created a case",
-      case_updated: "Updated a case",
-      case_deleted: "Deleted a case",
-      case_officer_assigned: "Assigned officer to case",
-      case_officer_removed: "Removed officer from case",
-      case_attachment_added: "Added case attachment",
-      case_attachment_removed: "Removed case attachment",
-      case_attachment_uploaded: "Uploaded case attachment",
+      mdt_login: "Entrou no MDT",
+      mdt_logout: "Saiu do MDT",
+      report_created: "Criou um relatório",
+      report_updated: "Atualizou um relatório",
+      report_deleted: "Excluiu um relatório",
+      warrant_issued: "Emitiu um mandado",
+      warrant_closed: "Encerrou um mandado",
+      case_created: "Criou um caso",
+      case_updated: "Atualizou um caso",
+      case_deleted: "Excluiu um caso",
+      case_officer_assigned: "Atribuiu um oficial ao caso",
+      case_officer_removed: "Removeu um oficial do caso",
+      case_attachment_added: "Adicionou um anexo ao caso",
+      case_attachment_removed: "Removeu um anexo do caso",
+      case_attachment_uploaded: "Enviou um anexo ao caso",
       evidence_added: "Added evidence",
-      evidence_updated: "Updated evidence",
-      evidence_deleted: "Deleted evidence",
-      evidence_transferred: "Transferred evidence custody",
+      evidence_updated: "Atualizou uma evidência",
+      evidence_deleted: "Excluiu uma evidência",
+      evidence_transferred: "Transferiu a custódia da evidência",
       evidence_image_added: "Added evidence image",
       evidence_image_removed: "Removed evidence image",
       evidence_linked_case: "Linked evidence to case",
-      case_created_from_evidence: "Created case from evidence",
-      weapon_created: "Registered a weapon",
-      weapon_updated: "Updated weapon record",
-      weapon_deleted: "Deleted weapon record",
-      vehicle_updated: "Updated vehicle record",
-      vehicle_impounded: "Impounded a vehicle",
-      vehicle_released: "Released vehicle from impound",
-      search_citizens: "Searched citizens",
-      search_players: "Searched players",
-      search_officers: "Searched officers",
-      fine_processed: "Processed a fine",
-      charge_updated: "Updated a charge",
-      arrest_logged: "Logged an arrest",
-      sent_to_jail: "Sent citizen to jail",
-      callsign_changed: "Changed officer callsign",
-      signal100_activated: "Activated Signal 100",
-      signal100_deactivated: "Deactivated Signal 100",
-      icu_deleted: "Deleted ICU record",
+      case_created_from_evidence: "Criou um caso a partir da evidência",
+      weapon_created: "Registrou uma arma",
+      weapon_updated: "Atualizou o registro da arma",
+      weapon_deleted: "Excluiu o registro da arma",
+      vehicle_updated: "Atualizou o registro do veículo",
+      vehicle_impounded: "Apreendeu um veículo",
+      vehicle_released: "Liberou um veículo do pátio",
+      search_citizens: "Pesquisou cidadãos",
+      search_players: "Pesquisou jogadores",
+      search_officers: "Pesquisou oficiais",
+      fine_processed: "Processou uma multa",
+      charge_updated: "Atualizou uma infração",
+      arrest_logged: "Registrou uma prisão",
+      sent_to_jail: "Enviou o cidadão para a prisão",
+      callsign_changed: "Alterou o indicativo do oficial",
+      signal100_activated: "Ativou o Sinal 100",
+      signal100_deactivated: "Desativou o Sinal 100",
+      icu_deleted: "Excluiu um registro de UTI",
     },
     s = {
       mdt_login: { icon: "login", color: "#3b82f6" },
@@ -44184,12 +44184,12 @@ function zL(n, e) {
       {
         profile: "Profile",
         report: "Relatório",
-        warrant: "Warrant",
+        warrant: "Mandado",
         case: "Caso",
-        evidence: "Evidence",
+        evidence: "Evidências",
         vehicle: "Veículo",
         weapon: "Arma",
-        citizen: "Citizen",
+        citizen: "Cidadão",
         search: "",
         dispatch: "Channel",
         fine: "Fine",
@@ -44198,17 +44198,17 @@ function zL(n, e) {
         icu: "ICU",
         case_attachment: "Attachment",
         evidence_image: "Image",
-        officer: "Oficial",
+        officer: "Officer",
       }[q.entity_type] || q.entity_type;
     return K ? `${K} #${q.entity_id}` : `#${q.entity_id}`;
   }
   function k(q) {
-    if (!q) return "Unknown";
+    if (!q) return "Desconhecido";
     const Z = new Date(q);
     if (Number.isNaN(Z.getTime())) return q;
     const re = new Date().getTime() - Z.getTime(),
       j = Math.floor(re / 6e4);
-    if (j < 1) return "Just now";
+    if (j < 1) return "Agora mesmo";
     if (j < 60) return `${j}m ago`;
     const Q = Math.floor(j / 60);
     if (Q < 24) return `${Q}h ago`;
@@ -44238,7 +44238,7 @@ function zL(n, e) {
           ? (y(i, Z, !0), y(u, o(i).length, !0), y(c, 1))
           : (y(i, [], !0), y(u, 0));
     } catch (Z) {
-      (console.error("Failed to load activity:", Z), y(i, [], !0), y(u, 0));
+      (console.error("Falha ao carregar as atividades:", Z), y(i, [], !0), y(u, 0));
     } finally {
       y(r, !1);
     }
@@ -44307,7 +44307,7 @@ function zL(n, e) {
                 ),
                   C(ue, o(te).icon),
                   C(se, Je),
-                  C(ye, o(Q).actor_name || "Unknown"),
+                  C(ye, o(Q).actor_name || "Desconhecido"),
                   Rn(xe, "title", Pe),
                   C(je, ke));
               },
@@ -44326,8 +44326,8 @@ function zL(n, e) {
               C(
                 $,
                 o(l)
-                  ? "No results matching your search."
-                  : "No recent activity.",
+                  ? "Nenhum resultado corresponde à sua busca."
+                  : "Nenhuma atividade recente.",
               ),
             ),
               x(j, Q));
@@ -44367,20 +44367,20 @@ async function BL(n, e, t, s) {
     y(t, !0);
     const i = await Te(he.SETTINGS.SAVE_AUDIT_TRACKING, o(s), { success: !1 });
     i != null && i.success
-      ? e("Activity tracking settings saved")
+      ? e("Configurações de rastreamento salvas")
       : e(
-          (i == null ? void 0 : i.message) || "Falha ao salvar settings",
+          (i == null ? void 0 : i.message) || "Falha ao salvar as configurações",
           "error",
         );
   } catch (i) {
-    (console.error("Falha ao salvar tracking config:", i),
-      e("Falha ao salvar settings", "error"));
+    (console.error("Falha ao salvar a configuração de rastreamento:", i),
+      e("Falha ao salvar as configurações", "error"));
   } finally {
     y(t, !1);
   }
 }
 var FL = E(
-    '<div class="tracking-loading svelte-110km3r"><div class="loading-spinner svelte-110km3r"></div> <p class="svelte-110km3r">Loading tracking settings...</p></div>',
+    '<div class="tracking-loading svelte-110km3r"><div class="loading-spinner svelte-110km3r"></div> <p class="svelte-110km3r">Carregando configurações de rastreamento...</p></div>',
   ),
   VL = (n, e, t) => e(o(t).key),
   qL = E(
@@ -44394,7 +44394,7 @@ var FL = E(
     '<div class="save-bar svelte-110km3r"><button class="btn-save svelte-110km3r"><span class="material-icons btn-save-icon svelte-110km3r">save</span> </button> <!></div>',
   ),
   GL = E(
-    '<div class="tracking-page svelte-110km3r"><div class="tracking-card svelte-110km3r"><div class="card-title-row svelte-110km3r"><span class="card-label svelte-110km3r">Activity Tracking</span> <div class="tracking-actions svelte-110km3r"><button class="action-btn svelte-110km3r">Enable All</button> <button class="action-btn svelte-110km3r">Disable All</button></div></div> <p class="card-subtitle svelte-110km3r">Configure which actions are logged in the activity feed. Changes apply department-wide.</p> <!></div> <!></div>',
+    '<div class="tracking-page svelte-110km3r"><div class="tracking-card svelte-110km3r"><div class="card-title-row svelte-110km3r"><span class="card-label svelte-110km3r">Activity Tracking</span> <div class="tracking-actions svelte-110km3r"><button class="action-btn svelte-110km3r">Ativar tudo</button> <button class="action-btn svelte-110km3r">Desativar tudo</button></div></div> <p class="card-subtitle svelte-110km3r">Configure which actions are logged in the activity feed. Changes apply department-wide.</p> <!></div> <!></div>',
   );
 function WL(n, e) {
   Vt(e, !0);
@@ -44402,62 +44402,62 @@ function WL(n, e) {
     {
       key: "authentication",
       label: "Authentication",
-      description: "Login and logout events",
+      description: "Eventos de entrada e saída",
     },
     {
       key: "reports",
       label: "Relatórios",
-      description: "Report create, update, and delete",
+      description: "Criação, atualização e exclusão de relatórios",
     },
     {
       key: "cases",
       label: "Casos",
-      description: "Case CRUD, officer assignments, attachments",
+      description: "CRUD de casos, atribuições de oficiais e anexos",
     },
     {
       key: "evidence",
-      label: "Evidence",
-      description: "Evidence CRUD, transfers, and images",
+      label: "Evidências",
+      description: "CRUD de evidências, transferências e imagens",
     },
     {
       key: "warrants",
       label: "Mandados",
-      description: "Warrant issued and closed",
+      description: "Mandados emitidos e encerrados",
     },
     {
       key: "vehicles",
-      label: "Vehicles",
-      description: "Vehicle updates, impound, and release",
+      label: "Veículos",
+      description: "Atualizações do veículo, apreensão e liberação",
     },
     {
       key: "weapons",
-      label: "Weapons",
-      description: "Weapon create, update, and delete",
+      label: "Armas",
+      description: "Criação, atualização e exclusão de armas",
     },
     {
       key: "charges",
-      label: "Charges & Fines",
-      description: "Fines processed and charges updated",
+      label: "Infrações e multas",
+      description: "Multas processadas e infrações atualizadas",
     },
     {
       key: "searches",
-      label: "Searches",
-      description: "Citizen, player, and officer searches",
+      label: "Pesquisas",
+      description: "Pesquisas de cidadãos, jogadores e oficiais",
     },
     {
       key: "dispatch",
       label: "Dispatch",
-      description: "Signal 100 activate and deactivate",
+      description: "Ativação e desativação do Sinal 100",
     },
-    { key: "officers", label: "Officers", description: "Callsign changes" },
-    { key: "sentencing", label: "Sentencing", description: "Jail sentencing" },
-    { key: "arrests", label: "Prisões", description: "Arrest logging" },
-    { key: "icu", label: "ICU", description: "ICU record deletion" },
-    { key: "cameras", label: "Cameras", description: "Security camera access" },
+    { key: "officers", label: "Oficiais", description: "Alterações de indicativo" },
+    { key: "sentencing", label: "Sentencing", description: "Sentenças de prisão" },
+    { key: "arrests", label: "Prisões", description: "Registro de prisões" },
+    { key: "icu", label: "ICU", description: "Exclusão de registros de UTI" },
+    { key: "cameras", label: "Câmeras", description: "Acesso às câmeras de segurança" },
     {
       key: "bodycams",
       label: "Bodycams",
-      description: "Officer bodycam access",
+      description: "Acesso às bodycams dos oficiais",
     },
   ];
   let s = F(Qe({})),
@@ -44476,7 +44476,7 @@ function WL(n, e) {
       const D = await Te(he.SETTINGS.GET_AUDIT_TRACKING, {}, {});
       D && typeof D == "object" && y(s, { ...D }, !0);
     } catch (D) {
-      console.error("Failed to load tracking config:", D);
+      console.error("Falha ao carregar a configuração de rastreamento:", D);
     } finally {
       y(i, !1);
     }
@@ -44566,7 +44566,7 @@ function WL(n, e) {
         });
       }
       (H(() => {
-        ((G.disabled = o(r)), C(q, ` ${o(r) ? "Saving..." : "Save Settings"}`));
+        ((G.disabled = o(r)), C(q, ` ${o(r) ? "Salvando..." : "Salvar configurações"}`));
       }),
         x(D, V));
     };
@@ -44595,10 +44595,10 @@ var $L = E("<div> </div>"),
   aR = (n, e) => y(e, "leo"),
   oR = (n, e) => y(e, "ems"),
   lR = E(
-    '<div class="filter-pills svelte-95g8j2"><button>All</button> <button>LEO</button> <button>EMS</button></div>',
+    '<div class="filter-pills svelte-95g8j2"><button>Todas</button> <button>Policial</button> <button>EMS</button></div>',
   ),
   cR = E(
-    '<div class="empty-state svelte-95g8j2"><div class="loading-spinner svelte-95g8j2"></div> <p class="svelte-95g8j2">Loading tags...</p></div>',
+    '<div class="empty-state svelte-95g8j2"><div class="loading-spinner svelte-95g8j2"></div> <p class="svelte-95g8j2">Carregando etiquetas...</p></div>',
   ),
   dR = (n, e) => n.key === "Enter" && e(),
   uR = E('<option class="svelte-95g8j2"> </option>'),
@@ -44607,20 +44607,20 @@ var $L = E("<div> </div>"),
   vR = (n, e, t) => y(e, o(t).value, !0),
   pR = E("<button></button>"),
   mR = E(
-    '<div class="tag-edit-form svelte-95g8j2"><div class="edit-row svelte-95g8j2"><div class="tag-color-indicator svelte-95g8j2"></div> <input class="tag-name-input edit svelte-95g8j2" type="text" maxlength="25"/> <select class="tag-select svelte-95g8j2"></select> <!></div> <div class="edit-row svelte-95g8j2"><div class="color-picker compact svelte-95g8j2"></div> <div class="edit-actions svelte-95g8j2"><button class="btn-save svelte-95g8j2">Save</button> <button class="btn-cancel svelte-95g8j2">Cancel</button></div></div></div>',
+    '<div class="tag-edit-form svelte-95g8j2"><div class="edit-row svelte-95g8j2"><div class="tag-color-indicator svelte-95g8j2"></div> <input class="tag-name-input edit svelte-95g8j2" type="text" maxlength="25"/> <select class="tag-select svelte-95g8j2"></select> <!></div> <div class="edit-row svelte-95g8j2"><div class="color-picker compact svelte-95g8j2"></div> <div class="edit-actions svelte-95g8j2"><button class="btn-save svelte-95g8j2">Salvar</button> <button class="btn-cancel svelte-95g8j2">Cancelar</button></div></div></div>',
   ),
   _R = E('<span class="tag-usage svelte-95g8j2" title="Times used"> </span>'),
   gR = (n, e, t) => e(o(t)),
   yR = (n, e, t) => e(o(t)),
   bR = E(
-    '<div class="tag-color-indicator svelte-95g8j2"></div> <div class="tag-info svelte-95g8j2"><span class="tag-name svelte-95g8j2"> </span> <span> </span> <span> </span></div> <!> <div class="tag-actions svelte-95g8j2"><button class="action-btn edit-btn svelte-95g8j2" title="Edit"><span class="material-icons svelte-95g8j2">edit</span></button> <button class="action-btn delete-btn svelte-95g8j2" title="Excluir"><span class="material-icons svelte-95g8j2">delete</span></button></div>',
+    '<div class="tag-color-indicator svelte-95g8j2"></div> <div class="tag-info svelte-95g8j2"><span class="tag-name svelte-95g8j2"> </span> <span> </span> <span> </span></div> <!> <div class="tag-actions svelte-95g8j2"><button class="action-btn edit-btn svelte-95g8j2" title="Editar"><span class="material-icons svelte-95g8j2">edit</span></button> <button class="action-btn delete-btn svelte-95g8j2" title="Excluir"><span class="material-icons svelte-95g8j2">delete</span></button></div>',
     1,
   ),
   kR = E("<div><!></div>"),
   wR = E('<div class="empty-state svelte-95g8j2"><!></div>'),
   xR = E('<div class="tags-list svelte-95g8j2"></div>'),
   TR = E(
-    '<div class="tags-panel svelte-95g8j2"><!> <div class="new-tag-section svelte-95g8j2"><div class="new-tag-row svelte-95g8j2"><input class="tag-name-input svelte-95g8j2" type="text" placeholder="New tag name..." maxlength="25"/> <select class="tag-select svelte-95g8j2"></select> <!> <div class="color-picker svelte-95g8j2"></div> <button class="btn-create svelte-95g8j2"> </button></div></div> <div class="filter-bar svelte-95g8j2"><input class="search-input svelte-95g8j2" type="text" placeholder="Search tags..."/> <div class="filter-pills svelte-95g8j2"><button>All</button> <button> </button> <button>Relatório</button> <button>Both</button></div> <!> <span class="tag-count svelte-95g8j2"> </span></div> <!></div>',
+    '<div class="tags-panel svelte-95g8j2"><!> <div class="new-tag-section svelte-95g8j2"><div class="new-tag-row svelte-95g8j2"><input class="tag-name-input svelte-95g8j2" type="text" placeholder="Nome da etiqueta..." maxlength="25"/> <select class="tag-select svelte-95g8j2"></select> <!> <div class="color-picker svelte-95g8j2"></div> <button class="btn-create svelte-95g8j2"> </button></div></div> <div class="filter-bar svelte-95g8j2"><input class="search-input svelte-95g8j2" type="text" placeholder="Buscar etiquetas..."/> <div class="filter-pills svelte-95g8j2"><button>Todas</button> <button> </button> <button>Relatório</button> <button>Ambos</button></div> <!> <span class="tag-count svelte-95g8j2"> </span></div> <!></div>',
   );
 function SR(n, e) {
   Vt(e, !0);
@@ -44642,17 +44642,17 @@ function SR(n, e) {
       ? [
           { value: "officer", label: "Personnel" },
           { value: "report", label: "Relatório" },
-          { value: "both", label: "Both" },
+          { value: "both", label: "Ambos" },
         ]
       : [
-          { value: "officer", label: "Oficial" },
+          { value: "officer", label: "Officer" },
           { value: "report", label: "Relatório" },
-          { value: "both", label: "Both" },
+          { value: "both", label: "Ambos" },
         ],
   );
   const l = [
     { value: "all", label: "All" },
-    { value: "leo", label: "LEO" },
+    { value: "leo", label: "Policial" },
     { value: "ems", label: "EMS" },
   ];
   let c = F(Qe([])),
@@ -44691,7 +44691,7 @@ function SR(n, e) {
       const Ae = await Te(he.MANAGEMENT.GET_TAGS, { jobType: t() }, []);
       y(c, Array.isArray(Ae) ? Ae : [], !0);
     } catch (Ae) {
-      (console.error("Failed to load tags:", Ae), y(c, [], !0));
+      (console.error("Falha ao carregar as etiquetas:", Ae), y(c, [], !0));
     } finally {
       y(g, !1);
     }
@@ -44700,7 +44700,7 @@ function SR(n, e) {
     const Ae = o(u).trim();
     if (Ae) {
       if (Ae.length > 25) {
-        V("Tag name must be 25 characters or less", "error");
+        V("O nome da etiqueta deve ter no máximo 25 caracteres", "error");
         return;
       }
       try {
@@ -44711,14 +44711,14 @@ function SR(n, e) {
           { success: !1 },
         );
         pe != null && pe.success
-          ? (V("Tag created"), y(u, ""), await G())
+          ? (V("Etiqueta criada"), y(u, ""), await G())
           : V(
-              (pe == null ? void 0 : pe.message) || "Failed to create tag",
+              (pe == null ? void 0 : pe.message) || "Falha ao criar a etiqueta",
               "error",
             );
       } catch (pe) {
-        (console.error("Failed to create tag:", pe),
-          V("Failed to create tag", "error"));
+        (console.error("Falha ao criar a etiqueta:", pe),
+          V("Falha ao criar a etiqueta", "error"));
       } finally {
         y(w, !1);
       }
@@ -44729,7 +44729,7 @@ function SR(n, e) {
     const Ae = o(A).trim();
     if (Ae) {
       if (Ae.length > 25) {
-        V("Tag name must be 25 characters or less", "error");
+        V("O nome da etiqueta deve ter no máximo 25 caracteres", "error");
         return;
       }
       try {
@@ -44740,14 +44740,14 @@ function SR(n, e) {
           { success: !1 },
         );
         pe != null && pe.success
-          ? (V("Tag updated"), y(T, null), await G())
+          ? (V("Etiqueta atualizada"), y(T, null), await G())
           : V(
-              (pe == null ? void 0 : pe.message) || "Failed to update tag",
+              (pe == null ? void 0 : pe.message) || "Falha ao atualizar a etiqueta",
               "error",
             );
       } catch (pe) {
-        (console.error("Failed to update tag:", pe),
-          V("Failed to update tag", "error"));
+        (console.error("Falha ao atualizar a etiqueta:", pe),
+          V("Falha ao atualizar a etiqueta", "error"));
       } finally {
         y(w, !1);
       }
@@ -44762,16 +44762,16 @@ function SR(n, e) {
         { success: !1 },
       );
       ne != null && ne.success
-        ? (V("Tag deleted"),
+        ? (V("Etiqueta excluída"),
           ((pe = o(T)) == null ? void 0 : pe.id) === Ae.id && y(T, null),
           await G())
         : V(
-            (ne == null ? void 0 : ne.message) || "Failed to delete tag",
+            (ne == null ? void 0 : ne.message) || "Falha ao excluir a etiqueta",
             "error",
           );
     } catch (ne) {
-      (console.error("Failed to delete tag:", ne),
-        V("Failed to delete tag", "error"));
+      (console.error("Falha ao excluir a etiqueta:", ne),
+        V("Falha ao excluir a etiqueta", "error"));
     }
   }
   function re(Ae) {
@@ -45143,11 +45143,11 @@ function SR(n, e) {
               de = f(ce);
             {
               var be = (Se) => {
-                  var ze = fs("No tags match your filter.");
+                  var ze = fs("Nenhuma etiqueta corresponde ao filtro.");
                   x(Se, ze);
                 },
                 le = (Se) => {
-                  var ze = fs("No tags created yet. Add one above.");
+                  var ze = fs("Nenhuma etiqueta criada ainda. Adicione uma acima.");
                   x(Se, ze);
                 };
               z(de, (Se) => {
@@ -45169,7 +45169,7 @@ function SR(n, e) {
         C(ve, o(w) ? "..." : "+ Add"),
         (Pe = Re(Je, 1, "filter-pill svelte-95g8j2", null, Pe, pe)),
         ($e = Re(ke, 1, "filter-pill svelte-95g8j2", null, $e, ne)),
-        C(xt, o(s) ? "Personnel" : "Oficial"),
+        C(xt, o(s) ? "Personnel" : "Officer"),
         (qe = Re(gt, 1, "filter-pill svelte-95g8j2", null, qe, ce)),
         (ge = Re(fe, 1, "filter-pill svelte-95g8j2", null, ge, de)),
         C(Ot, `${o(D).length ?? ""} tag${o(D).length !== 1 ? "s" : ""}`));
@@ -45208,14 +45208,14 @@ async function ER(n, e, t, s) {
       success: !1,
     });
     i != null && i.success
-      ? e("Jail & Fines settings saved")
+      ? e("Configurações de prisão e multas salvas")
       : e(
-          (i == null ? void 0 : i.message) || "Falha ao salvar settings",
+          (i == null ? void 0 : i.message) || "Falha ao salvar as configurações",
           "error",
         );
   } catch (i) {
-    (console.error("Falha ao salvar jail/fines config:", i),
-      e("Falha ao salvar settings", "error"));
+    (console.error("Falha ao salvar a configuração de prisão/multas:", i),
+      e("Falha ao salvar as configurações", "error"));
   } finally {
     y(t, !1);
   }
@@ -45224,17 +45224,17 @@ function CR(n, e) {
   n.key === "Enter" && (n.preventDefault(), e());
 }
 var AR = E(
-    '<div class="jf-loading svelte-1v7s77l"><div class="loading-spinner svelte-1v7s77l"></div> <p class="svelte-1v7s77l">Loading settings...</p></div>',
+    '<div class="jf-loading svelte-1v7s77l"><div class="loading-spinner svelte-1v7s77l"></div> <p class="svelte-1v7s77l">Carregando configurações...</p></div>',
   ),
   IR = (n, e, t) => e(o(t)),
   MR = E(
     '<div class="offer-chip svelte-1v7s77l"><span class="offer-value svelte-1v7s77l"> </span> <button class="offer-remove svelte-1v7s77l"><svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor" class="svelte-1v7s77l"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" class="svelte-1v7s77l"></path></svg></button></div>',
   ),
   OR = E(
-    '<span class="no-offers svelte-1v7s77l">No reduction offers configured</span>',
+    '<span class="no-offers svelte-1v7s77l">Nenhuma oferta de redução configurada</span>',
   ),
   PR = E(
-    '<div class="jf-scroll svelte-1v7s77l"><div class="setting-group svelte-1v7s77l"><div class="setting-group-header svelte-1v7s77l"><span class="group-label svelte-1v7s77l">Reduction Offers</span> <span class="group-desc svelte-1v7s77l">Percentage options shown when offering a reduction on charges</span></div> <div class="offers-list svelte-1v7s77l"><!> <!></div> <div class="add-offer-row svelte-1v7s77l"><input type="number" class="offer-input svelte-1v7s77l" placeholder="e.g. 25" min="1" max="100"/> <span class="offer-input-suffix svelte-1v7s77l">%</span> <button class="add-offer-btn svelte-1v7s77l">Add</button></div></div> <div class="setting-group svelte-1v7s77l"><div class="setting-group-header svelte-1v7s77l"><span class="group-label svelte-1v7s77l">Maximum Fine Amount</span> <span class="group-desc svelte-1v7s77l">The highest fine amount that can be processed through the MDT</span></div> <div class="fine-input-row svelte-1v7s77l"><span class="fine-prefix svelte-1v7s77l">$</span> <input type="number" class="fine-input svelte-1v7s77l" min="0"/></div></div></div>',
+    '<div class="jf-scroll svelte-1v7s77l"><div class="setting-group svelte-1v7s77l"><div class="setting-group-header svelte-1v7s77l"><span class="group-label svelte-1v7s77l">Reduction Offers</span> <span class="group-desc svelte-1v7s77l">Percentage options shown when offering a reduction on charges</span></div> <div class="offers-list svelte-1v7s77l"><!> <!></div> <div class="add-offer-row svelte-1v7s77l"><input type="number" class="offer-input svelte-1v7s77l" placeholder="e.g. 25" min="1" max="100"/> <span class="offer-input-suffix svelte-1v7s77l">%</span> <button class="add-offer-btn svelte-1v7s77l">Adicionar</button></div></div> <div class="setting-group svelte-1v7s77l"><div class="setting-group-header svelte-1v7s77l"><span class="group-label svelte-1v7s77l">Maximum Fine Amount</span> <span class="group-desc svelte-1v7s77l">The highest fine amount that can be processed through the MDT</span></div> <div class="fine-input-row svelte-1v7s77l"><span class="fine-prefix svelte-1v7s77l">$</span> <input type="number" class="fine-input svelte-1v7s77l" min="0"/></div></div></div>',
   ),
   NR = E("<span> </span>"),
   DR = E(
@@ -45277,7 +45277,7 @@ function RR(n, e) {
           !0,
         );
     } catch (P) {
-      console.error("Failed to load jail/fines config:", P);
+      console.error("Falha ao carregar a configuração de prisão/multas:", P);
     } finally {
       y(s, !1);
     }
@@ -45285,11 +45285,11 @@ function RR(n, e) {
   function h() {
     const P = parseInt(o(l), 10);
     if (!P || P < 1 || P > 100) {
-      c("Enter a value between 1 and 100", "error");
+      c("Digite um valor entre 1 e 100", "error");
       return;
     }
     if (o(t).reductionOffers.includes(P)) {
-      c("That percentage already exists", "error");
+      c("Essa porcentagem já existe", "error");
       return;
     }
     ((o(t).reductionOffers = [...o(t).reductionOffers, P].sort(
@@ -45391,7 +45391,7 @@ function RR(n, e) {
         });
       }
       (H(() => {
-        ((R.disabled = o(i)), C(B, ` ${o(i) ? "Saving..." : "Save Settings"}`));
+        ((R.disabled = o(i)), C(B, ` ${o(i) ? "Salvando..." : "Salvar configurações"}`));
       }),
         x(P, O));
     };
@@ -45405,11 +45405,11 @@ nn(["click", "keydown"]);
 async function zR(n, e, t, s, i, r, l, c, u, h, m) {
   var _;
   if (!o(e).trim()) {
-    t("Template name is required", "error");
+    t("O nome do modelo é obrigatório", "error");
     return;
   }
   if (!o(s).trim()) {
-    t("Template content is required", "error");
+    t("O conteúdo do modelo é obrigatório", "error");
     return;
   }
   try {
@@ -45423,7 +45423,7 @@ async function zR(n, e, t, s, i, r, l, c, u, h, m) {
       },
       w = await Te(he.SETTINGS.SAVE_REPORT_TEMPLATE, g, { success: !1 });
     w != null && w.success
-      ? (t(o(i) ? "Template updated" : "Template created"), c(), await m())
+      ? (t(o(i) ? "Modelo atualizado" : "Modelo criado"), c(), await m())
       : t(
           (w == null ? void 0 : w.message) || "Falha ao salvar template",
           "error",
@@ -45446,7 +45446,7 @@ var FR = E(
   ),
   qR = E('<option class="svelte-2y9yk4"> </option>'),
   jR = E(
-    '<div class="template-form svelte-2y9yk4"><div class="form-row svelte-2y9yk4"><div class="form-group svelte-2y9yk4"><label class="form-label svelte-2y9yk4" for="tmpl-name">Nome do Modelo</label> <input id="tmpl-name" type="text" class="form-input svelte-2y9yk4" placeholder="e.g. Standard Incident"/></div> <div class="form-group svelte-2y9yk4"><label class="form-label svelte-2y9yk4" for="tmpl-type">Tipo do Relatório</label> <select id="tmpl-type" class="form-select svelte-2y9yk4"></select></div></div> <div class="form-group svelte-2y9yk4"><label class="form-label svelte-2y9yk4" for="tmpl-content">Conteúdo do Modelo <span class="form-hint svelte-2y9yk4">(HTML)</span></label> <textarea id="tmpl-content" class="form-textarea svelte-2y9yk4" placeholder="Digite o conteúdo HTML do modelo..."></textarea></div> <div class="form-actions svelte-2y9yk4"><button class="btn-cancel svelte-2y9yk4">Cancel</button> <button class="btn-save svelte-2y9yk4"><span class="material-icons btn-save-icon svelte-2y9yk4">save</span> </button></div></div>',
+    '<div class="template-form svelte-2y9yk4"><div class="form-row svelte-2y9yk4"><div class="form-group svelte-2y9yk4"><label class="form-label svelte-2y9yk4" for="tmpl-name">Nome do Modelo</label> <input id="tmpl-name" type="text" class="form-input svelte-2y9yk4" placeholder="ex.: Ocorrência padrão"/></div> <div class="form-group svelte-2y9yk4"><label class="form-label svelte-2y9yk4" for="tmpl-type">Tipo do Relatório</label> <select id="tmpl-type" class="form-select svelte-2y9yk4"></select></div></div> <div class="form-group svelte-2y9yk4"><label class="form-label svelte-2y9yk4" for="tmpl-content">Conteúdo do Modelo <span class="form-hint svelte-2y9yk4">(HTML)</span></label> <textarea id="tmpl-content" class="form-textarea svelte-2y9yk4" placeholder="Digite o conteúdo HTML do modelo..."></textarea></div> <div class="form-actions svelte-2y9yk4"><button class="btn-cancel svelte-2y9yk4">Cancelar</button> <button class="btn-save svelte-2y9yk4"><span class="material-icons btn-save-icon svelte-2y9yk4">save</span> </button></div></div>',
   ),
   UR = E(
     '<div class="empty-state svelte-2y9yk4"><span class="material-icons svelte-2y9yk4" style="font-size: 20px; color: rgba(255,255,255,0.15); margin-bottom: 6px;">description</span> <p class="svelte-2y9yk4">Nenhum modelo configurado</p> <p class="empty-hint svelte-2y9yk4">Crie um modelo para começar</p></div>',
@@ -45454,7 +45454,7 @@ var FR = E(
   HR = (n, e, t) => e(o(t)),
   GR = (n, e, t) => e(o(t).id),
   WR = E(
-    '<div class="template-row svelte-2y9yk4"><div class="template-info svelte-2y9yk4"><span class="template-name svelte-2y9yk4"> </span> <span class="template-type svelte-2y9yk4"> </span></div> <div class="template-row-actions svelte-2y9yk4"><button class="row-btn edit-btn svelte-2y9yk4" aria-label="Edit"><span class="material-icons svelte-2y9yk4">edit</span></button> <button class="row-btn delete-btn svelte-2y9yk4" aria-label="Excluir"><span class="material-icons svelte-2y9yk4">delete</span></button></div></div>',
+    '<div class="template-row svelte-2y9yk4"><div class="template-info svelte-2y9yk4"><span class="template-name svelte-2y9yk4"> </span> <span class="template-type svelte-2y9yk4"> </span></div> <div class="template-row-actions svelte-2y9yk4"><button class="row-btn edit-btn svelte-2y9yk4" aria-label="Editar"><span class="material-icons svelte-2y9yk4">edit</span></button> <button class="row-btn delete-btn svelte-2y9yk4" aria-label="Excluir"><span class="material-icons svelte-2y9yk4">delete</span></button></div></div>',
   ),
   ZR = E('<div class="templates-list svelte-2y9yk4"></div>'),
   $R = E('<div class="templates-scroll svelte-2y9yk4"><!></div>'),
@@ -45492,7 +45492,7 @@ function YR(n, e) {
       );
       Array.isArray(j) && y(i, j, !0);
     } catch (j) {
-      console.error("Failed to load templates:", j);
+      console.error("Falha ao carregar os modelos:", j);
     } finally {
       y(r, !1);
     }
@@ -45587,7 +45587,7 @@ function YR(n, e) {
                 ((xe.disabled = o(l)),
                   C(
                     je,
-                    ` ${o(l) ? "Saving..." : o(u) ? "Atualizar Modelo" : "Criar Modelo"}`,
+                    ` ${o(l) ? "Salvando..." : o(u) ? "Atualizar Modelo" : "Criar Modelo"}`,
                   ));
               }),
                 bt(
@@ -45716,7 +45716,7 @@ var QR = E("<div> </div>"),
     '<button><span class="material-icons svelte-tscqvl"> </span></button>',
   ),
   n5 = E(
-    '<button class="btn-save svelte-tscqvl">Update</button> <button class="btn-cancel svelte-tscqvl">Cancel</button>',
+    '<button class="btn-save svelte-tscqvl">Atualizar</button> <button class="btn-cancel svelte-tscqvl">Cancelar</button>',
     1,
   ),
   s5 = E('<button class="btn-create svelte-tscqvl"> </button>'),
@@ -45726,26 +45726,26 @@ var QR = E("<div> </div>"),
   r5 = (n, e, t) => e(o(t)),
   a5 = (n, e, t) => e(o(t)),
   o5 = E(
-    '<div><span class="material-icons row-icon svelte-tscqvl"> </span> <div class="row-info svelte-tscqvl"><span class="row-name svelte-tscqvl"> </span> <span class="row-desc svelte-tscqvl"> </span></div> <span class="row-category svelte-tscqvl"> </span> <span class="row-goal svelte-tscqvl"> </span> <div class="row-actions svelte-tscqvl"><button class="action-btn edit-btn svelte-tscqvl" title="Edit"><span class="material-icons svelte-tscqvl">edit</span></button> <button class="action-btn delete-btn svelte-tscqvl" title="Excluir"><span class="material-icons svelte-tscqvl">delete</span></button></div></div>',
+    '<div><span class="material-icons row-icon svelte-tscqvl"> </span> <div class="row-info svelte-tscqvl"><span class="row-name svelte-tscqvl"> </span> <span class="row-desc svelte-tscqvl"> </span></div> <span class="row-category svelte-tscqvl"> </span> <span class="row-goal svelte-tscqvl"> </span> <div class="row-actions svelte-tscqvl"><button class="action-btn edit-btn svelte-tscqvl" title="Editar"><span class="material-icons svelte-tscqvl">edit</span></button> <button class="action-btn delete-btn svelte-tscqvl" title="Excluir"><span class="material-icons svelte-tscqvl">delete</span></button></div></div>',
   ),
   l5 = E(
     '<div class="empty-state svelte-tscqvl">Nenhuma premiação configurada. Adicione uma acima.</div>',
   ),
   c5 = E('<div class="awards-list svelte-tscqvl"></div>'),
   d5 = E(
-    '<div class="awards-panel svelte-tscqvl"><!> <div class="form-section svelte-tscqvl"><div class="form-row svelte-tscqvl"><input class="form-input name-input svelte-tscqvl" type="text" placeholder="Nome da premiação..." maxlength="50"/> <input class="form-input svelte-tscqvl" type="text" placeholder="Categoria..." maxlength="25"/> <select class="form-select svelte-tscqvl"></select> <input class="form-input goal-input svelte-tscqvl" type="number" min="1" placeholder="Meta"/></div> <div class="form-row svelte-tscqvl"><input class="form-input desc-input svelte-tscqvl" type="text" placeholder="Description..." maxlength="100"/> <div class="icon-picker svelte-tscqvl"></div> <div class="form-actions svelte-tscqvl"><!></div></div></div> <!></div>',
+    '<div class="awards-panel svelte-tscqvl"><!> <div class="form-section svelte-tscqvl"><div class="form-row svelte-tscqvl"><input class="form-input name-input svelte-tscqvl" type="text" placeholder="Nome da premiação..." maxlength="50"/> <input class="form-input svelte-tscqvl" type="text" placeholder="Categoria..." maxlength="25"/> <select class="form-select svelte-tscqvl"></select> <input class="form-input goal-input svelte-tscqvl" type="number" min="1" placeholder="Meta"/></div> <div class="form-row svelte-tscqvl"><input class="form-input desc-input svelte-tscqvl" type="text" placeholder="Descrição..." maxlength="100"/> <div class="icon-picker svelte-tscqvl"></div> <div class="form-actions svelte-tscqvl"><!></div></div></div> <!></div>',
   );
 function u5(n, e) {
   Vt(e, !0);
   const t = [
       { value: "reports", label: "Relatórios registrados" },
-      { value: "arrests", label: "Arrest Reports" },
+      { value: "arrests", label: "Relatórios de Prisão" },
       { value: "cases", label: "Casos trabalhados" },
       { value: "evidence", label: "Evidências registradas" },
       { value: "bolos", label: "BOLOs emitidos" },
       { value: "warrants", label: "Mandados emitidos" },
-      { value: "totalFined", label: "Total multado ($)" },
-      { value: "totalMonths", label: "Meses de condenação" },
+      { value: "totalMultado", label: "Total multado ($)" },
+      { value: "totalMeses", label: "Meses de condenação" },
       { value: "citations", label: "Citações emitidas" },
     ],
     s = [
@@ -45805,7 +45805,7 @@ function u5(n, e) {
       const Y = await Te(he.AWARDS.DELETE_AWARD, { id: W.id }, { success: !1 });
       Y != null && Y.success
         ? (T("Premiação excluída"), o(u) === W.id && A(), await O())
-        : T("Failed to delete", "error");
+        : T("Falha ao excluir", "error");
     } catch {
       T("Falha ao excluir a premiação", "error");
     }
@@ -46029,7 +46029,7 @@ async function mv(n, e, t, s, i, r, l, c, u) {
 }
 var f5 = E("<div> </div>"),
   h5 = E(
-    '<button class="btn-save svelte-k4uss6">Update</button> <button class="btn-cancel svelte-k4uss6">Cancel</button>',
+    '<button class="btn-save svelte-k4uss6">Atualizar</button> <button class="btn-cancel svelte-k4uss6">Cancelar</button>',
     1,
   ),
   v5 = E('<button class="btn-create svelte-k4uss6"> </button>'),
@@ -46040,7 +46040,7 @@ var f5 = E("<div> </div>"),
   _5 = (n, e, t) => e(o(t)),
   g5 = (n, e, t) => e(o(t)),
   y5 = E(
-    '<div><span class="material-icons row-icon custom-icon svelte-k4uss6">badge</span> <div class="row-info svelte-k4uss6"><span class="row-name svelte-k4uss6"> </span> <!></div> <span class="row-badge custom-badge svelte-k4uss6">CUSTOM</span> <div class="row-actions svelte-k4uss6"><button class="action-btn edit-btn svelte-k4uss6" title="Edit"><span class="material-icons svelte-k4uss6">edit</span></button> <button class="action-btn delete-btn svelte-k4uss6" title="Excluir"><span class="material-icons svelte-k4uss6">delete</span></button></div></div>',
+    '<div><span class="material-icons row-icon custom-icon svelte-k4uss6">badge</span> <div class="row-info svelte-k4uss6"><span class="row-name svelte-k4uss6"> </span> <!></div> <span class="row-badge custom-badge svelte-k4uss6">PERSONALIZADA</span> <div class="row-actions svelte-k4uss6"><button class="action-btn edit-btn svelte-k4uss6" title="Editar"><span class="material-icons svelte-k4uss6">edit</span></button> <button class="action-btn delete-btn svelte-k4uss6" title="Excluir"><span class="material-icons svelte-k4uss6">delete</span></button></div></div>',
   ),
   b5 = E(
     '<div class="empty-state svelte-k4uss6">Nenhuma licença personalizada configurada. Adicione uma acima.</div>',
@@ -46080,10 +46080,10 @@ function x5(n, e) {
         { success: !1 },
       );
       re != null && re.success
-        ? (h("License deleted"), o(l) === K.id && m(), await w())
-        : h("Failed to delete", "error");
+        ? (h("Licença excluída"), o(l) === K.id && m(), await w())
+        : h("Falha ao excluir", "error");
     } catch {
-      h("Failed to delete license", "error");
+      h("Falha ao excluir license", "error");
     }
   }
   async function w() {
@@ -46246,7 +46246,7 @@ function C5(n, e) {
         label: "Permissões",
         permission: "management_permissions",
       },
-      { key: "tags", label: "Tags", permission: "management_tags" },
+      { key: "tags", label: "Etiquetas", permission: "management_tags" },
       {
         key: "jailfines",
         label: "Prisões / Multas",
@@ -46259,7 +46259,7 @@ function C5(n, e) {
       },
       {
         key: "templates",
-        label: "Templates",
+        label: "Modelos",
         permission: "management_settings",
       },
       { key: "licenses", label: "Licenças", permission: "management_settings" },
@@ -46476,7 +46476,7 @@ function A5(n, e, t, s, i, r, l, c, u, h) {
       uiZoom: o(s),
       defaultZoom: o(i),
       showOfficers: o(r),
-      showVehicles: o(l),
+      showVeículos: o(l),
       showBodycams: o(c),
     };
     (localStorage.setItem(u, JSON.stringify(m)), h("Preferências salvas"));
@@ -46493,7 +46493,7 @@ var M5 = (n, e) => e(parseInt(n.currentTarget.value)),
   ),
   P5 = E('<span class="save-status svelte-ipuukb"> </span>'),
   N5 = E(
-    '<div class="settings-page svelte-ipuukb"><div class="settings-grid svelte-ipuukb"><div class="settings-card svelte-ipuukb"><span class="card-label svelte-ipuukb">Appearance</span> <div class="setting-row svelte-ipuukb"><div class="setting-info svelte-ipuukb"><span class="setting-label svelte-ipuukb">Theme</span> <span class="setting-desc svelte-ipuukb">Selecione o tema de cores do MDT</span></div> <select class="setting-select svelte-ipuukb"><option class="svelte-ipuukb">Dark</option><option class="svelte-ipuukb">Light</option></select></div> <div class="setting-row svelte-ipuukb"><div class="setting-info svelte-ipuukb"><span class="setting-label svelte-ipuukb">Sons de Notificação</span> <span class="setting-desc svelte-ipuukb">Reproduzir sons para alertas e mensagens de despacho</span></div> <label class="toggle svelte-ipuukb"><input type="checkbox" class="svelte-ipuukb"/> <span class="toggle-slider svelte-ipuukb"></span></label></div> <div class="setting-row svelte-ipuukb"><div class="setting-info svelte-ipuukb"><span class="setting-label svelte-ipuukb">UI Zoom</span> <span class="setting-desc svelte-ipuukb">Ajustar o tamanho geral da interface do MDT</span></div> <div class="zoom-control svelte-ipuukb"><input type="range" class="zoom-slider svelte-ipuukb" min="100" max="200" step="5"/> <span class="zoom-value svelte-ipuukb"> </span> <!></div></div></div> <div class="settings-card svelte-ipuukb"><span class="card-label svelte-ipuukb">Map</span> <div class="setting-row svelte-ipuukb"><div class="setting-info svelte-ipuukb"><span class="setting-label svelte-ipuukb">Default Zoom Level</span> <span class="setting-desc svelte-ipuukb">Nível de zoom ao abrir o mapa (3-10)</span></div> <input type="number" class="setting-input svelte-ipuukb" min="3" max="10"/></div> <div class="setting-row svelte-ipuukb"><div class="setting-info svelte-ipuukb"><span class="setting-label svelte-ipuukb">Mostrar Oficiais</span> <span class="setting-desc svelte-ipuukb">Exibir posições dos oficiais no mapa</span></div> <label class="toggle svelte-ipuukb"><input type="checkbox" class="svelte-ipuukb"/> <span class="toggle-slider svelte-ipuukb"></span></label></div> <div class="setting-row svelte-ipuukb"><div class="setting-info svelte-ipuukb"><span class="setting-label svelte-ipuukb">Mostrar Veículos</span> <span class="setting-desc svelte-ipuukb">Exibir veículos rastreados no mapa</span></div> <label class="toggle svelte-ipuukb"><input type="checkbox" class="svelte-ipuukb"/> <span class="toggle-slider svelte-ipuukb"></span></label></div> <div class="setting-row svelte-ipuukb"><div class="setting-info svelte-ipuukb"><span class="setting-label svelte-ipuukb">Mostrar Bodycams</span> <span class="setting-desc svelte-ipuukb">Exibir transmissões de bodycam no mapa</span></div> <label class="toggle svelte-ipuukb"><input type="checkbox" class="svelte-ipuukb"/> <span class="toggle-slider svelte-ipuukb"></span></label></div></div></div> <div class="save-bar svelte-ipuukb"><button class="btn-save svelte-ipuukb"><span class="material-icons btn-save-icon svelte-ipuukb">save</span> Save Preferences</button> <!></div></div>',
+    '<div class="settings-page svelte-ipuukb"><div class="settings-grid svelte-ipuukb"><div class="settings-card svelte-ipuukb"><span class="card-label svelte-ipuukb">Aparência</span> <div class="setting-row svelte-ipuukb"><div class="setting-info svelte-ipuukb"><span class="setting-label svelte-ipuukb">Tema</span> <span class="setting-desc svelte-ipuukb">Selecione o tema de cores do MDT</span></div> <select class="setting-select svelte-ipuukb"><option class="svelte-ipuukb">Escuro</option><option class="svelte-ipuukb">Claro</option></select></div> <div class="setting-row svelte-ipuukb"><div class="setting-info svelte-ipuukb"><span class="setting-label svelte-ipuukb">Sons de Notificação</span> <span class="setting-desc svelte-ipuukb">Reproduzir sons para alertas e mensagens de despacho</span></div> <label class="toggle svelte-ipuukb"><input type="checkbox" class="svelte-ipuukb"/> <span class="toggle-slider svelte-ipuukb"></span></label></div> <div class="setting-row svelte-ipuukb"><div class="setting-info svelte-ipuukb"><span class="setting-label svelte-ipuukb">Zoom da Interface</span> <span class="setting-desc svelte-ipuukb">Ajustar o tamanho geral da interface do MDT</span></div> <div class="zoom-control svelte-ipuukb"><input type="range" class="zoom-slider svelte-ipuukb" min="100" max="200" step="5"/> <span class="zoom-value svelte-ipuukb"> </span> <!></div></div></div> <div class="settings-card svelte-ipuukb"><span class="card-label svelte-ipuukb">Mapa</span> <div class="setting-row svelte-ipuukb"><div class="setting-info svelte-ipuukb"><span class="setting-label svelte-ipuukb">Nível de Zoom Padrão</span> <span class="setting-desc svelte-ipuukb">Nível de zoom ao abrir o mapa (3-10)</span></div> <input type="number" class="setting-input svelte-ipuukb" min="3" max="10"/></div> <div class="setting-row svelte-ipuukb"><div class="setting-info svelte-ipuukb"><span class="setting-label svelte-ipuukb">Mostrar Oficiais</span> <span class="setting-desc svelte-ipuukb">Exibir posições dos oficiais no mapa</span></div> <label class="toggle svelte-ipuukb"><input type="checkbox" class="svelte-ipuukb"/> <span class="toggle-slider svelte-ipuukb"></span></label></div> <div class="setting-row svelte-ipuukb"><div class="setting-info svelte-ipuukb"><span class="setting-label svelte-ipuukb">Mostrar Veículos</span> <span class="setting-desc svelte-ipuukb">Exibir veículos rastreados no mapa</span></div> <label class="toggle svelte-ipuukb"><input type="checkbox" class="svelte-ipuukb"/> <span class="toggle-slider svelte-ipuukb"></span></label></div> <div class="setting-row svelte-ipuukb"><div class="setting-info svelte-ipuukb"><span class="setting-label svelte-ipuukb">Mostrar Bodycams</span> <span class="setting-desc svelte-ipuukb">Exibir transmissões de bodycam no mapa</span></div> <label class="toggle svelte-ipuukb"><input type="checkbox" class="svelte-ipuukb"/> <span class="toggle-slider svelte-ipuukb"></span></label></div></div></div> <div class="save-bar svelte-ipuukb"><button class="btn-save svelte-ipuukb"><span class="material-icons btn-save-icon svelte-ipuukb">save</span> Salvar preferências</button> <!></div></div>',
   );
 function D5(n, e) {
   Vt(e, !0);
@@ -46520,7 +46520,7 @@ function D5(n, e) {
         ke.uiZoom !== void 0 && y(r, ke.uiZoom, !0),
         ke.defaultZoom !== void 0 && y(l, ke.defaultZoom, !0),
         ke.showOfficers !== void 0 && y(c, ke.showOfficers, !0),
-        ke.showVehicles !== void 0 && y(u, ke.showVehicles, !0),
+        ke.showVeículos !== void 0 && y(u, ke.showVeículos, !0),
         ke.showBodycams !== void 0 && y(h, ke.showBodycams, !0));
     } catch {}
   }
@@ -46627,10 +46627,10 @@ function D5(n, e) {
     qt());
 }
 nn(["input", "click"]);
-var L5 = (n, e) => e.tabService.setActiveTab("Dashboard"),
+var L5 = (n, e) => e.tabService.setAtivoTab("Dashboard"),
   R5 =
-    E(`<div class="denied-overlay svelte-weus49"><div class="denied-card svelte-weus49"><span class="material-icons denied-icon svelte-weus49">lock</span> <span class="denied-title svelte-weus49">Permission Denied</span> <span class="denied-desc svelte-weus49">Você não tem permissão para acessar <strong class="svelte-weus49"> </strong>.
-						Contact a supervisor to request access.</span> <button class="denied-btn svelte-weus49"><span class="material-icons denied-btn-icon svelte-weus49">arrow_back</span> Back to Dashboard</button></div></div>`),
+    E(`<div class="denied-overlay svelte-weus49"><div class="denied-card svelte-weus49"><span class="material-icons denied-icon svelte-weus49">lock</span> <span class="denied-title svelte-weus49">Acesso negado</span> <span class="denied-desc svelte-weus49">Você não tem permissão para acessar <strong class="svelte-weus49"> </strong>.
+						Entre em contato com um superior para solicitar acesso.</span> <button class="denied-btn svelte-weus49"><span class="material-icons denied-btn-icon svelte-weus49">arrow_back</span> Voltar ao painel</button></div></div>`),
   z5 = E('<div class="content-area svelte-weus49"><!></div>');
 function B5(n, e) {
   Vt(e, !0);
@@ -46645,7 +46645,7 @@ function B5(n, e) {
     } catch {}
   });
   function s() {
-    return e.tabService.getActiveComponent();
+    return e.tabService.getAtivoComponent();
   }
   function i(g) {
     return F1.includes(g);
@@ -46678,19 +46678,19 @@ function B5(n, e) {
   function c(g) {
     return (
       {
-        citizens: "Citizens",
+        citizens: "Cidadãos",
         bolos: "BOLOs",
-        vehicles: "Vehicles",
-        weapons: "Weapons",
+        vehicles: "Veículos",
+        weapons: "Armas",
         cases: "Casos",
-        evidence: "Evidence",
+        evidence: "Evidências",
         reports: "Relatórios",
         warrants: "Mandados",
-        charges: "Charges",
+        charges: "Infrações",
         awards: "Premiações",
-        cameras: "Cameras",
+        cameras: "Câmeras",
         bodycams: "Bodycams",
-        management: "Settings",
+        management: "Configurações",
         settings: "Preferences",
       }[g] || g
     );
@@ -47313,7 +47313,7 @@ function V5(n, e) {
   });
   function c() {
     Pn(() => {
-      const O = s.getActiveInstance();
+      const O = s.getAtivoInstance();
       O && i.switchToInstance(O.id, O.currentTab);
     });
   }
@@ -47589,7 +47589,7 @@ function _v(n, e) {
     } else if (!Ol(e.queryKey, l)) return !1;
   }
   if (t !== "all") {
-    const u = e.isActive();
+    const u = e.isAtivo();
     if ((t === "active" && !u) || (t === "inactive" && u)) return !1;
   }
   return !(
@@ -48120,12 +48120,12 @@ var Us = o3(),
       reset() {
         (this.destroy(), this.setState(De(this, To)));
       }
-      isActive() {
+      isAtivo() {
         return this.observers.some((e) => Y5(e.options.enabled, this) !== !1);
       }
       isDisabled() {
         return this.getObserversCount() > 0
-          ? !this.isActive()
+          ? !this.isAtivo()
           : this.options.queryFn === ff ||
               this.state.dataUpdateCount + this.state.errorUpdateCount === 0;
       }
@@ -48324,7 +48324,7 @@ var Us = o3(),
             return {
               ...s,
               fetchFailureCount: e.failureCount,
-              fetchFailureReason: e.error,
+              fetchFailureMotivo: e.error,
             };
           case "pause":
             return { ...s, fetchStatus: "paused" };
@@ -48350,7 +48350,7 @@ var Us = o3(),
                 ...(!e.manual && {
                   fetchStatus: "idle",
                   fetchFailureCount: 0,
-                  fetchFailureReason: null,
+                  fetchFailureMotivo: null,
                 }),
               }
             );
@@ -48364,7 +48364,7 @@ var Us = o3(),
                   errorUpdateCount: s.errorUpdateCount + 1,
                   errorUpdatedAt: Date.now(),
                   fetchFailureCount: s.fetchFailureCount + 1,
-                  fetchFailureReason: i,
+                  fetchFailureMotivo: i,
                   fetchStatus: "idle",
                   status: "error",
                 };
@@ -48386,7 +48386,7 @@ var Us = o3(),
 function c3(n, e) {
   return {
     fetchFailureCount: 0,
-    fetchFailureReason: null,
+    fetchFailureMotivo: null,
     fetchStatus: k_(e.networkMode) ? "fetching" : "paused",
     ...(n === void 0 && { error: null, status: "pending" }),
   };
@@ -48408,7 +48408,7 @@ function d3(n) {
     errorUpdateCount: 0,
     errorUpdatedAt: 0,
     fetchFailureCount: 0,
-    fetchFailureReason: null,
+    fetchFailureMotivo: null,
     fetchMeta: null,
     isInvalidated: !1,
     status: t ? "success" : "pending",
@@ -48683,7 +48683,7 @@ var qi,
             return {
               ...s,
               failureCount: e.failureCount,
-              failureReason: e.error,
+              failureMotivo: e.error,
             };
           case "pause":
             return { ...s, isPaused: !0 };
@@ -48695,7 +48695,7 @@ var qi,
               context: e.context,
               data: void 0,
               failureCount: 0,
-              failureReason: null,
+              failureMotivo: null,
               error: null,
               isPaused: e.isPaused,
               status: "pending",
@@ -48707,7 +48707,7 @@ var qi,
               ...s,
               data: e.data,
               failureCount: 0,
-              failureReason: null,
+              failureMotivo: null,
               error: null,
               status: "success",
               isPaused: !1,
@@ -48718,7 +48718,7 @@ var qi,
               data: void 0,
               error: e.error,
               failureCount: s.failureCount + 1,
-              failureReason: e.error,
+              failureMotivo: e.error,
               isPaused: !1,
               status: "error",
             };
@@ -48743,7 +48743,7 @@ function h3() {
     data: void 0,
     error: null,
     failureCount: 0,
-    failureReason: null,
+    failureMotivo: null,
     isPaused: !1,
     status: "idle",
     variables: void 0,

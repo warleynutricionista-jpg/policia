@@ -17,7 +17,7 @@ ps.registerCallback(resourceName .. ':server:sendDispatchMessage', function(sour
 
     local citizenid = ps.getIdentifier(src)
     local callsign = ps.getMetadata(src, 'callsign') or '000'
-    local name = ps.getPlayerName(src) or 'Unknown'
+    local name = ps.getPlayerName(src) or 'Desconhecido'
 
     local pfp = MySQL.scalar.await('SELECT profilepicture FROM mdt_profiles WHERE citizenid = ? LIMIT 1', { citizenid })
 
@@ -70,7 +70,7 @@ ps.registerCallback(resourceName .. ':server:sendCallResponse', function(source,
         return { success = false }
     end
 
-    local name = ps.getPlayerName(src) or 'Unknown'
+    local name = ps.getPlayerName(src) or 'Desconhecido'
 
     if GetResourceState('ps-dispatch') == 'started' then
         TriggerEvent('dispatch:sendCallResponse', src, callid, message, time, function(isGood)

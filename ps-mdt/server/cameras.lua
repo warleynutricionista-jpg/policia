@@ -247,7 +247,7 @@ function Camera:activate(playerId)
     if not self.activeViewers[playerId] then
         self.activeViewers[playerId] = {
             startTime = os.time(),
-            playerName = ps.getPlayerName(playerId) or 'Unknown'
+            playerName = ps.getPlayerName(playerId) or 'Desconhecido'
         }
         ps.debug('Camera:activate - Player ' .. playerId .. ' started viewing camera ' .. self.camId)
 
@@ -378,7 +378,7 @@ function Camera:getData()
     if self.camType == Camera.types.bodycam then
         data.playerId = self.playerId
         data.note = self.note
-        data.playerName = self.playerId and (ps.getPlayerName(self.playerId) or GetPlayerName(self.playerId)) or 'Unknown'
+        data.playerName = self.playerId and (ps.getPlayerName(self.playerId) or GetPlayerName(self.playerId)) or 'Desconhecido'
     elseif self.camType == Camera.types.static then
         data.model = self.model
         data.modelHash = self:getModelHash()
@@ -874,20 +874,20 @@ ps.registerCallback(resourceName .. ':server:updateCamera', function(source, upd
 
     if not updateData or type(updateData) ~= 'table' then
         ps.error('Camera update failed - invalid data from player:', playerId)
-        return { success = false, error = 'Invalid update data' }
+        return { success = false, error = 'Dados de atualização inválidos' }
     end
 
     -- Validate required fields
     if not updateData.camId then
         ps.error('Camera update failed - missing camera ID for player:', playerId)
-        return { success = false, error = 'Missing camera ID' }
+        return { success = false, error = 'ID da câmera ausente' }
     end
 
     -- Check if camera exists
     local camera = spawnedCameras[updateData.camId]
     if not camera then
         ps.error('Camera update failed - camera not found:', updateData.camId, 'for player:', playerId)
-        return { success = false, error = 'Camera not found' }
+        return { success = false, error = 'Câmera não encontrada' }
     end
 
     -- Store old position for comparison
@@ -1017,7 +1017,7 @@ end)
 ps.registerCallback(resourceName .. ':server:viewCamera', function(source, cameraId)
     local src = source
     if not CheckAuth(src) then
-        return { success = false, error = "Unauthorized" }
+        return { success = false, error = "Não autorizado" }
     end
 
     local camera = spawnedCameras[cameraId]

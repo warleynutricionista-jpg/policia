@@ -98,8 +98,8 @@ ps.registerCallback(resourceName .. ':server:getBodycams', function(source)
                 bodycamInstances[bodycamId] = {
                     id = bodycamId,
                     officerName = officerName,
-                    callsign = playerData.metadata and playerData.metadata.callsign or 'Unknown',
-                    rank = playerData.job.grade and playerData.job.grade.name or 'Officer',
+                    callsign = playerData.metadata and playerData.metadata.callsign or 'Desconhecido',
+                    rank = playerData.job.grade and playerData.job.grade.name or 'Oficial',
                     playerId = playerData.source,
                     isOnline = true,
                     createdAt = os.time()
@@ -108,8 +108,8 @@ ps.registerCallback(resourceName .. ':server:getBodycams', function(source)
             else
                 local data = bodycamInstances[bodycamId]
                 data.officerName = officerName
-                data.callsign = playerData.metadata and playerData.metadata.callsign or 'Unknown'
-                data.rank = playerData.job.grade and playerData.job.grade.name or 'Officer'
+                data.callsign = playerData.metadata and playerData.metadata.callsign or 'Desconhecido'
+                data.rank = playerData.job.grade and playerData.job.grade.name or 'Oficial'
             end
         end
     end
@@ -176,27 +176,27 @@ end)
 ps.registerCallback(resourceName .. ':server:viewBodycam', function(source, bodycamId)
     local src = source
     if not CheckAuth(src) then
-        return { success = false, error = "Unauthorized" }
+        return { success = false, error = "Não autorizado" }
     end
 
     local bodycamData = bodycamInstances[bodycamId]
     if not bodycamData then
-        return { success = false, error = "Bodycam not found" }
+        return { success = false, error = "Bodycam não encontrada" }
     end
 
     local targetSource = bodycamData.playerId
     if not targetSource then
-        return { success = false, error = "Invalid target source" }
+        return { success = false, error = "Origem de destino inválida" }
     end
 
     local targetPlayer = GetPlayerName(targetSource)
     if not targetPlayer then
-        return { success = false, error = "Officer is no longer online" }
+        return { success = false, error = "O oficial não está mais online" }
     end
 
     local targetPed = GetPlayerPed(targetSource)
     if not targetPed or targetPed == 0 then
-        return { success = false, error = "Unable to access officer's bodycam" }
+        return { success = false, error = "Não foi possível acessar a bodycam do oficial" }
     end
 
     local coords = GetEntityCoords(targetPed)
@@ -284,8 +284,8 @@ local function createOfficerBodycam(playerId, playerData)
     bodycamInstances[bodycamId] = {
         id = bodycamId,
         officerName = officerName,
-        callsign = (playerData.metadata and playerData.metadata.callsign) or 'Unknown',
-        rank = (playerData.job and playerData.job.grade and playerData.job.grade.name) or 'Officer',
+        callsign = (playerData.metadata and playerData.metadata.callsign) or 'Desconhecido',
+        rank = (playerData.job and playerData.job.grade and playerData.job.grade.name) or 'Oficial',
         playerId = playerId,
         isOnline = true,
         createdAt = os.time()
@@ -322,7 +322,7 @@ local function handleDutyChange(playerId, job, onDuty, employeeData)
                 },
                 metadata = { callsign = employeeData.callsign },
                 job = {
-                    grade = { name = employeeData.rank or 'Officer' },
+                    grade = { name = employeeData.rank or 'Oficial' },
                 }
             }
             if employeeData.name then
