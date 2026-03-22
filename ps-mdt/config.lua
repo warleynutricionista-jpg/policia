@@ -207,7 +207,7 @@ Config.CameraViewer = {
     FovStep = 2.0,
 }
 
--- Management permissions and defaults (per job grade)
+-- MDT permission catalog and defaults (per job grade)
 Config.ManagementPermissions = {
     -- Citizens
     'citizens_search',
@@ -256,6 +256,22 @@ Config.ManagementPermissions = {
     'management_permissions',
     'management_bulletins',
     'management_activity',
+    'management_tags',
+    'management_tracking',
+    'management_settings',
+}
+
+Config.PoliceHierarchy = {
+    [0] = { label = 'SOLDADO' },
+    [1] = { label = 'CABO' },
+    [2] = { label = '2 SARGENTO' },
+    [3] = { label = '1 SARGENTO' },
+    [4] = { label = 'SUB-TENENTE' },
+    [5] = { label = 'TENENTE' },
+    [6] = { label = 'CAPITÃO' },
+    [7] = { label = 'MAJOR' },
+    [8] = { label = 'TENENTE-CORONEL' },
+    [9] = { label = 'CORONEL', isBoss = true },
 }
 
 -- Bodycam Settings
@@ -278,6 +294,101 @@ Config.Bodycam = {
 --     }
 -- }
 Config.PermissionDefaults = Config.PermissionDefaults or {}
+
+local function appendUniquePermissions(target, additions)
+    local seen = {}
+    for _, permission in ipairs(target) do
+        seen[permission] = true
+    end
+
+    for _, permission in ipairs(additions or {}) do
+        if permission and not seen[permission] then
+            target[#target + 1] = permission
+            seen[permission] = true
+        end
+    end
+
+    return target
+end
+
+local policePermissionTiers = {
+    [0] = {
+        'citizens_search',
+        'bolos_view',
+        'vehicles_search',
+        'weapons_search',
+        'cases_view',
+        'evidence_view',
+        'reports_view',
+        'reports_create',
+        'warrants_view',
+        'charges_view',
+        'dispatch_attach',
+        'dispatch_route',
+        'cameras_view',
+        'bodycams_view',
+        'notes_edit_department',
+    },
+    [1] = {
+        'bolos_create',
+        'evidence_create',
+    },
+    [2] = {
+        'citizens_edit_licenses',
+        'charges_edit',
+        'evidence_upload',
+    },
+    [3] = {
+        'cases_create',
+        'warrants_issue',
+        'roster_manage_certifications',
+    },
+    [4] = {
+        'cases_edit',
+        'evidence_transfer',
+        'vehicles_edit_dmv',
+    },
+    [5] = {
+        'warrants_close',
+        'management_bulletins',
+        'management_activity',
+    },
+    [6] = {
+        'reports_delete',
+        'cases_delete',
+        'roster_manage_officers',
+    },
+    [7] = {
+        'management_tags',
+        'management_tracking',
+    },
+    [8] = {
+        'management_permissions',
+        'management_settings',
+    },
+    [9] = Config.ManagementPermissions,
+}
+
+local function buildPolicePermissionsForGrade(gradeLevel)
+    local permissions = {}
+    for level = 0, tonumber(gradeLevel) or 0 do
+        appendUniquePermissions(permissions, policePermissionTiers[level] or {})
+    end
+    return permissions
+end
+
+for _, policeJob in ipairs(Config.PoliceJobs or {}) do
+    Config.PermissionDefaults[policeJob] = Config.PermissionDefaults[policeJob] or {}
+
+    for gradeLevel, hierarchy in pairs(Config.PoliceHierarchy or {}) do
+        local gradeKey = tostring(gradeLevel)
+        if not Config.PermissionDefaults[policeJob][gradeKey] then
+            Config.PermissionDefaults[policeJob][gradeKey] = buildPolicePermissionsForGrade(gradeLevel)
+        end
+
+        hierarchy.permissions = hierarchy.permissions or Config.PermissionDefaults[policeJob][gradeKey]
+    end
+end
 
 -- Activity Tracking - Controls which actions are logged to the audit trail
 -- Categories can be toggled on/off from the Settings page in the MDT

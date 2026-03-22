@@ -24,14 +24,11 @@ local function normalizeGrades(grades)
 end
 
 local function isBossGrade(gradeData)
-    return gradeData and (gradeData.isboss == true or gradeData.isBoss == true or gradeData.boss == true)
+    return gradeData and GetMdtRankData(nil, gradeData.level or gradeData.grade or gradeData.rank or gradeData.value or gradeData.id, gradeData).isBoss
 end
 
-local function getGradeLabel(gradeData, gradeKeyString)
-    if gradeData then
-        return gradeData.name or gradeData.label or gradeData.title or ('Grade ' .. gradeKeyString)
-    end
-    return 'Grade ' .. gradeKeyString
+local function getGradeLabel(jobName, gradeData, gradeKeyString)
+    return GetMdtRankData(jobName, gradeKeyString, gradeData).label
 end
 
 local function getPoliceJobDefinition(source)
@@ -64,22 +61,7 @@ local function getPoliceJobDefinition(source)
 end
 
 local function getAllPermissions()
-    return (Config and Config.ManagementPermissions) or {
-        'citizens_search', 'citizens_edit_licenses',
-        'bolos_view', 'bolos_create',
-        'vehicles_search', 'vehicles_edit_dmv',
-        'weapons_search',
-        'cases_view', 'cases_create', 'cases_edit', 'cases_delete',
-        'evidence_view', 'evidence_create', 'evidence_transfer', 'evidence_upload',
-        'reports_view', 'reports_create', 'reports_delete',
-        'warrants_view', 'warrants_issue', 'warrants_close',
-        'charges_view', 'charges_edit',
-        'dispatch_attach', 'dispatch_route',
-        'cameras_view', 'bodycams_view',
-        'roster_manage_certifications',
-        'management_permissions', 'management_bulletins', 'management_activity',
-        'management_tags', 'management_tracking',
-    }
+    return GetMdtAllPermissions()
 end
 
 local function normalizePermissionList(list)
@@ -96,36 +78,23 @@ local function normalizePermissionList(list)
 end
 
 local function getDefaultRolePermissions(jobName, gradeKey, isBoss)
-    if isBoss then
-        return normalizePermissionList(getAllPermissions())
-    end
-
-    local defaults = Config and Config.PermissionDefaults and Config.PermissionDefaults[jobName]
-    if defaults and defaults[tostring(gradeKey)] then
-        return normalizePermissionList(defaults[tostring(gradeKey)])
-    end
-
-    return {}
+    return normalizePermissionList(GetMdtDefaultPermissions(jobName, gradeKey, isBoss))
 end
 
 ps.registerCallback(resourceName .. ':server:getPermissionRoles', function(source)
     local src = source
     if not CheckAuth(src) then return {} end
+    if not CheckPermission(src, 'management_permissions') then return {} end
 
     local jobName, job = getPoliceJobDefinition(src)
     local hasBossAccess = false
     if ps and ps.getJobData then
         local jobData = ps.getJobData(src)
         if jobData and jobData.grade then
-            if type(jobData.grade) == 'table' then
-                hasBossAccess = jobData.grade.isboss == true or jobData.grade.isBoss == true or jobData.grade.boss == true
-            else
-                local grades = job and job.grades and normalizeGrades(job.grades) or nil
-                if grades then
-                    local gradeData = grades[tostring(jobData.grade)]
-                    hasBossAccess = isBossGrade(gradeData)
-                end
-            end
+            local currentGrade = NormalizeMdtGradeValue(jobData.grade)
+            local grades = job and job.grades and normalizeGrades(job.grades) or nil
+            local gradeData = grades and grades[tostring(currentGrade)] or (type(jobData.grade) == 'table' and jobData.grade or nil)
+            hasBossAccess = GetMdtRankData(jobName, currentGrade, gradeData).isBoss
         end
     end
     ps.debug('[getPermissionRoles] jobName', jobName, 'job', job and job.label or 'nil')
@@ -139,7 +108,7 @@ ps.registerCallback(resourceName .. ':server:getPermissionRoles', function(sourc
             roles = {
                 {
                     key = '0',
-                    label = 'Oficial',
+                    label = GetMdtRankData(jobName, 0).label,
                     isBoss = isBoss,
                     permissions = fallbackPermissions,
                 }
@@ -166,7 +135,8 @@ ps.registerCallback(resourceName .. ':server:getPermissionRoles', function(sourc
     end
     ps.debug('[getPermissionRoles] grade count', gradeCount)
     for gradeKeyString, gradeData in pairs(grades) do
-        local isBoss = hasBossAccess or isBossGrade(gradeData)
+        local rankData = GetMdtRankData(jobName, gradeKeyString, gradeData)
+        local isBoss = hasBossAccess or rankData.isBoss
         local permissions = storedByGrade[gradeKeyString]
         if not permissions or #permissions == 0 then
             permissions = getDefaultRolePermissions(jobName, gradeKeyString, isBoss)
@@ -175,7 +145,7 @@ ps.registerCallback(resourceName .. ':server:getPermissionRoles', function(sourc
 
         roles[#roles + 1] = {
             key = gradeKeyString,
-            label = getGradeLabel(gradeData, gradeKeyString),
+            label = rankData.label,
             isBoss = isBoss,
             permissions = permissions,
         }
@@ -184,25 +154,18 @@ ps.registerCallback(resourceName .. ':server:getPermissionRoles', function(sourc
     if #roles == 0 and ps and ps.getJobData then
         local jobData = ps.getJobData(src)
         if jobData then
-            local gradeValue = jobData.grade
-            local gradeLabel = nil
-            local isBoss = false
-            if type(gradeValue) == 'table' then
-                gradeLabel = gradeValue.name or gradeValue.label
-                isBoss = gradeValue.isboss == true or gradeValue.isBoss == true or gradeValue.boss == true
-                gradeValue = gradeValue.level or gradeValue.grade or gradeValue.rank or gradeValue.value or gradeValue.id
-            end
-            gradeValue = gradeValue or 0
+            local gradeValue = NormalizeMdtGradeValue(jobData.grade)
             local gradeKeyString = tostring(gradeValue)
+            local rankData = GetMdtRankData(jobName, gradeValue, type(jobData.grade) == 'table' and jobData.grade or nil)
             local permissions = storedByGrade[gradeKeyString]
             if not permissions or #permissions == 0 then
-                permissions = getDefaultRolePermissions(jobName, gradeKeyString, isBoss)
+                permissions = getDefaultRolePermissions(jobName, gradeKeyString, rankData.isBoss)
             end
             permissions = normalizePermissionList(permissions)
             roles[#roles + 1] = {
                 key = gradeKeyString,
-                label = gradeLabel or ('Grade ' .. gradeKeyString),
-                isBoss = isBoss,
+                label = rankData.label,
+                isBoss = rankData.isBoss,
                 permissions = permissions,
             }
         end
@@ -219,7 +182,7 @@ ps.registerCallback(resourceName .. ':server:getPermissionRoles', function(sourc
 
     return {
         job = jobName,
-        label = job.label or 'Aplicação da Lei',
+        label = job and job.label or 'Aplicação da Lei',
         roles = roles,
         permissions = getAllPermissions(),
     }
@@ -228,6 +191,9 @@ end)
 ps.registerCallback(resourceName .. ':server:updatePermissionRole', function(source, payload)
     local src = source
     if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
+    if not CheckPermission(src, 'management_permissions') then
+        return { success = false, message = 'Sem permissão para editar permissões' }
+    end
 
     payload = payload or {}
     if not payload.job or payload.grade == nil or type(payload.permissions) ~= 'table' then
@@ -240,7 +206,7 @@ ps.registerCallback(resourceName .. ':server:updatePermissionRole', function(sou
         local grades = normalizeGrades(job.grades)
         local gradeData = grades[tostring(payload.grade)]
         if gradeData then
-            isBoss = isBossGrade(gradeData)
+            isBoss = GetMdtRankData(payload.job, payload.grade, gradeData).isBoss
         end
     end
 
@@ -334,6 +300,7 @@ end)
 ps.registerCallback(resourceName .. ':server:getTags', function(source, data)
     local src = source
     if not CheckAuth(src) then return {} end
+    if not CheckPermission(src, 'management_tags') then return {} end
 
     data = data or {}
     local jobType = data.jobType
@@ -367,6 +334,9 @@ end)
 ps.registerCallback(resourceName .. ':server:createTag', function(source, payload)
     local src = source
     if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
+    if not CheckPermission(src, 'management_tags') then
+        return { success = false, message = 'Sem permissão para gerenciar tags' }
+    end
 
     payload = payload or {}
     local name = payload.name
@@ -398,6 +368,9 @@ end)
 ps.registerCallback(resourceName .. ':server:updateTag', function(source, payload)
     local src = source
     if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
+    if not CheckPermission(src, 'management_tags') then
+        return { success = false, message = 'Sem permissão para gerenciar tags' }
+    end
 
     payload = payload or {}
     local id = tonumber(payload.id)
@@ -442,6 +415,7 @@ end)
 ps.registerCallback(resourceName .. ':server:getAwardConfigs', function(source)
     local src = source
     if not CheckAuth(src) then return {} end
+    if not CheckPermission(src, 'management_settings') then return {} end
 
     local rows = MySQL.query.await([[
         SELECT id, name, description, icon, category, goal_type, goal_amount
@@ -467,6 +441,9 @@ end)
 ps.registerCallback(resourceName .. ':server:saveAward', function(source, payload)
     local src = source
     if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
+    if not CheckPermission(src, 'management_settings') then
+        return { success = false, message = 'Sem permissão para gerenciar premiações' }
+    end
 
     payload = payload or {}
     local name = payload.name
@@ -510,6 +487,9 @@ end)
 ps.registerCallback(resourceName .. ':server:deleteAward', function(source, payload)
     local src = source
     if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
+    if not CheckPermission(src, 'management_settings') then
+        return { success = false, message = 'Sem permissão para gerenciar premiações' }
+    end
 
     payload = payload or {}
     local id = tonumber(payload.id)
@@ -524,6 +504,8 @@ end)
 ps.registerCallback(resourceName .. ':server:getAwardsData', function(source, payload)
     local src = source
     if not CheckAuth(src) then return nil end
+    if not CheckPermission(src, 'management_settings') then return nil end
+    EnsureMdtSchema()
 
     local citizenid = ps.getIdentifier(src)
     if not citizenid then return nil end
@@ -707,6 +689,7 @@ end)
 ps.registerCallback(resourceName .. ':server:getCustomLicenses', function(source)
     local src = source
     if not CheckAuth(src) then return {} end
+    if not CheckPermission(src, 'management_settings') then return {} end
 
     local rows = MySQL.query.await([[
         SELECT id, name, description FROM mdt_custom_licenses ORDER BY id ASC
@@ -726,6 +709,9 @@ end)
 ps.registerCallback(resourceName .. ':server:saveCustomLicense', function(source, payload)
     local src = source
     if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
+    if not CheckPermission(src, 'management_settings') then
+        return { success = false, message = 'Sem permissão para gerenciar licenças' }
+    end
 
     payload = payload or {}
     local name = payload.name
@@ -763,6 +749,9 @@ end)
 ps.registerCallback(resourceName .. ':server:deleteCustomLicense', function(source, payload)
     local src = source
     if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
+    if not CheckPermission(src, 'management_settings') then
+        return { success = false, message = 'Sem permissão para gerenciar licenças' }
+    end
 
     payload = payload or {}
     local id = tonumber(payload.id)
@@ -777,6 +766,9 @@ end)
 ps.registerCallback(resourceName .. ':server:deleteTag', function(source, payload)
     local src = source
     if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
+    if not CheckPermission(src, 'management_tags') then
+        return { success = false, message = 'Sem permissão para gerenciar tags' }
+    end
 
     payload = payload or {}
     local id = tonumber(payload.id)

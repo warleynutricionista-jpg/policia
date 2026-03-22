@@ -97,6 +97,9 @@ ps.registerCallback(resourceName .. ':server:createBulletin', function(source, p
     local src = source
     assert(src, 'Player ID cannot be nil')
     if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
+    if not CheckPermission(src, 'management_bulletins') then
+        return { success = false, message = 'Sem permissão para gerenciar boletins' }
+    end
 
     payload = payload or {}
     local content = payload.content
@@ -117,6 +120,9 @@ ps.registerCallback(resourceName .. ':server:deleteBulletin', function(source, p
     local src = source
     assert(src, 'Player ID cannot be nil')
     if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
+    if not CheckPermission(src, 'management_bulletins') then
+        return { success = false, message = 'Sem permissão para gerenciar boletins' }
+    end
 
     payload = payload or {}
     local id = tonumber(payload.id)

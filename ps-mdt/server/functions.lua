@@ -187,6 +187,7 @@ end
 
 function GetBoloStatus(plate)
     if not plate then return false, "", "" end
+    EnsureMdtSchema()
     plate = string.gsub(plate, "%s+", "")
     plate = string.upper(plate)
 

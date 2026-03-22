@@ -26558,11 +26558,15 @@ function pI(n, e) {
                 ((Be = ze.callsign), (Ve = Ne.callsign));
                 break;
               case "rank":
-                ((Be = ze.rank), (Ve = Ne.rank));
+                ((Be = ze.rankOrder ?? ze.rank), (Ve = Ne.rankOrder ?? Ne.rank));
                 break;
               case "status":
                 ((Be = ze.status), (Ve = Ne.status));
                 break;
+            }
+            if (typeof Be == "number" && typeof Ve == "number") {
+              const ae = Be - Ve;
+              return o(c) === "asc" ? ae : -ae;
             }
             if (typeof Be == "string" && typeof Ve == "string") {
               const ae = Be.localeCompare(Ve);
