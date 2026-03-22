@@ -162,7 +162,7 @@ local function useGizmo(entity)
     return {
         handle = entity,
         position = GetEntityCoords(entity),
-        rotation = GetEntityRotation(entity)
+        rotation = GetEntityRotação(entity)
     }
 end
 
@@ -208,7 +208,7 @@ lib.addKeybind({
         ExecuteCommand('+gizmoRotation')
     end,
     onReleased = function (self)
-        ExecuteCommand('-gizmoRotation')
+        ExecuteCommand('-gizmoRotação')
     end
 })
 

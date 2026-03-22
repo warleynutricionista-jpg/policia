@@ -135,6 +135,34 @@ local function getMultiJobEmployeeData(citizenid, jobName)
     return nil
 end
 
+local function getMultiJobEmployeeData(citizenid, jobName)
+    if GetResourceState('ps-multijob') ~= 'started' or not exports['ps-multijob'] then
+        return nil
+    end
+
+    local ok, jobs = pcall(function()
+        return exports['ps-multijob']:GetJobs(citizenid)
+    end)
+    if not ok or type(jobs) ~= 'table' then
+        return nil
+    end
+
+    if type(jobs[jobName]) == 'table' then
+        return jobs[jobName]
+    end
+
+    for _, jobData in pairs(jobs) do
+        if type(jobData) == 'table' then
+            local name = tostring(jobData.job or jobData.name or '')
+            if name == tostring(jobName) then
+                return jobData
+            end
+        end
+    end
+
+    return nil
+end
+
 ps.registerCallback('ps-mdt:server:getRosterList', function(source)
     if GetResourceState('qbx_core') == 'started' and exports['qbx_core'] then
         return buildRosterFromQbx()
