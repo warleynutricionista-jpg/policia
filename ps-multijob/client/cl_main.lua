@@ -45,7 +45,7 @@ RegisterNUICallback('toggleduty', function(data, cb)
     local job = QBCore.Functions.GetPlayerData().job.name
 
     if Config.DenyDuty[job] then
-        TriggerEvent("QBCore:Notify", 'Not allowed to use this station for clock-in.', 'error')
+        TriggerEvent("QBCore:Notify", 'Não é permitido bater ponto nesta estação.', 'error')
         return
     end
     
@@ -69,6 +69,6 @@ end)
 
 RegisterCommand("jobmenu", OpenUI, false)
 
-RegisterKeyMapping('jobmenu', "Show Job Management", "keyboard", "J")
+RegisterKeyMapping('jobmenu', "Abrir gerenciamento de empregos", "keyboard", "J")
 
 TriggerEvent('chat:removeSuggestion', '/jobmenu')

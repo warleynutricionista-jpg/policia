@@ -27,12 +27,12 @@ debugData([
 	{
 		action: "setLocale",
 		data: {
-			language: "English",
+			language: "Português",
 			ui: {
-				cancel: "Cancel",
-				close: "Close",
-				confirm: "Confirm",
-				more: "More...",
+				cancel: "Cancelar",
+				close: "Fechar",
+				confirm: "Confirmar",
+				more: "Mais...",
 			},
 		},
 	},

@@ -1,14 +1,14 @@
-Information:
-ps_lib is used for Platinum Scripts releases. ps_lib is a fork of ox_lib made by Overextended. This respository will remain public in accordance with the original license.
+Informações:
+ps_lib é usado nas releases da Platinum Scripts. ps_lib é um fork do ox_lib feito pela Overextended. Este repositório permanecerá público em conformidade com a licença original.
 
 ---
 
-<div align='center'><h1><a href='https://overextended.github.io/docs/'>Documentation</a></h3></div>
+<div align='center'><h1><a href='https://overextended.github.io/docs/'>Documentação</a></h3></div>
 <br>
 
-## Lua Library for FiveM
+## Biblioteca Lua para FiveM
 
-FXServer provides its own system for including files, which we use to load this resource in the fxmanifest via
+O FXServer fornece seu próprio sistema para inclusão de arquivos, que usamos para carregar este recurso no fxmanifest por meio de
 
 ```lua
 shared_script '@ps_lib/init.lua'
@@ -23,6 +23,6 @@ add_ace resource.ps_lib command.add_principal allow
 add_ace resource.ps_lib command.remove_principal allow
 ```
 
-## License
+## Licença
 
 <a href='https://www.gnu.org/licenses/lgpl-3.0.en.html'>LGPL-3.0-or-later</a>

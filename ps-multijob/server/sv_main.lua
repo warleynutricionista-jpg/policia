@@ -151,7 +151,7 @@ local function getEmployees(jobName)
 end
 exports("getEmployees", getEmployees)
 
-QBCore.Commands.Add('removejob', 'Remove Multi Job (Admin Only)', { { name = 'id', help = 'ID of player' }, { name = 'job', help = 'Job Name' } }, false, function(source, args)
+QBCore.Commands.Add('removejob', 'Remover multiemprego (somente admin)', { { name = 'id', help = 'ID do jogador' }, { name = 'job', help = 'Nome do emprego' } }, false, function(source, args)
     local source = source
     if source ~= 0 then
         if args[1] then
@@ -160,20 +160,20 @@ QBCore.Commands.Add('removejob', 'Remove Multi Job (Admin Only)', { { name = 'id
                 if args[2] then
                     RemoveJob(Player.PlayerData.citizenid, args[2])
                 else
-                    TriggerClientEvent("QBCore:Notify", source, "Wrong usage!")
+                    TriggerClientEvent("QBCore:Notify", source, "Uso incorreto!")
                 end
             else
-                TriggerClientEvent("QBCore:Notify", source, "Wrong usage!")
+                TriggerClientEvent("QBCore:Notify", source, "Uso incorreto!")
             end
         else
-            TriggerClientEvent("QBCore:Notify", source, "Wrong usage!")
+            TriggerClientEvent("QBCore:Notify", source, "Uso incorreto!")
         end
     else
-        TriggerClientEvent("QBCore:Notify", source, "Wrong usage!")
+        TriggerClientEvent("QBCore:Notify", source, "Uso incorreto!")
     end
 end, 'admin')
 
-QBCore.Commands.Add('addjob', 'Add Multi Job (Admin Only)', { { name = 'id', help = 'ID of player' }, { name = 'job', help = 'Job Name' }, { name = 'grade', help = 'Job Grade' } }, false, function(source, args)
+QBCore.Commands.Add('addjob', 'Adicionar multiemprego (somente admin)', { { name = 'id', help = 'ID do jogador' }, { name = 'job', help = 'Nome do emprego' }, { name = 'grade', help = 'Cargo do emprego' } }, false, function(source, args)
     local source = source
     if source ~= 0 then
         if args[1] then
@@ -182,16 +182,16 @@ QBCore.Commands.Add('addjob', 'Add Multi Job (Admin Only)', { { name = 'id', hel
                 if args[2]and args[3] then
                     AddJob(Player.PlayerData.citizenid, args[2], args[3])
                 else
-                    TriggerClientEvent("QBCore:Notify", source, "Wrong usage!")
+                    TriggerClientEvent("QBCore:Notify", source, "Uso incorreto!")
                 end
             else
-                TriggerClientEvent("QBCore:Notify", source, "Wrong usage!")
+                TriggerClientEvent("QBCore:Notify", source, "Uso incorreto!")
             end
         else
-            TriggerClientEvent("QBCore:Notify", source, "Wrong usage!")
+            TriggerClientEvent("QBCore:Notify", source, "Uso incorreto!")
         end
     else
-        TriggerClientEvent("QBCore:Notify", source, "Wrong usage!")
+        TriggerClientEvent("QBCore:Notify", source, "Uso incorreto!")
     end
 end, 'admin')
 
@@ -215,7 +215,7 @@ QBCore.Functions.CreateCallback("ps-multijob:getJobs", function(source, cb)
 
     for job, grade in pairs(jobs) do
         if QBCore.Shared.Jobs[job] == nil then
-            print("The job '" .. job .. "' has been removed and is not present in your QBCore jobs. Remove it from the multijob SQL or add it back to your qbcore jobs.lua.")
+            print("O emprego '" .. job .. "' foi removido e não está presente nos empregos do seu QBCore. Remova-o do SQL do multijob ou adicione-o novamente ao jobs.lua do qbcore.")
         else
             local online = active[job] or 0
             getjobs = {
