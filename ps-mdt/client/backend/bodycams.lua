@@ -25,7 +25,7 @@ RegisterNUICallback('viewBodycam', function(data, cb)
         CloseMDT()
         cb({ success = true })
     else
-        cb({ success = false, message = result and result.error or 'Failed to view bodycam' })
+        cb({ success = false, message = result and result.error or 'Falha ao visualizar a bodycam' })
     end
 
 end)

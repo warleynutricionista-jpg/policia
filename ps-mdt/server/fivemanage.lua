@@ -79,7 +79,7 @@ end
 ps.registerCallback(resourceName .. ':server:uploadMugshotBase64', function(source, base64Data)
     if not CheckAuth(source) then return { url = nil, error = 'Não autorizado' } end
     if not base64Data or base64Data == '' then
-        return { url = nil, error = 'No image data' }
+        return { url = nil, error = 'Nenhum dado de imagem fornecido' }
     end
     local url, err = FiveManageUpload(base64Data, 'mugshot_' .. source .. '.png')
     return { url = url, error = err }
@@ -94,13 +94,13 @@ AddEventHandler(resourceName .. ':server:mugshotUpload', function(citizenid, mug
 
     -- Ensure profile exists
     if not EnsureProfileExists(citizenid) then
-        ps.warn('Falha ao criar o perfil for mugshot upload: ' .. citizenid)
+        ps.warn('Falha ao criar o perfil para o upload da foto de registro: ' .. citizenid)
         return
     end
 
     local profile = MySQL.single.await('SELECT id FROM mdt_profiles WHERE citizenid = ?', { citizenid })
     if not profile then
-        ps.warn('Profile not found after ensure for mugshot upload: ' .. citizenid)
+        ps.warn('Perfil não encontrado após a verificação para o upload da foto de registro: ' .. citizenid)
         return
     end
 
@@ -113,7 +113,7 @@ AddEventHandler(resourceName .. ':server:mugshotUpload', function(citizenid, mug
     for _, url in ipairs(mugshotUrls) do
         if url and url ~= '' and url ~= 'invalid_url' then
             MySQL.insert.await('INSERT INTO mdt_profiles_gallery (profileId, image, label) VALUES (?, ?, ?)', {
-                profile.id, url, 'Mugshot'
+                profile.id, url, 'Foto de registro'
             })
         end
     end

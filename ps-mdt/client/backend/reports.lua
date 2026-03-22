@@ -60,7 +60,7 @@ RegisterNUICallback('saveReport', function(data, cb)
     end
 
     if not data or not data.reportId then
-        ps.error('Faltando dados do relatório in request')
+        ps.error('Faltando dados do relatório na requisição')
         cb({ success = false, message = 'Faltando dados do relatório' })
         return
     end
@@ -106,7 +106,7 @@ RegisterNUICallback('saveReport', function(data, cb)
     if data.evidence then
         for _, item in ipairs(data.evidence) do
             table.insert(evidence, {
-                type = item.type or 'Evidence',
+                type = item.type or 'Evidência',
                 content = item.serial or (item.images and item.images[1]) or item.title or '',
                 note = item.notes or ''
             })
@@ -189,7 +189,7 @@ RegisterNUICallback('saveReport', function(data, cb)
     else
         cb({
             success = false,
-            message = result and result.error or 'Failed to save report'
+            message = result and result.error or 'Falha ao salvar o relatório'
         })
     end
 end)
@@ -216,7 +216,7 @@ RegisterNUICallback('updateReportContent', function(data, cb)
     else
         cb({
             success = false,
-            message = result and result.error or 'Failed to update content'
+            message = result and result.error or 'Falha ao atualizar o conteúdo'
         })
     end
 end)
@@ -242,7 +242,7 @@ RegisterNUICallback('deleteReport', function(data, cb)
     else
         cb({
             success = false,
-            message = result and result.error or 'Failed to delete report'
+            message = result and result.error or 'Falha ao excluir o relatório'
         })
     end
 end)
@@ -278,7 +278,7 @@ RegisterNUICallback('generateReportId', function(data, cb)
     else
         cb({
             success = false,
-            message = result and result.error or 'Failed to generate report ID'
+            message = result and result.error or 'Falha ao gerar o ID do relatório'
         })
     end
 end)

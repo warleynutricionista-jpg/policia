@@ -10,7 +10,7 @@ RegisterNUICallback('issueWarrant', function(data, cb)
     if result and result.success then
         cb({ success = true })
     else
-        cb({ success = false, message = result and result.error or 'Failed to issue warrant' })
+        cb({ success = false, message = result and result.error or 'Falha ao emitir o mandado' })
     end
 end)
 
@@ -24,6 +24,6 @@ RegisterNUICallback('closeWarrant', function(data, cb)
     if result and result.success then
         cb({ success = true })
     else
-        cb({ success = false, message = result and result.error or 'Failed to close warrant' })
+        cb({ success = false, message = result and result.error or 'Falha ao encerrar o mandado' })
     end
 end)

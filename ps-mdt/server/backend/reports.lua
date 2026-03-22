@@ -738,7 +738,7 @@ ps.registerCallback(resourceName..':server:saveReport', function(source, reportD
         end)
         if not attachOk then
             ps.warn(('[Attachment Transaction Error] Report %s: %s'):format(reportId, tostring(attachErr)))
-            return { success = false, error = "Failed to save report attachments: " .. tostring(attachErr) }
+            return { success = false, error = "Falha ao salvar os anexos do relatório: " .. tostring(attachErr) }
         end
     end
 

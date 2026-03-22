@@ -71,12 +71,12 @@ local function buildRosterFromQbx()
                 lastName = data.charinfo and data.charinfo.lastname or 'N/A',
                 rank = rank,
                 department = department,
-                status = (onlinePlayer and job.onduty) and 'On Duty' or 'Off Duty',
+                status = (onlinePlayer and job.onduty) and 'Em serviço' or 'Fora de serviço',
                 certifications = certifications,
                 badgeNumber = callsign
             }
 
-            if rosterList[#rosterList].status == 'On Duty' then
+            if rosterList[#rosterList].status == 'Em serviço' then
                 activeUnits[#activeUnits + 1] = {
                     id = rosterList[#rosterList].id,
                     badgeNumber = rosterList[#rosterList].badgeNumber,
@@ -96,15 +96,43 @@ end
 
 local function checkDuty(citizenid)
    local player = ps.getPlayerByIdentifier(citizenid)
-   if not player then return 'Off Duty' end
+   if not player then return 'Fora de serviço' end
 
    local src = player.source or (player.PlayerData and player.PlayerData.source)
-   if not src then return 'Off Duty' end
+   if not src then return 'Fora de serviço' end
 
    if IsPoliceJob(ps.getJobName(src), ps.getJobType(src)) and ps.getJobDuty(src) then
-      return 'On Duty'
+      return 'Em serviço'
    end
-   return 'Off Duty'
+   return 'Fora de serviço'
+end
+
+local function getMultiJobEmployeeData(citizenid, jobName)
+    if GetResourceState('ps-multijob') ~= 'started' or not exports['ps-multijob'] then
+        return nil
+    end
+
+    local ok, jobs = pcall(function()
+        return exports['ps-multijob']:GetJobs(citizenid)
+    end)
+    if not ok or type(jobs) ~= 'table' then
+        return nil
+    end
+
+    if type(jobs[jobName]) == 'table' then
+        return jobs[jobName]
+    end
+
+    for _, jobData in pairs(jobs) do
+        if type(jobData) == 'table' then
+            local name = tostring(jobData.job or jobData.name or '')
+            if name == tostring(jobName) then
+                return jobData
+            end
+        end
+    end
+
+    return nil
 end
 
 local function getMultiJobEmployeeData(citizenid, jobName)
@@ -175,7 +203,7 @@ ps.registerCallback('ps-mdt:server:getRosterList', function(source)
                 certifications = getCertifications(citizenid),
                 badgeNumber = callsign
             }
-            if status == 'On Duty' then
+            if status == 'Em serviço' then
                 activeUnits[#activeUnits + 1] = {
                     id = rosterList[#rosterList].id,
                     badgeNumber = rosterList[#rosterList].badgeNumber,
