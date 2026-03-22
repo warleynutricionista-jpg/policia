@@ -1,5 +1,15 @@
 local resourceName = tostring(GetCurrentResourceName())
-local QBCore = exports['qb-core']:GetCoreObject()
+-- QBox-first core object resolution
+local QBCore = nil
+do
+    local okQbx, qbx = pcall(function() return exports['qbx_core']:GetCoreObject() end)
+    if okQbx and qbx then
+        QBCore = qbx
+    else
+        local okQb, qb = pcall(function() return exports['qb-core']:GetCoreObject() end)
+        if okQb and qb then QBCore = qb end
+    end
+end
 
 -- Impound locations - override in config if needed
 local ImpoundLocations = Config.ImpoundLocations or {

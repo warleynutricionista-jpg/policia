@@ -346,9 +346,17 @@ ps.registerCallback('ps-mdt:server:updateOfficerCallsign', function(source, payl
         return { success = false, message = 'Missing citizen ID or callsign' }
     end
 
-    -- Use the existing setCallsign callback logic
-    local ok, QBCore = pcall(function() return exports['qb-core']:GetCoreObject() end)
-    if not ok or not QBCore then
+    -- Use the existing setCallsign callback logic (QBox first, fallback QBCore)
+    local QBCore = nil
+    local okQbx, qbx = pcall(function() return exports['qbx_core']:GetCoreObject() end)
+    if okQbx and qbx then
+        QBCore = qbx
+    else
+        local okQb, qb = pcall(function() return exports['qb-core']:GetCoreObject() end)
+        if okQb and qb then QBCore = qb end
+    end
+
+    if not QBCore then
         return { success = false, message = 'Core framework not available' }
     end
 

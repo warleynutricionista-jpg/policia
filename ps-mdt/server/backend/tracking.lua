@@ -1,10 +1,18 @@
 local resourceName = tostring(GetCurrentResourceName())
 
+local function getCoreObject()
+    local okQbx, qbx = pcall(function() return exports['qbx_core']:GetCoreObject() end)
+    if okQbx and qbx then return qbx end
+    local okQb, qb = pcall(function() return exports['qb-core']:GetCoreObject() end)
+    if okQb and qb then return qb end
+    return nil
+end
+
 local function getOfficerTrackers()
     local officers = {}
+    local QBCore = getCoreObject()
 
-    if exports['qb-core'] then
-        local QBCore = exports['qb-core']:GetCoreObject()
+    if QBCore and QBCore.Functions and QBCore.Functions.GetQBPlayers then
         local players = QBCore.Functions.GetQBPlayers() or {}
         for _, player in pairs(players) do
             local data = player.PlayerData
@@ -63,9 +71,9 @@ end
 local function getVehicleTrackers()
     local vehicles = {}
     local seen = {}
+    local QBCore = getCoreObject()
 
-    if exports['qb-core'] then
-        local QBCore = exports['qb-core']:GetCoreObject()
+    if QBCore and QBCore.Functions and QBCore.Functions.GetQBPlayers then
         local players = QBCore.Functions.GetQBPlayers() or {}
         for _, player in pairs(players) do
             local data = player.PlayerData
@@ -95,9 +103,9 @@ end
 
 local function getBodycamTrackers()
     local bodycams = {}
+    local QBCore = getCoreObject()
 
-    if exports['qb-core'] then
-        local QBCore = exports['qb-core']:GetCoreObject()
+    if QBCore and QBCore.Functions and QBCore.Functions.GetQBPlayers then
         local players = QBCore.Functions.GetQBPlayers() or {}
         for _, player in pairs(players) do
             local data = player.PlayerData

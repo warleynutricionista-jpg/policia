@@ -10,6 +10,9 @@ local DisableControlAction = DisableControlAction
 local Wait = Wait
 local CreateThread = CreateThread
 local IsPedSwimming = IsPedSwimming
+local IsPedInAnyVehicle = IsPedInAnyVehicle
+local GetVehicleDashboardSpeed = GetVehicleDashboardSpeed
+local GetVehiclePedIsIn = GetVehiclePedIsIn
 local SetNuiFocus = SetNuiFocus
 local SetNuiFocusKeepInput = SetNuiFocusKeepInput
 local SendNUI = SendNUI
@@ -28,7 +31,7 @@ end
 local restrictedControls = {
     -- Camera controls
     {0, 0},   -- Next Camera
-    {0, 1},   -- Look Left/Right  
+    {0, 1},   -- Look Left/Right
     {0, 2},   -- Look Up/Down
     {0, 26},  -- Look Behind
 
@@ -94,6 +97,25 @@ local function toggleControls(state)
     controlsDisabled = state
 end
 
+-- Realism checks ------------------------------------------
+
+-- Check if player is in a moving vehicle (can't use MDT while driving fast)
+local function isVehicleMovingFast()
+    local ped = PlayerPedId()
+    if not IsPedInAnyVehicle(ped, false) then return false end
+    local vehicle = GetVehiclePedIsIn(ped, false)
+    local speed = GetEntitySpeed(vehicle) * 3.6 -- Convert to km/h
+    return speed > 80 -- Can't open MDT above 80 km/h
+end
+
+-- Check if player is the driver (passengers can use MDT freely)
+local function isDriver()
+    local ped = PlayerPedId()
+    if not IsPedInAnyVehicle(ped, false) then return false end
+    local vehicle = GetVehiclePedIsIn(ped, false)
+    return GetPedInVehicleSeat(vehicle, -1) == ped
+end
+
 -- MDT Display ------------------------------------------------
 
 -- Open MDT
@@ -116,7 +138,19 @@ function OpenMDT()
 
     -- Don't allow if armed
     if IsPedArmed(ped, 1) or IsPedArmed(ped, 2) or IsPedArmed(ped, 4) then
+        ps.notify('Holster your weapon first', 'error')
+        return
+    end
+
+    -- Don't allow if falling
+    if IsPedFalling(ped) then
         ps.notify('You cannot open the MDT right now', 'error')
+        return
+    end
+
+    -- Don't allow if vehicle is moving too fast (realism - driver only)
+    if isDriver() and isVehicleMovingFast() then
+        ps.notify('Reduce speed before using the MDT', 'error')
         return
     end
 
@@ -126,13 +160,13 @@ function OpenMDT()
         return
     end
 
-    -- Check if MDT is already open
+    -- Check if MDT is already open (toggle behavior)
     if MDTOpen then
         StopTabletAnimation()
         SendNUI('setVisible', { visible = false })
         SetNuiFocus(false, false)
         SetNuiFocusKeepInput(false)
-        toggleControls(false) -- Re-enable controls
+        toggleControls(false)
         MDTOpen = false
         return
     end
@@ -151,7 +185,7 @@ function OpenMDT()
 
     SetNuiFocus(true, true)
     SetNuiFocusKeepInput(false)
-    toggleControls(true) -- Disable controls
+    toggleControls(true)
 end
 
 -- Close MDT
@@ -171,7 +205,7 @@ function CloseMDT()
             closeControlsPending = true
             CreateThread(function()
                 Wait(100)
-                toggleControls(false) -- Re-enable controls
+                toggleControls(false)
                 closeControlsPending = false
             end)
         end
@@ -180,6 +214,29 @@ function CloseMDT()
         TriggerServerEvent('ps-mdt:server:trackLogout')
     end
 end
+
+-- Auto-close MDT if player exits vehicle while MDT is open (realism)
+CreateThread(function()
+    local wasInVehicle = false
+    while true do
+        if MDTOpen then
+            local ped = PlayerPedId()
+            local inVehicle = IsPedInAnyVehicle(ped, false)
+
+            if wasInVehicle and not inVehicle then
+                -- Player exited vehicle while MDT was open
+                CloseMDT()
+                ps.notify('MDT disconnected - Left vehicle', 'error')
+            end
+
+            wasInVehicle = inVehicle
+            Wait(500)
+        else
+            wasInVehicle = IsPedInAnyVehicle(PlayerPedId(), false)
+            Wait(1000)
+        end
+    end
+end)
 
 -- Nui ------------------------------------------------------
 

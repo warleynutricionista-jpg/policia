@@ -1,6 +1,15 @@
 local resourceName = tostring(GetCurrentResourceName())
-local ok, QBCore = pcall(function() return exports['qb-core']:GetCoreObject() end)
-if not ok then QBCore = nil end
+-- QBox-first core object resolution
+local QBCore = nil
+do
+    local okQbx, qbx = pcall(function() return exports['qbx_core']:GetCoreObject() end)
+    if okQbx and qbx then
+        QBCore = qbx
+    else
+        local okQb, qb = pcall(function() return exports['qb-core']:GetCoreObject() end)
+        if okQb and qb then QBCore = qb end
+    end
+end
 
 -- Get player source ID by citizenId
 ps.registerCallback(resourceName .. ':server:GetPlayerSourceId', function(source, targetCitizenId)

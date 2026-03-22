@@ -1,5 +1,16 @@
 function GetActiveUnits()
-    return ps.getJobCount("police")
+    -- Count all LEO jobs, not just "police"
+    local total = 0
+    if Config and Config.PoliceJobs then
+        for _, jobName in ipairs(Config.PoliceJobs) do
+            local count = ps.getJobCount(jobName)
+            if count then total = total + count end
+        end
+    end
+    if total == 0 then
+        total = ps.getJobCount("police") or 0
+    end
+    return total
 end
 
 --- Check if a job is a police/LEO job based on Config.PoliceJobs and Config.PoliceJobType
@@ -32,25 +43,48 @@ function EnsureProfileExists(citizenid)
         return true
     end
 
-    -- Try online player first
+    -- Try online player first (works with both QBox and QBCore via ps_lib)
     local playerData = ps.getPlayerByIdentifier(citizenid)
     if playerData then
-        playerData = playerData.PlayerData
-        local charinfo = playerData.charinfo
-        local fullname = charinfo.firstname .. ' ' .. charinfo.lastname
-        local callsign = playerData.metadata and playerData.metadata.callsign or nil
+        local pd = playerData.PlayerData or playerData
+        local charinfo = pd.charinfo
+        if charinfo then
+            local fullname = (charinfo.firstname or '') .. ' ' .. (charinfo.lastname or '')
+            local callsign = pd.metadata and pd.metadata.callsign or nil
+
+            local success = MySQL.insert.await([[
+                INSERT INTO mdt_profiles (citizenid, fullname, callsign)
+                VALUES(?, ?, ?)
+            ]], { citizenid, fullname, callsign })
+
+            if success then
+                ps.debug('Auto-created MDT profile for: ' .. citizenid)
+                return true
+            end
+            ps.warn('Failed to create MDT profile for: ' .. citizenid)
+            return false
+        end
+    end
+
+    -- Try QBox offline player API
+    local okQbx, qbxOffline = pcall(function()
+        return exports['qbx_core']:GetOfflinePlayer(citizenid)
+    end)
+    if okQbx and qbxOffline and qbxOffline.PlayerData then
+        local pd = qbxOffline.PlayerData
+        local charinfo = pd.charinfo or {}
+        local fullname = ((charinfo.firstname or '') .. ' ' .. (charinfo.lastname or '')):gsub('^%s+', ''):gsub('%s+$', '')
+        local callsign = pd.metadata and pd.metadata.callsign or nil
 
         local success = MySQL.insert.await([[
             INSERT INTO mdt_profiles (citizenid, fullname, callsign)
             VALUES(?, ?, ?)
-        ]], { citizenid, fullname, callsign })
+        ]], { citizenid, fullname ~= '' and fullname or 'Unknown', callsign })
 
         if success then
-            ps.debug('Auto-created MDT profile for: ' .. citizenid)
+            ps.debug('Auto-created MDT profile for (QBox offline): ' .. citizenid)
             return true
         end
-        ps.warn('Failed to create MDT profile for: ' .. citizenid)
-        return false
     end
 
     -- Fallback: resolve from players table (offline player)
