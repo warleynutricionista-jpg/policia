@@ -1,4 +1,5 @@
 local resourceName = tostring(GetCurrentResourceName())
+local ps = RequirePs('client/events.lua')
 
 local function isAuthorizedJob(job)
     if not job then return false, nil end
@@ -41,7 +42,7 @@ local function onJobUpdate(JobInfo)
 
         if not authorized then
             CloseMDT()
-            ps.notify('MDT closed - Access revoked', 'error')
+            ps.notify('MDT fechado - acesso revogado', 'error')
         else
             NUIUpdateAuthWithData(job)
         end
@@ -58,32 +59,65 @@ local function onSetDuty(duty)
             local authorized = isAuthorizedJob(job)
             if not authorized or not duty then
                 CloseMDT()
-                ps.notify('MDT closed - Off duty', 'error')
+                ps.notify('MDT fechado - fora de serviço', 'error')
             end
         end
     end
 end
 
--- QBCore / QBox events (both use the same event names for compatibility)
-RegisterNetEvent('QBCore:Client:SetDuty', function(duty)
-    ps.debug('SetDuty event received:', duty)
-    onSetDuty(duty)
-end)
+local function bindLocalFrameworkEvents()
+    -- Framework job/duty updates are local/internal events. Listening with AddEventHandler
+    -- avoids treating them as network events in newer QBox/QBCore setups.
+    AddEventHandler('QBCore:Client:SetDuty', function(duty)
+        ps.debug('SetDuty event received:', duty)
+        onSetDuty(duty)
+    end)
 
-RegisterNetEvent('QBCore:Client:OnJobUpdate', function(JobInfo)
-    ps.debug('OnJobUpdate event received:', JobInfo)
-    onJobUpdate(JobInfo)
-end)
+    AddEventHandler('QBCore:Client:OnJobUpdate', function(JobInfo)
+        ps.debug('OnJobUpdate event received:', JobInfo)
+        onJobUpdate(JobInfo)
+    end)
 
--- QBox-specific: listen for qbx duty toggle
-RegisterNetEvent('qbx_core:client:onJobUpdate', function(jobData)
-    ps.debug('QBox onJobUpdate event received:', jobData)
-    onJobUpdate(jobData)
-end)
+    AddEventHandler('qbx_core:client:onJobUpdate', function(jobData)
+        ps.debug('QBox onJobUpdate event received:', jobData)
+        onJobUpdate(jobData)
+    end)
 
-RegisterNetEvent('qbx_core:client:onSetDuty', function(duty)
-    ps.debug('QBox onSetDuty event received:', duty)
-    onSetDuty(duty)
+    AddEventHandler('qbx_core:client:onSetDuty', function(duty)
+        ps.debug('QBox onSetDuty event received:', duty)
+        onSetDuty(duty)
+    end)
+end
+
+local function bindLocalStateBagUpdates()
+    local playerId = PlayerId()
+    if playerId == -1 then return end
+
+    local serverId = GetPlayerServerId(playerId)
+    if not serverId then return end
+
+    local bagName = ('player:%s'):format(serverId)
+
+    AddStateBagChangeHandler('job', bagName, function(_, _, value)
+        if type(value) ~= 'table' then return end
+        ps.debug('State bag job update received:', value)
+        onJobUpdate(value)
+    end)
+
+    AddStateBagChangeHandler('onduty', bagName, function(_, _, value)
+        if type(value) ~= 'boolean' then return end
+        ps.debug('State bag duty update received:', value)
+        onSetDuty(value)
+    end)
+end
+
+bindLocalFrameworkEvents()
+CreateThread(function()
+    while GetPlayerServerId(PlayerId()) <= 0 do
+        Wait(250)
+    end
+
+    bindLocalStateBagUpdates()
 end)
 
 -- Send Profile Data
@@ -116,6 +150,6 @@ RegisterNetEvent('police:client:GetCuffed', function()
     if MDTOpen then
         ps.debug('Player got cuffed - closing MDT')
         CloseMDT()
-        ps.notify('MDT closed - You are restrained', 'error')
+        ps.notify('MDT fechado - você está algemado', 'error')
     end
 end)

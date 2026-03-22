@@ -1,4 +1,5 @@
 -- Dispatch Functions --
+local ps = RequirePs('client/functions.lua')
 
 -- Get Recent Dispatch Calls
 function GetRecentDispatch()

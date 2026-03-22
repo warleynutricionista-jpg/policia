@@ -330,7 +330,7 @@ local function getCameraModels()
         -- Fallback in case callback fails
         ps.error('Failed to fetch camera models from server')
         return {
-            { value = 'security_cam_03', label = 'Security Cam 03 (Default)' }
+            { value = 'security_cam_03', label = 'Câmera de Segurança 03 (Padrão)' }
         }
     end
 end
@@ -359,30 +359,30 @@ function CameraPlacement.showPlacementMenu()
     local input = lib.inputDialog('Camera Placement System', {
         {
             type = 'input',
-            label = 'Camera ID',
-            description = 'Unique identifier for this camera',
+            label = 'ID da Câmera',
+            description = 'Identificador único desta câmera',
             required = true,
             placeholder = 'cam_001'
         },
         {
             type = 'input',
-            label = 'Camera Label',
-            description = 'Display name for this camera',
+            label = 'Rótulo da Câmera',
+            description = 'Nome de exibição desta câmera',
             required = true,
-            placeholder = 'Police Station Entrance'
+            placeholder = 'Entrada da Delegacia'
         },
         {
             type = 'select',
-            label = 'Camera Model',
-            description = 'Select the camera model to spawn',
+            label = 'Modelo da Câmera',
+            description = 'Selecione o modelo da câmera para criar',
             required = true,
             options = getCameraModels(),
             default = 'security_cam_03'
         },
         {
             type = 'input',
-            label = 'Position (Vector4)',
-            description = 'Camera position and rotation as vector4(x, y, z, heading)',
+            label = 'Posição (Vector4)',
+            description = 'Posição e rotação da câmera como vector4(x, y, z, heading)',
             required = true,
             default = getCurrentPositionVector4(),
             placeholder = 'vector4(0, 0, 0, 0)'
@@ -390,15 +390,15 @@ function CameraPlacement.showPlacementMenu()
     })
 
     if not input then
-        ps.info('Camera placement cancelled')
-        ps.notify('Camera placement cancelled', 'info')
+        ps.info('Posicionamento da câmera cancelado')
+        ps.notify('Posicionamento da câmera cancelado', 'info')
         return
     end
 
     -- Validate camera ID format
     if not tostring(input[1]):match("^[a-zA-Z0-9_%-]+$") then
         ps.warn('Invalid camera ID format', 'error')
-        ps.notify('Camera ID can only contain letters, numbers, underscores, and dashes', 'error')
+        ps.notify('O ID da câmera só pode conter letras, números, underlines e hífens', 'error')
         return
     end
 
@@ -408,14 +408,14 @@ function CameraPlacement.showPlacementMenu()
 
     if not x or not y or not z or not heading then
         ps.warn('Invalid vector4 format', 'error')
-        ps.notify('Invalid vector4 format. Use: vector4(x, y, z, heading)', 'error')
+        ps.notify('Formato vector4 inválido. Use: vector4(x, y, z, heading)', 'error')
         return
     end
 
     -- Validate coordinate ranges
     if x < -4000 or x > 4000 or y < -4000 or y > 4000 or z < -100 or z > 1000 then
         ps.warn('Coordinates out of range', 'error')
-        ps.notify('Coordinates out of range. X,Y: -4000 to 4000, Z: -100 to 1000', 'error')
+        ps.notify('Coordenadas fora do limite. X,Y: -4000 a 4000, Z: -100 a 1000', 'error')
         return
     end
 
@@ -426,8 +426,8 @@ function CameraPlacement.showPlacementMenu()
     -- Validate camera model with server
     local modelValid = ps.callback('ps-mdt:server:validateCameraModel', tostring(input[3]))
     if not modelValid then
-        ps.warn('Invalid camera model selected: ' .. tostring(input[3]))
-        ps.notify('Invalid camera model selected', 'error')
+        ps.warn('Modelo de câmera selecionado inválido: ' .. tostring(input[3]))
+        ps.notify('Modelo de câmera selecionado inválido', 'error')
         return
     end
 
@@ -453,8 +453,8 @@ end
 -- Handle camera list response from server
 RegisterNetEvent(resourceName .. ':client:receiveCameraList', function(cameras)
     if not cameras or #cameras == 0 then
-        ps.info('No cameras found')
-        ps.notify('No cameras found', 'info')
+        ps.info('Nenhuma câmera encontrada')
+        ps.notify('Nenhuma câmera encontrada', 'info')
         return
     end
 
@@ -463,10 +463,10 @@ RegisterNetEvent(resourceName .. ':client:receiveCameraList', function(cameras)
     for _, camera in ipairs(cameras) do
         table.insert(options, {
             title = camera.camLabel,
-            description = string.format('ID: %s | Model: %s | Spawned: %s | Viewers: %d', 
+            description = string.format('ID: %s | Modelo: %s | Criada: %s | Visualizadores: %d',
                 camera.camId, camera.model, camera.isSpawned and 'Yes' or 'No', camera.viewerCount),
             metadata = {
-                'Camera ID: ' .. camera.camId,
+                'ID da Câmera: ' .. camera.camId,
                 'Coordinates: ' .. string.format('%.2f, %.2f, %.2f', camera.coords.x, camera.coords.y, camera.coords.z),
             },
             onSelect = function()
@@ -477,7 +477,7 @@ RegisterNetEvent(resourceName .. ':client:receiveCameraList', function(cameras)
 
     lib.registerContext({
         id = 'camera_management',
-        title = 'Camera Management',
+        title = 'Gerenciamento de Câmeras',
         options = options
     })
 
@@ -488,24 +488,24 @@ end)
 function CameraPlacement.showCameraActions(camera)
     local options = {
         {
-            title = 'View Camera Feed',
-            description = 'Start viewing through this camera',
+            title = 'Ver Transmissão da Câmera',
+            description = 'Começar a visualizar por esta câmera',
             icon = 'video',
             onSelect = function()
                 TriggerServerEvent(resourceName .. ':server:activateCamera', camera.camId)
             end
         },
         {
-            title = 'Edit Camera',
-            description = 'Modify camera position and settings',
+            title = 'Editar Câmera',
+            description = 'Modificar posição e configurações da câmera',
             icon = 'pencil',
             onSelect = function()
                 CameraPlacement.showEditMenu(camera)
             end
         },
         {
-            title = 'Edit Position with Gizmo',
-            description = 'Visually position camera using 3D gizmo',
+            title = 'Editar Posição com Gizmo',
+            description = 'Posicionar visualmente a câmera usando o gizmo 3D',
             icon = 'cube',
             onSelect = function()
                 CameraPlacement.placeWithGizmo(camera)
@@ -515,8 +515,8 @@ function CameraPlacement.showCameraActions(camera)
 
     if camera.isSpawned then
         table.insert(options, {
-            title = 'Despawn Camera',
-            description = 'Remove camera from world',
+            title = 'Remover Câmera',
+            description = 'Remover a câmera do mundo',
             icon = 'eye-slash',
             onSelect = function()
                 TriggerServerEvent(resourceName .. ':server:despawnCamera', camera.camId)
@@ -524,8 +524,8 @@ function CameraPlacement.showCameraActions(camera)
         })
     else
         table.insert(options, {
-            title = 'Spawn Camera',
-            description = 'Place camera in world',
+            title = 'Criar Câmera',
+            description = 'Posicionar câmera no mundo',
             icon = 'eye',
             onSelect = function()
                 TriggerServerEvent(resourceName .. ':server:spawnCamera', camera.camId)
@@ -534,12 +534,12 @@ function CameraPlacement.showCameraActions(camera)
     end
 
     table.insert(options, {
-        title = 'Delete Camera',
-        description = 'Permanently delete this camera',
+        title = 'Excluir Câmera',
+        description = 'Excluir permanentemente esta câmera',
         icon = 'trash',
         onSelect = function()
             local alert = lib.alertDialog({
-                header = 'Delete Camera',
+                header = 'Excluir Câmera',
                 content = 'Are you sure you want to delete camera "' .. camera.camLabel .. '"?\n\nThis action cannot be undone.',
                 centered = true,
                 cancel = true
@@ -566,27 +566,27 @@ function CameraPlacement.showEditMenu(camera)
     local currentPosition = string.format('vector4(%.2f, %.2f, %.2f, %.0f)',
         camera.coords.x, camera.coords.y, camera.coords.z, camera.rotation.z)
 
-    local input = lib.inputDialog('Edit Camera: ' .. camera.camLabel, {
+    local input = lib.inputDialog('Editar Câmera: ' .. camera.camLabel, {
         {
             type = 'input',
-            label = 'Camera Label',
-            description = 'Display name for this camera',
+            label = 'Rótulo da Câmera',
+            description = 'Nome de exibição desta câmera',
             required = true,
             default = camera.camLabel,
-            placeholder = 'Police Station Entrance'
+            placeholder = 'Entrada da Delegacia'
         },
         {
             type = 'select',
-            label = 'Camera Model',
-            description = 'Select the camera model to spawn',
+            label = 'Modelo da Câmera',
+            description = 'Selecione o modelo da câmera para criar',
             required = true,
             options = getCameraModels(),
             default = camera.model
         },
         {
             type = 'input',
-            label = 'Position (Vector4)',
-            description = 'Camera position and rotation as vector4(x, y, z, heading)',
+            label = 'Posição (Vector4)',
+            description = 'Posição e rotação da câmera como vector4(x, y, z, heading)',
             required = true,
             default = currentPosition,
             placeholder = 'vector4(0, 0, 0, 0)'
@@ -594,8 +594,8 @@ function CameraPlacement.showEditMenu(camera)
     })
 
     if not input then
-        ps.info('Camera edit cancelled')
-        ps.notify('Camera edit cancelled', 'info')
+        ps.info('Edição da câmera cancelada')
+        ps.notify('Edição da câmera cancelada', 'info')
         return
     end
 
@@ -605,14 +605,14 @@ function CameraPlacement.showEditMenu(camera)
 
     if not x or not y or not z or not heading then
         ps.warn('Invalid vector4 format', 'error')
-        ps.notify('Invalid vector4 format. Use: vector4(x, y, z, heading)', 'error')
+        ps.notify('Formato vector4 inválido. Use: vector4(x, y, z, heading)', 'error')
         return
     end
 
     -- Validate coordinate ranges
     if x < -4000 or x > 4000 or y < -4000 or y > 4000 or z < -100 or z > 1000 then
         ps.warn('Coordinates out of range', 'error')
-        ps.notify('Coordinates out of range. X,Y: -4000 to 4000, Z: -100 to 1000', 'error')
+        ps.notify('Coordenadas fora do limite. X,Y: -4000 a 4000, Z: -100 a 1000', 'error')
         return
     end
 
@@ -623,8 +623,8 @@ function CameraPlacement.showEditMenu(camera)
     -- Validate camera model with server
     local modelValid = ps.callback('ps-mdt:server:validateCameraModel', tostring(input[2]))
     if not modelValid then
-        ps.warn('Invalid camera model selected: ' .. tostring(input[2]))
-        ps.notify('Invalid camera model selected', 'error')
+        ps.warn('Modelo de câmera selecionado inválido: ' .. tostring(input[2]))
+        ps.notify('Modelo de câmera selecionado inválido', 'error')
         return
     end
 
@@ -642,8 +642,8 @@ function CameraPlacement.showEditMenu(camera)
     if result and result.success then
         ps.info('Camera update request sent to server for: ' .. camera.camId)
     else
-        ps.warn('Camera update failed for: ' .. camera.camId)
-        ps.notify('Camera update failed', 'error')
+        ps.warn('Falha ao atualizar a câmera for: ' .. camera.camId)
+        ps.notify('Falha ao atualizar a câmera', 'error')
     end
 end
 
@@ -652,22 +652,22 @@ function CameraPlacement.createWithGizmo()
     local input = lib.inputDialog('Create Camera with Gizmo', {
         {
             type = 'input',
-            label = 'Camera ID',
-            description = 'Unique identifier for this camera',
+            label = 'ID da Câmera',
+            description = 'Identificador único desta câmera',
             required = true,
             placeholder = 'cam_001'
         },
         {
             type = 'input',
-            label = 'Camera Label',
-            description = 'Display name for this camera',
+            label = 'Rótulo da Câmera',
+            description = 'Nome de exibição desta câmera',
             required = true,
-            placeholder = 'Police Station Entrance'
+            placeholder = 'Entrada da Delegacia'
         },
         {
             type = 'select',
-            label = 'Camera Model',
-            description = 'Select the camera model to spawn',
+            label = 'Modelo da Câmera',
+            description = 'Selecione o modelo da câmera para criar',
             required = true,
             options = getCameraModels(),
             default = 'security_cam_03'
@@ -675,23 +675,23 @@ function CameraPlacement.createWithGizmo()
     })
 
     if not input then
-        ps.info('Camera creation cancelled')
-        ps.notify('Camera creation cancelled', 'info')
+        ps.info('Criação da câmera cancelada')
+        ps.notify('Criação da câmera cancelada', 'info')
         return
     end
 
     -- Validate camera ID format
     if not tostring(input[1]):match("^[a-zA-Z0-9_%-]+$") then
         ps.warn('Invalid camera ID format', 'error')
-        ps.notify('Camera ID can only contain letters, numbers, underscores, and dashes', 'error')
+        ps.notify('O ID da câmera só pode conter letras, números, underlines e hífens', 'error')
         return
     end
 
     -- Validate camera model with server
     local modelValid = ps.callback('ps-mdt:server:validateCameraModel', tostring(input[3]))
     if not modelValid then
-        ps.warn('Invalid camera model selected: ' .. tostring(input[3]))
-        ps.notify('Invalid camera model selected', 'error')
+        ps.warn('Modelo de câmera selecionado inválido: ' .. tostring(input[3]))
+        ps.notify('Modelo de câmera selecionado inválido', 'error')
         return
     end
 
@@ -714,18 +714,18 @@ function CameraPlacement.createWithGizmo()
 
     if not tempObj or tempObj == 0 then
         ps.error('Failed to create temporary camera object for placement')
-        ps.notify('Failed to create placement object', 'error')
+        ps.notify('Falha ao criar o objeto de posicionamento', 'error')
         return
     end
     ps.debug('Created temporary object for gizmo placement')
 
     -- Use gizmo for placement
-    ps.notify('Use the gizmo to position the camera, then press ENTER when done', 'info')
+    ps.notify('Use o gizmo para posicionar a câmera e pressione ENTER quando terminar', 'info')
     local gizmoResult = exports[GetCurrentResourceName()]:useGizmo(tempObj)
 
     if not gizmoResult then
         ps.warn('Gizmo placement cancelled')
-        ps.notify('Camera placement cancelled', 'info')
+        ps.notify('Posicionamento da câmera cancelado', 'info')
         DeleteObject(tempObj)
         return
     end
@@ -758,7 +758,7 @@ function CameraPlacement.createWithGizmo()
     -- Send to server for creation
     TriggerServerEvent(resourceName .. ':server:createStaticCamera', cameraData)
     ps.info('Camera placement request sent to server for: ' .. cameraData.camId)
-    ps.notify('Camera created at position: ' .. string.format('%.2f, %.2f, %.2f', finalCoords.x, finalCoords.y, finalCoords.z), 'success')
+    ps.notify('Câmera criada na posição: ' .. string.format('%.2f, %.2f, %.2f', finalCoords.x, finalCoords.y, finalCoords.z), 'success')
 end
 
 -- Position existing camera with gizmo
@@ -775,7 +775,7 @@ function CameraPlacement.placeWithGizmo(camera)
 
     if not tempObj or tempObj == 0 then
         ps.error('Failed to create temporary camera object for placement')
-        ps.notify('Failed to create placement object', 'error')
+        ps.notify('Falha ao criar o objeto de posicionamento', 'error')
         return
     end
 
@@ -783,13 +783,13 @@ function CameraPlacement.placeWithGizmo(camera)
 
     ps.debug('Created temporary object for gizmo repositioning')
 
-    ps.notify('Use the gizmo to reposition camera "' .. camera.camLabel .. '", then press ENTER when done', 'info')
+    ps.notify('Use o gizmo para reposicionar a câmera "' .. camera.camLabel .. '", depois pressione ENTER quando terminar', 'info')
 
     local gizmoResult = exports[GetCurrentResourceName()]:useGizmo(tempObj)
 
     if not gizmoResult then
         ps.warn('Gizmo placement cancelled')
-        ps.notify('Camera repositioning cancelled', 'info')
+        ps.notify('Reposicionamento da câmera cancelado', 'info')
         DeleteObject(tempObj)
         return
     end
@@ -816,38 +816,38 @@ function CameraPlacement.placeWithGizmo(camera)
     -- Send to server for update
     local result = ps.callback(resourceName .. ':server:updateCamera', updateData)
     if not result or not result.success then
-        ps.warn('Camera update failed for: ' .. camera.camId)
-        ps.notify('Camera update failed', 'error')
+        ps.warn('Falha ao atualizar a câmera for: ' .. camera.camId)
+        ps.notify('Falha ao atualizar a câmera', 'error')
     end
     ps.info('Camera repositioning request sent to server for: ' .. camera.camId)
-    ps.notify('Camera repositioned at: ' .. string.format('%.2f, %.2f, %.2f', finalCoords.x, finalCoords.y, finalCoords.z), 'success')
+    ps.notify('Câmera reposicionada em: ' .. string.format('%.2f, %.2f, %.2f', finalCoords.x, finalCoords.y, finalCoords.z), 'success')
 end
 
 -- Main camera menu
 function CameraPlacement.showMainMenu()
     lib.registerContext({
         id = 'camera_main_menu',
-        title = 'Camera System',
+        title = 'Sistema de Câmeras',
         options = {
             {
-                title = 'Place New Camera',
-                description = 'Create a new camera',
+                title = 'Posicionar Nova Câmera',
+                description = 'Criar uma nova câmera',
                 icon = 'plus',
                 onSelect = function()
                     CameraPlacement.showPlacementMenu()
                 end
             },
             {
-                title = 'Create with Gizmo',
-                description = 'Create a new camera using Gizmo',
+                title = 'Criar com Gizmo',
+                description = 'Criar uma nova câmera usando Gizmo',
                 icon = 'cube',
                 onSelect = function()
                     CameraPlacement.createWithGizmo()
                 end
             },
             {
-                title = 'Manage Cameras',
-                description = 'View and manage existing cameras',
+                title = 'Gerenciar Câmeras',
+                description = 'Ver e gerenciar câmeras existentes',
                 icon = 'cog',
                 onSelect = function()
                     CameraPlacement.showManagementMenu()
