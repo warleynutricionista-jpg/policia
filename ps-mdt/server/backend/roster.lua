@@ -107,6 +107,34 @@ local function checkDuty(citizenid)
    return 'Off Duty'
 end
 
+local function getMultiJobEmployeeData(citizenid, jobName)
+    if GetResourceState('ps-multijob') ~= 'started' or not exports['ps-multijob'] then
+        return nil
+    end
+
+    local ok, jobs = pcall(function()
+        return exports['ps-multijob']:GetJobs(citizenid)
+    end)
+    if not ok or type(jobs) ~= 'table' then
+        return nil
+    end
+
+    if type(jobs[jobName]) == 'table' then
+        return jobs[jobName]
+    end
+
+    for _, jobData in pairs(jobs) do
+        if type(jobData) == 'table' then
+            local name = tostring(jobData.job or jobData.name or '')
+            if name == tostring(jobName) then
+                return jobData
+            end
+        end
+    end
+
+    return nil
+end
+
 ps.registerCallback('ps-mdt:server:getRosterList', function(source)
     if GetResourceState('qbx_core') == 'started' and exports['qbx_core'] then
         return buildRosterFromQbx()
@@ -121,18 +149,6 @@ ps.registerCallback('ps-mdt:server:getRosterList', function(source)
     end
     local jobType = Config and Config.PoliceJobType and tostring(Config.PoliceJobType) or nil
 
-    local employees = {}
-    if GetResourceState('ps-multijob') == 'started' and exports['ps-multijob'] then
-        for _, jobName in ipairs(policeJobs) do
-            local list = exports['ps-multijob']:getEmployees(jobName) or {}
-            for _, employee in pairs(list) do
-                if employee and employee.citizenid then
-                    employees[employee.citizenid] = employee
-                end
-            end
-        end
-    end
-
     for _, citizen in pairs(MySQL.query.await('SELECT citizenid, charinfo, job, metadata FROM players', {}) or {}) do
         local citizenid = citizen.citizenid
         local charinfo = citizen.charinfo and json.decode(citizen.charinfo) or {}
@@ -141,7 +157,7 @@ ps.registerCallback('ps-mdt:server:getRosterList', function(source)
         local jobName = job.name and tostring(job.name) or nil
         local isPolice = (jobName and jobLookup[jobName]) or (job.type and jobType and tostring(job.type) == jobType)
         if isPolice then
-            local employee = employees[citizenid] or {}
+            local employee = getMultiJobEmployeeData(citizenid, jobName or 'police') or {}
             local callsign = metadata.callsign or 'N/A'
             local firstName = charinfo.firstname or 'N/A'
             local lastName = charinfo.lastname or 'N/A'

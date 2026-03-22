@@ -56,6 +56,20 @@ local function tryInitPsLib()
     return result
 end
 
+local function detectPreferredBackend()
+    local configuredFramework = Config and Config.Framework or nil
+
+    if configuredFramework == 'qbx' and getResourceStartedState('qbx_core') then
+        return 'qbx'
+    end
+
+    if configuredFramework == 'qb' and getResourceStartedState('qb-core') then
+        return 'qb'
+    end
+
+    return nil
+end
+
 local function getCoreObject()
     local okQbx, qbx = pcall(function()
         return exports['qbx_core']:GetCoreObject()
@@ -519,10 +533,24 @@ function fallback.getPlayerById(source)
     return fallback.getPlayer(source)
 end
 
-local activePs = tryInitPsLib()
-if activePs then
-    installPs(activePs, 'ps_lib')
+local preferredBackend = detectPreferredBackend()
+
+if preferredBackend then
+    installPs(fallback, preferredBackend)
+    safePrint('INFO', ('using native %s compatibility bridge'):format(preferredBackend))
 else
-    installPs(fallback, 'fallback')
-    safePrint('INFO', 'ps_lib export unavailable or incompatible; using internal compatibility bootstrap')
+    local activePs = tryInitPsLib()
+    if activePs then
+        installPs(activePs, 'ps_lib')
+        safePrint('INFO', 'using ps_lib compatibility bridge')
+    else
+        local _, detectedCore = getCoreObject()
+        installPs(fallback, detectedCore or 'fallback')
+
+        if detectedCore then
+            safePrint('INFO', ('ps_lib unavailable or incompatible; using native %s compatibility bridge'):format(detectedCore))
+        else
+            safePrint('WARN', 'ps_lib unavailable or incompatible and no native core bridge detected; using limited compatibility bootstrap')
+        end
+    end
 end
