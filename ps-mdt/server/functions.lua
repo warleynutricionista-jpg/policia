@@ -1,3 +1,5 @@
+local ps = RequirePs('server/functions.lua')
+
 function GetActiveUnits()
     -- Count all LEO jobs, not just "police"
     local total = 0

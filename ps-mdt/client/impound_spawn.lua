@@ -62,7 +62,7 @@ end
 local function TakeOutImpound(data, garageIndex)
     local coords = ImpoundLocations[garageIndex]
     if not coords then
-        ps.notify('Invalid impound location', 'error')
+        ps.notify('Local de pátio inválido', 'error')
         return
     end
 
@@ -106,7 +106,7 @@ AddEventHandler(resourceName .. ':client:TakeOutImpound', function(data)
     local impoundCoords = ImpoundLocations[garageIndex]
 
     if not impoundCoords then
-        ps.notify('Invalid impound location', 'error')
+        ps.notify('Local de pátio inválido', 'error')
         return
     end
 
@@ -114,7 +114,7 @@ AddEventHandler(resourceName .. ':client:TakeOutImpound', function(data)
     if #(pos - takeDist) <= 15.0 then
         TakeOutImpound(data, garageIndex)
     else
-        ps.notify('You are too far away from the impound location!', 'error')
+        ps.notify('Você está longe demais do local do pátio!', 'error')
     end
 end)
 

@@ -2,7 +2,7 @@ local resourceName = tostring(GetCurrentResourceName())
 
 RegisterNUICallback('getVehicles', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open', vehicles = {}, bolos = {} })
+        cb({ success = false, message = 'O MDT não está aberto', vehicles = {}, bolos = {} })
         return
     end
     local vehicleList = ps.callback(resourceName .. ':server:GetVehicles')
@@ -19,12 +19,12 @@ end)
 
 RegisterNUICallback('getVehicle', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
     if type(data) ~= 'table' or not data.plate then
-        cb({ success = false, message = 'Missing plate' })
+        cb({ success = false, message = 'Faltando placa' })
         return
     end
 
@@ -32,18 +32,18 @@ RegisterNUICallback('getVehicle', function(data, cb)
     if result then
         cb(result)
     else
-        cb({ success = false, message = 'Vehicle not found' })
+        cb({ success = false, message = 'Veículo não encontrado' })
     end
 end)
 
 RegisterNUICallback('updateVehicle', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
     if type(data) ~= 'table' or not data.plate then
-        cb({ success = false, message = 'Missing plate' })
+        cb({ success = false, message = 'Faltando placa' })
         return
     end
 
@@ -51,7 +51,7 @@ RegisterNUICallback('updateVehicle', function(data, cb)
     if result then
         cb(result)
     else
-        cb({ success = false, message = 'Failed to update vehicle' })
+        cb({ success = false, message = 'Falha ao atualizar o veículo' })
     end
 end)
 

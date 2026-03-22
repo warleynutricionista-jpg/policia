@@ -123,7 +123,7 @@ end
 
 local function GetVectorText(vectorType) 
     if not currentEntity then return 'ERR_NO_ENTITY_' .. (vectorType or "UNK") end
-    local label = (vectorType == "coords" and "Position" or "Rotation")
+    local label = (vectorType == "coords" and "Posição" or "Rotação")
     local vec = (vectorType == "coords" and GetEntityCoords(currentEntity) or GetEntityRotation(currentEntity))
     return ('%s: %.2f, %.2f, %.2f'):format(label, vec.x, vec.y, vec.z)
 end
@@ -133,18 +133,18 @@ local function textUILoop()
     CreateThread(function()
         while gizmoEnabled do
             Wait(100)
-            local scaleText = (enableScale and '[S]     - Scale Mode  \n') or ''
+            local scaleText = (enableScale and '[S]     - Modo escala  \n') or ''
             lib.showTextUI(
-                ('Current Mode: %s | %s  \n'):format(currentMode, (isRelative and 'Relative') or 'World') ..
+                ('Modo atual: %s | %s  \n'):format(currentMode, (isRelative and 'Relativo') or 'Mundo') ..
                 GetVectorText("coords") .. '  \n' ..
                 GetVectorText("rotation") .. '  \n' ..
-                '[G]     - ' .. (isCursorActive and "Disable" or "Enable") .. ' Cursor  \n' ..
-                '[W]     - Translate Mode  \n' ..
-                '[R]     - Rotate Mode  \n' ..
+                '[G]     - ' .. (isCursorActive and "Desativar" or "Ativar") .. ' cursor  \n' ..
+                '[W]     - Modo translação  \n' ..
+                '[R]     - Modo rotação  \n' ..
                 scaleText ..
-                '[Q]     - Relative/World  \n' ..
-                '[LALT]  - Snap To Ground  \n' ..
-                '[ENTER] - Done Editing  \n'
+                '[Q]     - Relativo/Mundo  \n' ..
+                '[LALT]  - Alinhar ao chão  \n' ..
+                '[ENTER] - Finalizar edição  \n'
             )
         end
         lib.hideTextUI()
@@ -172,7 +172,7 @@ exports("useGizmo", useGizmo)
 
 lib.addKeybind({
     name = '_gizmoSelect',
-    description = 'Selects the currently highlighted gizmo',
+    description = 'Seleciona o gizmo destacado no momento',
     defaultMapper = 'MOUSE_BUTTON',
     defaultKey = 'MOUSE_LEFT',
     onPressed = function(self)
@@ -186,11 +186,11 @@ lib.addKeybind({
 
 lib.addKeybind({
     name = '_gizmoTranslation',
-    description = 'Sets mode of the gizmo to translation',
+    description = 'Define o modo do gizmo para translação',
     defaultKey = 'W',
     onPressed = function(self)
         if not gizmoEnabled then return end
-        currentMode = 'Translate'
+        currentMode = 'Translação'
         ExecuteCommand('+gizmoTranslation')
     end,
     onReleased = function (self)
@@ -200,11 +200,11 @@ lib.addKeybind({
 
 lib.addKeybind({
     name = '_gizmoRotation',
-    description = 'Sets mode for the gizmo to rotation',
+    description = 'Define o modo do gizmo para rotação',
     defaultKey = 'R',
     onPressed = function(self)
         if not gizmoEnabled then return end
-        currentMode = 'Rotate'
+        currentMode = 'Rotação'
         ExecuteCommand('+gizmoRotation')
     end,
     onReleased = function (self)
@@ -214,7 +214,7 @@ lib.addKeybind({
 
 lib.addKeybind({
     name = '_gizmoLocal',
-    description = 'toggle gizmo to be local to the entity instead of world',
+    description = 'Alterna o gizmo entre o espaço local da entidade e o mundo',
     defaultKey = 'Q',
     onPressed = function(self)
         if not gizmoEnabled then return end
@@ -228,7 +228,7 @@ lib.addKeybind({
 
 lib.addKeybind({
     name = 'gizmoclose',
-    description = 'close gizmo',
+    description = 'Fechar gizmo',
     defaultKey = 'RETURN',
     onPressed = function(self)
         if not gizmoEnabled then return end
@@ -238,7 +238,7 @@ lib.addKeybind({
 
 lib.addKeybind({
     name = 'gizmoSnapToGround',
-    description = 'snap current gizmo object to floor/surface',
+    description = 'Alinhar o objeto atual do gizmo ao chão/superfície',
     defaultKey = 'LMENU',
     onPressed = function(self)
         if not gizmoEnabled then return end
@@ -249,11 +249,11 @@ lib.addKeybind({
 if enableScale then
     lib.addKeybind({
         name = '_gizmoScale',
-        description = 'Sets mode for the gizmo to scale',
+        description = 'Define o modo do gizmo para escala',
         defaultKey = 'S',
         onPressed = function(self)
             if not gizmoEnabled then return end
-            currentMode = 'Scale'
+            currentMode = 'Escala'
             ExecuteCommand('+gizmoScale')
         end,
         onReleased = function (self)

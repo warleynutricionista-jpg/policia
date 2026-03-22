@@ -70,14 +70,14 @@ AddEventHandler("wk:onPlateScanned", function(cam, plate, index)
     local warrant, owner, incidentId = GetWarrantStatus(plate)
 
     if bolo == true then
-        ps.notify(src, 'BOLO ID: '..boloId..' | Title: '..title..' | Registered Owner: '..vehicleOwner..' | Plate: '..plate, 'error', Config.WolfknightNotifyTime)
+        ps.notify(src, 'ID do BOLO: '..boloId..' | Título: '..title..' | Proprietário registrado: '..vehicleOwner..' | Placa: '..plate, 'error', Config.WolfknightNotifyTime)
     end
     if warrant == true then
-        ps.notify(src, 'WANTED - INCIDENT ID: '..incidentId..' | Registered Owner: '..owner..' | Plate: '..plate, 'error', Config.WolfknightNotifyTime)
+        ps.notify(src, 'PROCURADO - ID DA OCORRÊNCIA: '..incidentId..' | Proprietário registrado: '..owner..' | Placa: '..plate, 'error', Config.WolfknightNotifyTime)
     end
 
     if Config.PlateScanForDriversLicense and driversLicense == false and vehicleOwner then
-        ps.notify(src, 'NO DRIVERS LICENCE | Registered Owner: '..vehicleOwner..' | Plate: '..plate, 'error', Config.WolfknightNotifyTime)
+        ps.notify(src, 'SEM CNH | Proprietário registrado: '..vehicleOwner..' | Placa: '..plate, 'error', Config.WolfknightNotifyTime)
     end
 
     if bolo or warrant or (Config.PlateScanForDriversLicense and not driversLicense) and vehicleOwner then

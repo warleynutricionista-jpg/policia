@@ -33,7 +33,7 @@ end)
 local fineAntiSpam = false
 ps.registerCallback(resourceName .. ':server:processFine', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local citizenId = payload.citizenid
@@ -43,26 +43,26 @@ ps.registerCallback(resourceName .. ':server:processFine', function(source, payl
     local jfConfig = GetJailFinesConfig and GetJailFinesConfig() or {}
     local maxFine = jfConfig.maxFineAmount or (Config and Config.Fines and Config.Fines.MaxAmount) or 100000
     if not citizenId or not fine or fine <= 0 then
-        return { success = false, message = 'Missing citizen ID or invalid fine amount' }
+        return { success = false, message = 'Faltando ID do cidadão ou valor de multa inválido' }
     end
     if fine > maxFine then
-        return { success = false, message = 'Fine amount exceeds maximum of $' .. maxFine }
+        return { success = false, message = 'O valor da multa excede o máximo de $' .. maxFine }
     end
 
     if fineAntiSpam then
-        return { success = false, message = 'Fine processing on cooldown' }
+        return { success = false, message = 'Processamento de multa em tempo de espera' }
     end
 
     -- Try to get online player first
     local Player = ps.getPlayerByIdentifier(citizenId)
     if not Player then
-        return { success = false, message = 'Player must be online to process fine' }
+        return { success = false, message = 'O jogador precisa estar online para processar a multa' }
     end
 
     -- Remove money from bank
     local removed = ps.removeMoney(Player.source or Player.PlayerData.source, 'bank', fine, 'mdt-fine')
     if removed then
-        ps.notify(Player.source or Player.PlayerData.source, '$' .. fine .. ' fine deducted from your bank account', 'error')
+        ps.notify(Player.source or Player.PlayerData.source, '$' .. fine .. ' de multa foi descontada da sua conta bancária', 'error')
 
         -- Anti-spam cooldown
         fineAntiSpam = true
@@ -80,22 +80,22 @@ ps.registerCallback(resourceName .. ':server:processFine', function(source, payl
             })
         end
 
-        return { success = true, message = 'Fine of $' .. fine .. ' processed' }
+        return { success = true, message = 'Multa de $' .. fine .. ' processada' }
     else
-        return { success = false, message = 'Failed to remove money - insufficient funds?' }
+        return { success = false, message = 'Falha ao remover o dinheiro - fundos insuficientes?' }
     end
 end)
 
 ps.registerCallback(resourceName .. ':server:updateCharge', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
     if not CheckPermission(src, 'charges_edit') then
-        return { success = false, message = 'You do not have permission to edit charges' }
+        return { success = false, message = 'Você não tem permissão para editar acusações' }
     end
 
     payload = payload or {}
     if not payload.code then
-        return { success = false, message = 'Missing charge code' }
+        return { success = false, message = 'Faltando código da acusação' }
     end
 
     local penalUpdates = {}

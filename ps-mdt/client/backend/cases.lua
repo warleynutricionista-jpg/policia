@@ -2,7 +2,7 @@ local resourceName = tostring(GetCurrentResourceName())
 
 RegisterNUICallback('createCase', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
@@ -24,12 +24,12 @@ end)
 
 RegisterNUICallback('getCase', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
     if not data or not data.caseId then
-        cb({ success = false, message = 'Missing case ID' })
+        cb({ success = false, message = 'Faltando ID do caso' })
         return
     end
 
@@ -39,7 +39,7 @@ end)
 
 RegisterNUICallback('linkReportToCase', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
@@ -54,7 +54,7 @@ end)
 
 RegisterNUICallback('unlinkReportFromCase', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
@@ -69,12 +69,12 @@ end)
 
 RegisterNUICallback('getCaseEvidencePage', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
     if not data or not data.caseId then
-        cb({ success = false, message = 'Missing case ID' })
+        cb({ success = false, message = 'Faltando ID do caso' })
         return
     end
 
@@ -89,12 +89,12 @@ end)
 
 RegisterNUICallback('updateCase', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
     if not data or not data.caseId then
-        cb({ success = false, message = 'Missing case ID' })
+        cb({ success = false, message = 'Faltando ID do caso' })
         return
     end
 
@@ -104,12 +104,12 @@ end)
 
 RegisterNUICallback('deleteCase', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
     if not data or not data.caseId then
-        cb({ success = false, message = 'Missing case ID' })
+        cb({ success = false, message = 'Faltando ID do caso' })
         return
     end
 
@@ -119,7 +119,7 @@ end)
 
 RegisterNUICallback('assignCaseOfficer', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
@@ -134,7 +134,7 @@ end)
 
 RegisterNUICallback('removeCaseOfficer', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
@@ -148,7 +148,7 @@ end)
 
 RegisterNUICallback('addCaseAttachment', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
@@ -162,7 +162,7 @@ end)
 
 RegisterNUICallback('addCaseAttachmentUpload', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
@@ -176,7 +176,7 @@ end)
 
 RegisterNUICallback('removeCaseAttachment', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
@@ -186,7 +186,7 @@ end)
 
 RegisterNUICallback('addEvidenceItem', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
@@ -200,7 +200,7 @@ end)
 
 RegisterNUICallback('updateEvidenceItem', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
@@ -214,7 +214,7 @@ end)
 
 RegisterNUICallback('transferEvidenceItem', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
@@ -229,7 +229,7 @@ end)
 
 RegisterNUICallback('deleteEvidenceItem', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
@@ -239,7 +239,7 @@ end)
 
 RegisterNUICallback('getEvidenceCustody', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
@@ -249,7 +249,7 @@ end)
 
 RegisterNUICallback('linkEvidenceToCase', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
@@ -265,7 +265,7 @@ end)
 
 RegisterNUICallback('linkEvidenceToReport', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
@@ -280,7 +280,7 @@ end)
 
 RegisterNUICallback('createCaseFromEvidence', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
@@ -295,7 +295,7 @@ end)
 
 RegisterNUICallback('addEvidenceImage', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
@@ -309,7 +309,7 @@ end)
 
 RegisterNUICallback('removeEvidenceImage', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
@@ -319,7 +319,7 @@ end)
 
 RegisterNUICallback('getEvidenceItems', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
@@ -333,7 +333,7 @@ end)
 
 RegisterNUICallback('searchEvidenceItems', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
@@ -362,12 +362,12 @@ end)
 
 RegisterNUICallback('openEvidenceStash', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
     if not data or not data.stashId or data.stashId == '' then
-        cb({ success = false, message = 'Missing stash ID' })
+        cb({ success = false, message = 'Faltando ID do depósito' })
         return
     end
 

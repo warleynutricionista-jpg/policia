@@ -11,19 +11,17 @@ version '3.1.0'
 ui_page 'web/dist/index.html'
 
 dependencies {
-  'ps_lib',
   'oxmysql',
   'ox_lib',
-  'qbx_core',
 }
 
 shared_scripts {
-  'config.lua',
   '@ox_lib/init.lua',
-  '@qbx_core/modules/lib.lua',
+  'config.lua',
+  'shared/ps.lua',
 }
 
-client_script {
+client_scripts {
   'client/**.lua'
 }
 

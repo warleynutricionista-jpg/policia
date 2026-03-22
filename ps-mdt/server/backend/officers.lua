@@ -16,7 +16,7 @@ ps.registerCallback(resourceName .. ':server:GetPlayerSourceId', function(source
     if not targetCitizenId then return nil end
     local targetPlayer = ps.getPlayerByIdentifier(targetCitizenId)
     if not targetPlayer then
-        ps.notify(source, 'Citizen seems asleep / missing', 'error')
+        ps.notify(source, 'O cidadão parece ausente / desconectado', 'error')
         return nil
     end
     return targetPlayer.source or targetPlayer.PlayerData.source
@@ -25,17 +25,17 @@ end)
 -- Set Callsign
 ps.registerCallback(resourceName .. ':server:setCallsign', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local cid = payload.citizenid or payload.cid
     local newCallsign = payload.callsign or payload.newcallsign
 
     if not cid or not newCallsign then
-        return { success = false, message = 'Missing citizen ID or callsign' }
+        return { success = false, message = 'Faltando ID do cidadão ou indicativo' }
     end
 
-    if not QBCore then return { success = false, message = 'Core framework not available' } end
+    if not QBCore then return { success = false, message = 'Framework principal indisponível' } end
     local Player = QBCore.Functions.GetPlayerByCitizenId(cid)
     if Player then
         Player.Functions.SetMetaData('callsign', newCallsign)
@@ -47,29 +47,29 @@ ps.registerCallback(resourceName .. ':server:setCallsign', function(source, payl
             ps.auditLog(src, 'callsign_changed', 'officer', cid, { callsign = newCallsign })
         end
 
-        return { success = true, message = 'Callsign updated to ' .. newCallsign }
+        return { success = true, message = 'Indicativo atualizado para ' .. newCallsign }
     end
 
-    return { success = false, message = 'Player must be online to update callsign' }
+    return { success = false, message = 'O jogador precisa estar online para atualizar o indicativo' }
 end)
 
 -- Set Radio Frequency
 ps.registerCallback(resourceName .. ':server:setRadio', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local cid = payload.citizenid or payload.cid
     local newRadio = payload.radio or payload.newradio
 
     if not cid or not newRadio then
-        return { success = false, message = 'Missing citizen ID or radio frequency' }
+        return { success = false, message = 'Faltando ID do cidadão ou frequência do rádio' }
     end
 
-    if not QBCore then return { success = false, message = 'Core framework not available' } end
+    if not QBCore then return { success = false, message = 'Framework principal indisponível' } end
     local targetPlayer = QBCore.Functions.GetPlayerByCitizenId(cid)
     if not targetPlayer then
-        return { success = false, message = 'Officer must be online' }
+        return { success = false, message = 'O oficial precisa estar online' }
     end
 
     local targetSource = targetPlayer.PlayerData.source
@@ -80,7 +80,7 @@ ps.registerCallback(resourceName .. ':server:setRadio', function(source, payload
     end
 
     TriggerClientEvent(resourceName .. ':client:setRadio', targetSource, newRadio)
-    return { success = true, message = 'Radio set to ' .. newRadio }
+    return { success = true, message = 'Rádio definido para ' .. newRadio }
 end)
 
 -- Get Unit Location (GPS to officer)

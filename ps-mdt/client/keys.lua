@@ -1,5 +1,6 @@
 MDTOpen = false -- Track MDT state
 local resourceName = tostring(GetCurrentResourceName())
+local ps = RequirePs('client/keys.lua')
 
 -- Control management
 local controlsDisabled = false
@@ -125,38 +126,38 @@ function OpenMDT()
 
     -- Don't allow if player is dead
     if ps.isDead() then
-        ps.notify('You cannot open the MDT right now', 'error')
+        ps.notify('Você não pode abrir o MDT agora', 'error')
         return
     end
 
     -- Don't allow if swimming
     local ped = PlayerPedId()
     if IsPedSwimming(ped) then
-        ps.notify('You cannot open the MDT right now', 'error')
+        ps.notify('Você não pode abrir o MDT agora', 'error')
         return
     end
 
     -- Don't allow if armed
     if IsPedArmed(ped, 1) or IsPedArmed(ped, 2) or IsPedArmed(ped, 4) then
-        ps.notify('Holster your weapon first', 'error')
+        ps.notify('Guarde sua arma primeiro', 'error')
         return
     end
 
     -- Don't allow if falling
     if IsPedFalling(ped) then
-        ps.notify('You cannot open the MDT right now', 'error')
+        ps.notify('Você não pode abrir o MDT agora', 'error')
         return
     end
 
     -- Don't allow if vehicle is moving too fast (realism - driver only)
     if isDriver() and isVehicleMovingFast() then
-        ps.notify('Reduce speed before using the MDT', 'error')
+        ps.notify('Reduza a velocidade antes de usar o MDT', 'error')
         return
     end
 
     -- Don't allow if viewing a camera
     if exports[resourceName]:isViewingCamera() then
-        ps.notify('You cannot open the MDT while viewing a camera', 'error')
+        ps.notify('Você não pode abrir o MDT enquanto visualiza uma câmera', 'error')
         return
     end
 
@@ -226,7 +227,7 @@ CreateThread(function()
             if wasInVehicle and not inVehicle then
                 -- Player exited vehicle while MDT was open
                 CloseMDT()
-                ps.notify('MDT disconnected - Left vehicle', 'error')
+                ps.notify('MDT desconectado - você saiu do veículo', 'error')
             end
 
             wasInVehicle = inVehicle
