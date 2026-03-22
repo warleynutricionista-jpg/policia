@@ -18,7 +18,7 @@ local QBCore = getCoreObject()
 -- Send to Jail (supports qbx_core, qb-prison, and legacy police:server:JailPlayer)
 ps.registerCallback(resourceName .. ':server:sendToJail', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local citizenId = payload.citizenId
@@ -27,7 +27,7 @@ ps.registerCallback(resourceName .. ':server:sendToJail', function(source, paylo
     local charges = payload.charges or {}
 
     if not citizenId or not sentence or sentence <= 0 then
-        return { success = false, message = 'Missing citizen ID or invalid sentence' }
+        return { success = false, message = 'Faltando ID do cidadão ou sentença inválida' }
     end
 
     -- Cap sentence to prevent abuse
@@ -38,7 +38,7 @@ ps.registerCallback(resourceName .. ':server:sendToJail', function(source, paylo
 
     local targetPlayer = ps.getPlayerByIdentifier(citizenId)
     if not targetPlayer then
-        return { success = false, message = 'Player must be online to send to jail' }
+        return { success = false, message = 'O jogador precisa estar online para ser enviado à prisão' }
     end
 
     local targetSource = targetPlayer.source or targetPlayer.PlayerData.source
@@ -99,7 +99,7 @@ ps.registerCallback(resourceName .. ':server:sendToJail', function(source, paylo
         })
     end
 
-    return { success = true, message = 'Sent to jail for ' .. sentence .. ' months' .. (fine > 0 and ' | Fine: $' .. fine or '') }
+    return { success = true, message = 'Enviado para a prisão por ' .. sentence .. ' meses' .. (fine > 0 and ' | Multa: $' .. fine or '') }
 end)
 
 -- Give Citation Item (QBox compatible with ox_inventory)
@@ -143,7 +143,7 @@ local function giveCitationItem(src, citizenId, fine, reportId)
     end
 
     if success then
-        ps.notify(src, PlayerName .. ' (' .. citizenId .. ') received a citation!', 'success')
+        ps.notify(src, PlayerName .. ' (' .. citizenId .. ') recebeu uma citação!', 'success')
     end
 
     return success
@@ -151,7 +151,7 @@ end
 
 ps.registerCallback(resourceName .. ':server:giveCitation', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local citizenId = payload.citizenId
@@ -159,7 +159,7 @@ ps.registerCallback(resourceName .. ':server:giveCitation', function(source, pay
     local reportId = payload.reportId
 
     if not citizenId then
-        return { success = false, message = 'Missing citizen ID' }
+        return { success = false, message = 'Faltando ID do cidadão' }
     end
 
     local result = giveCitationItem(src, citizenId, fine, reportId)

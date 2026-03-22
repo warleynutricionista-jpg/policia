@@ -2,7 +2,7 @@ local resourceName = tostring(GetCurrentResourceName())
 
 RegisterNUICallback('getReports', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
@@ -25,7 +25,7 @@ end)
 
 RegisterNUICallback('getReportAnalytics', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
@@ -36,12 +36,12 @@ end)
 
 RegisterNUICallback('getReport', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
     if not data or not data.reportId then
-        cb({ success = false, message = 'Missing report ID' })
+        cb({ success = false, message = 'Faltando ID do relatório' })
         return
     end
 
@@ -49,19 +49,19 @@ RegisterNUICallback('getReport', function(data, cb)
     if report then
         cb({ success = true, data = report })
     else
-        cb({ success = false, message = 'Report not found or access denied' })
+        cb({ success = false, message = 'Relatório não encontrado ou acesso negado' })
     end
 end)
 
 RegisterNUICallback('saveReport', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
     if not data or not data.reportId then
-        ps.error('Missing report data in request')
-        cb({ success = false, message = 'Missing report data' })
+        ps.error('Faltando dados do relatório in request')
+        cb({ success = false, message = 'Faltando dados do relatório' })
         return
     end
 
@@ -196,12 +196,12 @@ end)
 
 RegisterNUICallback('updateReportContent', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
     if not data.content then
-        cb({ success = false, message = 'Missing content' })
+        cb({ success = false, message = 'Faltando conteúdo' })
         return
     end
 
@@ -223,12 +223,12 @@ end)
 
 RegisterNUICallback('deleteReport', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
     if not data.reportId then
-        cb({ success = false, message = 'Missing report ID' })
+        cb({ success = false, message = 'Faltando ID do relatório' })
         return
     end
 
@@ -249,7 +249,7 @@ end)
 
 RegisterNUICallback('getAvailableTags', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
@@ -259,13 +259,13 @@ RegisterNUICallback('getAvailableTags', function(data, cb)
     if tags then
         cb({ success = true, data = tags })
     else
-        cb({ success = false, message = 'Failed to fetch available tags' })
+        cb({ success = false, message = 'Falha ao buscar tags disponíveis' })
     end
 end)
 
 RegisterNUICallback('generateReportId', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
@@ -285,7 +285,7 @@ end)
 
 RegisterNUICallback('searchOfficers', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open', data = {} })
+        cb({ success = false, message = 'O MDT não está aberto', data = {} })
         return
     end
 
@@ -296,7 +296,7 @@ end)
 
 RegisterNUICallback('searchPlayers', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open', data = {} })
+        cb({ success = false, message = 'O MDT não está aberto', data = {} })
         return
     end
 

@@ -41,7 +41,7 @@ local function onJobUpdate(JobInfo)
 
         if not authorized then
             CloseMDT()
-            ps.notify('MDT closed - Access revoked', 'error')
+            ps.notify('MDT fechado - acesso revogado', 'error')
         else
             NUIUpdateAuthWithData(job)
         end
@@ -58,7 +58,7 @@ local function onSetDuty(duty)
             local authorized = isAuthorizedJob(job)
             if not authorized or not duty then
                 CloseMDT()
-                ps.notify('MDT closed - Off duty', 'error')
+                ps.notify('MDT fechado - fora de serviço', 'error')
             end
         end
     end
@@ -116,6 +116,6 @@ RegisterNetEvent('police:client:GetCuffed', function()
     if MDTOpen then
         ps.debug('Player got cuffed - closing MDT')
         CloseMDT()
-        ps.notify('MDT closed - You are restrained', 'error')
+        ps.notify('MDT fechado - você está algemado', 'error')
     end
 end)

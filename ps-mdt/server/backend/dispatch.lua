@@ -5,14 +5,14 @@ local dispatchMessages = {}
 -- Send dispatch message
 ps.registerCallback(resourceName .. ':server:sendDispatchMessage', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local message = payload.message
     local time = payload.time
 
     if not message or message == '' then
-        return { success = false, message = 'Empty message' }
+        return { success = false, message = 'Mensagem vazia' }
     end
 
     local citizenid = ps.getIdentifier(src)
@@ -86,7 +86,7 @@ end)
 -- Signal 100 (Panic / Emergency)
 ps.registerCallback(resourceName .. ':server:signal100', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local radio = payload.radio or '1'

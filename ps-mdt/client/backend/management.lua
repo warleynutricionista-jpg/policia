@@ -2,23 +2,23 @@ local resourceName = tostring(GetCurrentResourceName())
 
 RegisterNUICallback('getPermissionRoles', function(_, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
     local result = ps.callback(resourceName .. ':server:getPermissionRoles')
     ps.debug('[getPermissionRoles] Result:', result)
-    cb(result or { success = false, message = 'Failed to fetch roles' })
+    cb(result or { success = false, message = 'Falha ao buscar funções' })
 end)
 
 RegisterNUICallback('updatePermissionRole', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
     local result = ps.callback(resourceName .. ':server:updatePermissionRole', data or {})
-    cb(result or { success = false, message = 'Failed to update role' })
+    cb(result or { success = false, message = 'Falha ao atualizar a função' })
 end)
 
 -- SETTINGS: Activity Tracking -------------------------------------------
@@ -43,13 +43,13 @@ end)
 
 RegisterNUICallback('saveAuditTrackingConfig', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
     -- Encode as JSON string to preserve boolean false values through msgpack serialization
     local result = ps.callback(resourceName .. ':server:saveAuditTrackingConfig', json.encode(data or {}))
-    cb(result or { success = false, message = 'Failed to save settings' })
+    cb(result or { success = false, message = 'Falha ao salvar as configurações' })
 end)
 
 -- SETTINGS: Jail / Fines -------------------------------------------
@@ -66,12 +66,12 @@ end)
 
 RegisterNUICallback('saveJailFinesConfig', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
     local result = ps.callback(resourceName .. ':server:saveJailFinesConfig', data or {})
-    cb(result or { success = false, message = 'Failed to save settings' })
+    cb(result or { success = false, message = 'Falha ao salvar as configurações' })
 end)
 
 -- SETTINGS: Report Templates -------------------------------------------
@@ -89,22 +89,22 @@ end)
 
 RegisterNUICallback('saveReportTemplate', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
     local result = ps.callback(resourceName .. ':server:saveReportTemplate', data or {})
-    cb(result or { success = false, message = 'Failed to save template' })
+    cb(result or { success = false, message = 'Falha ao salvar o modelo' })
 end)
 
 RegisterNUICallback('deleteReportTemplate', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
     local result = ps.callback(resourceName .. ':server:deleteReportTemplate', data or {})
-    cb(result or { success = false, message = 'Failed to delete template' })
+    cb(result or { success = false, message = 'Falha ao excluir o modelo' })
 end)
 
 -- TAG MANAGEMENT -------------------------------------------
@@ -121,29 +121,29 @@ end)
 
 RegisterNUICallback('createTag', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
     local result = ps.callback(resourceName .. ':server:createTag', data or {})
-    cb(result or { success = false, message = 'Failed to create tag' })
+    cb(result or { success = false, message = 'Falha ao criar a tag' })
 end)
 
 RegisterNUICallback('updateTag', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
     local result = ps.callback(resourceName .. ':server:updateTag', data or {})
-    cb(result or { success = false, message = 'Failed to update tag' })
+    cb(result or { success = false, message = 'Falha ao atualizar a tag' })
 end)
 
 RegisterNUICallback('deleteTag', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
     local result = ps.callback(resourceName .. ':server:deleteTag', data or {})
-    cb(result or { success = false, message = 'Failed to delete tag' })
+    cb(result or { success = false, message = 'Falha ao excluir a tag' })
 end)
 
 -- SETTINGS: Awards -------------------------------------------
@@ -159,20 +159,20 @@ end)
 
 RegisterNUICallback('saveAward', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
     local result = ps.callback(resourceName .. ':server:saveAward', data or {})
-    cb(result or { success = false, message = 'Failed to save award' })
+    cb(result or { success = false, message = 'Falha ao salvar a premiação' })
 end)
 
 RegisterNUICallback('deleteAward', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
     local result = ps.callback(resourceName .. ':server:deleteAward', data or {})
-    cb(result or { success = false, message = 'Failed to delete award' })
+    cb(result or { success = false, message = 'Falha ao excluir a premiação' })
 end)
 
 -- AWARDS PAGE: Get awards data (stats + progress + leaderboard) ---
@@ -199,18 +199,18 @@ end)
 
 RegisterNUICallback('saveCustomLicense', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
     local result = ps.callback(resourceName .. ':server:saveCustomLicense', data or {})
-    cb(result or { success = false, message = 'Failed to save license' })
+    cb(result or { success = false, message = 'Falha ao salvar a licença' })
 end)
 
 RegisterNUICallback('deleteCustomLicense', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
     local result = ps.callback(resourceName .. ':server:deleteCustomLicense', data or {})
-    cb(result or { success = false, message = 'Failed to delete license' })
+    cb(result or { success = false, message = 'Falha ao excluir a licença' })
 end)
