@@ -340,7 +340,7 @@ ps.registerCallback(resourceName .. ':server:getCitizenProfile', function(source
     if not CheckAuth(src) then return end
 
     if not citizenid or citizenid == '' then
-        return { success = false, message = 'Missing citizen id' }
+        return { success = false, message = 'Faltando ID do cidadão' }
     end
 
     local playerRow = MySQL.single.await([[
@@ -359,7 +359,7 @@ ps.registerCallback(resourceName .. ':server:getCitizenProfile', function(source
     ]], { citizenid })
 
     if not playerRow then
-        return { success = false, message = 'Citizen not found' }
+        return { success = false, message = 'Cidadão não encontrado' }
     end
 
     local profileRow = MySQL.single.await('SELECT id, profilepicture, notes FROM mdt_profiles WHERE citizenid = ?', { citizenid })
@@ -581,19 +581,19 @@ end)
 
 ps.registerCallback(resourceName .. ':server:updateCitizenLicense', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local citizenId = payload.citizenid
     local licenseType = payload.license
     local enabled = payload.enabled == true
     if not citizenId or not licenseType then
-        return { success = false, message = 'Missing citizen id or license' }
+        return { success = false, message = 'Faltando ID do cidadão ou licença' }
     end
 
     local row = MySQL.single.await('SELECT metadata FROM players WHERE citizenid = ? LIMIT 1', { citizenId })
     if not row then
-        return { success = false, message = 'Citizen not found' }
+        return { success = false, message = 'Cidadão não encontrado' }
     end
 
     local metadata = row.metadata and json.decode(row.metadata) or {}
@@ -606,7 +606,7 @@ end)
 
 ps.registerCallback(resourceName .. ':server:updateCitizenCustomLicense', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local citizenId = payload.citizenid
@@ -614,13 +614,13 @@ ps.registerCallback(resourceName .. ':server:updateCitizenCustomLicense', functi
     local enabled = payload.enabled == true
 
     if not citizenId or not licenseId then
-        return { success = false, message = 'Missing citizen id or license id' }
+        return { success = false, message = 'Faltando ID do cidadão ou licença id' }
     end
 
     -- Verify the license exists
     local licenseExists = MySQL.scalar.await('SELECT id FROM mdt_custom_licenses WHERE id = ?', { licenseId })
     if not licenseExists then
-        return { success = false, message = 'License not found' }
+        return { success = false, message = 'Licença não encontrada' }
     end
 
     local grantedBy = ps.getIdentifier(src)
@@ -637,15 +637,15 @@ end)
 -- Add fingerprint to a citizen's metadata
 ps.registerCallback(resourceName .. ':server:addSuspectFingerprint', function(source, citizenid)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     if not citizenid or citizenid == '' then
-        return { success = false, message = 'Missing citizen id' }
+        return { success = false, message = 'Faltando ID do cidadão' }
     end
 
     local row = MySQL.single.await('SELECT metadata FROM players WHERE citizenid = ? LIMIT 1', { citizenid })
     if not row then
-        return { success = false, message = 'Citizen not found' }
+        return { success = false, message = 'Cidadão não encontrado' }
     end
 
     local metadata = row.metadata and json.decode(row.metadata) or {}
@@ -677,7 +677,7 @@ end)
 
 ps.registerCallback(resourceName .. ':server:createBolo', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local boloType = payload.type or 'citizen'
@@ -687,7 +687,7 @@ ps.registerCallback(resourceName .. ':server:createBolo', function(source, paylo
     local notes = payload.notes
 
 	if not subjectName or subjectName == '' then
-		return { success = false, message = 'Missing required fields' }
+		return { success = false, message = 'Faltam campos obrigatórios' }
 	end
 
     local allowedTypes = { citizen = true, vehicle = true, weapon = true, property = true, other = true }
@@ -706,7 +706,7 @@ ps.registerCallback(resourceName .. ':server:createBolo', function(source, paylo
 			LIMIT 1
 		]], { boloType, subjectValue, reportValue })
 		if existing then
-			return { success = false, message = 'An active BOLO already exists.' }
+			return { success = false, message = 'Já existe um BOLO ativo.' }
 		end
 	end
 
@@ -722,7 +722,7 @@ ps.registerCallback(resourceName .. ':server:createBolo', function(source, paylo
 	})
 
     if not inserted then
-        return { success = false, message = 'Failed to create BOLO' }
+        return { success = false, message = 'Falha ao criar o BOLO' }
     end
 
     return { success = true, id = inserted }
@@ -731,12 +731,12 @@ end)
 -- Delete a BOLO
 ps.registerCallback(resourceName .. ':server:deleteBolo', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local id = tonumber(payload.id)
     if not id then
-        return { success = false, message = 'Invalid BOLO ID' }
+        return { success = false, message = 'ID do BOLO inválido' }
     end
 
     MySQL.query.await('DELETE FROM mdt_bolos WHERE id = ?', { id })
@@ -746,18 +746,18 @@ end)
 -- Update BOLO status (resolve, deactivate, reactivate)
 ps.registerCallback(resourceName .. ':server:updateBoloStatus', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local id = tonumber(payload.id)
     local status = payload.status
     if not id or not status then
-        return { success = false, message = 'Missing BOLO ID or status' }
+        return { success = false, message = 'Faltando ID do BOLO ou status' }
     end
 
     local allowedStatuses = { active = true, inactive = true, resolved = true }
     if not allowedStatuses[status] then
-        return { success = false, message = 'Invalid status' }
+        return { success = false, message = 'Status inválido' }
     end
 
     MySQL.update.await('UPDATE mdt_bolos SET status = ? WHERE id = ?', { status, id })
@@ -767,12 +767,12 @@ end)
 -- Save citizen profile notes and profile picture
 ps.registerCallback(resourceName .. ':server:updateCitizen', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local citizenId = payload.citizenid
     if not citizenId or citizenId == '' then
-        return { success = false, message = 'Missing citizen id' }
+        return { success = false, message = 'Faltando ID do cidadão' }
     end
 
     EnsureProfileExists(citizenId)
@@ -790,24 +790,24 @@ end)
 -- Add a tag to a citizen profile
 ps.registerCallback(resourceName .. ':server:addCitizenTag', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local citizenId = payload.citizenid
     local tag = payload.tag
     if not citizenId or not tag or tag == '' then
-        return { success = false, message = 'Missing citizen id or tag' }
+        return { success = false, message = 'Faltando ID do cidadão ou tag' }
     end
 
     local profile = MySQL.single.await('SELECT id FROM mdt_profiles WHERE citizenid = ?', { citizenId })
     if not profile then
-        return { success = false, message = 'Profile not found' }
+        return { success = false, message = 'Perfil não encontrado' }
     end
 
     -- Check for duplicate
     local existing = MySQL.scalar.await('SELECT COUNT(*) FROM mdt_profiles_tags WHERE profileId = ? AND tag = ?', { profile.id, tag })
     if existing and existing > 0 then
-        return { success = false, message = 'Tag already exists' }
+        return { success = false, message = 'A tag já existe' }
     end
 
     MySQL.insert.await('INSERT INTO mdt_profiles_tags (profileId, tag) VALUES (?, ?)', { profile.id, tag })
@@ -817,18 +817,18 @@ end)
 -- Remove a tag from a citizen profile
 ps.registerCallback(resourceName .. ':server:removeCitizenTag', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local citizenId = payload.citizenid
     local tag = payload.tag
     if not citizenId or not tag then
-        return { success = false, message = 'Missing citizen id or tag' }
+        return { success = false, message = 'Faltando ID do cidadão ou tag' }
     end
 
     local profile = MySQL.single.await('SELECT id FROM mdt_profiles WHERE citizenid = ?', { citizenId })
     if not profile then
-        return { success = false, message = 'Profile not found' }
+        return { success = false, message = 'Perfil não encontrado' }
     end
 
     MySQL.query.await('DELETE FROM mdt_profiles_tags WHERE profileId = ? AND tag = ?', { profile.id, tag })
@@ -838,19 +838,19 @@ end)
 -- Add an image to a citizen profile gallery
 ps.registerCallback(resourceName .. ':server:addCitizenGallery', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local citizenId = payload.citizenid
     local image = payload.image
     local label = payload.label or ''
     if not citizenId or not image or image == '' then
-        return { success = false, message = 'Missing citizen id or image URL' }
+        return { success = false, message = 'Faltando ID do cidadão ou URL da imagem' }
     end
 
     local profile = MySQL.single.await('SELECT id FROM mdt_profiles WHERE citizenid = ?', { citizenId })
     if not profile then
-        return { success = false, message = 'Profile not found' }
+        return { success = false, message = 'Perfil não encontrado' }
     end
 
     MySQL.insert.await('INSERT INTO mdt_profiles_gallery (profileId, image, label) VALUES (?, ?, ?)', { profile.id, image, label })
@@ -860,18 +860,18 @@ end)
 -- Remove an image from a citizen profile gallery
 ps.registerCallback(resourceName .. ':server:removeCitizenGallery', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local citizenId = payload.citizenid
     local image = payload.image
     if not citizenId or not image then
-        return { success = false, message = 'Missing citizen id or image' }
+        return { success = false, message = 'Faltando ID do cidadão ou imagem' }
     end
 
     local profile = MySQL.single.await('SELECT id FROM mdt_profiles WHERE citizenid = ?', { citizenId })
     if not profile then
-        return { success = false, message = 'Profile not found' }
+        return { success = false, message = 'Perfil não encontrado' }
     end
 
     MySQL.query.await('DELETE FROM mdt_profiles_gallery WHERE profileId = ? AND image = ?', { profile.id, image })

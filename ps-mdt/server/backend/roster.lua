@@ -191,9 +191,9 @@ end)
 -- Update officer certifications
 ps.registerCallback('ps-mdt:server:updateOfficerCertifications', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
     if not CheckPermission(src, 'roster_manage_certifications') then
-        return { success = false, message = 'No permission to manage certifications' }
+        return { success = false, message = 'Sem permissão para gerenciar certificações' }
     end
 
     payload = payload or {}
@@ -201,7 +201,7 @@ ps.registerCallback('ps-mdt:server:updateOfficerCertifications', function(source
     local certifications = payload.certifications
 
     if not citizenid or type(certifications) ~= 'table' then
-        return { success = false, message = 'Invalid payload' }
+        return { success = false, message = 'Payload inválido' }
     end
 
     EnsureProfileExists(citizenid)
@@ -240,9 +240,9 @@ end)
 -- Promote/demote an officer (change their job grade)
 ps.registerCallback('ps-mdt:server:promoteOfficer', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
     if not CheckPermission(src, 'roster_manage_officers') then
-        return { success = false, message = 'No permission to manage officers' }
+        return { success = false, message = 'Sem permissão para gerenciar oficiais' }
     end
 
     payload = payload or {}
@@ -251,29 +251,29 @@ ps.registerCallback('ps-mdt:server:promoteOfficer', function(source, payload)
     local newGrade = tonumber(payload.grade)
 
     if not citizenid or not jobName or not newGrade then
-        return { success = false, message = 'Missing required fields' }
+        return { success = false, message = 'Faltam campos obrigatórios' }
     end
 
     -- Validate the grade exists
     local gradeData = ps.getSharedJobGrade(jobName, newGrade)
     if not gradeData then
-        return { success = false, message = 'Invalid grade for this job' }
+        return { success = false, message = 'Patente inválida para este emprego' }
     end
 
     -- Find the target player (must be online for QBCore SetJob)
     local targetPlayer = ps.getPlayerByIdentifier(citizenid)
     if not targetPlayer then
-        return { success = false, message = 'Officer must be online to change rank' }
+        return { success = false, message = 'O oficial precisa estar online para alterar a patente' }
     end
 
     local targetSrc = targetPlayer.source or (targetPlayer.PlayerData and targetPlayer.PlayerData.source)
     if not targetSrc then
-        return { success = false, message = 'Could not resolve officer source' }
+        return { success = false, message = 'Não foi possível identificar a source do oficial' }
     end
 
     -- Don't allow changing your own rank
     if targetSrc == src then
-        return { success = false, message = 'You cannot change your own rank' }
+        return { success = false, message = 'Você não pode alterar sua própria patente' }
     end
 
     ps.setJob(targetSrc, jobName, newGrade)
@@ -288,37 +288,37 @@ ps.registerCallback('ps-mdt:server:promoteOfficer', function(source, payload)
         })
     end
 
-    return { success = true, message = 'Officer rank updated to ' .. gradeName }
+    return { success = true, message = 'Patente do oficial atualizada para ' .. gradeName }
 end)
 
 -- Fire an officer (set their job to unemployed)
 ps.registerCallback('ps-mdt:server:fireOfficer', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
     if not CheckPermission(src, 'roster_manage_officers') then
-        return { success = false, message = 'No permission to manage officers' }
+        return { success = false, message = 'Sem permissão para gerenciar oficiais' }
     end
 
     payload = payload or {}
     local citizenid = payload.citizenid
 
     if not citizenid then
-        return { success = false, message = 'Missing citizen ID' }
+        return { success = false, message = 'Faltando ID do cidadão' }
     end
 
     local targetPlayer = ps.getPlayerByIdentifier(citizenid)
     if not targetPlayer then
-        return { success = false, message = 'Officer must be online to be terminated' }
+        return { success = false, message = 'O oficial precisa estar online para ser desligado' }
     end
 
     local targetSrc = targetPlayer.source or (targetPlayer.PlayerData and targetPlayer.PlayerData.source)
     if not targetSrc then
-        return { success = false, message = 'Could not resolve officer source' }
+        return { success = false, message = 'Não foi possível identificar a source do oficial' }
     end
 
     -- Don't allow firing yourself
     if targetSrc == src then
-        return { success = false, message = 'You cannot fire yourself' }
+        return { success = false, message = 'Você não pode demitir a si mesmo' }
     end
 
     ps.setJob(targetSrc, 'unemployed', 0)
@@ -327,15 +327,15 @@ ps.registerCallback('ps-mdt:server:fireOfficer', function(source, payload)
         ps.auditLog(src, 'officer_fired', 'officers', citizenid, {})
     end
 
-    return { success = true, message = 'Officer has been terminated' }
+    return { success = true, message = 'O oficial foi desligado' }
 end)
 
 -- Update officer callsign (wrapper around existing setCallsign for NUI)
 ps.registerCallback('ps-mdt:server:updateOfficerCallsign', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
     if not CheckPermission(src, 'roster_manage_officers') then
-        return { success = false, message = 'No permission to manage officers' }
+        return { success = false, message = 'Sem permissão para gerenciar oficiais' }
     end
 
     payload = payload or {}
@@ -343,7 +343,7 @@ ps.registerCallback('ps-mdt:server:updateOfficerCallsign', function(source, payl
     local newCallsign = payload.callsign
 
     if not citizenid or not newCallsign or newCallsign == '' then
-        return { success = false, message = 'Missing citizen ID or callsign' }
+        return { success = false, message = 'Faltando ID do cidadão ou indicativo' }
     end
 
     -- Use the existing setCallsign callback logic (QBox first, fallback QBCore)
@@ -357,12 +357,12 @@ ps.registerCallback('ps-mdt:server:updateOfficerCallsign', function(source, payl
     end
 
     if not QBCore then
-        return { success = false, message = 'Core framework not available' }
+        return { success = false, message = 'Framework principal indisponível' }
     end
 
     local Player = QBCore.Functions.GetPlayerByCitizenId(citizenid)
     if not Player then
-        return { success = false, message = 'Officer must be online to update callsign' }
+        return { success = false, message = 'O oficial precisa estar online para atualizar o indicativo' }
     end
 
     Player.Functions.SetMetaData('callsign', newCallsign)
@@ -376,5 +376,5 @@ ps.registerCallback('ps-mdt:server:updateOfficerCallsign', function(source, payl
         ps.auditLog(src, 'callsign_changed', 'officers', citizenid, { callsign = newCallsign })
     end
 
-    return { success = true, message = 'Callsign updated to ' .. newCallsign }
+    return { success = true, message = 'Indicativo atualizado para ' .. newCallsign }
 end)

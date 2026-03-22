@@ -123,8 +123,8 @@ end
 
 local function GetVectorText(vectorType) 
     if not currentEntity then return 'ERR_NO_ENTITY_' .. (vectorType or "UNK") end
-    local label = (vectorType == "coords" and "Position" or "Rotation")
-    local vec = (vectorType == "coords" and GetEntityCoords(currentEntity) or GetEntityRotation(currentEntity))
+    local label = (vectorType == "coords" and "Posição" or "Rotação")
+    local vec = (vectorType == "coords" and GetEntityCoords(currentEntity) or GetEntityRotação(currentEntity))
     return ('%s: %.2f, %.2f, %.2f'):format(label, vec.x, vec.y, vec.z)
 end
 
@@ -162,7 +162,7 @@ local function useGizmo(entity)
     return {
         handle = entity,
         position = GetEntityCoords(entity),
-        rotation = GetEntityRotation(entity)
+        rotation = GetEntityRotação(entity)
     }
 end
 
@@ -172,7 +172,7 @@ exports("useGizmo", useGizmo)
 
 lib.addKeybind({
     name = '_gizmoSelect',
-    description = 'Selects the currently highlighted gizmo',
+    description = 'Seleciona o gizmo destacado no momento',
     defaultMapper = 'MOUSE_BUTTON',
     defaultKey = 'MOUSE_LEFT',
     onPressed = function(self)
@@ -186,7 +186,7 @@ lib.addKeybind({
 
 lib.addKeybind({
     name = '_gizmoTranslation',
-    description = 'Sets mode of the gizmo to translation',
+    description = 'Define o modo do gizmo para translação',
     defaultKey = 'W',
     onPressed = function(self)
         if not gizmoEnabled then return end
@@ -199,22 +199,22 @@ lib.addKeybind({
 })
 
 lib.addKeybind({
-    name = '_gizmoRotation',
-    description = 'Sets mode for the gizmo to rotation',
+    name = '_gizmoRotação',
+    description = 'Define o modo do gizmo para rotação',
     defaultKey = 'R',
     onPressed = function(self)
         if not gizmoEnabled then return end
         currentMode = 'Rotate'
-        ExecuteCommand('+gizmoRotation')
+        ExecuteCommand('+gizmoRotação')
     end,
     onReleased = function (self)
-        ExecuteCommand('-gizmoRotation')
+        ExecuteCommand('-gizmoRotação')
     end
 })
 
 lib.addKeybind({
     name = '_gizmoLocal',
-    description = 'toggle gizmo to be local to the entity instead of world',
+    description = 'alterna o gizmo para ser local à entidade em vez do mundo',
     defaultKey = 'Q',
     onPressed = function(self)
         if not gizmoEnabled then return end
@@ -228,7 +228,7 @@ lib.addKeybind({
 
 lib.addKeybind({
     name = 'gizmoclose',
-    description = 'close gizmo',
+    description = 'fechar gizmo',
     defaultKey = 'RETURN',
     onPressed = function(self)
         if not gizmoEnabled then return end
@@ -238,7 +238,7 @@ lib.addKeybind({
 
 lib.addKeybind({
     name = 'gizmoSnapToGround',
-    description = 'snap current gizmo object to floor/surface',
+    description = 'alinhar o objeto atual do gizmo ao chão/superfície',
     defaultKey = 'LMENU',
     onPressed = function(self)
         if not gizmoEnabled then return end
@@ -249,7 +249,7 @@ lib.addKeybind({
 if enableScale then
     lib.addKeybind({
         name = '_gizmoScale',
-        description = 'Sets mode for the gizmo to scale',
+        description = 'Define o modo do gizmo para escala',
         defaultKey = 'S',
         onPressed = function(self)
             if not gizmoEnabled then return end

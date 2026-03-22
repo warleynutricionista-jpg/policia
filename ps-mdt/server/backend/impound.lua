@@ -3,7 +3,7 @@ local resourceName = tostring(GetCurrentResourceName())
 -- Impound a vehicle by plate
 ps.registerCallback(resourceName .. ':server:impoundVehicle', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local plate = payload.plate
@@ -11,7 +11,7 @@ ps.registerCallback(resourceName .. ':server:impoundVehicle', function(source, p
     local linkedReport = tonumber(payload.reportId)
 
     if not plate or plate == '' then
-        return { success = false, message = 'Missing plate number' }
+        return { success = false, message = 'Faltando número da placa' }
     end
 
     plate = string.gsub(plate, "%s+", "")
@@ -19,7 +19,7 @@ ps.registerCallback(resourceName .. ':server:impoundVehicle', function(source, p
     -- Find the vehicle
     local vehicle = MySQL.single.await('SELECT id, citizenid, plate FROM player_vehicles WHERE plate = ? LIMIT 1', { plate })
     if not vehicle then
-        return { success = false, message = 'Vehicle not found' }
+        return { success = false, message = 'Veículo não encontrado' }
     end
 
     -- Set vehicle state to impounded (state = 2)
@@ -46,26 +46,26 @@ ps.registerCallback(resourceName .. ':server:impoundVehicle', function(source, p
         })
     end
 
-    return { success = true, message = 'Vehicle impounded' }
+    return { success = true, message = 'Veículo apreendido' }
 end)
 
 -- Release a vehicle from impound
 ps.registerCallback(resourceName .. ':server:releaseImpound', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local plate = payload.plate
 
     if not plate or plate == '' then
-        return { success = false, message = 'Missing plate number' }
+        return { success = false, message = 'Faltando número da placa' }
     end
 
     plate = string.gsub(plate, "%s+", "")
 
     local vehicle = MySQL.single.await('SELECT id, plate FROM player_vehicles WHERE plate = ? LIMIT 1', { plate })
     if not vehicle then
-        return { success = false, message = 'Vehicle not found' }
+        return { success = false, message = 'Veículo não encontrado' }
     end
 
     -- Get full vehicle data before releasing (for spawning)
@@ -97,7 +97,7 @@ ps.registerCallback(resourceName .. ':server:releaseImpound', function(source, p
         })
     end
 
-    return { success = true, message = 'Vehicle released from impound' }
+    return { success = true, message = 'Veículo liberado do pátio' }
 end)
 
 -- Get impound status for a vehicle
@@ -108,14 +108,14 @@ ps.registerCallback(resourceName .. ':server:getImpoundStatus', function(source,
     payload = payload or {}
     local plate = payload.plate
     if not plate or plate == '' then
-        return { success = false, message = 'Missing plate' }
+        return { success = false, message = 'Faltando placa' }
     end
 
     plate = string.gsub(plate, "%s+", "")
 
     local vehicle = MySQL.single.await('SELECT id, state FROM player_vehicles WHERE plate = ? LIMIT 1', { plate })
     if not vehicle then
-        return { success = false, message = 'Vehicle not found' }
+        return { success = false, message = 'Veículo não encontrado' }
     end
 
     local impoundInfo = nil
