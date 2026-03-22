@@ -130,6 +130,7 @@ ps.registerCallback(resourceName .. ':server:deleteBulletin', function(source, p
 end)
 
 ps.registerCallback(resourceName .. ':server:getRecentReports', function(source, page, limit)
+    EnsureMdtSchema()
     local src = source
     assert(src, 'Player ID cannot be nil')
     local pageNumber = tonumber(page) or 1
@@ -169,6 +170,7 @@ ps.registerCallback(resourceName .. ':server:getRecentReports', function(source,
 end)
 
 ps.registerCallback(resourceName .. ':server:getActiveBolos', function(source)
+    EnsureMdtSchema()
     local src = source
     assert(src, 'Player ID cannot be nil')
     if not CheckAuth(src) then return {} end

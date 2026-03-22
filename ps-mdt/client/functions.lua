@@ -13,12 +13,12 @@ function GetRecentDispatch()
     return {}
 end
 
--- QBCore / QBox player loaded event
-AddEventHandler('QBCore:Client:OnPlayerLoaded', function()
-    local check = ps.callback('ps-mdt:hasProfile')
-end)
+local function ensureProfileExists()
+    ps.callback('ps-mdt:hasProfile')
+end
 
--- QBox-specific player loaded event
-AddEventHandler('qbx_core:client:playerLoaded', function()
-    local check = ps.callback('ps-mdt:hasProfile')
-end)
+if (Config.Framework or 'qbx'):lower() == 'qbx' then
+    RegisterNetEvent('QBCore:Client:OnPlayerLoaded', ensureProfileExists)
+else
+    RegisterNetEvent('QBCore:Client:OnPlayerLoaded', ensureProfileExists)
+end
