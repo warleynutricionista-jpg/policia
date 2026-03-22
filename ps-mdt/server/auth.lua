@@ -1,11 +1,12 @@
 -- Authorisation --
+local ps = RequirePs('server/auth.lua')
 
 function CheckAuth(source)
     ps.debug('Checking MDT Authorization')
     local jobType = ps.getJobType(source)
     if jobType ~= Config.PoliceJobType and jobType ~= Config.MedicalJobType then
         ps.debug('Access Denied for ID: ' .. source .. ', Name: ' .. ps.getPlayerName(source) .. ', not an authorized job type')
-        ps.notify(source, 'Access Denied: Authorized Personnel Only', 'error')
+        ps.notify(source, 'Acesso negado: apenas pessoal autorizado', 'error')
         return false
     else
         ps.debug('Access Granted for ID: ' .. source .. ', Name: ' .. ps.getPlayerName(source) .. ', job type: ' .. tostring(jobType))
@@ -141,7 +142,7 @@ local function SendDutyWebhook(officerName, citizenid, action, jobName)
     if webhook == '' then return end
 
     local color = action == 'login' and 65280 or 16711680 -- green for login, red for logout
-    local title = action == 'login' and 'MDT Clock In' or 'MDT Clock Out'
+    local title = action == 'login' and 'Entrada de serviço no MDT' or 'Saída de serviço no MDT'
     local timestamp = os.date('!%Y-%m-%dT%H:%M:%SZ')
 
     PerformHttpRequest(webhook, function(err, text, headers) end, 'POST', json.encode({

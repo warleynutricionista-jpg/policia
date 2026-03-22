@@ -96,17 +96,17 @@ end)
 ps.registerCallback(resourceName .. ':server:createBulletin', function(source, payload)
     local src = source
     assert(src, 'Player ID cannot be nil')
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local content = payload.content
     if not content or content == '' then
-        return { success = false, message = 'Bulletin content is required' }
+        return { success = false, message = 'O conteúdo do boletim é obrigatório' }
     end
 
     local inserted = MySQL.insert.await('INSERT INTO mdt_bulletins (content) VALUES (?)', { content })
     if not inserted then
-        return { success = false, message = 'Failed to create bulletin' }
+        return { success = false, message = 'Falha ao criar o boletim' }
     end
 
     Cache.invalidate('dashboard:bulletins')
@@ -116,12 +116,12 @@ end)
 ps.registerCallback(resourceName .. ':server:deleteBulletin', function(source, payload)
     local src = source
     assert(src, 'Player ID cannot be nil')
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local id = tonumber(payload.id)
     if not id then
-        return { success = false, message = 'Invalid bulletin ID' }
+        return { success = false, message = 'ID do boletim inválido' }
     end
 
     MySQL.query.await('DELETE FROM mdt_bulletins WHERE id = ?', { id })

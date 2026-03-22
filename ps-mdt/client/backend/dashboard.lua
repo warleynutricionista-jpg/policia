@@ -65,7 +65,7 @@ RegisterNUICallback('signOut', function(_, cb)
     PlayMDTSound('close')
     cb({})
     CloseMDT()
-    ps.notify('Signed out of MDT', 'success')
+    ps.notify('Desconectado do MDT', 'success')
 end)
 
 RegisterNUICallback('toggleDuty', function(_, cb)
@@ -86,7 +86,7 @@ end)
 -- REPORT STATISTICS ---------------------------------------
 RegisterNUICallback('getReportStatistics', function(_, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
     local reportStats = ps.callback(resourceName .. ':server:getReportStatistics')
@@ -99,7 +99,7 @@ end)
 -- TIME STATISTICS -----------------------------------------
 RegisterNUICallback('getTimeStatistics', function(_, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
     local timeStats = ps.callback(resourceName .. ':server:getTimeStatistics')
@@ -111,7 +111,7 @@ end)
 -- ACTIVE WARRANTS -----------------------------------------
 RegisterNUICallback('getActiveWarrants', function(_, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
     local activeWarrants = ps.callback(resourceName .. ':server:getActiveWarrants')
@@ -132,7 +132,7 @@ end)
 -- BULLETIN BOARD ----------------------------------------
 RegisterNUICallback('getBulletins', function(_, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
     local bulletins = ps.callback(resourceName .. ':server:getBulletins')
@@ -144,7 +144,7 @@ end)
 RegisterNUICallback('createBulletin', function(data, cb)
     if not MDTOpen then cb({ success = false }) return end
     if not data or not data.content or data.content == '' then
-        cb({ success = false, message = 'Content is required' })
+        cb({ success = false, message = 'O conteúdo é obrigatório' })
         return
     end
     local result = ps.callback(resourceName .. ':server:createBulletin', data)
@@ -154,7 +154,7 @@ end)
 RegisterNUICallback('deleteBulletin', function(data, cb)
     if not MDTOpen then cb({ success = false }) return end
     if not data or not data.id then
-        cb({ success = false, message = 'Missing bulletin ID' })
+        cb({ success = false, message = 'Faltando ID do boletim' })
         return
     end
     local result = ps.callback(resourceName .. ':server:deleteBulletin', data)
@@ -165,7 +165,7 @@ end)
 
 RegisterNUICallback('getRecentReports', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
     local page = data and data.page or nil
@@ -179,7 +179,7 @@ end)
 
 RegisterNUICallback('getActiveBolos', function(_, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
     local activeBolos = ps.callback(resourceName .. ':server:getActiveBolos')
@@ -197,7 +197,7 @@ end)
 
 RegisterNUICallback('getActiveUnits', function(_, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
     local activeUnits = ps.callback(resourceName .. ':server:getActiveUnits')
@@ -241,7 +241,7 @@ end)
 
 RegisterNUICallback('getUsageMetrics', function(_, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
@@ -270,17 +270,17 @@ RegisterNUICallback("routeToDispatch", function(data, cb)
     local coords = data.coords or data.origin
     if not coords then
         cb('ok')
-        ps.notify('No location data for this dispatch', 'error')
+        ps.notify('Nenhum dado de localização para este despacho', 'error')
         return
     end
     local x = tonumber(coords.x) or tonumber(coords[1])
     local y = tonumber(coords.y) or tonumber(coords[2])
     if not x or not y then
         cb('ok')
-        ps.notify('Invalid location data', 'error')
+        ps.notify('Dados de localização inválidos', 'error')
         return
     end
     SetNewWaypoint(x, y)
     cb('ok')
-    ps.notify('Set Route to Dispatch Location', 'success')
+    ps.notify('Rota definida para o local do despacho', 'success')
 end)

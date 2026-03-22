@@ -365,7 +365,7 @@ local function registerDutyEvents()
 
     if dutyMode == 'qbx' or dutyMode == 'qbcore' then
         -- QBox and QBCore use the same event signature
-        RegisterNetEvent(dutyEvent, function(source, job)
+        AddEventHandler(dutyEvent, function(source, job)
             local src = source
             if not src or not job then return end
             handleDutyChange(src, job, job.onduty == true, nil)
@@ -373,7 +373,7 @@ local function registerDutyEvents()
 
         -- QBox-specific: also listen for qbx_core duty toggle
         if dutyMode == 'qbx' then
-            RegisterNetEvent('QBCore:Server:SetDuty', function(source, onDuty)
+            AddEventHandler('QBCore:Server:SetDuty', function(source, onDuty)
                 local src = source
                 if not src then return end
                 local QBCore = getQbCoreObject()
@@ -385,14 +385,14 @@ local function registerDutyEvents()
             end)
         end
     elseif dutyMode == 'pslib' then
-        RegisterNetEvent(dutyEvent, function(playerId, jobName, onDuty, employeeData)
+        AddEventHandler(dutyEvent, function(playerId, jobName, onDuty, employeeData)
             if not playerId then return end
             handleDutyChange(playerId, { name = jobName }, onDuty == true, employeeData)
         end)
     end
 
     if multiJobEvent then
-        RegisterNetEvent(multiJobEvent, function(playerId, jobName, onDuty, employeeData)
+        AddEventHandler(multiJobEvent, function(playerId, jobName, onDuty, employeeData)
             if not playerId then return end
             handleDutyChange(playerId, { name = jobName }, onDuty == true, employeeData)
         end)
@@ -403,44 +403,10 @@ end
 CreateThread(function()
     Wait(5000)
 
-    local cfg = Config and Config.Bodycam or {}
-    local multiJobResource = cfg.MultiJobResource or 'ps-multijob'
-    if multiJobResource and exports[multiJobResource] then
-        local police = exports[multiJobResource]:getEmployees('police')
-        if police then
-            for _, officer in pairs(police) do
-                if officer.citizenid then
-                    if shouldUseQbCore() then
-                        local QBCore = getQbCoreObject()
-                        local Player = QBCore and QBCore.Functions and QBCore.Functions.GetPlayerByCitizenId and QBCore.Functions.GetPlayerByCitizenId(officer.citizenid) or nil
-                        if Player and Player.PlayerData.job and Player.PlayerData.job.onduty then
-                            createOfficerBodycam(Player.PlayerData.source, Player.PlayerData)
-                        end
-                    elseif ps and ps.getPlayerByIdentifier then
-                        local player = ps.getPlayerByIdentifier(officer.citizenid)
-                        if player and player.PlayerData and player.PlayerData.job and player.PlayerData.job.onduty then
-                            createOfficerBodycam(player.PlayerData.source, player.PlayerData)
-                        end
-                    end
-                end
-            end
-        end
-    elseif shouldUseQbCore() then
-        local QBCore = getQbCoreObject()
-        local players = QBCore and QBCore.Functions and QBCore.Functions.GetQBPlayers and QBCore.Functions.GetQBPlayers() or {}
-
-        for _, player in pairs(players or {}) do
-            local playerData = player.PlayerData
-            if playerData and playerData.job and playerData.job.onduty and IsPoliceJob(playerData.job.name, playerData.job.type) then
-                createOfficerBodycam(player.PlayerData.source, playerData)
-            end
-        end
-    else
-        local officers = getOnDutyOfficers()
-        for _, player in pairs(officers or {}) do
-            if player and player.PlayerData then
-                createOfficerBodycam(player.PlayerData.source, player.PlayerData)
-            end
+    local officers = getOnDutyOfficers()
+    for _, player in pairs(officers or {}) do
+        if player and player.PlayerData then
+            createOfficerBodycam(player.PlayerData.source, player.PlayerData)
         end
     end
 
