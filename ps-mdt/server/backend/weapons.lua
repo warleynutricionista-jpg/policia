@@ -80,8 +80,17 @@ local class = {
     weapon_compactlauncher       ={type = 'heavy', class  = 7},
     weapon_rayminigun            ={type = 'heavy', class  = 7},
 }
-local okQB, QBCore = pcall(function() return exports['qb-core']:GetCoreObject() end)
-if not okQB then QBCore = nil end
+-- QBox-first core object resolution
+local QBCore = nil
+do
+    local okQbx, qbx = pcall(function() return exports['qbx_core']:GetCoreObject() end)
+    if okQbx and qbx then
+        QBCore = qbx
+    else
+        local okQb, qb = pcall(function() return exports['qb-core']:GetCoreObject() end)
+        if okQb and qb then QBCore = qb end
+    end
+end
 local function registerWeapon(citizenid, weaponName, serial, info)
     -- Ensure profile exists so owner name can be resolved later
     if citizenid and citizenid ~= '' then

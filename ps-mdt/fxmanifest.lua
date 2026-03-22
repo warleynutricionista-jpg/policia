@@ -5,20 +5,22 @@ game 'gta5'
 
 name 'ps-mdt'
 author "Project Sloth Development Team"
-description 'Project Sloth MDT'
-version '3.0.0'
+description 'Project Sloth MDT - QBox Optimized'
+version '3.1.0'
 
 ui_page 'web/dist/index.html'
 
 dependencies {
   'ps_lib',
   'oxmysql',
-  'ox_lib'
+  'ox_lib',
+  'qbx_core',
 }
 
 shared_scripts {
   'config.lua',
-  '@ox_lib/init.lua'
+  '@ox_lib/init.lua',
+  '@qbx_core/modules/lib.lua',
 }
 
 client_script {

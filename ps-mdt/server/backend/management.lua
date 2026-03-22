@@ -37,8 +37,16 @@ end
 local function getPoliceJobDefinition(source)
     local jobName = resolvePoliceJobName(source)
 
-    if exports['qb-core'] then
-        local QBCore = exports['qb-core']:GetCoreObject()
+    local QBCore = nil
+    local okQbx, qbx = pcall(function() return exports['qbx_core']:GetCoreObject() end)
+    if okQbx and qbx then
+        QBCore = qbx
+    else
+        local okQb, qb = pcall(function() return exports['qb-core']:GetCoreObject() end)
+        if okQb and qb then QBCore = qb end
+    end
+
+    if QBCore then
         local jobs = QBCore and QBCore.Shared and QBCore.Shared.Jobs
         if jobs and jobs[jobName] then
             return jobName, jobs[jobName]

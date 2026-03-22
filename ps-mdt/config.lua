@@ -1,15 +1,20 @@
 Config = {}
 ps = exports.ps_lib:init()
 
+-- Framework Detection (QBox priority)
+Config.Framework = 'qbx' -- 'qbx' for QBox, 'qb' for legacy QBCore
+
 -- Basic Settings
 Config.Debug = false -- Enable/disable debug mode (boolean)
 Config.OnlyShowOnDuty = true -- Only allow the MDT to be opened when on duty (boolean)
+Config.RequireVehicle = false -- Only allow MDT to be opened inside a vehicle (realistic laptop usage)
+Config.RequireOnFoot = false -- Only allow MDT to be opened on foot (tablet mode)
 
 -- Time and Date Settings
 Config.DateTime = {
     GameTime = true, -- If set to true, the game time will be used instead of the server time (boolean)
     TimeFormat = '24', -- Format for displaying time ('24' or '12')
-    DateFormat = "MM-DD-YYYY" -- Format for displaying date (string: "MM-DD-YYYY", "DD-MM-YYYY", or "YYYY-MM-DD")
+    DateFormat = "DD-MM-YYYY" -- Format for displaying date (string: "MM-DD-YYYY", "DD-MM-YYYY", or "YYYY-MM-DD")
 }
 
 -- Department data sharing
@@ -84,8 +89,9 @@ Config.Dispatch = {
 
 -- Wolfknight Plate Reader Settings
 Config.UseWolfknightRadar = true -- Enable/disable Wolfknight radar integration
-Config.WolfknightNotifyTime = 5000 -- Duration (ms) for plate reader notifications
+Config.WolfknightNotifyTime = 7000 -- Duration (ms) for plate reader notifications (longer for realism)
 Config.PlateScanForDriversLicense = true -- Check driver's license on plate scan
+Config.PlateReaderSound = true -- Play alert sound on plate reader hit
 
 -- Discord Webhook Settings
 Config.Webhooks = {
@@ -100,7 +106,7 @@ Config.UseCQCMugshot = true -- Trigger mugshot before jailing (boolean)
 Config.FingerprintAutoFilled = false -- Auto-populate fingerprints on citizen profiles (if false, officers must manually add fingerprints)
 
 -- Fuel Resource Name
-Config.Fuel = 'LegacyFuel' -- Fuel resource name for vehicle fuel management
+Config.Fuel = 'ox_fuel' -- Fuel resource name for vehicle fuel management (ox_fuel recommended for QBox)
 
 -- Weapon Registration
 Config.RegisterWeaponsAutomatically = true -- Auto-register weapons on purchase (ox_inventory and qb-inventory/qb-weapons)
@@ -178,6 +184,9 @@ Config.CacheTTL = {
 Config.Animation = {
     Dict = 'amb@world_human_tourist_map@male@base',
     Name = 'base',
+    VehicleDict = 'anim@amb@office@boardroom@crew@male@var_b@base@', -- Animation when inside vehicle
+    VehicleName = 'base',
+    UseVehicleAnim = true, -- Use different animation when in vehicle
 }
 
 -- Mugshot Camera
@@ -252,11 +261,13 @@ Config.ManagementPermissions = {
 
 -- Bodycam Settings
 Config.Bodycam = {
-    DutyEvent = 'QBCore:Server:OnJobUpdate',
-    DutyEventMode = 'qbcore',
+    DutyEvent = 'QBCore:Server:OnJobUpdate', -- QBox uses the same event name for compatibility
+    DutyEventMode = 'qbx', -- 'qbx' for QBox, 'qbcore' for legacy QBCore, 'pslib' for ps_lib
     MultiJobDutyEvent = 'ps-multijob:server:dutyChanged',
-    DutyResource = 'qb-core',
+    DutyResource = 'qbx_core', -- 'qbx_core' for QBox, 'qb-core' for legacy QBCore
     MultiJobResource = 'ps-multijob',
+    AutoActivate = true, -- Automatically activate bodycam when going on duty
+    RecordingIndicator = true, -- Show recording indicator on HUD
 }
 
 -- Optional defaults for role permissions by job/grade

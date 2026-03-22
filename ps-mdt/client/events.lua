@@ -4,6 +4,17 @@ local function isAuthorizedJob(job)
     if not job then return false, nil end
     if job.type == Config.PoliceJobType then return true, 'leo' end
     if job.type == Config.MedicalJobType then return true, 'ems' end
+    -- Also check by job name for QBox compatibility
+    if Config.PoliceJobs then
+        for _, policeJob in ipairs(Config.PoliceJobs) do
+            if job.name == policeJob then return true, 'leo' end
+        end
+    end
+    if Config.DojJobs then
+        for _, dojJob in ipairs(Config.DojJobs) do
+            if job.name == dojJob then return true, 'leo' end
+        end
+    end
     return false, nil
 end
 
@@ -45,14 +56,15 @@ local function onSetDuty(duty)
             NUIUpdateAuthWithData(job)
 
             local authorized = isAuthorizedJob(job)
-            if not authorized then
+            if not authorized or not duty then
                 CloseMDT()
-                ps.notify('MDT closed - Access revoked', 'error')
+                ps.notify('MDT closed - Off duty', 'error')
             end
         end
     end
 end
 
+-- QBCore / QBox events (both use the same event names for compatibility)
 RegisterNetEvent('QBCore:Client:SetDuty', function(duty)
     ps.debug('SetDuty event received:', duty)
     onSetDuty(duty)
@@ -63,9 +75,15 @@ RegisterNetEvent('QBCore:Client:OnJobUpdate', function(JobInfo)
     onJobUpdate(JobInfo)
 end)
 
-RegisterNetEvent('esx:setJob', function(job)
-    ps.debug('esx:setJob event received:', job)
-    onJobUpdate(job)
+-- QBox-specific: listen for qbx duty toggle
+RegisterNetEvent('qbx_core:client:onJobUpdate', function(jobData)
+    ps.debug('QBox onJobUpdate event received:', jobData)
+    onJobUpdate(jobData)
+end)
+
+RegisterNetEvent('qbx_core:client:onSetDuty', function(duty)
+    ps.debug('QBox onSetDuty event received:', duty)
+    onSetDuty(duty)
 end)
 
 -- Send Profile Data
@@ -75,7 +93,7 @@ RegisterNetEvent(resourceName..':client:sendProfile', function(data)
     end
 end)
 
--- Handle player death
+-- Handle player death - close MDT for realism
 if GetResourceState('baseevents') == 'started' then
     RegisterNetEvent('baseevents:onPlayerDied', function()
         if MDTOpen then
@@ -84,3 +102,20 @@ if GetResourceState('baseevents') == 'started' then
         end
     end)
 end
+
+-- QBox death event
+RegisterNetEvent('qbx_medical:client:onDeath', function()
+    if MDTOpen then
+        ps.debug('Player died (QBox)')
+        CloseMDT()
+    end
+end)
+
+-- Handle cuffed state - close MDT when player gets cuffed (realism)
+RegisterNetEvent('police:client:GetCuffed', function()
+    if MDTOpen then
+        ps.debug('Player got cuffed - closing MDT')
+        CloseMDT()
+        ps.notify('MDT closed - You are restrained', 'error')
+    end
+end)

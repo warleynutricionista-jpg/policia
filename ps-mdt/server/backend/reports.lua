@@ -525,10 +525,14 @@ ps.registerCallback(resourceName .. ':server:searchVehiclesForReport', function(
     local results = {}
     for _, row in ipairs(rows or {}) do
         local vehicleData = nil
-        local ok, core = pcall(function()
-            return exports['qb-core']:GetCoreObject()
-        end)
-        if ok and core and core.Shared and core.Shared.Vehicles then
+        local core = nil
+        local okQbx, qbx = pcall(function() return exports['qbx_core']:GetCoreObject() end)
+        if okQbx and qbx then core = qbx
+        else
+            local okQb, qb = pcall(function() return exports['qb-core']:GetCoreObject() end)
+            if okQb and qb then core = qb end
+        end
+        if core and core.Shared and core.Shared.Vehicles then
             vehicleData = core.Shared.Vehicles[row.vehicle]
         end
 

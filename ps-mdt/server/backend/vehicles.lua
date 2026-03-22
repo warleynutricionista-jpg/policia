@@ -1,16 +1,18 @@
 local function getCoreObject()
-    local ok, core = pcall(function()
-        return exports['qb-core']:GetCoreObject()
-    end)
-    if ok and core then
-        return core
-    end
-
+    -- QBox first
     local okQbx, qbx = pcall(function()
         return exports['qbx_core']:GetCoreObject()
     end)
     if okQbx and qbx then
         return qbx
+    end
+
+    -- Fallback to legacy QBCore
+    local ok, core = pcall(function()
+        return exports['qb-core']:GetCoreObject()
+    end)
+    if ok and core then
+        return core
     end
 
     return nil

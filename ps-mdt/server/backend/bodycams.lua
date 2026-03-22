@@ -4,21 +4,36 @@ local bodycamViewers = {}
 
 local function shouldUseQbCore()
     local cfg = Config and Config.Bodycam or {}
-    local resourceName = cfg.DutyResource or 'qb-core'
-    if cfg.DutyEventMode == 'pslib' then
+    local dutyMode = cfg.DutyEventMode or 'qbx'
+    if dutyMode == 'pslib' then
         return false
     end
-    return exports[resourceName] ~= nil
+    -- Try QBox first, then legacy QBCore
+    local dutyResource = cfg.DutyResource or 'qbx_core'
+    local ok = pcall(function() return exports[dutyResource] end)
+    if ok then return true end
+    -- Fallback to qb-core
+    local okQb = pcall(function() return exports['qb-core'] end)
+    return okQb
 end
 
 local function getQbCoreObject()
     local cfg = Config and Config.Bodycam or {}
-    local resourceName = cfg.DutyResource or 'qb-core'
-    local resource = exports[resourceName]
-    if not resource then
-        return nil
-    end
-    return resource:GetCoreObject()
+    local dutyResource = cfg.DutyResource or 'qbx_core'
+
+    -- Try configured resource first
+    local ok, core = pcall(function() return exports[dutyResource]:GetCoreObject() end)
+    if ok and core then return core end
+
+    -- Fallback: QBox
+    local okQbx, qbx = pcall(function() return exports['qbx_core']:GetCoreObject() end)
+    if okQbx and qbx then return qbx end
+
+    -- Fallback: legacy QBCore
+    local okQb, qb = pcall(function() return exports['qb-core']:GetCoreObject() end)
+    if okQb and qb then return qb end
+
+    return nil
 end
 
 local function getOnDutyOfficers()
@@ -348,12 +363,27 @@ local function registerDutyEvents()
     local dutyMode = cfg.DutyEventMode or 'qbcore'
     local multiJobEvent = cfg.MultiJobDutyEvent or 'ps-multijob:server:dutyChanged'
 
-    if dutyMode == 'qbcore' then
+    if dutyMode == 'qbx' or dutyMode == 'qbcore' then
+        -- QBox and QBCore use the same event signature
         RegisterNetEvent(dutyEvent, function(source, job)
             local src = source
             if not src or not job then return end
             handleDutyChange(src, job, job.onduty == true, nil)
         end)
+
+        -- QBox-specific: also listen for qbx_core duty toggle
+        if dutyMode == 'qbx' then
+            RegisterNetEvent('QBCore:Server:SetDuty', function(source, onDuty)
+                local src = source
+                if not src then return end
+                local QBCore = getQbCoreObject()
+                if not QBCore then return end
+                local Player = QBCore.Functions.GetPlayer(src)
+                if Player and Player.PlayerData and Player.PlayerData.job then
+                    handleDutyChange(src, Player.PlayerData.job, onDuty == true, nil)
+                end
+            end)
+        end
     elseif dutyMode == 'pslib' then
         RegisterNetEvent(dutyEvent, function(playerId, jobName, onDuty, employeeData)
             if not playerId then return end
