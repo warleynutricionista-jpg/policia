@@ -1,5 +1,6 @@
 
 local resourceName = tostring(GetCurrentResourceName())
+local ps = RequirePs('server/backend/weapons.lua')
 
 local class = {
     -- pistol
@@ -359,11 +360,9 @@ CreateThread(function()
     end
 end)
 
--- qb-inventory / qb-core auto-registration via player data change detection
--- qb-inventory doesn't fire weapon-specific events; instead it calls
--- Player.Functions.SetPlayerData('items', inventory) which triggers
--- QBCore:Player:SetPlayerData on the server. We track known weapon serials
--- per player and register any new ones that appear.
+-- Legacy qb-inventory fallback without relying on QBCore:Player:SetPlayerData.
+-- Some modern QBox/QBCore bases warn when that event path is treated as a net
+-- update, so we reconcile the server-side inventory snapshot for online players.
 do
     if not Config.RegisterWeaponsAutomatically then return end
 
@@ -384,13 +383,15 @@ do
         return serials
     end
 
-    AddEventHandler('QBCore:Player:SetPlayerData', function(PlayerData)
-        if not PlayerData or not PlayerData.items or not PlayerData.citizenid then return end
-        local citizenid = PlayerData.citizenid
+    local function reconcilePlayerWeapons(src, seedOnly)
+        if not QBCore then return end
+        local Player = QBCore.Functions.GetPlayer(src)
+        if not Player or not Player.PlayerData or not Player.PlayerData.citizenid then return end
 
-        local currentSerials = getWeaponSerials(PlayerData.items)
+        local playerData = Player.PlayerData
+        local citizenid = playerData.citizenid
+        local currentSerials = getWeaponSerials(playerData.items)
 
-        -- First time seeing this player: seed the known set without registering
         if not knownSerials[citizenid] then
             knownSerials[citizenid] = {}
             for serial, _ in pairs(currentSerials) do
@@ -399,11 +400,13 @@ do
             return
         end
 
-        -- Detect new weapon serials
+        if seedOnly then
+            return
+        end
+
         for serial, itemName in pairs(currentSerials) do
             if not knownSerials[citizenid][serial] then
                 knownSerials[citizenid][serial] = true
-                -- New weapon appeared - register it asynchronously
                 local _cid = citizenid
                 local _serial = serial
                 local _model = string.upper(itemName)
@@ -417,6 +420,25 @@ do
                         ps.warn('Auto-register weapon failed: ' .. tostring(err))
                     end
                 end)
+            end
+        end
+    end
+
+    CreateThread(function()
+        if GetResourceState('ox_inventory') == 'started' then
+            return
+        end
+
+        Wait(2000)
+
+        for _, playerId in ipairs(GetPlayers()) do
+            reconcilePlayerWeapons(tonumber(playerId), true)
+        end
+
+        while true do
+            Wait(30000)
+            for _, playerId in ipairs(GetPlayers()) do
+                reconcilePlayerWeapons(tonumber(playerId), false)
             end
         end
     end)

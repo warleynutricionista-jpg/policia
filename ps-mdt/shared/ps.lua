@@ -1,4 +1,23 @@
 local resourceName = GetCurrentResourceName()
+local globalEnv = _G or _ENV
+
+local function installPs(instance, backend)
+    instance.__backend = backend
+    rawset(globalEnv, 'ps', instance)
+    rawset(globalEnv, 'GetPs', function()
+        return rawget(globalEnv, 'ps')
+    end)
+    rawset(globalEnv, 'RequirePs', function(context)
+        local current = rawget(globalEnv, 'ps')
+        if current then
+            return current
+        end
+
+        error(('[%s] ps bootstrap unavailable in %s'):format(resourceName, context or 'unknown context'), 2)
+    end)
+
+    return instance
+end
 
 local function getResourceStartedState(name)
     local state = GetResourceState(name)
@@ -502,8 +521,8 @@ end
 
 local activePs = tryInitPsLib()
 if activePs then
-    ps = activePs
+    installPs(activePs, 'ps_lib')
 else
-    ps = fallback
+    installPs(fallback, 'fallback')
     safePrint('INFO', 'ps_lib export unavailable or incompatible; using internal compatibility bootstrap')
 end

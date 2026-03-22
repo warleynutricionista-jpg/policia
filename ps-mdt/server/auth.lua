@@ -1,4 +1,5 @@
 -- Authorisation --
+local ps = RequirePs('server/auth.lua')
 
 function CheckAuth(source)
     ps.debug('Checking MDT Authorization')

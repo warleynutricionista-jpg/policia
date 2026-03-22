@@ -1,5 +1,6 @@
 MDTOpen = false -- Track MDT state
 local resourceName = tostring(GetCurrentResourceName())
+local ps = RequirePs('client/keys.lua')
 
 -- Control management
 local controlsDisabled = false

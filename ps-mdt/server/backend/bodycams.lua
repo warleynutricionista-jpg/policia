@@ -365,7 +365,7 @@ local function registerDutyEvents()
 
     if dutyMode == 'qbx' or dutyMode == 'qbcore' then
         -- QBox and QBCore use the same event signature
-        RegisterNetEvent(dutyEvent, function(source, job)
+        AddEventHandler(dutyEvent, function(source, job)
             local src = source
             if not src or not job then return end
             handleDutyChange(src, job, job.onduty == true, nil)
@@ -373,7 +373,7 @@ local function registerDutyEvents()
 
         -- QBox-specific: also listen for qbx_core duty toggle
         if dutyMode == 'qbx' then
-            RegisterNetEvent('QBCore:Server:SetDuty', function(source, onDuty)
+            AddEventHandler('QBCore:Server:SetDuty', function(source, onDuty)
                 local src = source
                 if not src then return end
                 local QBCore = getQbCoreObject()
@@ -385,14 +385,14 @@ local function registerDutyEvents()
             end)
         end
     elseif dutyMode == 'pslib' then
-        RegisterNetEvent(dutyEvent, function(playerId, jobName, onDuty, employeeData)
+        AddEventHandler(dutyEvent, function(playerId, jobName, onDuty, employeeData)
             if not playerId then return end
             handleDutyChange(playerId, { name = jobName }, onDuty == true, employeeData)
         end)
     end
 
     if multiJobEvent then
-        RegisterNetEvent(multiJobEvent, function(playerId, jobName, onDuty, employeeData)
+        AddEventHandler(multiJobEvent, function(playerId, jobName, onDuty, employeeData)
             if not playerId then return end
             handleDutyChange(playerId, { name = jobName }, onDuty == true, employeeData)
         end)
