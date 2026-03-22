@@ -50,7 +50,7 @@ ps.registerCallback(resourceName .. ':server:getLeaderboard', function(source)
             for k, session in ipairs(sessions) do
                 result[#result + 1] = {
                     rank = k,
-                    name = session.fullname or 'Unknown',
+                    name = session.fullname or 'Desconhecido',
                     callsign = session.callsign or session.citizenid or '',
                     totalTime = format_time(tonumber(session.total_time) or 0),
                 }

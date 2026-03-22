@@ -60,7 +60,7 @@ local function buildFullName(firstname, lastname, citizenid)
     if full ~= '' then
         return full
     end
-    return ps.getPlayerNameByIdentifier(citizenid) or 'Unknown'
+    return ps.getPlayerNameByIdentifier(citizenid) or 'Desconhecido'
 end
 
 
@@ -538,8 +538,8 @@ ps.registerCallback(resourceName .. ':server:searchVehiclesForReport', function(
 
         table.insert(results, {
             plate = row.plate and string.upper(row.plate) or 'UNKNOWN',
-            vehicle_label = vehicleData and vehicleData.name or row.vehicle or 'Unknown',
-            owner_name = row.owner_name or 'Unknown',
+            vehicle_label = vehicleData and vehicleData.name or row.vehicle or 'Desconhecido',
+            owner_name = row.owner_name or 'Desconhecido',
             owner_citizenid = row.citizenid or nil,
         })
     end
@@ -559,14 +559,14 @@ ps.registerCallback(resourceName..':server:saveReport', function(source, reportD
     if not title or title == "" then
         ps.notify(src, 'Falha ao salvar o relatório: é necessário um título', 'error')
         ps.warn('Report with missing/empty title from player: ' .. src .. ' Name: ' .. playerName)
-        return { success = false, error = 'Report needs a title' }
+        return { success = false, error = 'O relatório precisa de um título' }
     end
 
     local content = reportData.report and reportData.report.content
     if not content or content == "" then
         ps.notify(src, 'Falha ao salvar o relatório: é necessário conteúdo', 'error')
         ps.warn('Report with missing/empty content from player: ' .. src .. ' Name: ' .. playerName)
-        return { success = false, error = 'Report needs content' }
+        return { success = false, error = 'O relatório precisa de conteúdo' }
     end
 
     -- Tags are required
@@ -611,14 +611,14 @@ ps.registerCallback(resourceName..':server:saveReport', function(source, reportD
             json.encode(content),
             type(content) == "string" and content or json.encode(content),
             identifier,
-            (callsign or '') .. ' ' .. (playerName or 'Unknown')
+            (callsign or '') .. ' ' .. (playerName or 'Desconhecido')
         })
 
         if not insertResult then
             ps.notify(src, 'Falha ao salvar o relatório', 'error')
             ps.warn(('[Failed to save] Player [%s] %s tried to save a report (new). Insert failed.')
                 :format(src, playerName))
-            return { success = false, error = 'Failed to insert report' }
+            return { success = false, error = 'Falha ao inserir o relatório' }
         end
         reportId = insertResult
     else
@@ -632,7 +632,7 @@ ps.registerCallback(resourceName..':server:saveReport', function(source, reportD
             json.encode(content),
             type(content) == "string" and content or json.encode(content),
             identifier,
-            (callsign or '') .. ' ' .. (playerName or 'Unknown'),
+            (callsign or '') .. ' ' .. (playerName or 'Desconhecido'),
             reportId
         })
 
@@ -640,7 +640,7 @@ ps.registerCallback(resourceName..':server:saveReport', function(source, reportD
             ps.notify(src, 'Falha ao salvar o relatório', 'error')
             ps.warn(('[Failed to save] Player [%s] %s tried to save a report (%s). Update failed.')
                 :format(src, playerName, reportId))
-            return { success = false, error = 'Failed to update report' }
+            return { success = false, error = 'Falha ao atualizar o relatório' }
         end
 
         local cleanupQueries = {
@@ -898,7 +898,7 @@ ps.registerCallback(resourceName..':server:deleteReport', function(source, repor
     end
 
     local reportInfo = MySQL.query.await("SELECT title FROM mdt_reports WHERE id = ?", { reportId })
-    local reportTitle = reportInfo and reportInfo[1] and reportInfo[1].title or "Unknown"
+    local reportTitle = reportInfo and reportInfo[1] and reportInfo[1].title or "Desconhecido"
 
     local success = MySQL.query.await("DELETE FROM mdt_reports WHERE id = ?", { reportId })
 

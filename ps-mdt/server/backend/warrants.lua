@@ -66,7 +66,7 @@ ps.registerCallback(resourceName .. ':server:getActiveWarrants', function(source
     for _, row in ipairs(rows or {}) do
         local name = ((row.firstname or '') .. ' ' .. (row.lastname or '')):gsub('^%s+', ''):gsub('%s+$', '')
         if name == '' then
-            name = ps.getPlayerNameByIdentifier(row.citizenid) or 'Unknown'
+            name = ps.getPlayerNameByIdentifier(row.citizenid) or 'Desconhecido'
         end
         results[#results + 1] = {
             reportid = row.reportid,
@@ -84,7 +84,7 @@ end)
 
 ps.registerCallback(resourceName .. ':server:issueWarrant', function(source, data)
     local src = source
-    if not CheckAuth(src) then return { success = false, error = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, error = 'Não autorizado' } end
 
     data = data or {}
     local reportId = tonumber(data.reportId)
@@ -97,12 +97,12 @@ ps.registerCallback(resourceName .. ':server:issueWarrant', function(source, dat
     end
 
     if not reportId or not citizenid then
-        return { success = false, error = 'Missing required fields' }
+        return { success = false, error = 'Campos obrigatórios ausentes' }
     end
 
     local existing = MySQL.single.await('SELECT reportid FROM mdt_reports_warrants WHERE reportid = ? AND citizenid = ?', { reportId, citizenid })
     if existing and existing.reportid then
-        return { success = false, error = 'An active warrant already exists for this subject on this report' }
+        return { success = false, error = 'Já existe um mandado ativo para este indivíduo neste relatório' }
     else
         MySQL.insert.await([[
             INSERT INTO mdt_reports_warrants (reportid, citizenid, felonies, misdemeanors, infractions, expirydate)
@@ -122,13 +122,13 @@ end)
 
 ps.registerCallback(resourceName .. ':server:closeWarrant', function(source, data)
     local src = source
-    if not CheckAuth(src) then return { success = false, error = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, error = 'Não autorizado' } end
 
     data = data or {}
     local reportId = tonumber(data.reportId)
     local citizenid = data.citizenid
     if not reportId or not citizenid then
-        return { success = false, error = 'Missing required fields' }
+        return { success = false, error = 'Campos obrigatórios ausentes' }
     end
 
     local updated = MySQL.update.await([[
@@ -146,5 +146,5 @@ ps.registerCallback(resourceName .. ':server:closeWarrant', function(source, dat
         return { success = true }
     end
 
-    return { success = false, error = 'Warrant not found' }
+    return { success = false, error = 'Mandado não encontrado' }
 end)

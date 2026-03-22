@@ -28,7 +28,7 @@ local function getOfficerTrackers()
                             citizenid = data.citizenid,
                             name = (data.charinfo.firstname .. ' ' .. data.charinfo.lastname),
                             callsign = data.metadata and data.metadata.callsign or nil,
-                            rank = data.job.grade and data.job.grade.name or 'Officer',
+                            rank = data.job.grade and data.job.grade.name or 'Oficial',
                             coords = coordsTable,
                             heading = heading,
                         }
@@ -53,9 +53,9 @@ local function getOfficerTrackers()
                         local heading = GetEntityHeading(ped)
                         officers[#officers + 1] = {
                             citizenid = ps.getIdentifier and ps.getIdentifier(playerId) or nil,
-                            name = ps.getPlayerName and ps.getPlayerName(playerId) or GetPlayerName(playerId) or 'Unknown',
+                            name = ps.getPlayerName and ps.getPlayerName(playerId) or GetPlayerName(playerId) or 'Desconhecido',
                             callsign = ps.getMetadata and ps.getMetadata(playerId, 'callsign') or nil,
-                            rank = ps.getJobGradeName and ps.getJobGradeName(playerId) or 'Officer',
+                            rank = ps.getJobGradeName and ps.getJobGradeName(playerId) or 'Oficial',
                             coords = coordsTable,
                             heading = heading,
                         }
@@ -144,7 +144,7 @@ local function getBodycamTrackers()
                         local heading = GetEntityHeading(ped)
                         bodycams[#bodycams + 1] = {
                             citizenid = ps.getIdentifier and ps.getIdentifier(playerId) or nil,
-                            name = ps.getPlayerName and ps.getPlayerName(playerId) or GetPlayerName(playerId) or 'Unknown',
+                            name = ps.getPlayerName and ps.getPlayerName(playerId) or GetPlayerName(playerId) or 'Desconhecido',
                             callsign = ps.getMetadata and ps.getMetadata(playerId, 'callsign') or nil,
                             coords = coordsTable,
                             heading = heading,

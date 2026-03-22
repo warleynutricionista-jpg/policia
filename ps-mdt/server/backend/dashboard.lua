@@ -5,7 +5,7 @@ ps.registerCallback(resourceName .. ':server:getJobData', function(source)
     local src = source
     assert(src, 'Player ID cannot be nil')
     local response = {
-        rank = ps.getJobGradeName(src) or "Officer",
+        rank = ps.getJobGradeName(src) or "Oficial",
         payRate = "$" .. (ps.getJobGradePay(src) or 300) .. "/hr",
     }
     return response
@@ -88,7 +88,7 @@ ps.registerCallback(resourceName .. ':server:getBulletins', function(source)
     if not CheckAuth(src) then return {} end
     local rows = MySQL.query.await('SELECT id, content FROM mdt_bulletins ORDER BY id DESC')
     if not rows or #rows == 0 then
-        return { { content = 'No bulletins found..' } }
+        return { { content = 'Nenhum boletim encontrado.' } }
     end
     return rows
 end)
@@ -186,7 +186,7 @@ ps.registerCallback(resourceName .. ':server:getActiveBolos', function(source)
         local formattedBolo = {
             id = v.id,
             reportId = v.reportId and tostring(v.reportId) or 'N/A',
-            name = v.subject_name or ps.getPlayerNameByIdentifier(v.subject_id) or 'Unknown',
+            name = v.subject_name or ps.getPlayerNameByIdentifier(v.subject_id) or 'Desconhecido',
             type = v.type,
             notes = v.notes or '',
             status = v.status,

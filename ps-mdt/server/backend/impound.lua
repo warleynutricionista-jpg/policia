@@ -38,7 +38,7 @@ ps.registerCallback(resourceName .. ':server:impoundVehicle', function(source, p
     end
 
     if ps.auditLog then
-        local officerName = ps.getPlayerName(src) or 'Unknown'
+        local officerName = ps.getPlayerName(src) or 'Desconhecido'
         ps.auditLog(src, 'vehicle_impounded', 'vehicle', plate, {
             fee = fee,
             reportId = linkedReport,
@@ -91,7 +91,7 @@ ps.registerCallback(resourceName .. ':server:releaseImpound', function(source, p
     end
 
     if ps.auditLog then
-        local officerName = ps.getPlayerName(src) or 'Unknown'
+        local officerName = ps.getPlayerName(src) or 'Desconhecido'
         ps.auditLog(src, 'vehicle_released', 'vehicle', plate, {
             officer = officerName,
         })

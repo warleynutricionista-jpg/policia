@@ -128,13 +128,13 @@ ps.registerCallback('ps-mdt:server:getWeapons', function(source)
     local weaponBolo = {}
     for k, v in pairs(weapons) do
         -- Resolve owner name: try mdt_profiles first, then ps_lib lookup
-        local ownerName = 'Unknown'
+        local ownerName = 'Desconhecido'
         if v.owner and v.owner ~= '' then
             local profile = MySQL.single.await('SELECT fullname FROM mdt_profiles WHERE citizenid = ?', { v.owner })
             if profile and profile.fullname and profile.fullname ~= '' then
                 ownerName = profile.fullname
             else
-                ownerName = ps.getPlayerNameByIdentifier(v.owner) or 'Unknown'
+                ownerName = ps.getPlayerNameByIdentifier(v.owner) or 'Desconhecido'
             end
         end
 
@@ -164,7 +164,7 @@ ps.registerCallback('ps-mdt:server:getWeapons', function(source)
             type = v.type,
             notes = v.notes or '',
             status = v.status,
-            serial = v.subject_id or 'Unknown',
+            serial = v.subject_id or 'Desconhecido',
         })
     end
     return { weapons = newData, bolos = weaponBolo }
@@ -278,7 +278,7 @@ ps.registerCallback(resourceName .. ':server:getWeaponInfo', function(source)
                 if item.name and string.find(item.name, 'WEAPON_') then
                     local invImage = ('https://cfx-nui-ox_inventory/web/images/%s.png'):format(item.name)
                     weaponInfos[#weaponInfos + 1] = {
-                        serialnumber = item.metadata and item.metadata.serial or 'Unknown',
+                        serialnumber = item.metadata and item.metadata.serial or 'Desconhecido',
                         owner = Player.PlayerData.charinfo.firstname .. ' ' .. Player.PlayerData.charinfo.lastname,
                         weaponmodel = (QBCore.Shared.Items[string.lower(item.name)] and QBCore.Shared.Items[string.lower(item.name)].label) or item.name,
                         weaponurl = invImage,
@@ -293,7 +293,7 @@ ps.registerCallback(resourceName .. ':server:getWeaponInfo', function(source)
             for _, item in pairs(Player.PlayerData.items) do
                 if item.type == 'weapon' then
                     weaponInfos[#weaponInfos + 1] = {
-                        serialnumber = item.info and item.info.serie or 'Unknown',
+                        serialnumber = item.info and item.info.serie or 'Desconhecido',
                         owner = Player.PlayerData.charinfo.firstname .. ' ' .. Player.PlayerData.charinfo.lastname,
                         weaponmodel = (QBCore.Shared.Items[item.name] and QBCore.Shared.Items[item.name].label) or item.name,
                         weaponurl = item.image or '',

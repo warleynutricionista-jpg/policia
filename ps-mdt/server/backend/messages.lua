@@ -23,7 +23,7 @@ end)
 
 ps.registerCallback(resourceName .. ':server:sendOfficerMessage', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, error = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, error = 'Não autorizado' } end
 
     payload = payload or {}
     local receiverId = payload.receiverCitizenId
@@ -31,20 +31,20 @@ ps.registerCallback(resourceName .. ':server:sendOfficerMessage', function(sourc
     local body = payload.body and tostring(payload.body) or ''
 
     if not receiverId or receiverId == '' then
-        return { success = false, error = 'Missing recipient' }
+        return { success = false, error = 'Destinatário ausente' }
     end
 
     if body == '' then
-        return { success = false, error = 'Message body required' }
+        return { success = false, error = 'O corpo da mensagem é obrigatório' }
     end
 
     local senderId = ps.getIdentifier(src)
     if not senderId then
-        return { success = false, error = 'Missing sender' }
+        return { success = false, error = 'Remetente ausente' }
     end
 
-    local senderName = ps.getPlayerName(src) or 'Unknown'
-    local receiverName = ps.getPlayerNameByIdentifier(receiverId) or 'Unknown'
+    local senderName = ps.getPlayerName(src) or 'Desconhecido'
+    local receiverName = ps.getPlayerNameByIdentifier(receiverId) or 'Desconhecido'
 
     local insertId = MySQL.insert.await([[
         INSERT INTO mdt_messages (sender_citizenid, sender_name, receiver_citizenid, receiver_name, subject, body)
@@ -52,7 +52,7 @@ ps.registerCallback(resourceName .. ':server:sendOfficerMessage', function(sourc
     ]], { senderId, senderName, receiverId, receiverName, subject, body })
 
     if not insertId then
-        return { success = false, error = 'Failed to send message' }
+        return { success = false, error = 'Falha ao enviar a mensagem' }
     end
 
     return { success = true, messageId = insertId }
@@ -60,17 +60,17 @@ end)
 
 ps.registerCallback(resourceName .. ':server:markMessageRead', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, error = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, error = 'Não autorizado' } end
 
     payload = payload or {}
     local messageId = tonumber(payload.messageId)
     if not messageId then
-        return { success = false, error = 'Missing message id' }
+        return { success = false, error = 'ID da mensagem ausente' }
     end
 
     local citizenid = ps.getIdentifier(src)
     if not citizenid then
-        return { success = false, error = 'Missing recipient' }
+        return { success = false, error = 'Destinatário ausente' }
     end
 
     local updated = MySQL.update.await([[

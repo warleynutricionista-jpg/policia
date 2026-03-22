@@ -66,7 +66,7 @@ local function getGender(gen)
     elseif gen == 1 then
         return 'Female'
     end
-    return 'Unknown'
+    return 'Desconhecido'
 end
 
 -- getCitizens - pulls citizens from database with pagination support
@@ -325,7 +325,7 @@ ps.registerCallback(resourceName .. ':server:getBOLO', function(source, boloType
         local formattedBolo = {
             id = v.id,
             reportId = v.reportId and tostring(v.reportId) or 'N/A',
-            name = v.subject_name or ps.getPlayerNameByIdentifier(v.subject_id) or 'Unknown',
+            name = v.subject_name or ps.getPlayerNameByIdentifier(v.subject_id) or 'Desconhecido',
             type = v.type,
             notes = v.notes or '',
             status = v.status,
@@ -531,8 +531,8 @@ ps.registerCallback(resourceName .. ':server:getCitizenProfile', function(source
         success = true,
         profile = {
             citizenid = citizenid,
-            firstName = playerRow.firstname or 'Unknown',
-            lastName = playerRow.lastname or 'Unknown',
+            firstName = playerRow.firstname or 'Desconhecido',
+            lastName = playerRow.lastname or 'Desconhecido',
             gender = getGender(tonumber(playerRow.gender)),
             dob = playerRow.dateofbirth or 'N/A',
             phone = playerRow.phone or 'N/A',
