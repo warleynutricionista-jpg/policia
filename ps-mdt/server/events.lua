@@ -12,6 +12,7 @@ end)
 RegisterNetEvent(resourceName..':server:viewBolo', function(boloId)
     local src = source
     local Player = ps.getPlayer(src)
+    EnsureMdtSchema()
 
     if not Player then return end
     if not boloId then

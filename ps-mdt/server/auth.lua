@@ -18,29 +18,16 @@ end
 function CheckPermission(source, permName)
     if not source or not permName then return false end
 
-    -- Boss always has all permissions
-    if ps.isBoss and ps.isBoss(source) then return true end
-
     local jobData = ps.getJobData and ps.getJobData(source) or nil
-    local isBoss = false
-    local gradeValue = 0
-
-    if jobData and jobData.grade then
-        if type(jobData.grade) == 'table' then
-            gradeValue = jobData.grade.level or jobData.grade.grade or jobData.grade.rank or jobData.grade.value or jobData.grade.id or 0
-            isBoss = jobData.grade.isboss == true or jobData.grade.isBoss == true or jobData.grade.boss == true
-        else
-            gradeValue = jobData.grade
-        end
-    end
-
-    if isBoss then return true end
-
     local jobName = ps.getJobName(source) or 'police'
-    local gradeStr = tostring(gradeValue)
+    local gradeValue = NormalizeMdtGradeValue(jobData and jobData.grade or 0)
+    local rankData = GetMdtRankData(jobName, gradeValue, type(jobData and jobData.grade) == 'table' and jobData.grade or nil)
+
+    -- Boss always has all permissions
+    if rankData.isBoss or (ps.isBoss and ps.isBoss(source)) then return true end
 
     -- Check database
-    local row = MySQL.single.await('SELECT permissions FROM mdt_permission_roles WHERE job = ? AND grade = ?', { jobName, tonumber(gradeStr) })
+    local row = MySQL.single.await('SELECT permissions FROM mdt_permission_roles WHERE job = ? AND grade = ?', { jobName, gradeValue })
     if row and row.permissions then
         local ok, decoded = pcall(json.decode, row.permissions)
         if ok and type(decoded) == 'table' then
@@ -52,11 +39,8 @@ function CheckPermission(source, permName)
     end
 
     -- Check config defaults
-    local defaults = Config and Config.PermissionDefaults and Config.PermissionDefaults[jobName]
-    if defaults and defaults[gradeStr] then
-        for _, p in ipairs(defaults[gradeStr]) do
-            if p == permName then return true end
-        end
+    for _, p in ipairs(GetMdtDefaultPermissions(jobName, gradeValue, rankData.isBoss)) do
+        if p == permName then return true end
     end
 
     return false
@@ -202,41 +186,28 @@ ps.registerCallback(tostring(GetCurrentResourceName())..':server:getMyPermission
 
     local jobName = ps.getJobName(src) or 'police'
     local jobData = ps.getJobData and ps.getJobData(src) or nil
-    local gradeValue = 0
-    local isBoss = false
-
-    if jobData and jobData.grade then
-        if type(jobData.grade) == 'table' then
-            gradeValue = jobData.grade.level or jobData.grade.grade or jobData.grade.rank or jobData.grade.value or jobData.grade.id or 0
-            isBoss = jobData.grade.isboss == true or jobData.grade.isBoss == true or jobData.grade.boss == true
-        else
-            gradeValue = jobData.grade
-        end
-    end
+    local gradeValue = NormalizeMdtGradeValue(jobData and jobData.grade or 0)
+    local rankData = GetMdtRankData(jobName, gradeValue, type(jobData and jobData.grade) == 'table' and jobData.grade or nil)
 
     -- Boss gets all permissions
-    if isBoss or (ps.isBoss and ps.isBoss(src)) then
-        local allPerms = (Config and Config.ManagementPermissions) or {}
-        return { permissions = allPerms, isBoss = true }
+    if rankData.isBoss or (ps.isBoss and ps.isBoss(src)) then
+        return { permissions = GetMdtAllPermissions(), isBoss = true }
     end
 
-    local gradeStr = tostring(gradeValue)
-
     -- Check database for stored permissions
-    local row = MySQL.single.await('SELECT permissions FROM mdt_permission_roles WHERE job = ? AND grade = ?', { jobName, tonumber(gradeStr) })
+    local row = MySQL.single.await('SELECT permissions FROM mdt_permission_roles WHERE job = ? AND grade = ?', { jobName, gradeValue })
     if row and row.permissions then
         local ok, decoded = pcall(json.decode, row.permissions)
         if ok and type(decoded) == 'table' then
-            return { permissions = decoded, isBoss = false }
+            return { permissions = decoded, isBoss = false, grade = gradeValue, rank = rankData.label }
         end
     end
 
     -- Check config defaults
-    local defaults = Config and Config.PermissionDefaults and Config.PermissionDefaults[jobName]
-    if defaults and defaults[gradeStr] then
-        return { permissions = defaults[gradeStr], isBoss = false }
-    end
-
-    -- No permissions found for this grade
-    return { permissions = {}, isBoss = false }
+    return {
+        permissions = GetMdtDefaultPermissions(jobName, gradeValue, false),
+        isBoss = false,
+        grade = gradeValue,
+        rank = rankData.label,
+    }
 end)

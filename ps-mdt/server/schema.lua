@@ -59,7 +59,15 @@ local function ensureColumn(tableName, columnName, definition)
         return false
     end
 
-    local query = ('ALTER TABLE `%s` ADD COLUMN %s'):format(tableName, definition)
+    local finalDefinition = definition
+    if type(definition) == 'table' then
+        finalDefinition = definition.definition
+        if definition.after and columnExists(tableName, definition.after) then
+            finalDefinition = ('%s AFTER `%s`'):format(finalDefinition, definition.after)
+        end
+    end
+
+    local query = ('ALTER TABLE `%s` ADD COLUMN %s'):format(tableName, finalDefinition)
     MySQL.query.await(query)
     schemaState.columnCache[tableName .. ':' .. columnName] = true
     schemaDebug(('Added missing column %s.%s'):format(tableName, columnName))
@@ -100,18 +108,19 @@ function EnsureMdtSchema(force)
     schemaState.running = true
 
     local ok, err = pcall(function()
-        ensureColumn('mdt_reports', 'contentplaintext', '`contentplaintext` TEXT NULL AFTER `contentyjs`')
-        ensureColumn('mdt_reports', 'authorplaintext', '`authorplaintext` VARCHAR(100) NULL AFTER `author`')
-        ensureColumn('mdt_reports', 'dateupdated', '`dateupdated` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER `datecreated`')
+        ensureColumn('mdt_reports', 'contentplaintext', { definition = '`contentplaintext` TEXT NULL', after = 'contentyjs' })
+        ensureColumn('mdt_reports', 'authorplaintext', { definition = '`authorplaintext` VARCHAR(100) NULL', after = 'author' })
+        ensureColumn('mdt_reports', 'dateupdated', { definition = '`dateupdated` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', after = 'datecreated' })
 
-        ensureColumn('mdt_bolos', 'subject_name', '`subject_name` VARCHAR(100) NULL AFTER `subject_id`')
-        ensureColumn('mdt_bolos', 'reportId', '`reportId` INT(11) UNSIGNED NULL AFTER `subject_name`')
-        ensureColumn('mdt_bolos', 'notes', '`notes` TEXT NULL AFTER `reportId`')
-        ensureColumn('mdt_bolos', 'status', "`status` ENUM('active','inactive','resolved') NOT NULL DEFAULT 'active' AFTER `notes`")
+        ensureColumn('mdt_bolos', 'subject_name', { definition = '`subject_name` VARCHAR(100) NULL', after = 'subject_id' })
+        ensureColumn('mdt_bolos', 'reportId', { definition = '`reportId` INT(11) UNSIGNED NULL', after = 'subject_name' })
+        ensureColumn('mdt_bolos', 'notes', { definition = '`notes` TEXT NULL', after = 'reportId' })
+        ensureColumn('mdt_bolos', 'status', { definition = "`status` ENUM('active','inactive','resolved') NOT NULL DEFAULT 'active'", after = 'notes' })
         ensureIndex('mdt_bolos', 'status', "INDEX `status` (`status`)")
+        ensureIndex('mdt_bolos', 'reportId', "INDEX `reportId` (`reportId`)")
 
-        ensureColumn('mdt_reports_restrictions', 'type', '`type` VARCHAR(32) NOT NULL AFTER `reportid`')
-        ensureColumn('mdt_reports_restrictions', 'identifier', '`identifier` VARCHAR(64) NOT NULL AFTER `type`')
+        ensureColumn('mdt_reports_restrictions', 'type', { definition = '`type` VARCHAR(32) NULL', after = 'reportid' })
+        ensureColumn('mdt_reports_restrictions', 'identifier', { definition = '`identifier` VARCHAR(64) NULL', after = 'type' })
 
         if tableExists('mdt_bolos') and columnExists('mdt_bolos', 'status') then
             MySQL.update.await("UPDATE mdt_bolos SET status = 'active' WHERE status IS NULL OR status = ''")

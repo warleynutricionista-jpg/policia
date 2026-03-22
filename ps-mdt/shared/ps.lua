@@ -98,6 +98,35 @@ local function getSharedJob(jobName)
     return jobs and jobs[jobName] or nil
 end
 
+local function isPoliceJobName(jobName, jobType)
+    if jobType and Config and Config.PoliceJobType and tostring(jobType) == tostring(Config.PoliceJobType) then
+        return true
+    end
+
+    if jobName and Config and Config.PoliceJobs then
+        for _, configuredJob in ipairs(Config.PoliceJobs) do
+            if tostring(configuredJob) == tostring(jobName) then
+                return true
+            end
+        end
+    end
+
+    return false
+end
+
+local function getConfiguredRank(jobName, grade, gradeData)
+    local level = getGradeLevel(grade)
+    local hierarchy = isPoliceJobName(jobName, nil) and Config and Config.PoliceHierarchy and Config.PoliceHierarchy[tonumber(level) or 0] or nil
+
+    return {
+        level = tonumber(level) or 0,
+        label = hierarchy and hierarchy.label or gradeData and (gradeData.name or gradeData.label or gradeData.title) or nil,
+        isBoss = (hierarchy and hierarchy.isBoss == true)
+            or gradeData and (gradeData.isboss == true or gradeData.isBoss == true or gradeData.boss == true)
+            or false,
+    }
+end
+
 local function normalizePlayerData(player)
     if not player then return nil end
     return player.PlayerData or player
@@ -320,14 +349,16 @@ end
 function fallback.getJobGradeName(source)
     local job = getJobData(source)
     local grade = job and job.grade or nil
+    local jobName = job and job.name or nil
     if type(grade) == 'table' then
-        return grade.name or grade.label or ('Grade ' .. tostring(getGradeLevel(grade)))
+        local rank = getConfiguredRank(jobName, grade, grade)
+        return rank.label or ('Grade ' .. tostring(rank.level))
     end
 
-    local jobName = job and job.name or nil
     local shared = jobName and getSharedJob(jobName) or nil
     local gradeData = shared and shared.grades and shared.grades[tostring(grade)] or shared and shared.grades and shared.grades[tonumber(grade or 0)] or nil
-    return gradeData and (gradeData.name or gradeData.label) or (grade ~= nil and ('Grade ' .. tostring(grade)) or nil)
+    local rank = getConfiguredRank(jobName, grade, gradeData)
+    return rank.label or (grade ~= nil and ('Grade ' .. tostring(grade)) or nil)
 end
 
 function fallback.getJobGradePay(source)
@@ -437,13 +468,14 @@ end
 function fallback.isBoss(source)
     local job = getJobData(source)
     local grade = job and job.grade or nil
+    local jobName = job and job.name or nil
     if type(grade) == 'table' then
-        return grade.isboss == true or grade.isBoss == true or grade.boss == true
+        return getConfiguredRank(jobName, grade, grade).isBoss
     end
 
-    local shared = job and job.name and getSharedJob(job.name) or nil
+    local shared = jobName and getSharedJob(jobName) or nil
     local gradeData = shared and shared.grades and (shared.grades[tostring(grade)] or shared.grades[tonumber(grade or 0)]) or nil
-    return gradeData and (gradeData.isboss == true or gradeData.isBoss == true or gradeData.boss == true) or false
+    return getConfiguredRank(jobName, grade, gradeData).isBoss
 end
 
 function fallback.getSharedJob(jobName)

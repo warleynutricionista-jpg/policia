@@ -17,83 +17,6 @@ local function getCertifications(citizenid)
     return {}
 end
 
-local function buildRosterFromQbx()
-    local rosterList = {}
-    local activeUnits = {}
-    local members = {}
-    local policeJobs = (Config and Config.PoliceJobs) or { 'police' }
-    local qbx = exports['qbx_core']
-
-    for _, jobName in ipairs(policeJobs) do
-        local groupMembers = qbx:GetGroupMembers(jobName, 'job') or {}
-        for _, member in ipairs(groupMembers) do
-            if member.citizenid then
-                members[member.citizenid] = true
-            end
-        end
-    end
-
-    for _, playerId in ipairs(qbx:GetPlayers() or {}) do
-        local player = qbx:GetPlayer(playerId)
-        local data = player and player.PlayerData or nil
-        if data and data.job then
-            local job = data.job
-            if IsPoliceJob(job.name, job.type) then
-                members[data.citizenid] = true
-            end
-        end
-    end
-
-    for _, row in ipairs(MySQL.query.await('SELECT citizenid, job FROM players', {}) or {}) do
-        local job = row.job and json.decode(row.job) or {}
-        if IsPoliceJob(job.name, job.type) then
-            members[row.citizenid] = true
-        end
-    end
-
-    for citizenid, _ in pairs(members) do
-        local onlinePlayer = qbx:GetPlayerByCitizenId(citizenid)
-        local player = onlinePlayer or qbx:GetOfflinePlayer(citizenid)
-        if player and player.PlayerData then
-            local data = player.PlayerData
-            local job = data.job or {}
-            local callsign = data.metadata and data.metadata.callsign or 'N/A'
-            local fullname = data.charinfo and (data.charinfo.firstname .. ' ' .. data.charinfo.lastname) or 'Unknown'
-            local rank = job.grade and job.grade.name or 'Officer'
-            local department = job.name or 'police'
-            local certifications = getCertifications(citizenid)
-
-            rosterList[#rosterList + 1] = {
-                id = #rosterList + 1,
-                citizenid = citizenid,
-                callsign = callsign,
-                firstName = data.charinfo and data.charinfo.firstname or 'N/A',
-                lastName = data.charinfo and data.charinfo.lastname or 'N/A',
-                rank = rank,
-                department = department,
-                status = (onlinePlayer and job.onduty) and 'Em serviço' or 'Fora de serviço',
-                certifications = certifications,
-                badgeNumber = callsign
-            }
-
-            if rosterList[#rosterList].status == 'Em serviço' then
-                activeUnits[#activeUnits + 1] = {
-                    id = rosterList[#rosterList].id,
-                    badgeNumber = rosterList[#rosterList].badgeNumber,
-                    callsign = rosterList[#rosterList].callsign,
-                    firstName = rosterList[#rosterList].firstName,
-                    lastName = rosterList[#rosterList].lastName,
-                }
-            end
-        end
-    end
-
-    return {
-        roster = rosterList,
-        activeUnits = activeUnits
-    }
-end
-
 local function checkDuty(citizenid)
    local player = ps.getPlayerByIdentifier(citizenid)
    if not player then return 'Fora de serviço' end
@@ -135,7 +58,17 @@ local function getMultiJobEmployeeData(citizenid, jobName)
     return nil
 end
 
-local function getMultiJobEmployeeData(citizenid, jobName)
+local function getPoliceEmployeeData(citizenid, primaryJob)
+    local primaryJobName = primaryJob and primaryJob.name and tostring(primaryJob.name) or nil
+    if primaryJobName and IsPoliceJob(primaryJobName, primaryJob.type) then
+        return {
+            job = primaryJobName,
+            grade = NormalizeMdtGradeValue(primaryJob.grade),
+            gradeData = type(primaryJob.grade) == 'table' and primaryJob.grade or ps.getSharedJobGrade(primaryJobName, primaryJob.grade),
+            type = primaryJob.type,
+        }
+    end
+
     if GetResourceState('ps-multijob') ~= 'started' or not exports['ps-multijob'] then
         return nil
     end
@@ -147,15 +80,19 @@ local function getMultiJobEmployeeData(citizenid, jobName)
         return nil
     end
 
-    if type(jobs[jobName]) == 'table' then
-        return jobs[jobName]
-    end
-
     for _, jobData in pairs(jobs) do
         if type(jobData) == 'table' then
-            local name = tostring(jobData.job or jobData.name or '')
-            if name == tostring(jobName) then
-                return jobData
+            local jobName = tostring(jobData.job or jobData.name or '')
+            local sharedGrade = ps.getSharedJobGrade(jobName, jobData.grade)
+            local sharedJob = ps.getSharedJobData(jobName)
+            local jobType = jobData.type or (sharedGrade and sharedGrade.type) or (sharedJob and sharedJob.type) or nil
+            if IsPoliceJob(jobName, jobType) then
+                return {
+                    job = jobName,
+                    grade = NormalizeMdtGradeValue(jobData.grade),
+                    gradeData = sharedGrade,
+                    type = jobType,
+                }
             end
         end
     end
@@ -163,61 +100,128 @@ local function getMultiJobEmployeeData(citizenid, jobName)
     return nil
 end
 
-ps.registerCallback('ps-mdt:server:getRosterList', function(source)
-    if GetResourceState('qbx_core') == 'started' and exports['qbx_core'] then
-        return buildRosterFromQbx()
+local function decodeJsonField(value)
+    if not value or value == '' then
+        return {}
     end
 
+    local ok, decoded = pcall(json.decode, value)
+    return ok and type(decoded) == 'table' and decoded or {}
+end
+
+local function buildRosterEntry(citizenid, charinfo, metadata, employee, status)
+    local firstName = charinfo.firstname or 'N/A'
+    local lastName = charinfo.lastname or 'N/A'
+    local callsign = metadata.callsign or 'N/A'
+    local rankData = GetMdtRankData(employee.job, employee.grade, employee.gradeData)
+
+    return {
+        citizenid = citizenid,
+        callsign = callsign,
+        firstName = firstName,
+        lastName = lastName,
+        rank = rankData.label,
+        rankOrder = rankData.level,
+        department = employee.job or 'police',
+        status = status,
+        certifications = getCertifications(citizenid),
+        badgeNumber = callsign,
+    }
+end
+
+local function buildRoster()
     local rosterList = {}
     local activeUnits = {}
-    local policeJobs = (Config and Config.PoliceJobs) or { 'police' }
-    local jobLookup = {}
-    for _, jobName in ipairs(policeJobs) do
-        jobLookup[tostring(jobName)] = true
-    end
-    local jobType = Config and Config.PoliceJobType and tostring(Config.PoliceJobType) or nil
+    local byCitizenId = {}
 
-    for _, citizen in pairs(MySQL.query.await('SELECT citizenid, charinfo, job, metadata FROM players', {}) or {}) do
-        local citizenid = citizen.citizenid
-        local charinfo = citizen.charinfo and json.decode(citizen.charinfo) or {}
-        local job = citizen.job and json.decode(citizen.job) or {}
-        local metadata = citizen.metadata and json.decode(citizen.metadata) or {}
-        local jobName = job.name and tostring(job.name) or nil
-        local isPolice = (jobName and jobLookup[jobName]) or (job.type and jobType and tostring(job.type) == jobType)
-        if isPolice then
-            local employee = getMultiJobEmployeeData(citizenid, jobName or 'police') or {}
-            local callsign = metadata.callsign or 'N/A'
-            local firstName = charinfo.firstname or 'N/A'
-            local lastName = charinfo.lastname or 'N/A'
-            local rank = job.grade and job.grade.name or employee.grade and ps.getSharedJobGradeData(jobName or 'police', employee.grade, 'name') or 'Officer'
-            local status = checkDuty(citizenid)
-            rosterList[#rosterList + 1] = {
-                id = #rosterList + 1,
-                citizenid = citizenid,
-                callsign = callsign,
-                firstName = firstName,
-                lastName = lastName,
-                rank = rank,
-                department = jobName or employee.job or 'police',
-                status = status,
-                certifications = getCertifications(citizenid),
-                badgeNumber = callsign
-            }
-            if status == 'Em serviço' then
-                activeUnits[#activeUnits + 1] = {
-                    id = rosterList[#rosterList].id,
-                    badgeNumber = rosterList[#rosterList].badgeNumber,
-                    callsign = rosterList[#rosterList].callsign,
-                    firstName = rosterList[#rosterList].firstName,
-                    lastName = rosterList[#rosterList].lastName,
-                }
+    for _, playerId in ipairs(ps.getAllPlayers() or {}) do
+        local src = tonumber(playerId)
+        local playerData = ps.getPlayerData(src)
+        if playerData and playerData.citizenid then
+            local employee = getPoliceEmployeeData(playerData.citizenid, playerData.job)
+            if employee then
+                local entry = buildRosterEntry(
+                    playerData.citizenid,
+                    playerData.charinfo or {},
+                    playerData.metadata or {},
+                    employee,
+                    (playerData.job and playerData.job.onduty) and 'Em serviço' or 'Fora de serviço'
+                )
+                byCitizenId[playerData.citizenid] = entry
             end
         end
     end
+
+    for _, citizen in ipairs(MySQL.query.await('SELECT citizenid, charinfo, job, metadata FROM players', {}) or {}) do
+        local citizenid = citizen.citizenid
+        if citizenid and not byCitizenId[citizenid] then
+            local charinfo = decodeJsonField(citizen.charinfo)
+            local job = decodeJsonField(citizen.job)
+            local metadata = decodeJsonField(citizen.metadata)
+            local employee = getPoliceEmployeeData(citizenid, job)
+            if employee then
+                byCitizenId[citizenid] = buildRosterEntry(citizenid, charinfo, metadata, employee, checkDuty(citizenid))
+            end
+        end
+    end
+
+    for citizenid, entry in pairs(byCitizenId) do
+        entry.id = #rosterList + 1
+        rosterList[#rosterList + 1] = entry
+
+        if entry.status == 'Em serviço' then
+            activeUnits[#activeUnits + 1] = {
+                id = entry.id,
+                badgeNumber = entry.badgeNumber,
+                callsign = entry.callsign,
+                firstName = entry.firstName,
+                lastName = entry.lastName,
+                rank = entry.rank,
+                rankOrder = entry.rankOrder,
+            }
+        end
+    end
+
+    table.sort(rosterList, function(a, b)
+        if a.rankOrder ~= b.rankOrder then
+            return (a.rankOrder or 0) < (b.rankOrder or 0)
+        end
+        if a.department ~= b.department then
+            return (a.department or '') < (b.department or '')
+        end
+        if a.callsign ~= b.callsign then
+            return (a.callsign or '') < (b.callsign or '')
+        end
+        return ((a.firstName or '') .. (a.lastName or '')) < ((b.firstName or '') .. (b.lastName or ''))
+    end)
+
+    table.sort(activeUnits, function(a, b)
+        if a.rankOrder ~= b.rankOrder then
+            return (a.rankOrder or 0) < (b.rankOrder or 0)
+        end
+        return (a.callsign or '') < (b.callsign or '')
+    end)
+
+    for index, entry in ipairs(rosterList) do
+        entry.id = index
+    end
+
+    for index, entry in ipairs(activeUnits) do
+        entry.id = index
+    end
+
     return {
         roster = rosterList,
-        activeUnits = activeUnits
+        activeUnits = activeUnits,
     }
+end
+
+ps.registerCallback('ps-mdt:server:getRosterList', function(source)
+    if not CheckAuth(source) then
+        return { roster = {}, activeUnits = {} }
+    end
+
+    return buildRoster()
 end)
 
 -- Get available officer tags/certifications
@@ -270,10 +274,11 @@ ps.registerCallback('ps-mdt:server:getJobGrades', function(source, payload)
 
     local grades = {}
     for gradeKey, gradeValue in pairs(jobData.grades) do
+        local rankData = GetMdtRankData(jobName, gradeKey, gradeValue)
         grades[#grades + 1] = {
-            grade = tonumber(gradeKey) or 0,
-            name = gradeValue.name or ('Grade ' .. gradeKey),
-            isBoss = gradeValue.isboss == true or gradeValue.isBoss == true or gradeValue.boss == true,
+            grade = rankData.level,
+            name = rankData.label,
+            isBoss = rankData.isBoss,
         }
     end
 
@@ -322,7 +327,7 @@ ps.registerCallback('ps-mdt:server:promoteOfficer', function(source, payload)
 
     ps.setJob(targetSrc, jobName, newGrade)
 
-    local gradeName = gradeData.name or ('Grade ' .. newGrade)
+    local gradeName = GetMdtRankData(jobName, newGrade, gradeData).label
 
     if ps.auditLog then
         ps.auditLog(src, 'officer_promoted', 'officers', citizenid, {
