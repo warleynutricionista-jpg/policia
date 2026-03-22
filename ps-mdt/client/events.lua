@@ -33,8 +33,8 @@ function NUIUpdateAuthWithData(jobData)
     })
 end
 
-local function onJobUpdate(JobInfo)
-    local job = JobInfo or ps.getJob()
+local function onJobUpdate(jobInfo)
+    local job = jobInfo or ps.getJob()
     ps.debug('Updated job info:', job)
 
     if MDTOpen then
@@ -65,27 +65,31 @@ local function onSetDuty(duty)
     end
 end
 
-local function bindLocalFrameworkEvents()
-    -- Framework job/duty updates are local/internal events. Listening with AddEventHandler
-    -- avoids treating them as network events in newer QBox/QBCore setups.
-    AddEventHandler('QBCore:Client:SetDuty', function(duty)
-        ps.debug('SetDuty event received:', duty)
+local function bindFrameworkEvents()
+    local framework = (Config.Framework or 'qbx'):lower()
+
+    if framework == 'qbx' then
+        RegisterNetEvent('QBCore:Client:SetDuty', function(duty)
+            ps.debug('QBox SetDuty event received:', duty)
+            onSetDuty(duty)
+        end)
+
+        RegisterNetEvent('QBCore:Client:OnJobUpdate', function(jobInfo)
+            ps.debug('QBox OnJobUpdate event received:', jobInfo)
+            onJobUpdate(jobInfo)
+        end)
+
+        return
+    end
+
+    RegisterNetEvent('QBCore:Client:SetDuty', function(duty)
+        ps.debug('QBCore SetDuty event received:', duty)
         onSetDuty(duty)
     end)
 
-    AddEventHandler('QBCore:Client:OnJobUpdate', function(JobInfo)
-        ps.debug('OnJobUpdate event received:', JobInfo)
-        onJobUpdate(JobInfo)
-    end)
-
-    AddEventHandler('qbx_core:client:onJobUpdate', function(jobData)
-        ps.debug('QBox onJobUpdate event received:', jobData)
-        onJobUpdate(jobData)
-    end)
-
-    AddEventHandler('qbx_core:client:onSetDuty', function(duty)
-        ps.debug('QBox onSetDuty event received:', duty)
-        onSetDuty(duty)
+    RegisterNetEvent('QBCore:Client:OnJobUpdate', function(jobInfo)
+        ps.debug('QBCore OnJobUpdate event received:', jobInfo)
+        onJobUpdate(jobInfo)
     end)
 end
 
@@ -111,7 +115,7 @@ local function bindLocalStateBagUpdates()
     end)
 end
 
-bindLocalFrameworkEvents()
+bindFrameworkEvents()
 CreateThread(function()
     while GetPlayerServerId(PlayerId()) <= 0 do
         Wait(250)

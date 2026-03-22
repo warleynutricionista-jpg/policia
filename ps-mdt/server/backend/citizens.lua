@@ -9,6 +9,7 @@ local function buildInClause(values)
 end
 
 local function collectCitizenFlags(citizenids)
+    EnsureMdtSchema()
     local flagsByCid = {}
     if not citizenids or #citizenids == 0 then
         return flagsByCid
