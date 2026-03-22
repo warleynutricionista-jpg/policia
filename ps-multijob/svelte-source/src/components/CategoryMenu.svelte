@@ -9,9 +9,9 @@
 
 <main class="w-[380px] min-h-screen block pt-[20px] select-none">
 	<div class="text-white px-[28px] pb-4">
-		<p class="category">CATEGORY</p>
+		<p class="category">CATEGORIA</p>
 		<p class="category-name text-white block mt-[-5px] font-medium capitalize">
-			{panelName} Jobs
+			{panelName} Empregos
 		</p>
 	</div>
 

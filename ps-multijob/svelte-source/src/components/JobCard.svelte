@@ -21,11 +21,11 @@
 	export let category: string;
 
 	function getDutyText(onDuty: boolean) {
-		return onDuty ? "On Duty" : "Off Duty";
+		return onDuty ? "Em serviço" : "Fora de serviço";
 	}
 
 	function getSelectText(select: boolean) {
-		return select ? "Selected" : "Unselect";
+		return select ? "Selecionado" : "Desmarcar";
 	}
 
 	const { activeJob, onDuty, setActiveJob, toggleDuty, unSetActiveJob, deleteJob } = JobStore;
@@ -61,7 +61,7 @@
 		toggleDuty();
 	}
 
-	let selectText: string = "selected";
+	let selectText: string = "selecionado";
 	let selectHover: boolean = false;
 
 	function handleOnSelectMouseEnter() {
@@ -77,7 +77,7 @@
 	function handleUnSelectJob() {
 		unSetActiveJob();
 		selectHover = false;
-		selectText = "selected";
+		selectText = "selecionado";
 	}
 </script>
 
@@ -105,9 +105,9 @@
 		{description}
 	</p>
 	<div class="job-details flex gap-[12px] justify-stretch">
-		<JobDetail icon={SalarySVG} detail="Salary" value={salary} svgSize="w-[0.8rem]"/>
-		<JobDetail icon={RankSVG}   detail="Rank"   value={rank} svgSize="w-[1.4rem]"/>
-		<JobDetail icon={ActiveSVG} detail="Active" value={active} svgSize="w-[1.1rem]"/>
+		<JobDetail icon={SalarySVG} detail="Salário" value={salary} svgSize="w-[0.8rem]"/>
+		<JobDetail icon={RankSVG}   detail="Cargo"   value={rank} svgSize="w-[1.4rem]"/>
+		<JobDetail icon={ActiveSVG} detail="Ativos" value={active} svgSize="w-[1.1rem]"/>
 	</div>
 	<div class="mt-2">
 		{#if !isActive}
@@ -117,7 +117,7 @@
 				<div class="w-4">
 					<svelte:component this={SelectSVG} />
 				</div>
-				<p class="ml-[5px] uppercase tracking-wide">select</p>
+				<p class="ml-[5px] uppercase tracking-wide">selecionar</p>
 			</button>
 		{/if}
 		{#if isActive}

@@ -4,7 +4,7 @@ local zoneType, step, xCoord, yCoord, zCoord, heading, height, width, length
 local steps = {{0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 25, 50, 100}, {0.25, 0.5, 1, 2.5, 5, 15, 30, 45, 60, 90, 180}}
 local points = {}
 local format = 'array'
-local displayModes = {'basic', 'walls', 'axes', 'full'}
+local displayModes = {'básico', 'paredes', 'eixos', 'completo'}
 local displayMode = 1
 local minCheck = steps[1][1] / 2
 local lastZone = {}
@@ -17,35 +17,35 @@ end
 
 local function updateText()
     local text = {
-    	('------ Creating %s Zone ------  \n'):format(firstToUpper(zoneType)),
-    	('Step size [Scroll]: %sm/%s&deg;  \n'):format(steps[1][step], steps[2][step]),
-    	('X coord [A/D]: %s  \n'):format(xCoord),
-    	('Y coord [W/S]: %s  \n'):format(yCoord),
-    	('Z coord [R/F]: %s  \n'):format(zCoord),
+    	('------ Criando zona %s ------  \n'):format(firstToUpper(zoneType)),
+    	('Tamanho do passo [Scroll]: %sm/%s&deg;  \n'):format(steps[1][step], steps[2][step]),
+    	('Coord. X [A/D]: %s  \n'):format(xCoord),
+    	('Coord. Y [W/S]: %s  \n'):format(yCoord),
+    	('Coord. Z [R/F]: %s  \n'):format(zCoord),
     }
 
     if zoneType == 'poly' then
-    	text[#text + 1] = ('Height [Shift + Scroll]: %s  \n'):format(height)
-    	text[#text + 1] = ('Cycle display mode [G]: %s  \n'):format(firstToUpper(displayModes[displayMode]))
-          text[#text + 1] = ('Toggle Axis mode [C]: %s  \n'):format(alignMovementWithCamera and 'Camera' or 'Grid')
-    	text[#text + 1] = 'Create new point - [Space]  \n'
+    	text[#text + 1] = ('Altura [Shift + Scroll]: %s  \n'):format(height)
+    	text[#text + 1] = ('Alternar modo de exibição [G]: %s  \n'):format(firstToUpper(displayModes[displayMode]))
+          text[#text + 1] = ('Alternar modo de eixo [C]: %s  \n'):format(alignMovementWithCamera and 'Câmera' or 'Grade')
+    	text[#text + 1] = 'Criar novo ponto - [Space]  \n'
     elseif zoneType == 'box' then
-    	text[#text + 1] = ('Heading [Q/E]: %s&deg;  \n'):format(heading)
-    	text[#text + 1] = ('Height [Shift + Scroll]: %s  \n'):format(height)
-    	text[#text + 1] = ('Width [Ctrl + Scroll]: %s  \n'):format(width)
-    	text[#text + 1] = ('Length [Alt + Scroll]: %s  \n'):format(length)
-    	text[#text + 1] = ('Cycle display mode [G]: %s  \n'):format(firstToUpper(displayModes[displayMode]))
-          text[#text + 1] = ('Toggle Axis mode [C]: %s  \n'):format(alignMovementWithCamera and 'Camera' or 'Grid')
-    	text[#text + 1] = 'Recenter - [Space]  \n'
+    	text[#text + 1] = ('Direção [Q/E]: %s&deg;  \n'):format(heading)
+    	text[#text + 1] = ('Altura [Shift + Scroll]: %s  \n'):format(height)
+    	text[#text + 1] = ('Largura [Ctrl + Scroll]: %s  \n'):format(width)
+    	text[#text + 1] = ('Comprimento [Alt + Scroll]: %s  \n'):format(length)
+    	text[#text + 1] = ('Alternar modo de exibição [G]: %s  \n'):format(firstToUpper(displayModes[displayMode]))
+          text[#text + 1] = ('Alternar modo de eixo [C]: %s  \n'):format(alignMovementWithCamera and 'Câmera' or 'Grade')
+    	text[#text + 1] = 'Recentralizar - [Space]  \n'
     elseif zoneType == 'sphere' then
-    	text[#text + 1] = ('Size [Shift + Scroll]: %s  \n'):format(height)
-          text[#text + 1] = ('Toggle Axis mode [C]: %s  \n'):format(alignMovementWithCamera and 'Camera' or 'Grid')
-    	text[#text + 1] = 'Recenter - [Space]  \n'
+    	text[#text + 1] = ('Tamanho [Shift + Scroll]: %s  \n'):format(height)
+          text[#text + 1] = ('Alternar modo de eixo [C]: %s  \n'):format(alignMovementWithCamera and 'Câmera' or 'Grade')
+    	text[#text + 1] = 'Recentralizar - [Space]  \n'
     end
 
-    text[#text + 1] = 'Toggle controls - [X]  \n'
-    text[#text + 1] = 'Save - [Enter]  \n'
-    text[#text + 1] = 'Cancel - [Esc]'
+    text[#text + 1] = 'Alternar controles - [X]  \n'
+    text[#text + 1] = 'Salvar - [Enter]  \n'
+    text[#text + 1] = 'Cancelar - [Esc]'
 
     lib.showTextUI(table.concat(text))
 end
@@ -61,12 +61,12 @@ local function closeCreator(cancel)
     	end
 
           ---@type string[]
-    	local input = lib.inputDialog(('Name your %s Zone'):format(firstToUpper(zoneType)), {
-              { type = 'input', label = 'Name', placeholder = 'none' },
-              { type = 'select', label = 'Format', default = format, options = {
-                  { value = 'function', label = 'Function' },
+    	local input = lib.inputDialog(('Dê um nome para sua zona %s'):format(firstToUpper(zoneType)), {
+              { type = 'input', label = 'Nome', placeholder = 'nenhum' },
+              { type = 'select', label = 'Formato', default = format, options = {
+                  { value = 'function', label = 'Função' },
                   { value = 'array', label = 'Array' },
-                  { value = 'target', label = 'Target'},
+                  { value = 'target', label = 'Alvo'},
               }}
           }) or {}
 
@@ -451,12 +451,12 @@ end
 
 RegisterCommand('zone', function(source, args, rawCommand)
     if args[1] ~= 'poly' and args[1] ~= 'box' and args[1] ~= 'sphere' then
-          lib.notify({title = 'Invalid zone type', type = 'error'})
+          lib.notify({title = 'Tipo de zona inválido', type = 'error'})
           return
       end
 
       if creatorActive then
-          lib.notify({title = 'Already creating a zone', type = 'error'})
+          lib.notify({title = 'Uma zona já está sendo criada', type = 'error'})
           return
       end
 
@@ -464,10 +464,10 @@ RegisterCommand('zone', function(source, args, rawCommand)
 
       if useLast then
           if args[1] == 'poly' then
-              lib.notify({title = 'Cannot duplicate a poly zone', type = 'error'})
+              lib.notify({title = 'Não é possível duplicar uma zona poly', type = 'error'})
               useLast = false
           elseif not lastZone[args[1]] then
-              lib.notify({title = ('No previous %s zone to duplicate'):format(args[1]), type = 'error'})
+              lib.notify({title = ('Não há zona %s anterior para duplicar'):format(args[1]), type = 'error'})
               useLast = false
           end
       end
@@ -477,8 +477,8 @@ end, true)
 
 CreateThread(function()
       Wait(1000)
-      TriggerEvent('chat:addSuggestion', '/zone', 'Starts creation of the specified zone', {
+      TriggerEvent('chat:addSuggestion', '/zone', 'Inicia a criação da zona especificada', {
           { name = 'zoneType', help = 'poly, box, sphere' },
-          { name = 'useLast', help = 'duplicates the last created zone of the specified type (box and sphere only, optional)' }
+          { name = 'useLast', help = 'duplica a última zona criada do tipo especificado (apenas box e sphere, opcional)' }
       })
 end)

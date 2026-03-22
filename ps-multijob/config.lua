@@ -1,6 +1,6 @@
 Config = Config or {}
 
--- Side of the screen where you want the ui to be on. Can either be "left" or "right"
+-- Lado da tela onde você quer que a interface apareça. Pode ser "left" ou "right"
 Config.Side = "right"
 
 Config.MaxJobs = 3
@@ -22,25 +22,25 @@ Config.WhitelistJobs = {
 }
 
 Config.Descriptions = {
-	["police"] = "Shoot some criminals or maybe be a good cop and arrest them",
-	["ambulance"] = "Fix the bullet holes",
-	["mechanic"] = "Fix the bullet holes",
-	["tow"] = "Pickup the tow truck and steal some vehicles",
-	["taxi"] = "Pickup people around the city and drive them to their destination",
-	["bus"] = "Pickup multiple people around the city and drive them to their destination",
-	["realestate"] = "Sell houses or something",
-	["cardealer"] = "Sell cars or something",
-	["judge"] = "Decide if people are guilty",
-	["lawyer"] = "Help the good or the bad",
-	["reporter"] = "Lowkey useless",
-	["trucker"] = "Drive a truck",
-	["garbage"] = "Drive a garbage truck",
-	["vineyard"] = "Get them vines",
-	["hotdog"] = "Sell them glizzys",
+	["police"] = "Enfrente criminosos ou seja um bom policial e prenda-os",
+	["ambulance"] = "Cuide dos feridos e salve vidas",
+	["mechanic"] = "Conserte veículos e mantenha a cidade rodando",
+	["tow"] = "Pegue o guincho e recolha veículos pela cidade",
+	["taxi"] = "Busque passageiros pela cidade e leve-os ao destino",
+	["bus"] = "Transporte várias pessoas pela cidade até seus destinos",
+	["realestate"] = "Venda casas e ajude clientes a encontrar um lar",
+	["cardealer"] = "Venda carros e feche bons negócios",
+	["judge"] = "Decida se as pessoas são culpadas ou inocentes",
+	["lawyer"] = "Defenda os inocentes ou represente os culpados",
+	["reporter"] = "Cubra notícias e mantenha a cidade informada",
+	["trucker"] = "Dirija um caminhão e faça entregas",
+	["garbage"] = "Dirija um caminhão de lixo e mantenha a cidade limpa",
+	["vineyard"] = "Trabalhe no vinhedo e cuide das plantações",
+	["hotdog"] = "Venda cachorros-quentes pela cidade",
 }
 
--- Change the icons to any free font awesome icon, also add other jobs your server might have to the list
--- List: https://fontawesome.com/search?o=r&s=solid
+-- Altere os ícones para qualquer ícone gratuito do Font Awesome e adicione aqui outros empregos do seu servidor
+-- Lista: https://fontawesome.com/search?o=r&s=solid
 Config.FontAwesomeIcons = {
 	["police"] = "fa-solid fa-handcuffs",
 	["ambulance"] = "fa-solid fa-user-doctor",
