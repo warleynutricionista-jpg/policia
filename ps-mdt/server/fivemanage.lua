@@ -20,7 +20,7 @@ local resourceName = tostring(GetCurrentResourceName())
 --- @return string|nil error     Error message on failure
 function FiveManageUpload(base64Data, filename)
     if not FiveManageApiKey or FiveManageApiKey == '' then
-        local msg = 'FiveManage API key not configured. Add to server.cfg: set ps_mdt_fivemanage_key_images "YOUR_KEY"'
+        local msg = 'Chave da API FiveManage não configurada. Adicione ao server.cfg: set ps_mdt_fivemanage_key_images "YOUR_KEY"'
         ps.warn(msg)
         return nil, msg
     end
@@ -32,7 +32,7 @@ function FiveManageUpload(base64Data, filename)
     end
 
     if not rawBase64 or rawBase64 == '' then
-        local msg = 'Empty image data received'
+        local msg = 'Recebidos dados de imagem vazios'
         ps.warn('FiveManage upload: ' .. msg)
         return nil, msg
     end
@@ -77,7 +77,7 @@ end
 
 -- Server callback to upload a mugshot from base64 data (API key stays server-side)
 ps.registerCallback(resourceName .. ':server:uploadMugshotBase64', function(source, base64Data)
-    if not CheckAuth(source) then return { url = nil, error = 'Unauthorized' } end
+    if not CheckAuth(source) then return { url = nil, error = 'Não autorizado' } end
     if not base64Data or base64Data == '' then
         return { url = nil, error = 'No image data' }
     end
@@ -94,7 +94,7 @@ AddEventHandler(resourceName .. ':server:mugshotUpload', function(citizenid, mug
 
     -- Ensure profile exists
     if not EnsureProfileExists(citizenid) then
-        ps.warn('Failed to create profile for mugshot upload: ' .. citizenid)
+        ps.warn('Falha ao criar o perfil for mugshot upload: ' .. citizenid)
         return
     end
 
@@ -132,41 +132,41 @@ end)
 
 -- Trigger mugshot on a suspect by citizenid (from MDT UI)
 ps.registerCallback(resourceName .. ':server:triggerSuspectMugshot', function(source, citizenid)
-    if not citizenid then return { success = false, message = 'Missing citizen id' } end
+    if not citizenid then return { success = false, message = 'Faltando ID do cidadão' } end
 
     local targetPlayer = ps.getPlayerByIdentifier(citizenid)
     if not targetPlayer then
-        return { success = false, message = 'Suspect is not online' }
+        return { success = false, message = 'O suspeito não está online' }
     end
 
     local targetSource = targetPlayer.source or (targetPlayer.PlayerData and targetPlayer.PlayerData.source)
     if not targetSource then
-        return { success = false, message = 'Could not find suspect source' }
+        return { success = false, message = 'Não foi possível localizar a source do suspeito' }
     end
 
     TriggerClientEvent(resourceName .. ':client:triggerMugshot', targetSource)
-    return { success = true, message = 'Mugshot triggered on suspect' }
+    return { success = true, message = 'Foto de ficha acionada no suspeito' }
 end)
 
 -- Upload a profile photo for a suspect via base64 (from MDT UI)
 ps.registerCallback(resourceName .. ':server:uploadSuspectPhoto', function(source, citizenid, base64Image)
     if not citizenid or not base64Image then
-        return { success = false, message = 'Missing data' }
+        return { success = false, message = 'Faltando dados' }
     end
 
     local imageUrl, uploadError = FiveManageUpload(base64Image, 'suspect_' .. citizenid .. '.png')
     if not imageUrl then
-        return { success = false, message = 'Upload failed: ' .. (uploadError or 'Unknown error') }
+        return { success = false, message = 'Falha no envio: ' .. (uploadError or 'Erro desconhecido') }
     end
 
     -- Ensure profile exists
     if not EnsureProfileExists(citizenid) then
-        return { success = false, message = 'Failed to create profile' }
+        return { success = false, message = 'Falha ao criar o perfil' }
     end
 
     local profile = MySQL.single.await('SELECT id FROM mdt_profiles WHERE citizenid = ?', { citizenid })
     if not profile then
-        return { success = false, message = 'Failed to create profile' }
+        return { success = false, message = 'Falha ao criar o perfil' }
     end
 
     -- Set as profile picture
@@ -177,7 +177,7 @@ ps.registerCallback(resourceName .. ':server:uploadSuspectPhoto', function(sourc
         profile.id, imageUrl, 'Profile Photo'
     })
 
-    return { success = true, message = 'Photo uploaded', imageUrl = imageUrl }
+    return { success = true, message = 'Foto enviada', imageUrl = imageUrl }
 end)
 
 -- ============================================================

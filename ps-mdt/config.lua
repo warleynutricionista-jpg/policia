@@ -1,5 +1,4 @@
-Config = {}
-ps = exports.ps_lib:init()
+Config = Config or {}
 
 -- Framework Detection (QBox priority)
 Config.Framework = 'qbx' -- 'qbx' for QBox, 'qb' for legacy QBCore

@@ -74,9 +74,9 @@ AddEventHandler(resourceName .. ':client:sig100', function(radio, isActive)
     if not ps.getJobDuty() then return end
 
     if isActive then
-        ps.notify('Radio ' .. tostring(radio) .. ' is currently Signal 100!', 'error')
+        ps.notify('Rádio ' .. tostring(radio) .. ' está atualmente em Sinal 100!', 'error')
     else
-        ps.notify('Radio ' .. tostring(radio) .. ' Signal 100 cleared', 'success')
+        ps.notify('Rádio ' .. tostring(radio) .. ' Sinal 100 liberado', 'success')
     end
 
     SendNUI('signal100', { radio = radio, active = isActive })
@@ -107,7 +107,7 @@ RegisterNUICallback('dispatchNotif', function(data, cb)
     end
 
     if mentioned then
-        ps.notify('Dispatch (Mention): ' .. (info.message or ''), 'info')
+        ps.notify('Despacho (menção): ' .. (info.message or ''), 'info')
         PlaySoundFrontend(-1, 'SELECT', 'HUD_FRONTEND_DEFAULT_SOUNDSET', false)
         PlaySoundFrontend(-1, 'Event_Start_Text', 'GTAO_FM_Events_Soundset', false)
     end
@@ -138,12 +138,12 @@ if Config.UseWolfknightRadar then
     RegisterNetEvent(resourceName .. ':client:trafficStop')
     AddEventHandler(resourceName .. ':client:trafficStop', function()
         if not IsPedInAnyPoliceVehicle(PlayerPedId()) then
-            ps.notify('Not in a police vehicle!', 'error')
+            ps.notify('Você não está em um veículo policial!', 'error')
             return
         end
 
         if coolDown then
-            ps.notify('Traffic stop cooldown active!', 'error')
+            ps.notify('Tempo de espera da abordagem de trânsito ativo!', 'error')
             return
         end
 
@@ -155,7 +155,7 @@ if Config.UseWolfknightRadar then
         end)
 
         if not success or not data or not data.veh or data.veh == 0 then
-            ps.notify('No vehicle detected by radar', 'error')
+            ps.notify('Nenhum veículo detectado pelo radar', 'error')
             return
         end
 
@@ -170,9 +170,9 @@ if Config.UseWolfknightRadar then
 
             exports['ps-dispatch']:CustomAlert({
                 coords = { x = currentPos.x, y = currentPos.y, z = currentPos.z },
-                message = 'Ongoing Traffic Stop',
+                message = 'Abordagem de trânsito em andamento',
                 dispatchCode = '10-11',
-                description = 'Ongoing Traffic Stop',
+                description = 'Abordagem de trânsito em andamento',
                 firstStreet = locationInfo,
                 model = vehicleName,
                 plate = plate,

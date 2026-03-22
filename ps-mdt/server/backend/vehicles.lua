@@ -105,7 +105,7 @@ ps.registerCallback(resourceName .. ':server:GetVehicles', function(source)
         table.insert(bolos, {
             id = bolo.id,
             reportId = bolo.reportId and tostring(bolo.reportId) or 'N/A',
-            name = bolo.subject_name or 'Unknown Vehicle',
+            name = bolo.subject_name or 'Veículo desconhecido',
             type = bolo.type,
             notes = bolo.notes or '',
             status = bolo.status,
@@ -125,7 +125,7 @@ ps.registerCallback(resourceName .. ':server:GetVehicles', function(source)
         table.insert(vehicles, {
             id = v.id,
             model = v.vehicle,
-            label = vehicleData and vehicleData.name or 'Unknown Vehicle',
+            label = vehicleData and vehicleData.name or 'Veículo desconhecido',
             plate = plate,
             owner = ps.getPlayerNameByIdentifier(v.citizenid) or 'Unknown',
             class = formatLabel(vehicleData and vehicleData.category or 'Unknown'),
@@ -155,17 +155,17 @@ end)
 
 ps.registerCallback(resourceName .. ':server:UpdateVehicle', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local plate = payload.plate
     if not plate or plate == '' then
-        return { success = false, message = 'Missing plate' }
+        return { success = false, message = 'Faltando placa' }
     end
 
     local ownerRow = MySQL.single.await('SELECT citizenid FROM player_vehicles WHERE plate = ? LIMIT 1', { plate })
     if not ownerRow or not ownerRow.citizenid then
-        return { success = false, message = 'Vehicle not found' }
+        return { success = false, message = 'Veículo não encontrado' }
     end
 
     local existing = MySQL.single.await('SELECT mdt_vehicle_points, mdt_vehicle_status, mdt_vehicle_information FROM player_vehicles WHERE plate = ? LIMIT 1', { plate })
@@ -230,7 +230,7 @@ ps.registerCallback(resourceName .. ':server:GetVehicle', function(source, plate
     if not CheckAuth(src) then return end
 
     if not plate or plate == '' then
-        return { success = false, message = 'Missing plate' }
+        return { success = false, message = 'Faltando placa' }
     end
 
     local vehicleRow = MySQL.query.await([[
@@ -252,7 +252,7 @@ ps.registerCallback(resourceName .. ':server:GetVehicle', function(source, plate
     ]], { plate })
 
     if not vehicleRow or not vehicleRow[1] then
-        return { success = false, message = 'Vehicle not found' }
+        return { success = false, message = 'Veículo não encontrado' }
     end
 
     local row = vehicleRow[1]
@@ -287,7 +287,7 @@ ps.registerCallback(resourceName .. ':server:GetVehicle', function(source, plate
         vehicle = {
             id = row.id,
             model = row.vehicle,
-            label = vehicleData and vehicleData.name or 'Unknown Vehicle',
+            label = vehicleData and vehicleData.name or 'Veículo desconhecido',
             brand = vehicleData and vehicleData.brand or nil,
             plate = plateUpper,
             owner = ps.getPlayerNameByIdentifier(row.citizenid) or 'Unknown',

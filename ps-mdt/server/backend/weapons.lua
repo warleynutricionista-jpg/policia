@@ -186,7 +186,7 @@ end)
 -- Save/Edit Weapon Info (from NUI)
 ps.registerCallback(resourceName .. ':server:saveWeaponInfo', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local serial = payload.serial
@@ -197,7 +197,7 @@ ps.registerCallback(resourceName .. ':server:saveWeaponInfo', function(source, p
     local weapModel = payload.weapModel or ''
 
     if not serial or serial == '' then
-        return { success = false, message = 'Missing serial number' }
+        return { success = false, message = 'Faltando número de série' }
     end
 
     local existing = MySQL.single.await('SELECT id FROM mdt_weapons WHERE serial = ? LIMIT 1', { serial })
@@ -233,14 +233,14 @@ end)
 -- Delete Weapon Record
 ps.registerCallback(resourceName .. ':server:deleteWeapon', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local id = tonumber(payload.id)
     local serial = payload.serial
 
     if not id and not serial then
-        return { success = false, message = 'Missing weapon ID or serial' }
+        return { success = false, message = 'Faltando ID da arma ou série' }
     end
 
     local deleted = 0
@@ -443,6 +443,6 @@ AddEventHandler(resourceName .. ':server:selfRegisterWeapon', function(serial, i
     end)
 
     if success then
-        ps.notify(src, 'Weapon registered in police database', 'success')
+        ps.notify(src, 'Arma registrada no banco de dados policial', 'success')
     end
 end)

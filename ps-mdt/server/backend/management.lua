@@ -135,11 +135,11 @@ ps.registerCallback(resourceName .. ':server:getPermissionRoles', function(sourc
         local fallbackPermissions = getDefaultRolePermissions(jobName, 0, isBoss)
         return {
             job = jobName,
-            label = 'Law Enforcement',
+            label = 'Aplicação da Lei',
             roles = {
                 {
                     key = '0',
-                    label = 'Officer',
+                    label = 'Oficial',
                     isBoss = isBoss,
                     permissions = fallbackPermissions,
                 }
@@ -219,7 +219,7 @@ ps.registerCallback(resourceName .. ':server:getPermissionRoles', function(sourc
 
     return {
         job = jobName,
-        label = job.label or 'Law Enforcement',
+        label = job.label or 'Aplicação da Lei',
         roles = roles,
         permissions = getAllPermissions(),
     }
@@ -227,11 +227,11 @@ end)
 
 ps.registerCallback(resourceName .. ':server:updatePermissionRole', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     if not payload.job or payload.grade == nil or type(payload.permissions) ~= 'table' then
-        return { success = false, message = 'Invalid payload' }
+        return { success = false, message = 'Payload inválido' }
     end
 
     local jobName, job = getPoliceJobDefinition(src)
@@ -366,7 +366,7 @@ end)
 
 ps.registerCallback(resourceName .. ':server:createTag', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local name = payload.name
@@ -375,21 +375,21 @@ ps.registerCallback(resourceName .. ':server:createTag', function(source, payloa
     local jobType = payload.job_type or 'all'
 
     if not name or name == '' then
-        return { success = false, message = 'Tag name is required' }
+        return { success = false, message = 'O nome da tag é obrigatório' }
     end
     if #name > 25 then
-        return { success = false, message = 'Tag name must be 25 characters or less' }
+        return { success = false, message = 'O nome da tag deve ter no máximo 25 caracteres' }
     end
 
     -- Check duplicate
     local existing = MySQL.scalar.await('SELECT id FROM mdt_tags WHERE name = ?', { name })
     if existing then
-        return { success = false, message = 'Tag already exists' }
+        return { success = false, message = 'A tag já existe' }
     end
 
     local id = MySQL.insert.await('INSERT INTO mdt_tags (name, type, color, job_type) VALUES (?, ?, ?, ?)', { name, tagType, color, jobType })
     if not id then
-        return { success = false, message = 'Failed to create tag' }
+        return { success = false, message = 'Falha ao criar a tag' }
     end
 
     return { success = true, id = id }
@@ -397,7 +397,7 @@ end)
 
 ps.registerCallback(resourceName .. ':server:updateTag', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local id = tonumber(payload.id)
@@ -407,13 +407,13 @@ ps.registerCallback(resourceName .. ':server:updateTag', function(source, payloa
     local jobType = payload.job_type or 'all'
 
     if not id then
-        return { success = false, message = 'Invalid tag ID' }
+        return { success = false, message = 'ID da tag inválido' }
     end
     if not name or name == '' then
-        return { success = false, message = 'Tag name is required' }
+        return { success = false, message = 'O nome da tag é obrigatório' }
     end
     if #name > 25 then
-        return { success = false, message = 'Tag name must be 25 characters or less' }
+        return { success = false, message = 'O nome da tag deve ter no máximo 25 caracteres' }
     end
 
     -- Get old name to update references
@@ -423,7 +423,7 @@ ps.registerCallback(resourceName .. ':server:updateTag', function(source, payloa
     -- Check duplicate (excluding self)
     local dup = MySQL.scalar.await('SELECT id FROM mdt_tags WHERE name = ? AND id != ?', { name, id })
     if dup then
-        return { success = false, message = 'Another tag with that name already exists' }
+        return { success = false, message = 'Já existe outra tag com esse nome' }
     end
 
     MySQL.update.await('UPDATE mdt_tags SET name = ?, type = ?, color = ?, job_type = ? WHERE id = ?', { name, tagType, color, jobType, id })
@@ -466,7 +466,7 @@ end)
 
 ps.registerCallback(resourceName .. ':server:saveAward', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local name = payload.name
@@ -477,10 +477,10 @@ ps.registerCallback(resourceName .. ':server:saveAward', function(source, payloa
     local goalAmount = tonumber(payload.goalAmount) or 1
 
     if not name or name == '' then
-        return { success = false, message = 'Award name is required' }
+        return { success = false, message = 'O nome da premiação é obrigatório' }
     end
     if not goalType or goalType == '' then
-        return { success = false, message = 'Goal type is required' }
+        return { success = false, message = 'O tipo de meta é obrigatório' }
     end
 
     local id = payload.id and tonumber(payload.id)
@@ -501,7 +501,7 @@ ps.registerCallback(resourceName .. ':server:saveAward', function(source, payloa
     end
 
     if not id then
-        return { success = false, message = 'Failed to save award' }
+        return { success = false, message = 'Falha ao salvar a premiação' }
     end
 
     return { success = true, id = id }
@@ -509,12 +509,12 @@ end)
 
 ps.registerCallback(resourceName .. ':server:deleteAward', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local id = tonumber(payload.id)
     if not id then
-        return { success = false, message = 'Invalid award ID' }
+        return { success = false, message = 'ID da premiação inválido' }
     end
 
     MySQL.query.await('DELETE FROM mdt_awards WHERE id = ?', { id })
@@ -725,14 +725,14 @@ end)
 
 ps.registerCallback(resourceName .. ':server:saveCustomLicense', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local name = payload.name
     local description = payload.description or ''
 
     if not name or name == '' then
-        return { success = false, message = 'License name is required' }
+        return { success = false, message = 'O nome da licença é obrigatório' }
     end
 
     local id = payload.id and tonumber(payload.id)
@@ -741,20 +741,20 @@ ps.registerCallback(resourceName .. ':server:saveCustomLicense', function(source
         -- Check duplicate (excluding self)
         local dup = MySQL.scalar.await('SELECT id FROM mdt_custom_licenses WHERE name = ? AND id != ?', { name, id })
         if dup then
-            return { success = false, message = 'A license with that name already exists' }
+            return { success = false, message = 'Já existe uma licença com esse nome' }
         end
         MySQL.update.await('UPDATE mdt_custom_licenses SET name = ?, description = ? WHERE id = ?', { name, description, id })
     else
         -- Check duplicate
         local existing = MySQL.scalar.await('SELECT id FROM mdt_custom_licenses WHERE name = ?', { name })
         if existing then
-            return { success = false, message = 'A license with that name already exists' }
+            return { success = false, message = 'Já existe uma licença com esse nome' }
         end
         id = MySQL.insert.await('INSERT INTO mdt_custom_licenses (name, description) VALUES (?, ?)', { name, description })
     end
 
     if not id then
-        return { success = false, message = 'Failed to save license' }
+        return { success = false, message = 'Falha ao salvar a licença' }
     end
 
     return { success = true, id = id }
@@ -762,12 +762,12 @@ end)
 
 ps.registerCallback(resourceName .. ':server:deleteCustomLicense', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local id = tonumber(payload.id)
     if not id then
-        return { success = false, message = 'Invalid license ID' }
+        return { success = false, message = 'ID da licença inválido' }
     end
 
     MySQL.query.await('DELETE FROM mdt_custom_licenses WHERE id = ?', { id })
@@ -776,12 +776,12 @@ end)
 
 ps.registerCallback(resourceName .. ':server:deleteTag', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     payload = payload or {}
     local id = tonumber(payload.id)
     if not id then
-        return { success = false, message = 'Invalid tag ID' }
+        return { success = false, message = 'ID da tag inválido' }
     end
 
     -- Get name before deleting so we can clean up references

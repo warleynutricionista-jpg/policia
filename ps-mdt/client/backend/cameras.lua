@@ -3,7 +3,7 @@ local resourceName = tostring(GetCurrentResourceName())
 -- Events
 RegisterNUICallback('viewCamera', function(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open' })
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
@@ -15,7 +15,7 @@ RegisterNUICallback('viewCamera', function(data, cb)
     end
 
     if not cameraId then
-        cb({ success = false, message = 'Invalid camera ID' })
+        cb({ success = false, message = 'ID de câmera inválido' })
         return
     end
 
@@ -32,7 +32,7 @@ end)
 
 RegisterNUICallback('getCameras', function(_, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'MDT is not open', data = {} })
+        cb({ success = false, message = 'O MDT não está aberto', data = {} })
         return
     end
 
@@ -41,6 +41,6 @@ RegisterNUICallback('getCameras', function(_, cb)
     if cameras then
         cb({ success = true, data = cameras })
     else
-        cb({ success = false, message = 'Failed to fetch cameras', data = {} })
+        cb({ success = false, message = 'Falha ao buscar câmeras', data = {} })
     end
 end)

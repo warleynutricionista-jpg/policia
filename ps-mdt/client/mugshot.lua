@@ -97,7 +97,7 @@ function CaptureMugshot(citizenid)
 
     local sbState = GetResourceState('screenshot-basic')
     if sbState ~= 'started' then
-        ps.notify('screenshot-basic is not running', 'error')
+        ps.notify('screenshot-basic não está em execução', 'error')
         return nil
     end
 

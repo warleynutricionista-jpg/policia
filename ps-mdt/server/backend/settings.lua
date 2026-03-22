@@ -118,7 +118,7 @@ end)
 -- Save tracking config callback
 ps.registerCallback(resourceName .. ':server:saveAuditTrackingConfig', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     -- Payload arrives as JSON string to preserve boolean false values through msgpack
     if type(payload) == 'string' then
@@ -126,12 +126,12 @@ ps.registerCallback(resourceName .. ':server:saveAuditTrackingConfig', function(
         if ok and type(decoded) == 'table' then
             payload = decoded
         else
-            return { success = false, message = 'Invalid payload' }
+            return { success = false, message = 'Payload inválido' }
         end
     end
 
     if type(payload) ~= 'table' then
-        return { success = false, message = 'Invalid payload' }
+        return { success = false, message = 'Payload inválido' }
     end
 
     -- Validate: only allow known category keys with boolean values
@@ -202,13 +202,13 @@ end)
 
 ps.registerCallback(resourceName .. ':server:saveJailFinesConfig', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
     if not CheckPermission(src, 'management_settings') then
-        return { success = false, message = 'You do not have permission to change these settings' }
+        return { success = false, message = 'Você não tem permissão para alterar essas configurações' }
     end
 
     if type(payload) ~= 'table' then
-        return { success = false, message = 'Invalid payload' }
+        return { success = false, message = 'Payload inválido' }
     end
 
     -- Validate reductionOffers: must be array of numbers 1-100
@@ -268,13 +268,13 @@ end)
 
 ps.registerCallback(resourceName .. ':server:saveReportTemplate', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
     if not CheckPermission(src, 'management_settings') then
-        return { success = false, message = 'You do not have permission to change templates' }
+        return { success = false, message = 'Você não tem permissão para alterar modelos' }
     end
 
     if type(payload) ~= 'table' then
-        return { success = false, message = 'Invalid payload' }
+        return { success = false, message = 'Payload inválido' }
     end
 
     local name = tostring(payload.name or ''):sub(1, 100)
@@ -282,7 +282,7 @@ ps.registerCallback(resourceName .. ':server:saveReportTemplate', function(sourc
     local content = tostring(payload.content or '')
 
     if name == '' or tmplType == '' or content == '' then
-        return { success = false, message = 'Name, type, and content are required' }
+        return { success = false, message = 'Nome, tipo e conteúdo são obrigatórios' }
     end
 
     local jobType = tostring(payload.jobType or 'all'):sub(1, 10)
@@ -314,18 +314,18 @@ end)
 
 ps.registerCallback(resourceName .. ':server:deleteReportTemplate', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, message = 'Unauthorized' } end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
     if not CheckPermission(src, 'management_settings') then
-        return { success = false, message = 'You do not have permission to delete templates' }
+        return { success = false, message = 'Você não tem permissão para excluir modelos' }
     end
 
     if type(payload) ~= 'table' or not payload.id then
-        return { success = false, message = 'Invalid payload' }
+        return { success = false, message = 'Payload inválido' }
     end
 
     local id = tonumber(payload.id)
     if not id then
-        return { success = false, message = 'Invalid template ID' }
+        return { success = false, message = 'ID do modelo inválido' }
     end
 
     MySQL.update.await('DELETE FROM mdt_report_templates WHERE `id` = ?', { id })
