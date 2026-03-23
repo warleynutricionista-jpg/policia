@@ -1,0 +1,94 @@
+Listagem de caminhos de pasta
+O n£mero de s‚rie do volume ‚ 1402-F3DB
+C:.
+³   config.lua
+³   fxmanifest.lua
+³   novo
+³   README.md
+³   
+ÃÄÄÄ.github
+³       FUNDING.yml
+³       
+ÃÄÄÄbridge
+³   ÃÄÄÄcustom
+³   ³       client.lua
+³   ³       server.lua
+³   ³       
+³   ÃÄÄÄesx
+³   ³       client.lua
+³   ³       server.lua
+³   ³       
+³   ÃÄÄÄinventory
+³   ³   ÀÄÄÄox_inventory
+³   ³           client.lua
+³   ³           server.lua
+³   ³           
+³   ÃÄÄÄqb
+³   ³       client.lua
+³   ³       server.lua
+³   ³       
+³   ÃÄÄÄtarget
+³   ³   ÃÄÄÄox_target
+³   ³   ³       client.lua
+³   ³   ³       
+³   ³   ÃÄÄÄqb-target
+³   ³   ³       client.lua
+³   ³   ³       
+³   ³   ÀÄÄÄqtarget
+³   ³           client.lua
+³   ³           
+³   ÀÄÄÄxp
+³           client.lua
+³           server.lua
+³           
+ÃÄÄÄcore
+³       client.lua
+³       shared.lua
+³       
+ÃÄÄÄlocales
+³   ³   locale.lua
+³   ³   
+³   ÀÄÄÄtranslations
+³           de.lua
+³           en.lua
+³           et.lua
+³           pt-br.lua
+³           
+ÃÄÄÄmodules
+³   ÃÄÄÄactivities
+³   ³       client.lua
+³   ³       server.lua
+³   ³       
+³   ÃÄÄÄlootables
+³   ³       client.lua
+³   ³       server.lua
+³   ³       
+³   ÃÄÄÄprison
+³   ³       client.lua
+³   ³       server.lua
+³   ³       
+³   ÀÄÄÄstores
+³           client.lua
+³           server.lua
+³           
+ÃÄÄÄnui
+³   ³   index.html
+³   ³   
+³   ÀÄÄÄassets
+³       ÃÄÄÄjs
+³       ³       main.js
+³       ³       
+³       ÀÄÄÄsounds
+³               end_siren.mp3
+³               siren.mp3
+³               
+ÀÄÄÄ_INSTALL
+    ÃÄÄÄItems
+    ³       esx_limit.sql
+    ³       esx_weight.sql
+    ³       ox_inventory.lua
+    ³       qbcore.lua
+    ³       
+    ÀÄÄÄSQL
+            install.sql
+            
