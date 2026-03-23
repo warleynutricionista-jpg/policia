@@ -170,6 +170,58 @@ ps.registerCallback('ps-mdt:server:getWeapons', function(source)
     return { weapons = newData, bolos = weaponBolo }
 end)
 
+ps.registerCallback(resourceName .. ':server:searchWeapons', function(source, query)
+    if not CheckAuth(source) then return { weapons = {}, bolos = {} } end
+
+    query = tostring(query or '')
+    local trimmedQuery = query:match('^%s*(.-)%s*$') or ''
+    local hasSearch = trimmedQuery ~= ''
+    local likeQuery = '%' .. trimmedQuery .. '%'
+
+    local weapons = MySQL.query.await(([[
+        SELECT *
+        FROM mdt_weapons
+        WHERE (%s)
+        ORDER BY id DESC
+        LIMIT 50
+    ]]):format(hasSearch and [[
+        serial LIKE ?
+        OR owner LIKE ?
+        OR information LIKE ?
+        OR weaponModel LIKE ?
+    ]] or '1=1'), hasSearch and { likeQuery, likeQuery, likeQuery, likeQuery } or {})
+
+    local newData = {}
+    for _, v in pairs(weapons or {}) do
+        local ownerName = 'Desconhecido'
+        if v.owner and v.owner ~= '' then
+            local profile = MySQL.single.await('SELECT fullname FROM mdt_profiles WHERE citizenid = ?', { v.owner })
+            if profile and profile.fullname and profile.fullname ~= '' then
+                ownerName = profile.fullname
+            else
+                ownerName = ps.getPlayerNameByIdentifier(v.owner) or 'Desconhecido'
+            end
+        end
+
+        local modelLower = v.weaponModel and string.lower(v.weaponModel) or ''
+        newData[#newData + 1] = {
+            id = v.id,
+            serial = v.serial,
+            scratched = v.scratched == 1,
+            owner = ownerName,
+            ownerCitizenId = v.owner,
+            information = v.information,
+            weaponClass = v.weaponClass,
+            weaponModel = v.weaponModel,
+            name = (QBCore and QBCore.Shared and QBCore.Shared.Weapons and QBCore.Shared.Weapons[GetHashKey(v.weaponModel)] and QBCore.Shared.Weapons[GetHashKey(v.weaponModel)].label) or v.weaponModel,
+            image = 'https://docs.fivem.net/weapons/' .. v.weaponModel:upper() .. '.png',
+            type = class[modelLower] and class[modelLower].type or 'unknown',
+        }
+    end
+
+    return { weapons = newData, bolos = {} }
+end)
+
 ps.registerCallback(resourceName .. ':server:getWeaponOwnershipHistory', function(source, serial)
     local src = source
     if not CheckAuth(src) then return end
@@ -182,6 +234,47 @@ ps.registerCallback(resourceName .. ':server:getWeaponOwnershipHistory', functio
         ORDER BY created_at DESC
     ]], { serial })
     return rows or {}
+end)
+
+ps.registerCallback(resourceName .. ':server:getWeapon', function(source, serial)
+    local src = source
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
+    if not serial or serial == '' then
+        return { success = false, message = 'Faltando número de série' }
+    end
+
+    local v = MySQL.single.await('SELECT * FROM mdt_weapons WHERE serial = ? LIMIT 1', { serial })
+    if not v then
+        return { success = false, message = 'Arma não encontrada' }
+    end
+
+    local ownerName = 'Desconhecido'
+    if v.owner and v.owner ~= '' then
+        local profile = MySQL.single.await('SELECT fullname FROM mdt_profiles WHERE citizenid = ?', { v.owner })
+        if profile and profile.fullname and profile.fullname ~= '' then
+            ownerName = profile.fullname
+        else
+            ownerName = ps.getPlayerNameByIdentifier(v.owner) or 'Desconhecido'
+        end
+    end
+
+    local modelLower = v.weaponModel and string.lower(v.weaponModel) or ''
+    return {
+        success = true,
+        weapon = {
+            id = v.id,
+            serial = v.serial,
+            scratched = v.scratched == 1,
+            owner = ownerName,
+            ownerCitizenId = v.owner,
+            information = v.information,
+            weaponClass = v.weaponClass,
+            weaponModel = v.weaponModel,
+            name = (QBCore and QBCore.Shared and QBCore.Shared.Weapons and QBCore.Shared.Weapons[GetHashKey(v.weaponModel)] and QBCore.Shared.Weapons[GetHashKey(v.weaponModel)].label) or v.weaponModel,
+            image = 'https://docs.fivem.net/weapons/' .. v.weaponModel:upper() .. '.png',
+            type = class[modelLower] and class[modelLower].type or 'unknown',
+        }
+    }
 end)
 
 -- Save/Edit Weapon Info (from NUI)

@@ -179,11 +179,11 @@ end)
 
 RegisterNUICallback('getAwardsData', function(data, cb)
     if not MDTOpen then
-        cb(nil)
+        cb({ success = false, awards = {}, officer = nil, leaderboard = {} })
         return
     end
     local result = ps.callback(resourceName .. ':server:getAwardsData', data or {})
-    cb(result)
+    cb(result or { success = false, awards = {}, officer = nil, leaderboard = {} })
 end)
 
 -- SETTINGS: Custom Licenses -------------------------------------------

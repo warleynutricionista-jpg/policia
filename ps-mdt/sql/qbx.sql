@@ -729,9 +729,11 @@ CREATE TABLE IF NOT EXISTS `mdt_tags` (
   `name` VARCHAR(25) NOT NULL,
   `type` ENUM('officer','report','both') NOT NULL DEFAULT 'officer',
   `color` VARCHAR(7) NOT NULL DEFAULT '#6b7280',
+  `job_type` ENUM('leo','ems','all') NOT NULL DEFAULT 'all',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_tag_name` (`name`)
+  UNIQUE KEY `unique_tag_name` (`name`),
+  KEY `idx_mdt_tags_job_type` (`job_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Default Officer Tags
@@ -772,6 +774,24 @@ CREATE TABLE IF NOT EXISTS `mdt_report_vehicles` (
   KEY `idx_report_vehicles_plate` (`plate`),
   CONSTRAINT `FK_mdt_report_vehicles_mdt_reports` FOREIGN KEY (`reportid`) REFERENCES `mdt_reports` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `mdt_report_templates` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `type` varchar(50) NOT NULL,
+  `content` longtext NOT NULL,
+  `job_type` enum('leo','ems','all') NOT NULL DEFAULT 'all',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_mdt_report_templates_job_type` (`job_type`),
+  KEY `idx_mdt_report_templates_type_name` (`type`,`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO `mdt_report_templates` (`name`, `type`, `content`, `job_type`) VALUES
+('Standard Incident', 'Incident Report', '<h2>Incident Summary</h2>\n<p>On [DATE] at approximately [TIME] hours, [OFFICER NAME/BADGE] responded to a call at [LOCATION] regarding [TYPE OF INCIDENT].</p>\n\n<h2>Details of Incident</h2>\n<p>Upon arrival, officers observed [DESCRIBE SCENE]. [DESCRIBE WHAT HAPPENED IN CHRONOLOGICAL ORDER].</p>\n\n<h2>Parties Involved</h2>\n<p>Victim(s): [NAME/DETAILS]</p>\n<p>Suspect(s): [NAME/DETAILS]</p>\n<p>Witness(es): [NAME/DETAILS]</p>\n\n<h2>Evidence Collected</h2>\n<p>[LIST EVIDENCE, PHOTOS, VIDEO, STATEMENTS, ETC.]</p>\n\n<h2>Charges / Actions Taken</h2>\n<p>[LIST CHARGES, ARRESTS, CITATIONS, WARNINGS, ETC.]</p>\n\n<h2>Officer Notes</h2>\n<p>[ADDITIONAL OBSERVATIONS OR FOLLOW-UP REQUIRED]</p>', 'all'),
+('Traffic Stop', 'Traffic Stop', '<h2>Traffic Stop Summary</h2>\n<p>On [DATE] at approximately [TIME] hours, I, [OFFICER NAME/BADGE], conducted a traffic stop on [VEHICLE DESCRIPTION] bearing plate [PLATE] at [LOCATION] for [REASON FOR STOP].</p>\n\n<h2>Driver / Occupants</h2>\n<p>Driver: [NAME, DOB, LICENSE STATUS]</p>\n<p>Passenger(s): [NAME/DETAILS]</p>\n\n<h2>Observations</h2>\n<p>[DRIVER BEHAVIOR, ODOR, CONTRABAND IN PLAIN VIEW, STATEMENTS, ETC.]</p>\n\n<h2>Actions Taken</h2>\n<p>[WARNING / CITATION / SEARCH / ARREST / TOW / FIELD SOBRIETY TEST / OTHER]</p>\n\n<h2>Disposition</h2>\n<p>[FINAL OUTCOME OF THE STOP]</p>', 'all'),
+('Use of Force', 'Use of Force', '<h2>Use of Force Report</h2>\n<p>Date/Time: [DATE/TIME]</p>\n<p>Location: [LOCATION]</p>\n<p>Officer(s) Involved: [NAME/BADGE]</p>\n<p>Subject(s) Involved: [NAME/DETAILS]</p>\n\n<h2>Incident Leading to Force</h2>\n<p>[DESCRIBE EVENTS THAT LED TO THE USE OF FORCE]</p>\n\n<h2>Type of Force Used</h2>\n<p>[PHYSICAL / TASER / LESS-LETHAL / FIREARM / OTHER]</p>\n\n<h2>Justification</h2>\n<p>[WHY THE FORCE WAS NECESSARY]</p>\n\n<h2>Injuries / Medical Aid</h2>\n<p>[DESCRIBE INJURIES AND TREATMENT PROVIDED]</p>\n\n<h2>Witnesses / Evidence</h2>\n<p>[BODYCAM, DASHCAM, CCTV, WITNESSES, PHOTOS]</p>\n\n<h2>Supervisor Review</h2>\n<p>[SUPERVISOR NAME / FINDINGS]</p>', 'leo');
 
 CREATE TABLE IF NOT EXISTS `mdt_awards` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,

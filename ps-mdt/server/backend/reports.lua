@@ -428,26 +428,20 @@ end)
 
 ps.registerCallback(resourceName .. ':server:searchOfficers', function(source, query)
     local src = source
-    if not CheckAuth(src) then return end
+    if not CheckAuth(src) then return {} end
 
-    if not query or query == '' then
-        return {}
-    end
+    query = tostring(query or '')
+    local trimmedQuery = query:match('^%s*(.-)%s*$') or ''
+    local hasSearch = trimmedQuery ~= ''
+    local likeQuery = '%' .. trimmedQuery .. '%'
 
-    query = tostring(query)
-    if #query < 2 then
-        return {}
-    end
-
-    if ps.auditLog then
+    if hasSearch and ps.auditLog then
         ps.auditLog(src, 'search_officers', 'search', nil, {
-            query = query
+            query = trimmedQuery
         })
     end
 
-    local likeQuery = '%' .. query .. '%'
-
-    local rows = MySQL.query.await([[
+    local rows = MySQL.query.await(([[
         SELECT
             p.citizenid,
             JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')) as firstname,
@@ -458,7 +452,9 @@ ps.registerCallback(resourceName .. ':server:searchOfficers', function(source, q
             mp.callsign as callsign
         FROM players p
         LEFT JOIN mdt_profiles mp ON mp.citizenid COLLATE utf8mb4_general_ci = p.citizenid COLLATE utf8mb4_general_ci
-        WHERE (
+        WHERE (%s)
+        LIMIT 50
+    ]]):format(hasSearch and [[
             p.citizenid LIKE ?
             OR JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')) LIKE ?
             OR JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname')) LIKE ?
@@ -468,9 +464,7 @@ ps.registerCallback(resourceName .. ':server:searchOfficers', function(source, q
                 JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname'))
             ) LIKE ?
             OR mp.callsign COLLATE utf8mb4_general_ci LIKE ?
-        )
-        LIMIT 50
-    ]], { likeQuery, likeQuery, likeQuery, likeQuery, likeQuery })
+        ]] or '1=1'), hasSearch and { likeQuery, likeQuery, likeQuery, likeQuery, likeQuery } or {})
 
     local results = {}
     for _, row in ipairs(rows or {}) do
@@ -481,7 +475,8 @@ ps.registerCallback(resourceName .. ':server:searchOfficers', function(source, q
                 citizenid = row.citizenid,
                 fullName = fullName,
                 badgeId = row.callsign or nil,
-                rank = row.jobgrade or nil
+                rank = row.jobgrade or nil,
+                label = row.callsign and row.callsign ~= '' and (row.callsign .. ' - ' .. fullName) or fullName
             })
         end
     end
@@ -493,13 +488,12 @@ ps.registerCallback(resourceName .. ':server:searchVehiclesForReport', function(
     local src = source
     if not CheckAuth(src) then return {} end
 
-    if not query or query == '' then
-        return {}
-    end
+    query = tostring(query or '')
+    local trimmedQuery = query:match('^%s*(.-)%s*$') or ''
+    local hasSearch = trimmedQuery ~= ''
+    local likeQuery = '%' .. trimmedQuery .. '%'
 
-    local likeQuery = '%' .. query .. '%'
-
-    local rows = MySQL.query.await([[
+    local rows = MySQL.query.await(([[
         SELECT
             pv.plate,
             pv.vehicle,
@@ -511,16 +505,18 @@ ps.registerCallback(resourceName .. ':server:searchVehiclesForReport', function(
             ) as owner_name
         FROM player_vehicles pv
         LEFT JOIN players p ON p.citizenid COLLATE utf8mb4_general_ci = pv.citizenid COLLATE utf8mb4_general_ci
-        WHERE (
+        WHERE (%s)
+        ORDER BY pv.plate ASC
+        LIMIT 25
+    ]]):format(hasSearch and [[
             pv.plate LIKE ?
+            OR pv.vehicle LIKE ?
             OR CONCAT(
                 JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')),
                 ' ',
                 JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname'))
             ) LIKE ?
-        )
-        LIMIT 25
-    ]], { likeQuery, likeQuery })
+        ]] or '1=1'), hasSearch and { likeQuery, likeQuery, likeQuery } or {})
 
     local results = {}
     for _, row in ipairs(rows or {}) do
@@ -541,6 +537,7 @@ ps.registerCallback(resourceName .. ':server:searchVehiclesForReport', function(
             vehicle_label = vehicleData and vehicleData.name or row.vehicle or 'Desconhecido',
             owner_name = row.owner_name or 'Desconhecido',
             owner_citizenid = row.citizenid or nil,
+            model = row.vehicle,
         })
     end
 
@@ -934,7 +931,8 @@ end)
 
 ps.registerCallback(resourceName..':server:getAvailableTags', function(source, playerJobType)
     local src = source
-    if not CheckAuth(src) then return end
+    if not CheckAuth(src) then return {} end
+    EnsureMdtSchema()
 
     local jt = playerJobType or 'leo'
 

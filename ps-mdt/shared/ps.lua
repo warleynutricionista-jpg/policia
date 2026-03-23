@@ -98,7 +98,83 @@ local function getSharedJob(jobName)
     return jobs and jobs[jobName] or nil
 end
 
-local function isPoliceJobName(jobName, jobType)
+local isPoliceJobName
+
+local function getGradeLevel(grade)
+    if type(grade) ~= 'table' then
+        return tonumber(grade) or 0
+    end
+
+    local candidates = {
+        grade.level,
+        grade.grade,
+        grade.rank,
+        grade.value,
+        grade.id,
+        grade.index,
+        grade.payment and grade.level, -- preserves direct qbox grade tables without changing semantics
+    }
+
+    for i = 1, #candidates do
+        local value = tonumber(candidates[i])
+        if value ~= nil then
+            return value
+        end
+    end
+
+    if type(grade.name) == 'number' then
+        return grade.name
+    end
+
+    return 0
+end
+
+local function getGradeLabel(grade, fallbackLabel)
+    if type(grade) == 'table' then
+        return grade.name or grade.label or grade.title or fallbackLabel
+    end
+
+    return fallbackLabel
+end
+
+local function resolveJobType(job)
+    if type(job) ~= 'table' then
+        return nil
+    end
+
+    if job.type and job.type ~= '' then
+        return job.type
+    end
+
+    local sharedJob = job.name and getSharedJob(job.name) or nil
+    if sharedJob and sharedJob.type and sharedJob.type ~= '' then
+        return sharedJob.type
+    end
+
+    if isPoliceJobName(job.name, nil) then
+        return Config and Config.PoliceJobType or nil
+    end
+
+    if job.name and Config and Config.MedicalJobs then
+        for _, medicalJob in ipairs(Config.MedicalJobs) do
+            if tostring(medicalJob) == tostring(job.name) then
+                return Config.MedicalJobType
+            end
+        end
+    end
+
+    if job.name and Config and Config.DojJobs then
+        for _, dojJob in ipairs(Config.DojJobs) do
+            if tostring(dojJob) == tostring(job.name) then
+                return Config.DojJobType
+            end
+        end
+    end
+
+    return nil
+end
+
+isPoliceJobName = function(jobName, jobType)
     if jobType and Config and Config.PoliceJobType and tostring(jobType) == tostring(Config.PoliceJobType) then
         return true
     end
@@ -120,7 +196,7 @@ local function getConfiguredRank(jobName, grade, gradeData)
 
     return {
         level = tonumber(level) or 0,
-        label = hierarchy and hierarchy.label or gradeData and (gradeData.name or gradeData.label or gradeData.title) or nil,
+        label = hierarchy and hierarchy.label or getGradeLabel(gradeData, nil),
         isBoss = (hierarchy and hierarchy.isBoss == true)
             or gradeData and (gradeData.isboss == true or gradeData.isBoss == true or gradeData.boss == true)
             or false,
@@ -189,14 +265,20 @@ end
 
 local function getJobData(source)
     local playerData = getPlayerData(source)
-    return playerData and playerData.job or nil
-end
-
-local function getGradeLevel(grade)
-    if type(grade) ~= 'table' then
-        return tonumber(grade) or grade or 0
+    local job = playerData and playerData.job or nil
+    if not job then
+        return nil
     end
-    return grade.level or grade.grade or grade.rank or grade.value or grade.id or 0
+
+    if job.type == nil or job.type == '' then
+        job.type = resolveJobType(job)
+    end
+
+    if job.grade and type(job.grade) == 'table' and job.grade.level == nil then
+        job.grade.level = getGradeLevel(job.grade)
+    end
+
+    return job
 end
 
 local function getMetadataValue(metadata, key)
@@ -338,7 +420,7 @@ end
 
 function fallback.getJobType(source)
     local job = getJobData(source)
-    return job and job.type or nil
+    return resolveJobType(job)
 end
 
 function fallback.getJobDuty(source)
