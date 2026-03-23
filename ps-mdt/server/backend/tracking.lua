@@ -1,4 +1,8 @@
 local resourceName = tostring(GetCurrentResourceName())
+local trackingCache = {
+    payload = nil,
+    expiresAt = 0,
+}
 
 local function getCoreObject()
     local okQbx, qbx = pcall(function() return exports['qbx_core']:GetCoreObject() end)
@@ -162,9 +166,18 @@ ps.registerCallback(resourceName .. ':server:getTracking', function(source)
     local src = source
     if not CheckAuth(src) then return { officers = {}, vehicles = {}, bodycams = {} } end
 
-    return {
+    local now = GetGameTimer()
+    if trackingCache.payload and trackingCache.expiresAt > now then
+        return trackingCache.payload
+    end
+
+    local payload = {
         officers = getOfficerTrackers(),
         vehicles = getVehicleTrackers(),
         bodycams = getBodycamTrackers(),
     }
+    trackingCache.payload = payload
+    trackingCache.expiresAt = now + 1000
+
+    return payload
 end)

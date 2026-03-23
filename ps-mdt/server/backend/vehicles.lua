@@ -65,10 +65,35 @@ local function countSetItems(set)
     return count
 end
 
+local function serializeVehicleRow(v, reportIdsByPlate, activeBoloByPlate)
+    local vehicleData = getVehicleShared(v.vehicle)
+    local plate = v.plate and string.upper(v.plate) or 'UNKNOWN'
+    local reportCount = countSetItems(reportIdsByPlate and reportIdsByPlate[plate] or nil)
+    local hasActiveBolo = (activeBoloByPlate and activeBoloByPlate[plate] == true) or v.boloactive == 1
+    local flags = buildVehicleFlags(v.stolen == 1, hasActiveBolo, v.status)
+
+    return {
+        id = v.id,
+        model = v.vehicle,
+        label = vehicleData and vehicleData.name or formatLabel(v.vehicle),
+        plate = plate,
+        owner = ps.getPlayerNameByIdentifier(v.citizenid) or 'Desconhecido',
+        ownerCitizenId = v.citizenid,
+        class = formatLabel(vehicleData and vehicleData.category or 'Desconhecido'),
+        type = formatLabel(vehicleData and vehicleData.type or 'Desconhecido'),
+        flags = flags,
+        image = (v.image and v.image ~= '' and v.image) or ('https://docs.fivem.net/vehicles/' .. v.vehicle .. '.webp'),
+        seenIn = reportCount,
+        points = tonumber(v.points) or 0,
+        status = v.status or 'valid',
+        core_state = tonumber(v.core_state) or 0,
+    }
+end
+
 ps.registerCallback(resourceName .. ':server:GetVehicles', function(source)
     local startTime = os.clock()
     local src = source
-    if not CheckAuth(src) then return end
+    if not CheckAuth(src) then return { vehicles = {}, bolos = {} } end
 
     local vehList = MySQL.query.await([[
         SELECT
@@ -116,27 +141,7 @@ ps.registerCallback(resourceName .. ':server:GetVehicles', function(source)
 
     local vehicles = {}
     for _, v in ipairs(vehList) do
-        local vehicleData = getVehicleShared(v.vehicle)
-        local plate = v.plate and string.upper(v.plate) or 'UNKNOWN'
-        local reportCount = countSetItems(reportIdsByPlate[plate])
-        local hasActiveBolo = activeBoloByPlate[plate] == true or v.boloactive == 1
-        local flags = buildVehicleFlags(v.stolen == 1, hasActiveBolo, v.status)
-
-        table.insert(vehicles, {
-            id = v.id,
-            model = v.vehicle,
-            label = vehicleData and vehicleData.name or 'Veículo desconhecido',
-            plate = plate,
-            owner = ps.getPlayerNameByIdentifier(v.citizenid) or 'Desconhecido',
-            class = formatLabel(vehicleData and vehicleData.category or 'Desconhecido'),
-            type = formatLabel(vehicleData and vehicleData.type or 'Desconhecido'),
-            flags = flags,
-            image = (v.image and v.image ~= '' and v.image) or ('https://docs.fivem.net/vehicles/' .. v.vehicle .. '.webp'),
-            seenIn = reportCount,
-            points = tonumber(v.points) or 0,
-            status = v.status or 'valid',
-            core_state = tonumber(v.core_state) or 0,
-        })
+        table.insert(vehicles, serializeVehicleRow(v, reportIdsByPlate, activeBoloByPlate))
     end
 
     local endTime = os.clock()
@@ -151,6 +156,52 @@ ps.registerCallback(resourceName .. ':server:GetVehicles', function(source)
     end
 
     return {vehicles = vehicles, bolos = bolos}
+end)
+
+ps.registerCallback(resourceName .. ':server:SearchVehicles', function(source, query)
+    local src = source
+    if not CheckAuth(src) then return { vehicles = {}, bolos = {} } end
+
+    query = tostring(query or '')
+    local trimmedQuery = query:match('^%s*(.-)%s*$') or ''
+    local hasSearch = trimmedQuery ~= ''
+    local likeQuery = '%' .. trimmedQuery .. '%'
+
+    local rows = MySQL.query.await(([[
+        SELECT
+            pv.id,
+            pv.plate,
+            pv.vehicle,
+            pv.citizenid,
+            pv.mdt_vehicle_information AS information,
+            pv.mdt_vehicle_points AS points,
+            pv.mdt_vehicle_status AS status,
+            pv.mdt_vehicle_stolen AS stolen,
+            pv.mdt_vehicle_boloactive AS boloactive,
+            pv.mdt_vehicle_image AS image,
+            pv.state AS core_state
+        FROM player_vehicles pv
+        LEFT JOIN players p ON p.citizenid COLLATE utf8mb4_general_ci = pv.citizenid COLLATE utf8mb4_general_ci
+        WHERE (%s)
+        ORDER BY pv.plate ASC
+        LIMIT 50
+    ]]):format(hasSearch and [[
+        UPPER(REPLACE(pv.plate, ' ', '')) LIKE UPPER(REPLACE(?, ' ', ''))
+        OR pv.vehicle LIKE ?
+        OR CONCAT(
+            JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')),
+            ' ',
+            JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname'))
+        ) LIKE ?
+        OR pv.citizenid LIKE ?
+    ]] or '1=1'), hasSearch and { likeQuery, likeQuery, likeQuery, likeQuery } or {})
+
+    local vehicles = {}
+    for _, row in ipairs(rows or {}) do
+        vehicles[#vehicles + 1] = serializeVehicleRow(row)
+    end
+
+    return { vehicles = vehicles, bolos = {} }
 end)
 
 ps.registerCallback(resourceName .. ':server:UpdateVehicle', function(source, payload)
@@ -227,7 +278,7 @@ end)
 
 ps.registerCallback(resourceName .. ':server:GetVehicle', function(source, plate)
     local src = source
-    if not CheckAuth(src) then return end
+    if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
 
     if not plate or plate == '' then
         return { success = false, message = 'Faltando placa' }

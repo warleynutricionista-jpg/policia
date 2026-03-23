@@ -8,6 +8,29 @@ local function buildInClause(values)
     return table.concat(placeholders, ',')
 end
 
+local function hasTable(tableName)
+    return type(MdtTableExists) == 'function' and MdtTableExists(tableName) or false
+end
+
+local function queryCitizenProperties(inClause, citizenids)
+    if not hasTable('player_houses') then
+        return {}
+    end
+
+    return MySQL.query.await(
+        ('SELECT citizenid, COUNT(*) AS cnt FROM player_houses WHERE citizenid IN (%s) GROUP BY citizenid'):format(inClause),
+        citizenids
+    ) or {}
+end
+
+local function queryCitizenPropertyList(citizenid)
+    if not hasTable('player_houses') then
+        return {}
+    end
+
+    return MySQL.query.await('SELECT house FROM player_houses WHERE citizenid = ?', { citizenid }) or {}
+end
+
 local function collectCitizenFlags(citizenids)
     EnsureMdtSchema()
     local flagsByCid = {}
@@ -120,10 +143,7 @@ ps.registerCallback(resourceName .. ':server:getCitizens', function(source, page
             end
         end
 
-        local propRows = MySQL.query.await(
-            ('SELECT citizenid, COUNT(*) AS cnt FROM player_houses WHERE citizenid IN (%s) GROUP BY citizenid'):format(inClause),
-            citizenids
-        )
+        local propRows = queryCitizenProperties(inClause, citizenids)
         for _, row in ipairs(propRows or {}) do
             propCounts[row.citizenid] = tonumber(row.cnt) or 0
         end
@@ -247,10 +267,7 @@ ps.registerCallback(resourceName .. ':server:searchCitizens', function(source, q
             end
         end
 
-        local propRows = MySQL.query.await(
-            ('SELECT citizenid, COUNT(*) AS cnt FROM player_houses WHERE citizenid IN (%s) GROUP BY citizenid'):format(inClause),
-            citizenids
-        )
+        local propRows = queryCitizenProperties(inClause, citizenids)
         for _, row in ipairs(propRows or {}) do
             propCounts[row.citizenid] = tonumber(row.cnt) or 0
         end
@@ -392,7 +409,7 @@ ps.registerCallback(resourceName .. ':server:getCitizenProfile', function(source
     local flags = collectCitizenFlags({ citizenid })
     local vehicles = MySQL.query.await('SELECT plate, vehicle FROM player_vehicles WHERE citizenid = ?', { citizenid }) or {}
     local vehiclesCount = #vehicles
-    local properties = MySQL.query.await('SELECT house FROM player_houses WHERE citizenid = ?', { citizenid }) or {}
+    local properties = queryCitizenPropertyList(citizenid)
     local propertiesCount = #properties
     local arrestsCount = MySQL.scalar.await('SELECT COUNT(*) FROM mdt_arrests WHERE citizenid = ?', { citizenid }) or 0
     local activeWarrants = MySQL.query.await([[

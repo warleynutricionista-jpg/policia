@@ -16,6 +16,12 @@ RegisterNUICallback('updateOfficerCertifications', function(data, cb)
     cb(result or { success = false })
 end)
 
+RegisterNUICallback('updateOfficerCertificações', function(data, cb)
+    if not MDTOpen then cb({ success = false }) return end
+    local result = ps.callback('ps-mdt:server:updateOfficerCertifications', data)
+    cb(result or { success = false })
+end)
+
 RegisterNUICallback('getJobGrades', function(data, cb)
     if not MDTOpen then cb({}) return end
     local result = ps.callback('ps-mdt:server:getJobGrades', data)

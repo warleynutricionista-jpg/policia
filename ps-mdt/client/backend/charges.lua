@@ -35,3 +35,23 @@ RegisterNUICallback('updateCharge', function(data, cb)
     local result = ps.callback(resourceName .. ':server:updateCharge', data)
     cb(result or { success = false, message = 'Falha ao atualizar a acusação' })
 end)
+
+RegisterNUICallback('addCharge', function(data, cb)
+    if not MDTOpen then
+        cb({ success = false, message = 'O MDT não está aberto' })
+        return
+    end
+
+    local result = ps.callback(resourceName .. ':server:addCharge', data or {})
+    cb(result or { success = false, message = 'Falha ao criar a infração' })
+end)
+
+RegisterNUICallback('deleteCharge', function(data, cb)
+    if not MDTOpen then
+        cb({ success = false, message = 'O MDT não está aberto' })
+        return
+    end
+
+    local result = ps.callback(resourceName .. ':server:deleteCharge', data or {})
+    cb(result or { success = false, message = 'Falha ao excluir a infração' })
+end)

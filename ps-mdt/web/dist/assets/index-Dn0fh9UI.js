@@ -2589,23 +2589,23 @@ function Du(n) {
   return n === "ems" ? N1 : P1;
 }
 const Qo = {
-    Dashboard: "dashboard",
-    Citizens: "citizens",
+    Painel: "dashboard",
+    Cidadãos: "citizens",
     BOLOs: "bolos",
     Veículos: "vehicles",
     Armas: "weapons",
-    Cases: "cases",
-    Evidence: "evidence",
-    Reports: "reports",
-    Warrants: "warrants",
+    Casos: "cases",
+    Evidências: "evidence",
+    Relatórios: "reports",
+    Mandados: "warrants",
     Infrações: "charges",
-    Awards: "awards",
+    Premiações: "awards",
     Escala: "roster",
-    Map: "map",
-    Cameras: "cameras",
+    Mapa: "map",
+    Câmeras: "cameras",
     Bodycams: "bodycams",
-    Settings: "management",
-    Preferences: "settings",
+    Configurações: "management",
+    Preferências: "settings",
   },
   D1 = "16:20",
   L1 = "03.15.2024",
@@ -2649,7 +2649,7 @@ const Qo = {
     cameras: "Câmeras",
     bodycams: "Bodycams",
     management: "Configurações",
-    settings: "Preferences",
+    settings: "Preferências",
   },
   F1 = [],
   V1 = [
@@ -4216,9 +4216,9 @@ var Gy = E("<button></button>"),
   Wy = E('<div class="carousel-dots svelte-o013ra"></div>'),
   Zy = E('<span class="bulletin-text svelte-o013ra"> </span> <!>', 1),
   $y = E(
-    '<span class="bulletin-empty svelte-o013ra">No active bulletins</span>',
+    '<span class="bulletin-empty svelte-o013ra">Nenhum boletim ativo</span>',
   ),
-  Jy = E('<div class="empty-state svelte-o013ra">No active warrants</div>'),
+  Jy = E('<div class="empty-state svelte-o013ra">Nenhum mandado ativo</div>'),
   Ky = (n, e, t) => e(o(t).reportid),
   Yy = E('<span class="pill pill-red svelte-o013ra"> </span>'),
   Qy = E('<span class="pill pill-orange svelte-o013ra"> </span>'),
@@ -35687,7 +35687,7 @@ var AI = E("<span> </span>"),
   ),
   qI = E('<div class="sitem-overflow svelte-h1hdsn"> </div>'),
   jI = E("<!> <!>", 1),
-  UI = E('<div class="empty-msg svelte-h1hdsn">No active warrants</div>'),
+  UI = E('<div class="empty-msg svelte-h1hdsn">Nenhum mandado ativo</div>'),
   HI = E(
     '<div class="panel-caution caution-warning svelte-h1hdsn">PROCEDA COM CAUTELA</div>',
   ),
@@ -46468,6 +46468,57 @@ function C5(n, e) {
   (x(n, c), qt());
 }
 nn(["click"]);
+function __psApplyTheme(n){
+  const e=document.documentElement;
+  const t=n==="light"?"light":"dark";
+  e.setAttribute("data-mdt-theme",t);
+  const s=t==="light"?{
+    "--dark-bg":"rgb(245, 247, 250)",
+    "--light-bg":"rgb(255, 255, 255)",
+    "--card-dark-bg":"rgb(255, 255, 255)",
+    "--card-light-bg":"rgb(255, 255, 255)",
+    "--secondary-bg":"rgb(235, 239, 244)",
+    "--hover-bg":"rgba(15, 23, 42, 0.06)",
+    "--active-bg":"rgba(15, 23, 42, 0.1)",
+    "--primary-text":"rgba(15, 23, 42, 0.96)",
+    "--secondary-text":"rgba(30, 41, 59, 0.82)",
+    "--muted-text":"rgba(51, 65, 85, 0.72)",
+    "--disabled-text":"rgba(51, 65, 85, 0.48)",
+    "--border-primary":"rgba(15, 23, 42, 0.12)",
+    "--border-secondary":"rgba(15, 23, 42, 0.2)",
+    "--border-hover":"rgba(15, 23, 42, 0.28)",
+    "--btn-secondary":"rgba(15, 23, 42, 0.06)",
+    "--btn-secondary-hover":"rgba(15, 23, 42, 0.12)",
+    "--btn-secondary-active":"rgba(15, 23, 42, 0.14)",
+    "--input-bg":"rgba(255, 255, 255, 0.9)",
+    "--input-border":"rgba(15, 23, 42, 0.16)",
+    "--input-placeholder":"rgba(51, 65, 85, 0.5)",
+    "--spinner-track":"rgba(15, 23, 42, 0.12)"
+  }:{
+    "--dark-bg":"rgb(23, 23, 23)",
+    "--light-bg":"#1d1d1d",
+    "--card-dark-bg":"rgb(14, 15, 15)",
+    "--card-light-bg":"rgb(255, 255, 255)",
+    "--secondary-bg":"rgb(29, 29, 29)",
+    "--hover-bg":"rgba(255, 255, 255, .05)",
+    "--active-bg":"rgba(255, 255, 255, .1)",
+    "--primary-text":"rgba(255, 255, 255, .87)",
+    "--secondary-text":"rgba(255, 255, 255, .7)",
+    "--muted-text":"rgba(255, 255, 255, .6)",
+    "--disabled-text":"rgba(255, 255, 255, .5)",
+    "--border-primary":"rgba(255, 255, 255, .1)",
+    "--border-secondary":"rgba(255, 255, 255, .2)",
+    "--border-hover":"rgba(255, 255, 255, .3)",
+    "--btn-secondary":"rgba(255, 255, 255, .1)",
+    "--btn-secondary-hover":"rgba(255, 255, 255, .3)",
+    "--btn-secondary-active":"rgba(255, 255, 255, .3)",
+    "--input-bg":"rgba(255, 255, 255, .1)",
+    "--input-border":"rgba(255, 255, 255, .2)",
+    "--input-placeholder":"rgba(255, 255, 255, .5)",
+    "--spinner-track":"rgba(255, 255, 255, .1)"
+  };
+  Object.entries(s).forEach(([i,r])=>e.style.setProperty(i,r));
+}
 function A5(n, e, t, s, i, r, l, c, u, h) {
   try {
     const m = {
@@ -46479,7 +46530,7 @@ function A5(n, e, t, s, i, r, l, c, u, h) {
       showVeículos: o(l),
       showBodycams: o(c),
     };
-    (localStorage.setItem(u, JSON.stringify(m)), h("Preferências salvas"));
+    (localStorage.setItem(u, JSON.stringify(m)), __psApplyTheme(o(e)), h("Preferências salvas"));
   } catch {
     h("Falha ao salvar");
   }
@@ -46513,7 +46564,7 @@ function D5(n, e) {
   function g() {
     try {
       const Pe = localStorage.getItem(t);
-      if (!Pe) return;
+      if (!Pe) return void __psApplyTheme(o(s));
       const ke = JSON.parse(Pe);
       (ke.theme && y(s, ke.theme, !0),
         ke.notificationSounds !== void 0 && y(i, ke.notificationSounds, !0),
@@ -46521,7 +46572,8 @@ function D5(n, e) {
         ke.defaultZoom !== void 0 && y(l, ke.defaultZoom, !0),
         ke.showOfficers !== void 0 && y(c, ke.showOfficers, !0),
         ke.showVeículos !== void 0 && y(u, ke.showVeículos, !0),
-        ke.showBodycams !== void 0 && y(h, ke.showBodycams, !0));
+        ke.showBodycams !== void 0 && y(h, ke.showBodycams, !0),
+        __psApplyTheme(ke.theme || o(s)));
     } catch {}
   }
   function w(Pe) {
