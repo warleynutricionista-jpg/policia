@@ -29,6 +29,9 @@ CREATE TABLE IF NOT EXISTS `mdt_report_templates` (
     KEY `idx_mdt_report_templates_type_name` (`type`, `name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+ALTER TABLE `mdt_report_templates`
+    ADD COLUMN IF NOT EXISTS `job_type` ENUM('leo','ems','all') NOT NULL DEFAULT 'all' AFTER `content`;
+
 ALTER TABLE `player_vehicles`
     ADD COLUMN IF NOT EXISTS `mdt_vehicle_information` TEXT NULL,
     ADD COLUMN IF NOT EXISTS `mdt_vehicle_points` INT(11) NOT NULL DEFAULT 0,
@@ -49,6 +52,10 @@ ALTER TABLE `mdt_reports_restrictions`
 
 ALTER TABLE `mdt_tags`
     ADD INDEX IF NOT EXISTS `idx_mdt_tags_job_type` (`job_type`);
+
+ALTER TABLE `mdt_report_templates`
+    ADD INDEX IF NOT EXISTS `idx_mdt_report_templates_job_type` (`job_type`),
+    ADD INDEX IF NOT EXISTS `idx_mdt_report_templates_type_name` (`type`, `name`);
 
 ALTER TABLE `player_vehicles`
     ADD INDEX IF NOT EXISTS `idx_player_vehicles_citizenid_plate` (`citizenid`, `plate`);
