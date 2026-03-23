@@ -235,6 +235,7 @@ CreateThread(function()
             `name` VARCHAR(25) NOT NULL,
             `type` ENUM('officer','report','both') NOT NULL DEFAULT 'officer',
             `color` VARCHAR(7) NOT NULL DEFAULT '#6b7280',
+            `job_type` ENUM('leo','ems','all') NOT NULL DEFAULT 'all',
             `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (`id`),
             UNIQUE KEY `unique_tag_name` (`name`)
@@ -244,6 +245,9 @@ CreateThread(function()
     -- Fix ENUM if table was created with old 'citizen' value
     pcall(MySQL.query.await, [[
         ALTER TABLE `mdt_tags` MODIFY COLUMN `type` ENUM('officer','report','both') NOT NULL DEFAULT 'officer'
+    ]])
+    pcall(MySQL.query.await, [[
+        ALTER TABLE `mdt_tags` ADD COLUMN `job_type` ENUM('leo','ems','all') NOT NULL DEFAULT 'all' AFTER `color`
     ]])
     -- Migrate any old 'citizen' rows to 'officer'
     pcall(MySQL.query.await, [[UPDATE `mdt_tags` SET `type` = 'officer' WHERE `type` = 'citizen']])
@@ -301,6 +305,7 @@ ps.registerCallback(resourceName .. ':server:getTags', function(source, data)
     local src = source
     if not CheckAuth(src) then return {} end
     if not CheckPermission(src, 'management_tags') then return {} end
+    EnsureMdtSchema()
 
     data = data or {}
     local jobType = data.jobType
@@ -337,6 +342,7 @@ ps.registerCallback(resourceName .. ':server:createTag', function(source, payloa
     if not CheckPermission(src, 'management_tags') then
         return { success = false, message = 'Sem permissão para gerenciar tags' }
     end
+    EnsureMdtSchema()
 
     payload = payload or {}
     local name = payload.name
@@ -371,6 +377,7 @@ ps.registerCallback(resourceName .. ':server:updateTag', function(source, payloa
     if not CheckPermission(src, 'management_tags') then
         return { success = false, message = 'Sem permissão para gerenciar tags' }
     end
+    EnsureMdtSchema()
 
     payload = payload or {}
     local id = tonumber(payload.id)
@@ -503,12 +510,14 @@ end)
 
 ps.registerCallback(resourceName .. ':server:getAwardsData', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return nil end
-    if not CheckPermission(src, 'management_settings') then return nil end
+    if not CheckAuth(src) then return { success = false, stats = nil, awards = {}, leaderboard = {} } end
+    if not CheckPermission(src, 'management_settings') then
+        return { success = false, stats = nil, awards = {}, leaderboard = {} }
+    end
     EnsureMdtSchema()
 
     local citizenid = ps.getIdentifier(src)
-    if not citizenid then return nil end
+    if not citizenid then return { success = false, stats = nil, awards = {}, leaderboard = {} } end
 
     -- Get officer info
     local playerName = ps.getName(src) or 'Desconhecido'
@@ -678,6 +687,7 @@ ps.registerCallback(resourceName .. ':server:getAwardsData', function(source, pa
     end
 
     return {
+        success = true,
         stats = myStats,
         awards = awards,
         leaderboard = leaderboard,
@@ -769,6 +779,7 @@ ps.registerCallback(resourceName .. ':server:deleteTag', function(source, payloa
     if not CheckPermission(src, 'management_tags') then
         return { success = false, message = 'Sem permissão para gerenciar tags' }
     end
+    EnsureMdtSchema()
 
     payload = payload or {}
     local id = tonumber(payload.id)

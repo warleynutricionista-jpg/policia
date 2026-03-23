@@ -256,6 +256,7 @@ end)
 ps.registerCallback(resourceName .. ':server:getReportTemplates', function(source, data)
     local src = source
     if not CheckAuth(src) then return {} end
+    EnsureMdtSchema()
 
     local jobType = (type(data) == 'table' and data.jobType) or 'all'
     -- Return templates matching the job type or 'all'
@@ -272,6 +273,7 @@ ps.registerCallback(resourceName .. ':server:saveReportTemplate', function(sourc
     if not CheckPermission(src, 'management_settings') then
         return { success = false, message = 'Você não tem permissão para alterar modelos' }
     end
+    EnsureMdtSchema()
 
     if type(payload) ~= 'table' then
         return { success = false, message = 'Payload inválido' }
@@ -318,6 +320,7 @@ ps.registerCallback(resourceName .. ':server:deleteReportTemplate', function(sou
     if not CheckPermission(src, 'management_settings') then
         return { success = false, message = 'Você não tem permissão para excluir modelos' }
     end
+    EnsureMdtSchema()
 
     if type(payload) ~= 'table' or not payload.id then
         return { success = false, message = 'Payload inválido' }

@@ -315,3 +315,14 @@ RegisterNUICallback('searchVehiclesForReport', function(data, cb)
     local result = ps.callback(resourceName .. ':server:searchVehiclesForReport', query)
     cb(result or {})
 end)
+
+RegisterNUICallback('searchVeículosForReport', function(data, cb)
+    if not MDTOpen then
+        cb({})
+        return
+    end
+
+    local query = data and data.query or ''
+    local result = ps.callback(resourceName .. ':server:searchVehiclesForReport', query)
+    cb(result or {})
+end)
