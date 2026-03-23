@@ -261,7 +261,7 @@ function GetBoloStatus(plate)
     ]], { plate })
 
     if result then
-        return true, result.subject_name or result.notes or "Active BOLO", tostring(result.id)
+        return true, result.subject_name or result.notes or "Procurado ativo", tostring(result.id)
     end
     return false, "", ""
 end

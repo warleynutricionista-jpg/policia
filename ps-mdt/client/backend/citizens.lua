@@ -55,7 +55,7 @@ end)
 RegisterNUICallback('deleteBolo', function(data, cb)
     if not MDTOpen then cb({ success = false }) return end
     if not data or not data.id then
-        cb({ success = false, message = 'Faltando ID do BOLO' })
+        cb({ success = false, message = 'Faltando ID do procurado' })
         return
     end
     local result = ps.callback(resourceName .. ':server:deleteBolo', data)
@@ -65,7 +65,7 @@ end)
 RegisterNUICallback('updateBoloStatus', function(data, cb)
     if not MDTOpen then cb({ success = false }) return end
     if not data or not data.id or not data.status then
-        cb({ success = false, message = 'Faltando ID do BOLO ou status' })
+        cb({ success = false, message = 'Faltando ID do procurado ou status' })
         return
     end
     local result = ps.callback(resourceName .. ':server:updateBoloStatus', data)

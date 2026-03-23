@@ -71,7 +71,7 @@ AddEventHandler("wk:onPlateScanned", function(cam, plate, index)
     local warrant, owner, incidentId = GetWarrantStatus(plate)
 
     if bolo == true then
-        ps.notify(src, 'ID do BOLO: '..boloId..' | Título: '..title..' | Proprietário registrado: '..vehicleOwner..' | Placa: '..plate, 'error', Config.WolfknightNotifyTime)
+        ps.notify(src, 'ID do Procurado: '..boloId..' | Título: '..title..' | Proprietário registrado: '..vehicleOwner..' | Placa: '..plate, 'error', Config.WolfknightNotifyTime)
     end
     if warrant == true then
         ps.notify(src, 'PROCURADO - ID DA OCORRÊNCIA: '..incidentId..' | Proprietário registrado: '..owner..' | Placa: '..plate, 'error', Config.WolfknightNotifyTime)

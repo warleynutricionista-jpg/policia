@@ -76,7 +76,7 @@ local function collectCitizenFlags(citizenids)
         if row.subject_id and not boloSeen[row.subject_id] then
             boloSeen[row.subject_id] = true
             flagsByCid[row.subject_id] = flagsByCid[row.subject_id] or {}
-            table.insert(flagsByCid[row.subject_id], 'Active Bolo')
+            table.insert(flagsByCid[row.subject_id], 'Procurado Ativo')
         end
     end
 
@@ -724,7 +724,7 @@ ps.registerCallback(resourceName .. ':server:createBolo', function(source, paylo
 			LIMIT 1
 		]], { boloType, subjectValue, reportValue })
 		if existing then
-			return { success = false, message = 'Já existe um BOLO ativo.' }
+			return { success = false, message = 'Já existe um procurado ativo.' }
 		end
 	end
 
@@ -740,7 +740,7 @@ ps.registerCallback(resourceName .. ':server:createBolo', function(source, paylo
 	})
 
     if not inserted then
-        return { success = false, message = 'Falha ao criar o BOLO' }
+        return { success = false, message = 'Falha ao criar o procurado' }
     end
 
     return { success = true, id = inserted }
@@ -754,7 +754,7 @@ ps.registerCallback(resourceName .. ':server:deleteBolo', function(source, paylo
     payload = payload or {}
     local id = tonumber(payload.id)
     if not id then
-        return { success = false, message = 'ID do BOLO inválido' }
+        return { success = false, message = 'ID do procurado inválido' }
     end
 
     MySQL.query.await('DELETE FROM mdt_bolos WHERE id = ?', { id })
@@ -770,7 +770,7 @@ ps.registerCallback(resourceName .. ':server:updateBoloStatus', function(source,
     local id = tonumber(payload.id)
     local status = payload.status
     if not id or not status then
-        return { success = false, message = 'Faltando ID do BOLO ou status' }
+        return { success = false, message = 'Faltando ID do procurado ou status' }
     end
 
     local allowedStatuses = { active = true, inactive = true, resolved = true }

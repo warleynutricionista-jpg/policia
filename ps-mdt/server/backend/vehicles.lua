@@ -64,7 +64,7 @@ end
 local function buildVehicleFlags(stolen, hasActiveBolo, status)
     local flags = {}
     if hasActiveBolo then
-        table.insert(flags, 'Bolo')
+        table.insert(flags, 'Procurado')
     end
     if stolen then
         table.insert(flags, 'Stolen')
