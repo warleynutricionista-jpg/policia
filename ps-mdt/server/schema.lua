@@ -352,6 +352,24 @@ function EnsureMdtSchema(force)
         if tableExists('mdt_reports') and columnExists('mdt_reports', 'contentplaintext') then
             MySQL.update.await("UPDATE mdt_reports SET contentplaintext = COALESCE(contentplaintext, '') WHERE contentplaintext IS NULL")
         end
+
+        if tableExists('mdt_profiles') and columnExists('mdt_profiles', 'callsign') then
+            MySQL.update.await([[
+                UPDATE mdt_profiles
+                SET callsign = NULL
+                WHERE callsign IS NOT NULL
+                  AND UPPER(TRIM(callsign)) IN ('SEM CALLSIGN', 'SEM INDICATIVO', 'NO CALLSIGN', 'N/A', 'NULL', 'NONE')
+            ]])
+        end
+
+        if tableExists('mdt_profiles') and columnExists('mdt_profiles', 'badge_number') then
+            MySQL.update.await([[
+                UPDATE mdt_profiles
+                SET badge_number = NULL
+                WHERE badge_number IS NOT NULL
+                  AND UPPER(TRIM(badge_number)) IN ('SEM CALLSIGN', 'SEM INDICATIVO', 'NO CALLSIGN', 'N/A', 'NULL', 'NONE')
+            ]])
+        end
     end)
 
     schemaState.running = false

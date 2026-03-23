@@ -24,6 +24,7 @@ ps.registerCallback(resourceName .. ':server:impoundVehicle', function(source, p
 
     -- Set vehicle state to impounded (state = 2)
     MySQL.update.await('UPDATE player_vehicles SET state = 2 WHERE plate = ?', { plate })
+    Cache.invalidate('vehicles:directory')
 
     -- Store impound record
     local existing = MySQL.scalar.await('SELECT COUNT(*) FROM mdt_impound WHERE vehicleid = ?', { vehicle.id })
@@ -73,6 +74,7 @@ ps.registerCallback(resourceName .. ':server:releaseImpound', function(source, p
 
     -- Set vehicle state back to garaged (state = 1)
     MySQL.update.await('UPDATE player_vehicles SET state = 1 WHERE plate = ?', { plate })
+    Cache.invalidate('vehicles:directory')
 
     -- Remove impound record
     MySQL.query.await('DELETE FROM mdt_impound WHERE vehicleid = ?', { vehicle.id })

@@ -1,4 +1,183 @@
 local resourceName = tostring(GetCurrentResourceName())
+local OFFICER_DIRECTORY_CACHE_KEY = 'reports:officers:directory'
+local OFFICER_DIRECTORY_TTL = 15
+
+local function normalizeSearchTerm(value)
+    return tostring(value or ''):match('^%s*(.-)%s*$') or ''
+end
+
+local function normalizeCallsignValue(value)
+    local trimmed = normalizeSearchTerm(value)
+    if trimmed == '' then
+        return nil
+    end
+
+    local upper = trimmed:upper()
+    if upper == 'SEM CALLSIGN' or upper == 'SEM INDICATIVO' or upper == 'NO CALLSIGN' or upper == 'N/A' then
+        return nil
+    end
+
+    return trimmed
+end
+
+local function buildFullName(firstname, lastname, citizenid)
+    local first = firstname and tostring(firstname) or ''
+    local last = lastname and tostring(lastname) or ''
+    local full = (first .. ' ' .. last):gsub('^%s+', ''):gsub('%s+$', '')
+    if full ~= '' then
+        return full
+    end
+    return ps.getPlayerNameByIdentifier(citizenid) or 'Desconhecido'
+end
+
+local function formatOfficerDisplayName(callsign, fullname)
+    local sanitizedCallsign = normalizeCallsignValue(callsign)
+    local sanitizedName = normalizeSearchTerm(fullname)
+    if sanitizedName == '' then
+        sanitizedName = 'Desconhecido'
+    end
+
+    if sanitizedCallsign then
+        return ('%s %s'):format(sanitizedCallsign, sanitizedName)
+    end
+
+    return sanitizedName
+end
+
+local function decodeJsonField(value)
+    if not value or value == '' then
+        return {}
+    end
+
+    local ok, decoded = pcall(json.decode, value)
+    return ok and type(decoded) == 'table' and decoded or {}
+end
+
+local function getOfficerEmployment(citizenid, primaryJob)
+    local primaryJobName = primaryJob and primaryJob.name and tostring(primaryJob.name) or nil
+    if primaryJobName and IsPoliceJob(primaryJobName, primaryJob.type) then
+        local sharedGrade = type(primaryJob.grade) == 'table' and primaryJob.grade or ps.getSharedJobGrade(primaryJobName, primaryJob.grade)
+        return {
+            job = primaryJobName,
+            grade = NormalizeMdtGradeValue(primaryJob.grade),
+            gradeData = sharedGrade,
+            type = primaryJob.type,
+        }
+    end
+
+    if GetResourceState('ps-multijob') ~= 'started' or not exports['ps-multijob'] then
+        return nil
+    end
+
+    local ok, jobs = pcall(function()
+        return exports['ps-multijob']:GetJobs(citizenid)
+    end)
+    if not ok or type(jobs) ~= 'table' then
+        return nil
+    end
+
+    for _, jobData in pairs(jobs) do
+        if type(jobData) == 'table' then
+            local jobName = tostring(jobData.job or jobData.name or '')
+            local sharedGrade = ps.getSharedJobGrade(jobName, jobData.grade)
+            local sharedJob = ps.getSharedJobData(jobName)
+            local jobType = jobData.type or (sharedGrade and sharedGrade.type) or (sharedJob and sharedJob.type) or nil
+            if IsPoliceJob(jobName, jobType) then
+                return {
+                    job = jobName,
+                    grade = NormalizeMdtGradeValue(jobData.grade),
+                    gradeData = sharedGrade,
+                    type = jobType,
+                }
+            end
+        end
+    end
+
+    return nil
+end
+
+local function buildOfficerDirectory()
+    return Cache.getOrSet(OFFICER_DIRECTORY_CACHE_KEY, OFFICER_DIRECTORY_TTL, function()
+        local rows = MySQL.query.await([[
+            SELECT
+                p.citizenid,
+                p.charinfo,
+                p.job,
+                p.metadata,
+                mp.callsign AS profile_callsign
+            FROM players p
+            LEFT JOIN mdt_profiles mp
+                ON mp.citizenid COLLATE utf8mb4_general_ci = p.citizenid COLLATE utf8mb4_general_ci
+        ]]) or {}
+
+        local results = {}
+        for _, row in ipairs(rows) do
+            local citizenid = row.citizenid
+            local charinfo = decodeJsonField(row.charinfo)
+            local job = decodeJsonField(row.job)
+            local metadata = decodeJsonField(row.metadata)
+            local employment = getOfficerEmployment(citizenid, job)
+
+            if citizenid and employment then
+                local callsign = normalizeCallsignValue(row.profile_callsign or metadata.callsign)
+                local fullName = buildFullName(charinfo.firstname, charinfo.lastname, citizenid)
+                local rankData = GetMdtRankData(employment.job, employment.grade, employment.gradeData)
+                results[#results + 1] = {
+                    id = citizenid,
+                    citizenid = citizenid,
+                    fullName = fullName,
+                    badgeId = callsign,
+                    rank = rankData.label ~= 'Officer' and rankData.label or (employment.gradeData and employment.gradeData.name) or nil,
+                    department = employment.job,
+                    label = callsign and ('%s - %s'):format(callsign, fullName) or fullName,
+                    searchText = table.concat({
+                        citizenid,
+                        fullName,
+                        callsign or '',
+                        employment.job or '',
+                        rankData.label or '',
+                    }, ' '):lower(),
+                }
+            end
+        end
+
+        table.sort(results, function(a, b)
+            local aCallsign = a.badgeId or ''
+            local bCallsign = b.badgeId or ''
+            if aCallsign ~= bCallsign then
+                return aCallsign < bCallsign
+            end
+
+            return (a.fullName or '') < (b.fullName or '')
+        end)
+
+        return results
+    end) or {}
+end
+
+local function searchOfficerDirectory(query)
+    local needle = normalizeSearchTerm(query):lower()
+    local results = {}
+
+    for _, officer in ipairs(buildOfficerDirectory()) do
+        if needle == '' or (officer.searchText and officer.searchText:find(needle, 1, true)) then
+            results[#results + 1] = {
+                id = officer.id,
+                citizenid = officer.citizenid,
+                fullName = officer.fullName,
+                badgeId = officer.badgeId,
+                rank = officer.rank,
+                department = officer.department,
+                label = officer.label,
+            }
+            if #results >= 50 then
+                break
+            end
+        end
+    end
+
+    return results
+end
 
 
 local function collectCitizenIds(reportData)
@@ -52,19 +231,6 @@ local function checkReportAccess(src, reportId)
 
     return hasAccess and hasAccess[1] ~= nil
 end
-
-local function buildFullName(firstname, lastname, citizenid)
-    local first = firstname and tostring(firstname) or ''
-    local last = lastname and tostring(lastname) or ''
-    local full = (first .. ' ' .. last):gsub('^%s+', ''):gsub('%s+$', '')
-    if full ~= '' then
-        return full
-    end
-    return ps.getPlayerNameByIdentifier(citizenid) or 'Desconhecido'
-end
-
-
-
 
 local function normalizeDateFilter(value)
     if not value then
@@ -441,104 +607,37 @@ ps.registerCallback(resourceName .. ':server:searchOfficers', function(source, q
         })
     end
 
-    local rows = MySQL.query.await(([[
-        SELECT
-            p.citizenid,
-            JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')) as firstname,
-            JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname')) as lastname,
-            JSON_UNQUOTE(JSON_EXTRACT(p.job, '$.name')) as jobname,
-            JSON_UNQUOTE(JSON_EXTRACT(p.job, '$.grade.name')) as jobgrade,
-            JSON_UNQUOTE(JSON_EXTRACT(p.job, '$.type')) as jobtype,
-            mp.callsign as callsign
-        FROM players p
-        LEFT JOIN mdt_profiles mp ON mp.citizenid COLLATE utf8mb4_general_ci = p.citizenid COLLATE utf8mb4_general_ci
-        WHERE (%s)
-        LIMIT 50
-    ]]):format(hasSearch and [[
-            p.citizenid LIKE ?
-            OR JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')) LIKE ?
-            OR JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname')) LIKE ?
-            OR CONCAT(
-                JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')),
-                ' ',
-                JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname'))
-            ) LIKE ?
-            OR mp.callsign COLLATE utf8mb4_general_ci LIKE ?
-        ]] or '1=1'), hasSearch and { likeQuery, likeQuery, likeQuery, likeQuery, likeQuery } or {})
-
-    local results = {}
-    for _, row in ipairs(rows or {}) do
-        if IsPoliceJob(row.jobname, row.jobtype) then
-            local fullName = buildFullName(row.firstname, row.lastname, row.citizenid)
-            table.insert(results, {
-                id = row.citizenid,
-                citizenid = row.citizenid,
-                fullName = fullName,
-                badgeId = row.callsign or nil,
-                rank = row.jobgrade or nil,
-                label = row.callsign and row.callsign ~= '' and (row.callsign .. ' - ' .. fullName) or fullName
-            })
-        end
-    end
-
-    return results
+    return searchOfficerDirectory(trimmedQuery)
 end)
 
 ps.registerCallback(resourceName .. ':server:searchVehiclesForReport', function(source, query)
     local src = source
     if not CheckAuth(src) then return {} end
-
-    query = tostring(query or '')
-    local trimmedQuery = query:match('^%s*(.-)%s*$') or ''
-    local hasSearch = trimmedQuery ~= ''
-    local likeQuery = '%' .. trimmedQuery .. '%'
-
-    local rows = MySQL.query.await(([[
-        SELECT
-            pv.plate,
-            pv.vehicle,
-            pv.citizenid,
-            CONCAT(
-                JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')),
-                ' ',
-                JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname'))
-            ) as owner_name
-        FROM player_vehicles pv
-        LEFT JOIN players p ON p.citizenid COLLATE utf8mb4_general_ci = pv.citizenid COLLATE utf8mb4_general_ci
-        WHERE (%s)
-        ORDER BY pv.plate ASC
-        LIMIT 25
-    ]]):format(hasSearch and [[
-            pv.plate LIKE ?
-            OR pv.vehicle LIKE ?
-            OR CONCAT(
-                JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')),
-                ' ',
-                JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname'))
-            ) LIKE ?
-        ]] or '1=1'), hasSearch and { likeQuery, likeQuery, likeQuery } or {})
-
+    local trimmedQuery = normalizeSearchTerm(query)
+    local directory = GetMdtVehicleDirectory and GetMdtVehicleDirectory() or { vehicles = {} }
     local results = {}
-    for _, row in ipairs(rows or {}) do
-        local vehicleData = nil
-        local core = nil
-        local okQbx, qbx = pcall(function() return exports['qbx_core']:GetCoreObject() end)
-        if okQbx and qbx then core = qbx
-        else
-            local okQb, qb = pcall(function() return exports['qb-core']:GetCoreObject() end)
-            if okQb and qb then core = qb end
-        end
-        if core and core.Shared and core.Shared.Vehicles then
-            vehicleData = core.Shared.Vehicles[row.vehicle]
-        end
 
-        table.insert(results, {
-            plate = row.plate and string.upper(row.plate) or 'UNKNOWN',
-            vehicle_label = vehicleData and vehicleData.name or row.vehicle or 'Desconhecido',
-            owner_name = row.owner_name or 'Desconhecido',
-            owner_citizenid = row.citizenid or nil,
-            model = row.vehicle,
-        })
+    for _, vehicle in ipairs(directory.vehicles or {}) do
+        local searchText = table.concat({
+            vehicle.plate or '',
+            vehicle.model or '',
+            vehicle.label or '',
+            vehicle.owner or '',
+            vehicle.ownerCitizenId or '',
+        }, ' '):lower()
+
+        if trimmedQuery == '' or searchText:find(trimmedQuery:lower(), 1, true) then
+            results[#results + 1] = {
+                plate = vehicle.plate,
+                vehicle_label = vehicle.label,
+                owner_name = vehicle.owner,
+                owner_citizenid = vehicle.ownerCitizenId,
+                model = vehicle.model,
+            }
+            if #results >= 25 then
+                break
+            end
+        end
     end
 
     return results
@@ -547,10 +646,11 @@ end)
 ps.registerCallback(resourceName..':server:saveReport', function(source, reportData)
     local src = source
     if not CheckAuth(src) then return end
+    EnsureMdtSchema()
 
     local identifier = ps.getIdentifier(src)
     local playerName = ps.getPlayerName(src)
-    local callsign = ps.getMetadata(src, 'callsign')
+    local callsign = normalizeCallsignValue(ps.getMetadata(src, 'callsign'))
 
     local title = reportData.report and reportData.report.title
     if not title or title == "" then
@@ -608,7 +708,7 @@ ps.registerCallback(resourceName..':server:saveReport', function(source, reportD
             json.encode(content),
             type(content) == "string" and content or json.encode(content),
             identifier,
-            (callsign or '') .. ' ' .. (playerName or 'Desconhecido')
+            formatOfficerDisplayName(callsign, playerName or 'Desconhecido')
         })
 
         if not insertResult then
@@ -629,7 +729,7 @@ ps.registerCallback(resourceName..':server:saveReport', function(source, reportD
             json.encode(content),
             type(content) == "string" and content or json.encode(content),
             identifier,
-            (callsign or '') .. ' ' .. (playerName or 'Desconhecido'),
+            formatOfficerDisplayName(callsign, playerName or 'Desconhecido'),
             reportId
         })
 
@@ -741,8 +841,7 @@ ps.registerCallback(resourceName..':server:saveReport', function(source, reportD
 
     if reportId and reportType == 'Arrest Report' and reportData.involved and #reportData.involved > 0 then
         local officerId = ps.getIdentifier(src)
-        local officerName = (callsign or '') .. ' ' .. (playerName or '')
-        officerName = officerName:gsub('^%s+', ''):gsub('%s+$', '')
+        local officerName = formatOfficerDisplayName(callsign, playerName or '')
         local arrestQueries = {}
         for _, involved in ipairs(reportData.involved) do
             if involved.type == 'suspect' and involved.citizenid then
@@ -819,7 +918,7 @@ ps.registerCallback(resourceName..':server:updateReportContent', function(source
 
     local identifier = ps.getIdentifier(src)
     local playerName = ps.getPlayerName(src)
-    local callsign = ps.getMetadata(src, 'callsign')
+    local callsign = normalizeCallsignValue(ps.getMetadata(src, 'callsign'))
 
     if not identifier then return { success = false, error = "Player not found" } end
 
@@ -839,7 +938,7 @@ ps.registerCallback(resourceName..':server:updateReportContent', function(source
             json.encode(content),
             type(content) == "string" and content or json.encode(content),
             identifier,
-            callsign .. ' ' .. playerName
+            formatOfficerDisplayName(callsign, playerName)
         })
 
         if not insertResult then

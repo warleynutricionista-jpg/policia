@@ -42,6 +42,7 @@ ps.registerCallback(resourceName .. ':server:setCallsign', function(source, payl
         TriggerClientEvent(resourceName .. ':client:updateCallsign', Player.PlayerData.source, newCallsign)
 
         MySQL.update.await('UPDATE mdt_profiles SET callsign = ? WHERE citizenid = ?', { newCallsign, cid })
+        Cache.invalidate('reports:officers:directory')
 
         if ps.auditLog then
             ps.auditLog(src, 'callsign_changed', 'officer', cid, { callsign = newCallsign })

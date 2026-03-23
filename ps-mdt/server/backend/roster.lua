@@ -326,6 +326,7 @@ ps.registerCallback('ps-mdt:server:promoteOfficer', function(source, payload)
     end
 
     ps.setJob(targetSrc, jobName, newGrade)
+    Cache.invalidate('reports:officers:directory')
 
     local gradeName = GetMdtRankData(jobName, newGrade, gradeData).label
 
@@ -371,6 +372,7 @@ ps.registerCallback('ps-mdt:server:fireOfficer', function(source, payload)
     end
 
     ps.setJob(targetSrc, 'unemployed', 0)
+    Cache.invalidate('reports:officers:directory')
 
     if ps.auditLog then
         ps.auditLog(src, 'officer_fired', 'officers', citizenid, {})
@@ -420,6 +422,7 @@ ps.registerCallback('ps-mdt:server:updateOfficerCallsign', function(source, payl
     TriggerClientEvent(resourceName .. ':client:updateCallsign', Player.PlayerData.source, newCallsign)
 
     MySQL.update.await('UPDATE mdt_profiles SET callsign = ? WHERE citizenid = ?', { newCallsign, citizenid })
+    Cache.invalidate('reports:officers:directory')
 
     if ps.auditLog then
         ps.auditLog(src, 'callsign_changed', 'officers', citizenid, { callsign = newCallsign })

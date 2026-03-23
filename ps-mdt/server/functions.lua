@@ -1,5 +1,114 @@
 local ps = RequirePs('server/functions.lua')
 
+local CALLSIGN_PLACEHOLDERS = {
+    [''] = true,
+    ['SEM CALLSIGN'] = true,
+    ['SEM INDICATIVO'] = true,
+    ['NO CALLSIGN'] = true,
+    ['N/A'] = true,
+    ['NULL'] = true,
+    ['NONE'] = true,
+}
+
+local function trimString(value)
+    if value == nil then
+        return nil
+    end
+
+    local trimmed = tostring(value):gsub('^%s+', ''):gsub('%s+$', '')
+    return trimmed
+end
+
+local function normalizeFullName(fullname)
+    local trimmed = trimString(fullname)
+    if trimmed and trimmed ~= '' then
+        return trimmed
+    end
+    return 'Desconhecido'
+end
+
+local function normalizeProfileCallsign(citizenid, rawCallsign)
+    local trimmed = trimString(rawCallsign)
+    if not trimmed then
+        return nil
+    end
+
+    local upper = trimmed:upper()
+    if CALLSIGN_PLACEHOLDERS[upper] then
+        return nil
+    end
+
+    local conflictingCitizenId = MySQL.scalar.await([[
+        SELECT citizenid
+        FROM mdt_profiles
+        WHERE callsign = ?
+          AND citizenid <> ?
+        LIMIT 1
+    ]], { trimmed, citizenid })
+
+    if conflictingCitizenId then
+        ps.warn(('Skipping duplicated callsign "%s" for citizen %s; already used by %s'):format(trimmed, citizenid, conflictingCitizenId))
+        return nil
+    end
+
+    return trimmed
+end
+
+local function upsertProfileRecord(citizenid, fullname, callsign, badgeNumber, rank, department)
+    local sanitizedFullname = normalizeFullName(fullname)
+    local sanitizedCallsign = normalizeProfileCallsign(citizenid, callsign)
+    local sanitizedBadgeNumber = trimString(badgeNumber)
+    local sanitizedRank = trimString(rank)
+    local sanitizedDepartment = trimString(department)
+
+    local existing = MySQL.single.await('SELECT id FROM mdt_profiles WHERE citizenid = ? LIMIT 1', { citizenid })
+    if existing and existing.id then
+        MySQL.update.await([[
+            UPDATE mdt_profiles
+            SET fullname = ?,
+                callsign = COALESCE(?, callsign),
+                badge_number = COALESCE(?, badge_number),
+                rank = COALESCE(?, rank),
+                department = COALESCE(?, department)
+            WHERE citizenid = ?
+        ]], {
+            sanitizedFullname,
+            sanitizedCallsign,
+            sanitizedBadgeNumber,
+            sanitizedRank,
+            sanitizedDepartment,
+            citizenid
+        })
+
+        if sanitizedCallsign == nil and callsign ~= nil and trimString(callsign) ~= nil then
+            MySQL.update.await('UPDATE mdt_profiles SET callsign = NULL WHERE citizenid = ? AND UPPER(TRIM(callsign)) IN (?, ?, ?, ?, ?, ?)', {
+                citizenid,
+                'SEM CALLSIGN',
+                'SEM INDICATIVO',
+                'NO CALLSIGN',
+                'N/A',
+                'NULL',
+                'NONE'
+            })
+        end
+
+        return existing.id
+    end
+
+    return MySQL.insert.await([[
+        INSERT INTO mdt_profiles
+            (citizenid, fullname, callsign, badge_number, rank, department)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ]], {
+        citizenid,
+        sanitizedFullname,
+        sanitizedCallsign,
+        sanitizedBadgeNumber,
+        sanitizedRank,
+        sanitizedDepartment
+    })
+end
+
 function GetActiveUnits()
     -- Count all LEO jobs, not just "police"
     local total = 0
@@ -40,24 +149,15 @@ end
 function EnsureProfileExists(citizenid)
     if not citizenid then return false end
 
-    local exists = MySQL.scalar.await('SELECT COUNT(*) FROM mdt_profiles WHERE citizenid = ?', { citizenid })
-    if exists and exists > 0 then
-        return true
-    end
-
     -- Try online player first (works with both QBox and QBCore via ps_lib)
     local playerData = ps.getPlayerByIdentifier(citizenid)
     if playerData then
         local pd = playerData.PlayerData or playerData
         local charinfo = pd.charinfo
         if charinfo then
-            local fullname = (charinfo.firstname or '') .. ' ' .. (charinfo.lastname or '')
+            local fullname = normalizeFullName((charinfo.firstname or '') .. ' ' .. (charinfo.lastname or ''))
             local callsign = pd.metadata and pd.metadata.callsign or nil
-
-            local success = MySQL.insert.await([[
-                INSERT INTO mdt_profiles (citizenid, fullname, callsign)
-                VALUES(?, ?, ?)
-            ]], { citizenid, fullname, callsign })
+            local success = upsertProfileRecord(citizenid, fullname, callsign)
 
             if success then
                 ps.debug('Auto-created MDT profile for: ' .. citizenid)
@@ -75,13 +175,9 @@ function EnsureProfileExists(citizenid)
     if okQbx and qbxOffline and qbxOffline.PlayerData then
         local pd = qbxOffline.PlayerData
         local charinfo = pd.charinfo or {}
-        local fullname = ((charinfo.firstname or '') .. ' ' .. (charinfo.lastname or '')):gsub('^%s+', ''):gsub('%s+$', '')
+        local fullname = normalizeFullName((charinfo.firstname or '') .. ' ' .. (charinfo.lastname or ''))
         local callsign = pd.metadata and pd.metadata.callsign or nil
-
-        local success = MySQL.insert.await([[
-            INSERT INTO mdt_profiles (citizenid, fullname, callsign)
-            VALUES(?, ?, ?)
-        ]], { citizenid, fullname ~= '' and fullname or 'Desconhecido', callsign })
+        local success = upsertProfileRecord(citizenid, fullname, callsign)
 
         if success then
             ps.debug('Auto-created MDT profile for (QBox offline): ' .. citizenid)
@@ -92,19 +188,15 @@ function EnsureProfileExists(citizenid)
     -- Fallback: resolve from players table (offline player)
     local row = MySQL.single.await('SELECT charinfo, metadata FROM players WHERE citizenid = ? LIMIT 1', { citizenid })
     if not row then
-        ps.warn('No player data found for citizenid: ' .. citizenid)
-        return false
+        return upsertProfileRecord(citizenid, 'Desconhecido') ~= nil
     end
 
     local charinfo = row.charinfo and json.decode(row.charinfo) or {}
     local metadata = row.metadata and json.decode(row.metadata) or {}
-    local fullname = ((charinfo.firstname or '') .. ' ' .. (charinfo.lastname or '')):gsub('^%s+', ''):gsub('%s+$', '')
+    local fullname = normalizeFullName((charinfo.firstname or '') .. ' ' .. (charinfo.lastname or ''))
     local callsign = metadata.callsign
 
-    local success = MySQL.insert.await([[
-        INSERT INTO mdt_profiles (citizenid, fullname, callsign)
-        VALUES(?, ?, ?)
-    ]], { citizenid, fullname ~= '' and fullname or 'Desconhecido', callsign })
+    local success = upsertProfileRecord(citizenid, fullname, callsign)
 
     if success then
         ps.debug('Auto-created MDT profile for: ' .. citizenid)
@@ -119,39 +211,7 @@ function EnsureProfileData(citizenid, fullname, callsign, badgeNumber, rank, dep
         return nil
     end
 
-    local profile = MySQL.single.await('SELECT id FROM mdt_profiles WHERE citizenid = ?', { citizenid })
-    if profile and profile.id then
-        MySQL.update.await([[UPDATE mdt_profiles
-            SET fullname = COALESCE(?, fullname),
-                callsign = COALESCE(?, callsign),
-                badge_number = COALESCE(?, badge_number),
-                rank = COALESCE(?, rank),
-                department = COALESCE(?, department)
-            WHERE citizenid = ?
-        ]], {
-            fullname,
-            callsign,
-            badgeNumber,
-            rank,
-            department,
-            citizenid
-        })
-        return profile.id
-    end
-
-    local result = MySQL.insert.await([[INSERT INTO mdt_profiles
-        (citizenid, fullname, callsign, badge_number, rank, department)
-        VALUES (?, ?, ?, ?, ?, ?)
-    ]], {
-        citizenid,
-        fullname or 'Desconhecido',
-        callsign,
-        badgeNumber,
-        rank,
-        department
-    })
-
-    return result
+    return upsertProfileRecord(citizenid, fullname, callsign, badgeNumber, rank, department)
 end
 
 -- Returns the owner of a vehicle based on its license plate.

@@ -20,6 +20,27 @@ end
 
 local Core = getCoreObject()
 local resourceName = tostring(GetCurrentResourceName())
+local VEHICLE_DIRECTORY_CACHE_KEY = 'vehicles:directory'
+local VEHICLE_DIRECTORY_TTL = 15
+
+local function normalizeSearchTerm(value)
+    local trimmed = tostring(value or ''):match('^%s*(.-)%s*$') or ''
+    return trimmed
+end
+
+local function normalizePlate(value)
+    local trimmed = normalizeSearchTerm(value)
+    return trimmed ~= '' and trimmed:gsub('%s+', ''):upper() or ''
+end
+
+local function buildOwnerName(rawName, citizenid)
+    local trimmed = normalizeSearchTerm(rawName)
+    if trimmed ~= '' and trimmed:lower() ~= 'null null' then
+        return trimmed
+    end
+
+    return ps.getPlayerNameByIdentifier(citizenid) or 'Desconhecido'
+end
 
 local function formatLabel(value)
     if not value or value == '' then
@@ -65,10 +86,13 @@ local function countSetItems(set)
     return count
 end
 
-local function serializeVehicleRow(v, reportIdsByPlate, activeBoloByPlate)
+local function serializeVehicleRow(v, reportCountsByPlate, activeBoloByPlate)
     local vehicleData = getVehicleShared(v.vehicle)
-    local plate = v.plate and string.upper(v.plate) or 'UNKNOWN'
-    local reportCount = countSetItems(reportIdsByPlate and reportIdsByPlate[plate] or nil)
+    local plate = normalizePlate(v.plate)
+    if plate == '' then
+        plate = 'UNKNOWN'
+    end
+    local reportCount = tonumber(reportCountsByPlate and reportCountsByPlate[plate] or 0) or 0
     local hasActiveBolo = (activeBoloByPlate and activeBoloByPlate[plate] == true) or v.boloactive == 1
     local flags = buildVehicleFlags(v.stolen == 1, hasActiveBolo, v.status)
 
@@ -77,7 +101,7 @@ local function serializeVehicleRow(v, reportIdsByPlate, activeBoloByPlate)
         model = v.vehicle,
         label = vehicleData and vehicleData.name or formatLabel(v.vehicle),
         plate = plate,
-        owner = ps.getPlayerNameByIdentifier(v.citizenid) or 'Desconhecido',
+        owner = buildOwnerName(v.owner_name, v.citizenid),
         ownerCitizenId = v.citizenid,
         class = formatLabel(vehicleData and vehicleData.category or 'Desconhecido'),
         type = formatLabel(vehicleData and vehicleData.type or 'Desconhecido'),
@@ -90,59 +114,125 @@ local function serializeVehicleRow(v, reportIdsByPlate, activeBoloByPlate)
     }
 end
 
+local function matchesVehicleQuery(vehicle, normalizedQuery)
+    if not normalizedQuery or normalizedQuery == '' then
+        return true
+    end
+
+    local needle = normalizedQuery:lower()
+    local compactNeedle = normalizedQuery:gsub('%s+', ''):lower()
+    local haystacks = {
+        vehicle.plate or '',
+        vehicle.model or '',
+        vehicle.label or '',
+        vehicle.owner or '',
+        vehicle.ownerCitizenId or '',
+        vehicle.class or '',
+        vehicle.type or '',
+        vehicle.status or '',
+    }
+
+    for i = 1, #haystacks do
+        local value = tostring(haystacks[i] or '')
+        if value:lower():find(needle, 1, true) or value:gsub('%s+', ''):lower():find(compactNeedle, 1, true) then
+            return true
+        end
+    end
+
+    return false
+end
+
+function GetMdtVehicleDirectory(forceRefresh)
+    if forceRefresh then
+        Cache.invalidate(VEHICLE_DIRECTORY_CACHE_KEY)
+    end
+
+    return Cache.getOrSet(VEHICLE_DIRECTORY_CACHE_KEY, VEHICLE_DIRECTORY_TTL, function()
+        EnsureMdtSchema()
+
+        local vehList = MySQL.query.await([[
+            SELECT
+                pv.id,
+                pv.plate,
+                pv.vehicle,
+                pv.citizenid,
+                pv.mdt_vehicle_information AS information,
+                pv.mdt_vehicle_points AS points,
+                pv.mdt_vehicle_status AS status,
+                pv.mdt_vehicle_stolen AS stolen,
+                pv.mdt_vehicle_boloactive AS boloactive,
+                pv.mdt_vehicle_image AS image,
+                pv.state AS core_state,
+                CONCAT_WS(
+                    ' ',
+                    NULLIF(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')), 'null'),
+                    NULLIF(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname')), 'null')
+                ) AS owner_name
+            FROM player_vehicles pv
+            LEFT JOIN players p
+                ON p.citizenid COLLATE utf8mb4_general_ci = pv.citizenid COLLATE utf8mb4_general_ci
+            ORDER BY pv.plate ASC
+        ]]) or {}
+
+        local boloRows = MySQL.query.await([[
+            SELECT id, reportId, subject_name, notes, status, subject_id, image, type
+            FROM mdt_bolos
+            WHERE type = ? AND status = ?
+        ]], { 'vehicle', 'active' }) or {}
+
+        local reportRows = MySQL.query.await([[
+            SELECT UPPER(REPLACE(plate, ' ', '')) AS normalized_plate, COUNT(DISTINCT reportid) AS report_count
+            FROM mdt_report_vehicles
+            GROUP BY normalized_plate
+        ]]) or {}
+
+        local reportCountsByPlate = {}
+        local activeBoloByPlate = {}
+        local bolos = {}
+
+        for _, reportRow in ipairs(reportRows) do
+            if reportRow.normalized_plate and reportRow.normalized_plate ~= '' then
+                reportCountsByPlate[reportRow.normalized_plate] = tonumber(reportRow.report_count) or 0
+            end
+        end
+
+        for _, bolo in pairs(boloRows) do
+            local plate = normalizePlate(bolo.subject_id)
+            if plate ~= '' then
+                activeBoloByPlate[plate] = true
+            end
+
+            table.insert(bolos, {
+                id = bolo.id,
+                reportId = bolo.reportId and tostring(bolo.reportId) or 'N/A',
+                name = bolo.subject_name or 'Veículo desconhecido',
+                type = bolo.type,
+                notes = bolo.notes or '',
+                status = bolo.status,
+                plate = bolo.subject_id or 'Desconhecido',
+                image = bolo.image or 'https://docs.fivem.net/vehicles/elegy.webp',
+            })
+        end
+
+        local vehicles = {}
+        for _, v in ipairs(vehList) do
+            vehicles[#vehicles + 1] = serializeVehicleRow(v, reportCountsByPlate, activeBoloByPlate)
+        end
+
+        return {
+            vehicles = vehicles,
+            bolos = bolos,
+        }
+    end) or { vehicles = {}, bolos = {} }
+end
+
 ps.registerCallback(resourceName .. ':server:GetVehicles', function(source)
     local startTime = os.clock()
     local src = source
     if not CheckAuth(src) then return { vehicles = {}, bolos = {} } end
-
-    local vehList = MySQL.query.await([[
-        SELECT
-            pv.id,
-            pv.plate,
-            pv.vehicle,
-            pv.citizenid,
-            pv.mdt_vehicle_information AS information,
-            pv.mdt_vehicle_points AS points,
-            pv.mdt_vehicle_status AS status,
-            pv.mdt_vehicle_stolen AS stolen,
-            pv.mdt_vehicle_boloactive AS boloactive,
-            pv.mdt_vehicle_image AS image,
-            pv.state AS core_state
-        FROM player_vehicles pv
-    ]])
-
-    local boloRows = MySQL.query.await('SELECT * FROM mdt_bolos WHERE type = ? AND status = ?', {'vehicle', 'active'})
-    local reportIdsByPlate = {}
-    local activeBoloByPlate = {}
-    local bolos = {}
-
-    for _, bolo in pairs(boloRows) do
-        local plate = bolo.subject_id and string.upper(tostring(bolo.subject_id)) or nil
-        if plate then
-            reportIdsByPlate[plate] = reportIdsByPlate[plate] or {}
-            if bolo.reportId then
-                reportIdsByPlate[plate][tostring(bolo.reportId)] = true
-            end
-            if bolo.status == 'active' then
-                activeBoloByPlate[plate] = true
-            end
-        end
-        table.insert(bolos, {
-            id = bolo.id,
-            reportId = bolo.reportId and tostring(bolo.reportId) or 'N/A',
-            name = bolo.subject_name or 'Veículo desconhecido',
-            type = bolo.type,
-            notes = bolo.notes or '',
-            status = bolo.status,
-            plate = bolo.subject_id or 'Desconhecido',
-            image = bolo.image or 'https://docs.fivem.net/vehicles/elegy.webp',
-        })
-    end
-
-    local vehicles = {}
-    for _, v in ipairs(vehList) do
-        table.insert(vehicles, serializeVehicleRow(v, reportIdsByPlate, activeBoloByPlate))
-    end
+    local directory = GetMdtVehicleDirectory()
+    local vehicles = directory.vehicles or {}
+    local bolos = directory.bolos or {}
 
     local endTime = os.clock()
     local elapsedTime = (endTime - startTime) * 1000
@@ -162,43 +252,17 @@ ps.registerCallback(resourceName .. ':server:SearchVehicles', function(source, q
     local src = source
     if not CheckAuth(src) then return { vehicles = {}, bolos = {} } end
 
-    query = tostring(query or '')
-    local trimmedQuery = query:match('^%s*(.-)%s*$') or ''
-    local hasSearch = trimmedQuery ~= ''
-    local likeQuery = '%' .. trimmedQuery .. '%'
-
-    local rows = MySQL.query.await(([[
-        SELECT
-            pv.id,
-            pv.plate,
-            pv.vehicle,
-            pv.citizenid,
-            pv.mdt_vehicle_information AS information,
-            pv.mdt_vehicle_points AS points,
-            pv.mdt_vehicle_status AS status,
-            pv.mdt_vehicle_stolen AS stolen,
-            pv.mdt_vehicle_boloactive AS boloactive,
-            pv.mdt_vehicle_image AS image,
-            pv.state AS core_state
-        FROM player_vehicles pv
-        LEFT JOIN players p ON p.citizenid COLLATE utf8mb4_general_ci = pv.citizenid COLLATE utf8mb4_general_ci
-        WHERE (%s)
-        ORDER BY pv.plate ASC
-        LIMIT 50
-    ]]):format(hasSearch and [[
-        UPPER(REPLACE(pv.plate, ' ', '')) LIKE UPPER(REPLACE(?, ' ', ''))
-        OR pv.vehicle LIKE ?
-        OR CONCAT(
-            JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')),
-            ' ',
-            JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname'))
-        ) LIKE ?
-        OR pv.citizenid LIKE ?
-    ]] or '1=1'), hasSearch and { likeQuery, likeQuery, likeQuery, likeQuery } or {})
-
+    local trimmedQuery = normalizeSearchTerm(query)
+    local directory = GetMdtVehicleDirectory()
     local vehicles = {}
-    for _, row in ipairs(rows or {}) do
-        vehicles[#vehicles + 1] = serializeVehicleRow(row)
+
+    for _, vehicle in ipairs(directory.vehicles or {}) do
+        if matchesVehicleQuery(vehicle, trimmedQuery) then
+            vehicles[#vehicles + 1] = vehicle
+            if #vehicles >= 50 then
+                break
+            end
+        end
     end
 
     return { vehicles = vehicles, bolos = {} }
@@ -207,19 +271,20 @@ end)
 ps.registerCallback(resourceName .. ':server:UpdateVehicle', function(source, payload)
     local src = source
     if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
+    EnsureMdtSchema()
 
     payload = payload or {}
-    local plate = payload.plate
+    local plate = normalizePlate(payload.plate)
     if not plate or plate == '' then
         return { success = false, message = 'Faltando placa' }
     end
 
-    local ownerRow = MySQL.single.await('SELECT citizenid FROM player_vehicles WHERE plate = ? LIMIT 1', { plate })
+    local ownerRow = MySQL.single.await('SELECT citizenid FROM player_vehicles WHERE UPPER(REPLACE(plate, \' \', \'\')) = ? LIMIT 1', { plate })
     if not ownerRow or not ownerRow.citizenid then
         return { success = false, message = 'Veículo não encontrado' }
     end
 
-    local existing = MySQL.single.await('SELECT mdt_vehicle_points, mdt_vehicle_status, mdt_vehicle_information FROM player_vehicles WHERE plate = ? LIMIT 1', { plate })
+    local existing = MySQL.single.await('SELECT mdt_vehicle_points, mdt_vehicle_status, mdt_vehicle_information FROM player_vehicles WHERE UPPER(REPLACE(plate, \' \', \'\')) = ? LIMIT 1', { plate })
     local previousPoints = existing and tonumber(existing.mdt_vehicle_points) or 0
 
     local points = tonumber(payload.points)
@@ -262,7 +327,8 @@ ps.registerCallback(resourceName .. ':server:UpdateVehicle', function(source, pa
 
     values[#values + 1] = plate
 
-    MySQL.update.await(('UPDATE player_vehicles SET %s WHERE plate = ?'):format(table.concat(updates, ', ')), values)
+    MySQL.update.await(('UPDATE player_vehicles SET %s WHERE UPPER(REPLACE(plate, \' \', \'\')) = ?'):format(table.concat(updates, ', ')), values)
+    Cache.invalidate(VEHICLE_DIRECTORY_CACHE_KEY)
 
     if ps.auditLog then
         ps.auditLog(src, 'vehicle_updated', 'vehicle', plate, {
@@ -279,7 +345,9 @@ end)
 ps.registerCallback(resourceName .. ':server:GetVehicle', function(source, plate)
     local src = source
     if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
+    EnsureMdtSchema()
 
+    plate = normalizePlate(plate)
     if not plate or plate == '' then
         return { success = false, message = 'Faltando placa' }
     end
@@ -296,9 +364,16 @@ ps.registerCallback(resourceName .. ':server:GetVehicle', function(source, plate
             pv.mdt_vehicle_stolen AS stolen,
             pv.mdt_vehicle_boloactive AS boloactive,
             pv.mdt_vehicle_image AS image,
-            pv.state AS core_state
+            pv.state AS core_state,
+            CONCAT_WS(
+                ' ',
+                NULLIF(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')), 'null'),
+                NULLIF(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname')), 'null')
+            ) AS owner_name
         FROM player_vehicles pv
-        WHERE pv.plate = ?
+        LEFT JOIN players p
+            ON p.citizenid COLLATE utf8mb4_general_ci = pv.citizenid COLLATE utf8mb4_general_ci
+        WHERE UPPER(REPLACE(pv.plate, ' ', '')) = ?
         LIMIT 1
     ]], { plate })
 
@@ -308,9 +383,17 @@ ps.registerCallback(resourceName .. ':server:GetVehicle', function(source, plate
 
     local row = vehicleRow[1]
     local vehicleData = getVehicleShared(row.vehicle)
-    local plateUpper = row.plate and string.upper(row.plate) or 'UNKNOWN'
+    local plateUpper = normalizePlate(row.plate)
+    if plateUpper == '' then
+        plateUpper = 'UNKNOWN'
+    end
 
-    local boloRows = MySQL.query.await('SELECT * FROM mdt_bolos WHERE type = ? AND subject_id = ?', { 'vehicle', plate })
+    local boloRows = MySQL.query.await([[
+        SELECT *
+        FROM mdt_bolos
+        WHERE type = ?
+          AND UPPER(REPLACE(subject_id, ' ', '')) = ?
+    ]], { 'vehicle', plate })
     local reportIdSet = {}
     local bolos = {}
     local hasActiveBolo = false
@@ -341,7 +424,7 @@ ps.registerCallback(resourceName .. ':server:GetVehicle', function(source, plate
             label = vehicleData and vehicleData.name or 'Veículo desconhecido',
             brand = vehicleData and vehicleData.brand or nil,
             plate = plateUpper,
-            owner = ps.getPlayerNameByIdentifier(row.citizenid) or 'Desconhecido',
+            owner = buildOwnerName(row.owner_name, row.citizenid),
             class = formatLabel(vehicleData and vehicleData.category or 'Desconhecido'),
             type = formatLabel(vehicleData and vehicleData.type or 'Desconhecido'),
             image = (row.image and row.image ~= '' and row.image) or ('https://docs.fivem.net/vehicles/' .. row.vehicle .. '.webp'),
