@@ -4,6 +4,8 @@ ALTER TABLE `mdt_reports`
     ADD COLUMN IF NOT EXISTS `dateupdated` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
 
 ALTER TABLE `mdt_bolos`
+    ADD COLUMN IF NOT EXISTS `type` ENUM('citizen','vehicle','weapon','property','other') NOT NULL DEFAULT 'citizen',
+    ADD COLUMN IF NOT EXISTS `subject_id` VARCHAR(50) NULL,
     ADD COLUMN IF NOT EXISTS `subject_name` VARCHAR(100) NULL,
     ADD COLUMN IF NOT EXISTS `reportId` INT(11) UNSIGNED NULL,
     ADD COLUMN IF NOT EXISTS `notes` TEXT NULL,
@@ -45,6 +47,9 @@ ALTER TABLE `mdt_reports`
     ADD INDEX IF NOT EXISTS `idx_mdt_reports_author` (`author`);
 
 ALTER TABLE `mdt_bolos`
+    ADD INDEX IF NOT EXISTS `type` (`type`),
+    ADD INDEX IF NOT EXISTS `status` (`status`),
+    ADD INDEX IF NOT EXISTS `reportId` (`reportId`),
     ADD INDEX IF NOT EXISTS `idx_mdt_bolos_type_status_subject` (`type`, `status`, `subject_id`);
 
 ALTER TABLE `mdt_reports_restrictions`
