@@ -1,6 +1,88 @@
 Prisoners = {}
 Breakouts = {}
 
+local function NormalizePrisonTime(time)
+    local normalized = math.floor(tonumber(time) or 0)
+    if normalized < 0 then
+        normalized = 0
+    end
+    return normalized
+end
+
+local function FindPrisonerSourceByIdentifier(identifier)
+    if not identifier then return nil end
+
+    for playerSource, prisonerData in pairs(Prisoners) do
+        if prisonerData.identifier == identifier then
+            return playerSource, prisonerData
+        end
+    end
+
+    return nil, nil
+end
+
+local function GetPrisonConfigSummary()
+    local prisons = {}
+
+    for index, prison in pairs(Config.Prisons or {}) do
+        prisons[#prisons + 1] = {
+            index = index,
+            label = prison.label or index,
+        }
+    end
+
+    table.sort(prisons, function(a, b)
+        return tostring(a.label) < tostring(b.label)
+    end)
+
+    return prisons
+end
+
+local function BuildPrisonStatus(identifier, playerSource, prisonerData)
+    local prisonIndex = prisonerData and prisonerData.index or nil
+    local prisonConfig = prisonIndex and Config.Prisons[prisonIndex] or nil
+
+    return {
+        jailed = prisonerData ~= nil,
+        identifier = identifier,
+        source = playerSource,
+        online = playerSource ~= nil and GetPlayerName(playerSource) ~= nil,
+        prison = prisonIndex,
+        prisonLabel = prisonConfig and prisonConfig.label or prisonIndex,
+        time = prisonerData and prisonerData.time or 0,
+        sentence_date = prisonerData and prisonerData.sentence_date or nil,
+    }
+end
+
+local function GetPrisonStatusByIdentifier(identifier)
+    if not identifier then return nil end
+
+    local onlineSource, onlinePrisoner = FindPrisonerSourceByIdentifier(identifier)
+    if onlinePrisoner then
+        return BuildPrisonStatus(identifier, onlineSource, onlinePrisoner)
+    end
+
+    local row = MySQL.single.await('SELECT identifier, prison, time, sentence_date FROM pickle_prisons WHERE identifier = ? LIMIT 1', { identifier })
+    if not row then
+        return BuildPrisonStatus(identifier, nil, nil)
+    end
+
+    local prisonTime = NormalizePrisonTime(row.time)
+    if Config.ServeTimeOffline and row.sentence_date then
+        prisonTime = prisonTime - math.floor((os.time() - tonumber(row.sentence_date or os.time())) / 60)
+        if prisonTime < 0 then
+            prisonTime = 0
+        end
+    end
+
+    return BuildPrisonStatus(identifier, nil, {
+        identifier = row.identifier,
+        index = row.prison,
+        time = prisonTime,
+        sentence_date = row.sentence_date,
+    })
+end
+
 function CheckRequired(source, required)
     if not required or #required < 1 then return true end
     local success = true
@@ -127,6 +209,64 @@ function UpdatePrisonTime(source, time)
         ["@time"] = time,
     })
 end
+
+local function SetPrisonTimeByIdentifier(identifier, time)
+    local normalizedTime = NormalizePrisonTime(time)
+    local playerSource, prisonerData = FindPrisonerSourceByIdentifier(identifier)
+
+    if prisonerData then
+        if normalizedTime <= 0 then
+            UnjailPlayer(playerSource)
+            return true, "released", GetPrisonStatusByIdentifier(identifier)
+        end
+
+        Prisoners[playerSource].time = normalizedTime
+        SetPlayerMetadata(playerSource, "injail", normalizedTime)
+        UpdatePrisonTime(playerSource, normalizedTime)
+
+        return true, "updated", GetPrisonStatusByIdentifier(identifier)
+    end
+
+    local row = MySQL.single.await('SELECT identifier, time FROM pickle_prisons WHERE identifier = ? LIMIT 1', { identifier })
+    if not row then
+        return false, "not_found"
+    end
+
+    if normalizedTime <= 0 then
+        return false, "offline_release_not_supported"
+    end
+
+    MySQL.update.await('UPDATE pickle_prisons SET time = ? WHERE identifier = ?', { normalizedTime, identifier })
+    return true, "updated", GetPrisonStatusByIdentifier(identifier)
+end
+
+local function AdjustPrisonTimeByIdentifier(identifier, delta)
+    local status = GetPrisonStatusByIdentifier(identifier)
+    if not status or not status.jailed then
+        return false, "not_found"
+    end
+
+    local currentTime = NormalizePrisonTime(status.time)
+    local newTime = NormalizePrisonTime(currentTime + (tonumber(delta) or 0))
+
+    return SetPrisonTimeByIdentifier(identifier, newTime)
+end
+
+local function UnjailByIdentifier(identifier)
+    local playerSource, prisonerData = FindPrisonerSourceByIdentifier(identifier)
+    if not prisonerData or not playerSource then
+        return false, "offline_release_not_supported"
+    end
+
+    UnjailPlayer(playerSource)
+    return true, "released", GetPrisonStatusByIdentifier(identifier)
+end
+
+exports("GetPrisons", GetPrisonConfigSummary)
+exports("GetPrisonStatus", GetPrisonStatusByIdentifier)
+exports("SetPrisonTimeByIdentifier", SetPrisonTimeByIdentifier)
+exports("AdjustPrisonTimeByIdentifier", AdjustPrisonTimeByIdentifier)
+exports("UnjailByIdentifier", UnjailByIdentifier)
 
 RegisterCallback("pickle_prisons:canBreakout", function(source, cb, index)
     if Breakouts[index] then return cb(false) end
