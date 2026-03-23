@@ -24,7 +24,7 @@ end
 
 local function makeEntityMatrix(entity)
     local f, r, u, a = GetEntityMatrix(entity)
-    local view = dataview.ArrayBuffer(60)
+    local view = dataview.ArrayBuffer(64)
 
     view:SetFloat32(0, r[1])
         :SetFloat32(4, r[2])
@@ -124,7 +124,7 @@ end
 local function GetVectorText(vectorType) 
     if not currentEntity then return 'ERR_NO_ENTITY_' .. (vectorType or "UNK") end
     local label = (vectorType == "coords" and "Posição" or "Rotação")
-    local vec = (vectorType == "coords" and GetEntityCoords(currentEntity) or GetEntityRotation(currentEntity))
+    local vec = (vectorType == "coords" and GetEntityCoords(currentEntity) or GetEntityRotation(currentEntity, 2))
     return ('%s: %.2f, %.2f, %.2f'):format(label, vec.x, vec.y, vec.z)
 end
 
@@ -162,7 +162,7 @@ local function useGizmo(entity)
     return {
         handle = entity,
         position = GetEntityCoords(entity),
-        rotation = GetEntityRotação(entity)
+        rotation = GetEntityRotation(entity, 2)
     }
 end
 
@@ -208,7 +208,7 @@ lib.addKeybind({
         ExecuteCommand('+gizmoRotation')
     end,
     onReleased = function (self)
-        ExecuteCommand('-gizmoRotação')
+        ExecuteCommand('-gizmoRotation')
     end
 })
 

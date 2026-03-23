@@ -605,12 +605,60 @@ function fallback.setJob(source, jobName, grade)
     return ok and result ~= false
 end
 
-function fallback.addKeybind(options)
-    if lib and lib.addKeybind then
-        return lib.addKeybind(options)
+local function slugifyKeybindName(value)
+    value = tostring(value or '')
+    value = value:gsub('[^%w_]+', '_'):gsub('^_+', ''):gsub('_+$', ''):lower()
+
+    if value == '' then
+        value = ('%s_keybind'):format(resourceName:gsub('[^%w_]+', '_'):lower())
     end
-    fallback.warn('lib.addKeybind unavailable')
-    return nil
+
+    return value
+end
+
+function fallback.addKeybind(options, legacyCommandOrDescription, legacyDescriptionOrCallback, legacyCallback)
+    if not (lib and lib.addKeybind) then
+        fallback.warn('lib.addKeybind unavailable')
+        return nil
+    end
+
+    local keybind = options
+
+    if type(options) ~= 'table' then
+        local defaultKey = options
+        local commandName = type(legacyCommandOrDescription) == 'string' and legacyCommandOrDescription or nil
+        local description = type(legacyDescriptionOrCallback) == 'string' and legacyDescriptionOrCallback or nil
+        local callback = type(legacyDescriptionOrCallback) == 'function' and legacyDescriptionOrCallback or legacyCallback
+
+        keybind = {
+            name = slugifyKeybindName(commandName or defaultKey),
+            description = description or (commandName and ('Executar /%s'):format(commandName)) or 'Atalho do recurso',
+            defaultKey = defaultKey,
+            onPressed = callback or (commandName and function()
+                ExecuteCommand(commandName)
+            end) or nil,
+        }
+    else
+        keybind = {}
+        for k, v in pairs(options) do
+            keybind[k] = v
+        end
+    end
+
+    keybind.name = slugifyKeybindName(keybind.name or keybind.command or keybind.description or keybind.defaultKey)
+    keybind.description = tostring(keybind.description or keybind.name or 'Atalho do recurso')
+
+    if not keybind.defaultKey or keybind.defaultKey == '' then
+        fallback.warn(('Invalid keybind registration for %s: missing defaultKey'):format(keybind.name))
+        return nil
+    end
+
+    if type(keybind.onPressed) ~= 'function' and type(keybind.onReleased) ~= 'function' then
+        fallback.warn(('Invalid keybind registration for %s: missing callback'):format(keybind.name))
+        return nil
+    end
+
+    return lib.addKeybind(keybind)
 end
 
 function fallback.requestModel(model)

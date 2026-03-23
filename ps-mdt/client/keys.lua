@@ -260,5 +260,12 @@ if not Config.Keys.OpenMDT.enabled then
     ps.debug('MDT Open Keybind Disabled')
 else
     ps.debug('MDT Open Keybind Enabled: ' .. Config.Keys.OpenMDT.key)
-    ps.addKeybind(Config.Keys.OpenMDT.key, Config.Commands.Open.command)
+    ps.addKeybind({
+        name = ('%s_open_mdt'):format(resourceName:gsub('[^%w_]+', '_'):lower()),
+        description = 'Abrir ou fechar o MDT',
+        defaultKey = Config.Keys.OpenMDT.key,
+        onPressed = function()
+            OpenMDT()
+        end,
+    })
 end
