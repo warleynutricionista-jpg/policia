@@ -1,12 +1,9 @@
 local resourceName = tostring(GetCurrentResourceName())
 
--- QBox-first core object resolution
 local function getCoreObject()
-    -- Try QBox first
     local okQbx, qbx = pcall(function() return exports['qbx_core']:GetCoreObject() end)
     if okQbx and qbx then return qbx end
 
-    -- Fallback to legacy QBCore
     local okQb, qb = pcall(function() return exports['qb-core']:GetCoreObject() end)
     if okQb and qb then return qb end
 
@@ -15,7 +12,6 @@ end
 
 local QBCore = getCoreObject()
 
--- Send to Jail (supports qbx_core, qb-prison, and legacy police:server:JailPlayer)
 ps.registerCallback(resourceName .. ':server:sendToJail', function(source, payload)
     local src = source
     if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
@@ -49,37 +45,17 @@ ps.registerCallback(resourceName .. ':server:sendToJail', function(source, paylo
         Wait(5000)
     end
 
-    -- Try multiple jail systems in order of preference
-    local jailed = false
-
-    -- 1. Try qbx_core prison system (QBox native)
-    if not jailed then
-        local okJail = pcall(function()
-            exports['qbx_core']:JailPlayer(targetSource, sentence)
-        end)
-        if okJail then jailed = true end
+    local prisonResource = 'pickle_prisons'
+    if GetResourceState(prisonResource) ~= 'started' then
+        return { success = false, message = 'pickle_prisons não está iniciado' }
     end
 
-    -- 2. Try common prison resources
-    if not jailed then
-        local prisonResources = { 'qb-prison', 'rcore_prison', 'myPrison', 'esx_jail' }
-        for _, prison in ipairs(prisonResources) do
-            if GetResourceState(prison) == 'started' then
-                local okPrison = pcall(function()
-                    TriggerEvent(prison .. ':server:jailPlayer', targetSource, sentence)
-                end)
-                if okPrison then
-                    jailed = true
-                    break
-                end
-            end
-        end
-    end
+    local okJail, jailError = pcall(function()
+        exports[prisonResource]:JailPlayer(targetSource, sentence, 'default')
+    end)
 
-    -- 3. Fallback to legacy police event
-    if not jailed then
-        TriggerEvent('police:server:JailPlayer', targetSource, sentence)
-        jailed = true
+    if not okJail then
+        return { success = false, message = ('Falha ao enviar para o pickle_prisons: %s'):format(tostring(jailError)) }
     end
 
     -- Process fine if applicable
