@@ -92,6 +92,31 @@ do
         if okQb and qb then QBCore = qb end
     end
 end
+
+local defaultWeaponRegistrationConfig = {
+    RegisterWeaponsAutomatically = true,
+    RegisterCreatedWeapons = false,
+}
+
+local weaponConfigWarningShown = false
+
+local function getWeaponRegistrationConfig()
+    local configRef = rawget(_G, 'Config')
+    if type(configRef) ~= 'table' then
+        if not weaponConfigWarningShown then
+            weaponConfigWarningShown = true
+            ps.warn('Config global is unavailable in server/backend/weapons.lua; using safe weapon registration defaults until config loads')
+        end
+
+        return defaultWeaponRegistrationConfig
+    end
+
+    return {
+        RegisterWeaponsAutomatically = configRef.RegisterWeaponsAutomatically ~= false,
+        RegisterCreatedWeapons = configRef.RegisterCreatedWeapons == true,
+    }
+end
+
 local function registerWeapon(citizenid, weaponName, serial, info)
     -- Ensure profile exists so owner name can be resolved later
     if citizenid and citizenid ~= '' then
@@ -406,7 +431,9 @@ CreateThread(function()
     Wait(2000)
 
     if GetResourceState('ox_inventory') ~= 'started' then return end
-    if not Config.RegisterWeaponsAutomatically then return end
+
+    local weaponConfig = getWeaponRegistrationConfig()
+    if not weaponConfig.RegisterWeaponsAutomatically then return end
 
     exports.ox_inventory:registerHook('buyItem', function(payload)
         if not payload.itemName or not string.find(payload.itemName, 'WEAPON_') then return true end
@@ -429,7 +456,7 @@ CreateThread(function()
         typeFilter = { ['player'] = true }
     })
 
-    if Config.RegisterCreatedWeapons then
+    if weaponConfig.RegisterCreatedWeapons then
         exports.ox_inventory:registerHook('createItem', function(payload)
             if not payload.item or not payload.item.name or not string.find(payload.item.name, 'WEAPON_') then return true end
             CreateThread(function()
@@ -457,7 +484,8 @@ end)
 -- Some modern QBox/QBCore bases warn when that event path is treated as a net
 -- update, so we reconcile the server-side inventory snapshot for online players.
 do
-    if not Config.RegisterWeaponsAutomatically then return end
+    local weaponConfig = getWeaponRegistrationConfig()
+    if not weaponConfig.RegisterWeaponsAutomatically then return end
 
     local knownSerials = {} -- [citizenid] = { [serial] = true }
 
