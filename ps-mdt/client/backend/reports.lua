@@ -59,7 +59,7 @@ RegisterNUICallback('saveReport', function(data, cb)
         return
     end
 
-    if not data or not data.reportId then
+    if not data or (not data.reportId and not data.id and not data.title) then
         ps.error('Faltando dados do relatório na requisição')
         cb({ success = false, message = 'Faltando dados do relatório' })
         return
