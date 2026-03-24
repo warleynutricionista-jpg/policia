@@ -34,7 +34,7 @@ ps.registerCallback(resourceName .. ':server:createCase', function(source, paylo
     local summary = payload.summary or ''
     local status = normalizeStatus(payload.status)
     local priority = payload.priority or 'medium'
-    local department = payload.department or ps.getJobName(src) or 'police'
+    local department = payload.department or ps.getJobName(src) or ((Config and Config.PoliceJobs and Config.PoliceJobs[1]) or 'police')
 
     local citizenid = ps.getIdentifier(src)
     if not citizenid then

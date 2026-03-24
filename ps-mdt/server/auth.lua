@@ -4,14 +4,18 @@ local ps = RequirePs('server/auth.lua')
 function CheckAuth(source)
     ps.debug('Checking MDT Authorization')
     local jobType = ps.getJobType(source)
-    if jobType ~= Config.PoliceJobType and jobType ~= Config.MedicalJobType then
-        ps.debug('Access Denied for ID: ' .. source .. ', Name: ' .. ps.getPlayerName(source) .. ', not an authorized job type')
+    local jobName = ps.getJobName(source)
+    local isPolice = IsPoliceJob(jobName, jobType)
+    local isMedical = jobType == Config.MedicalJobType
+
+    if not isPolice and not isMedical then
+        ps.debug('Access Denied for ID: ' .. source .. ', Name: ' .. ps.getPlayerName(source) .. ', job: ' .. tostring(jobName) .. ', type: ' .. tostring(jobType))
         ps.notify(source, 'Acesso negado: apenas pessoal autorizado', 'error')
         return false
-    else
-        ps.debug('Access Granted for ID: ' .. source .. ', Name: ' .. ps.getPlayerName(source) .. ', job type: ' .. tostring(jobType))
-        return true
     end
+
+    ps.debug('Access Granted for ID: ' .. source .. ', Name: ' .. ps.getPlayerName(source) .. ', job: ' .. tostring(jobName) .. ', type: ' .. tostring(jobType))
+    return true
 end
 
 -- Check if a player has a specific permission (by job + grade lookup)
@@ -19,7 +23,7 @@ function CheckPermission(source, permName)
     if not source or not permName then return false end
 
     local jobData = ps.getJobData and ps.getJobData(source) or nil
-    local jobName = ps.getJobName(source) or 'police'
+    local jobName = ps.getJobName(source) or ((Config and Config.PoliceJobs and Config.PoliceJobs[1]) or 'police')
     local gradeValue = NormalizeMdtGradeValue(jobData and jobData.grade or 0)
     local rankData = GetMdtRankData(jobName, gradeValue, type(jobData and jobData.grade) == 'table' and jobData.grade or nil)
 
@@ -184,7 +188,7 @@ ps.registerCallback(tostring(GetCurrentResourceName())..':server:getMyPermission
     local src = source
     if not CheckAuth(src) then return { permissions = {} } end
 
-    local jobName = ps.getJobName(src) or 'police'
+    local jobName = ps.getJobName(src) or ((Config and Config.PoliceJobs and Config.PoliceJobs[1]) or 'police')
     local jobData = ps.getJobData and ps.getJobData(src) or nil
     local gradeValue = NormalizeMdtGradeValue(jobData and jobData.grade or 0)
     local rankData = GetMdtRankData(jobName, gradeValue, type(jobData and jobData.grade) == 'table' and jobData.grade or nil)

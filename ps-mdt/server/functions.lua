@@ -119,7 +119,7 @@ function GetActiveUnits()
         end
     end
     if total == 0 then
-        total = ps.getJobCount("police") or 0
+        total = ps.getJobCount((Config and Config.PoliceJobs and Config.PoliceJobs[1]) or "police") or 0
     end
     return total
 end

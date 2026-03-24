@@ -120,6 +120,9 @@ Config.ImpoundLocations = {
 -- Job Settings
 Config.PoliceJobType = "leo"
 Config.PoliceJobs = {
+    'police',
+    'ftpolicia',
+    'policiacivil',
     'lspd',
     'bcso',
     'sahp',
@@ -274,6 +277,25 @@ Config.PoliceHierarchy = {
     [9] = { label = 'CORONEL', isBoss = true },
 }
 
+Config.JobHierarchies = Config.JobHierarchies or {}
+Config.JobHierarchies.policiacivil = Config.JobHierarchies.policiacivil or {
+    [0] = { label = 'INVESTIGADOR' },
+    [1] = { label = 'ESCRIVÃO' },
+    [2] = { label = 'DELEGADO' },
+    [3] = { label = 'AGSECRETO', isBoss = true },
+}
+
+function GetMdtHierarchyForJob(jobName)
+    if jobName and Config.JobHierarchies then
+        local customHierarchy = Config.JobHierarchies[tostring(jobName)]
+        if type(customHierarchy) == 'table' then
+            return customHierarchy
+        end
+    end
+
+    return Config.PoliceHierarchy or {}
+end
+
 -- Bodycam Settings
 Config.Bodycam = {
     DutyEvent = 'QBCore:Server:OnJobUpdate', -- QBox uses the same event name for compatibility
@@ -380,7 +402,8 @@ end
 for _, policeJob in ipairs(Config.PoliceJobs or {}) do
     Config.PermissionDefaults[policeJob] = Config.PermissionDefaults[policeJob] or {}
 
-    for gradeLevel, hierarchy in pairs(Config.PoliceHierarchy or {}) do
+    local hierarchyByJob = GetMdtHierarchyForJob(policeJob)
+    for gradeLevel, hierarchy in pairs(hierarchyByJob or {}) do
         local gradeKey = tostring(gradeLevel)
         if not Config.PermissionDefaults[policeJob][gradeKey] then
             Config.PermissionDefaults[policeJob][gradeKey] = buildPolicePermissionsForGrade(gradeLevel)
