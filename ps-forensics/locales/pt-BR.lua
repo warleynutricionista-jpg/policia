@@ -218,6 +218,28 @@ return {
         },
     },
 
+    fingerprints = {
+        errors = {
+            not_authorized = 'Não autorizado para operações de digitais',
+            citizenid_required = 'CitizenID é obrigatório para cadastro de digital',
+            profile_exists = 'Já existe perfil de digital para este cidadão',
+            no_permission_collect = 'Sem permissão para coletar impressão digital',
+            no_permission_analyze = 'Sem permissão para análise de impressão digital',
+            invalid_id = 'ID de digital inválido',
+            not_found = 'Digital coletada não encontrada',
+            evidence_not_found = 'Evidência vinculada à digital não encontrada',
+            too_far_from_scene = 'Você está longe demais da cena para coletar digitais',
+        },
+        defaults = {
+            unknown_surface = 'Superfície não especificada',
+        },
+        result = {
+            sem_correspondencia = 'Sem correspondência',
+            parcial = 'Correspondência parcial',
+            positiva = 'Correspondência positiva',
+        },
+    },
+
     target = {
         open_lab = 'Abrir Laboratório Forense',
         open_morgue = 'Abrir Instituto Médico Legal',
