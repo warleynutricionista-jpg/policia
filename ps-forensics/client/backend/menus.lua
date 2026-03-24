@@ -9,19 +9,16 @@ local resourceName = GetCurrentResourceName()
 -- MENU: CRIAR CENA DE CRIME
 -- ============================================================
 function OpenCreateSceneMenu()
-    local classOptions = {}
-    for _, v in ipairs(Config.SceneClassifications) do
-        classOptions[#classOptions + 1] = { value = v.value, label = v.label }
-    end
+    local classOptions = ForensicUtils.GetSceneClassificationOptions()
 
     local input = lib.inputDialog(L('scene.title'), {
-        { type = 'select', label = 'Classificação', options = classOptions, required = true },
-        { type = 'textarea', label = 'Descrição da Cena', required = false },
-        { type = 'number', label = 'Raio do Perímetro (metros)', default = 50, min = 10, max = 200 },
-        { type = 'input', label = 'Condições Climáticas', placeholder = 'Ex: Chuvoso, Ensolarado' },
-        { type = 'input', label = 'Iluminação', placeholder = 'Ex: Noturno, Diurno, Artificial' },
-        { type = 'input', label = 'ID do Caso (MDT)', placeholder = 'Opcional' },
-        { type = 'input', label = 'ID do Relatório (MDT)', placeholder = 'Opcional' },
+        { type = 'select', label = L('form.scene.classification'), options = classOptions, required = true },
+        { type = 'textarea', label = L('form.scene.description'), required = false },
+        { type = 'number', label = L('form.scene.perimeter_radius'), default = 50, min = 10, max = 200 },
+        { type = 'input', label = L('form.scene.weather'), placeholder = L('form.scene.weather_placeholder') },
+        { type = 'input', label = L('form.scene.lighting'), placeholder = L('form.scene.lighting_placeholder') },
+        { type = 'input', label = L('form.scene.case_id'), placeholder = L('common.optional') },
+        { type = 'input', label = L('form.scene.report_id'), placeholder = L('common.optional') },
     })
 
     if not input then return end
@@ -63,33 +60,21 @@ end
 -- MENU: COLETAR EVIDÊNCIA
 -- ============================================================
 function OpenCollectEvidenceMenu()
-    local categoryOptions = {
-        { value = 'balistica', label = 'Balística' },
-        { value = 'biologica', label = 'Biológica' },
-        { value = 'digital_impressao', label = 'Impressões' },
-        { value = 'quimica', label = 'Química' },
-        { value = 'documental', label = 'Documental' },
-        { value = 'eletronica', label = 'Eletrônica' },
-        { value = 'vestimenta', label = 'Vestimenta' },
-        { value = 'veiculo', label = 'Veículo' },
-        { value = 'objeto_cortante', label = 'Objeto Cortante' },
-        { value = 'objeto_contundente', label = 'Objeto Contundente' },
-        { value = 'outros', label = 'Outros' },
-    }
+    local categoryOptions = ForensicUtils.GetEvidenceCategoryOptions()
 
     -- Buscar tipos da categoria
     local input = lib.inputDialog(L('evidence.collecting'), {
-        { type = 'select', label = 'Categoria', options = categoryOptions, required = true },
-        { type = 'input', label = 'Tipo Específico', placeholder = 'Ex: Cápsula, Sangue, Faca...', required = true },
-        { type = 'input', label = 'Subtipo', placeholder = 'Ex: 9mm, AB+, Inox...' },
-        { type = 'textarea', label = 'Descrição', placeholder = 'Descreva a evidência detalhadamente' },
-        { type = 'input', label = 'Método de Coleta', placeholder = 'Ex: Pinça, Swab, Saco plástico' },
-        { type = 'number', label = 'ID da Cena', placeholder = 'ID da cena de crime' },
-        { type = 'select', label = 'Prioridade', options = {
-            { value = 'baixa', label = 'Baixa' },
-            { value = 'media', label = 'Média' },
-            { value = 'alta', label = 'Alta' },
-            { value = 'urgente', label = 'Urgente' },
+        { type = 'select', label = L('form.evidence.category'), options = categoryOptions, required = true },
+        { type = 'input', label = L('form.evidence.type'), placeholder = L('form.evidence.type_placeholder'), required = true },
+        { type = 'input', label = L('form.evidence.subtype'), placeholder = L('form.evidence.subtype_placeholder') },
+        { type = 'textarea', label = L('form.evidence.description'), placeholder = L('form.evidence.description_placeholder') },
+        { type = 'input', label = L('form.evidence.collection_method'), placeholder = L('form.evidence.collection_method_placeholder') },
+        { type = 'number', label = L('form.evidence.scene_id'), placeholder = L('form.evidence.scene_id_placeholder') },
+        { type = 'select', label = L('form.evidence.priority'), options = {
+            { value = 'baixa', label = L('form.priority.baixa') },
+            { value = 'media', label = L('form.priority.media') },
+            { value = 'alta', label = L('form.priority.alta') },
+            { value = 'urgente', label = L('form.priority.urgente') },
         }, default = 'media' },
     })
 
@@ -146,23 +131,15 @@ end
 -- MENU: EXECUTAR TESTE RÁPIDO
 -- ============================================================
 function OpenRunTestMenu()
-    local testOptions = {
-        { value = 'residuo_polvora_maos', label = 'Resíduo de Pólvora (Mãos)' },
-        { value = 'residuo_polvora_roupa', label = 'Resíduo de Pólvora (Roupa)' },
-        { value = 'residuo_polvora_arma', label = 'Resíduo de Pólvora (Arma)' },
-        { value = 'residuo_polvora_veiculo', label = 'Resíduo de Pólvora (Veículo)' },
-        { value = 'teste_droga_presuntivo', label = 'Teste Presuntivo de Drogas' },
-        { value = 'teste_sangue_presuntivo', label = 'Teste Presuntivo de Sangue' },
-        { value = 'alcoolemia', label = 'Teste de Alcoolemia' },
-    }
+    local testOptions = ForensicUtils.GetQuickTestOptions()
 
     local input = lib.inputDialog(L('test.quick_title'), {
-        { type = 'select', label = 'Tipo de Teste', options = testOptions, required = true },
-        { type = 'input', label = 'Nome do Alvo', placeholder = 'Nome do suspeito/objeto' },
-        { type = 'input', label = 'CitizenID do Alvo', placeholder = 'Se aplicável' },
-        { type = 'textarea', label = 'Observações', placeholder = 'Notas adicionais' },
-        { type = 'number', label = 'ID da Evidência', placeholder = 'Se vinculado a evidência' },
-        { type = 'number', label = 'ID da Cena', placeholder = 'Se vinculado a cena' },
+        { type = 'select', label = L('form.test.type'), options = testOptions, required = true },
+        { type = 'input', label = L('form.test.target_name'), placeholder = L('form.test.target_name_placeholder') },
+        { type = 'input', label = L('form.test.target_citizenid'), placeholder = L('form.test.target_citizenid_placeholder') },
+        { type = 'textarea', label = L('form.test.notes'), placeholder = L('form.test.notes_placeholder') },
+        { type = 'number', label = L('form.test.evidence_id'), placeholder = L('form.test.evidence_id_placeholder') },
+        { type = 'number', label = L('form.test.scene_id'), placeholder = L('form.test.scene_id_placeholder') },
     })
 
     if not input then return end
@@ -180,7 +157,7 @@ function OpenRunTestMenu()
     -- Solicitar teste
     local testResult = lib.callback.await(resourceName .. ':server:requestLabTest', false, {
         test_type = testType,
-        test_name = 'Teste Rápido - ' .. selectedTestLabel,
+        test_name = L('test.quick_name_prefix') .. selectedTestLabel,
         target_name = input[2] or nil,
         target_citizenid = input[3] ~= '' and input[3] or nil,
         description = input[4] or '',
@@ -223,7 +200,7 @@ function OpenRunTestMenu()
 
             lib.notify({
                 title = L('test.result_title'),
-                description = performResult.resultDetails or ('Resultado: ' .. (performResult.resultLevel or 'N/A')),
+                description = performResult.resultDetails or (L('test.result_prefix') .. (performResult.resultLevel or L('labels.na'))),
                 type = resultColor[performResult.resultLevel] or 'inform',
                 duration = 12000,
             })
@@ -280,22 +257,22 @@ RegisterCommand('gsrtest', function(_, args)
 
         local testResult = lib.callback.await(resourceName .. ':server:requestLabTest', false, {
             test_type = 'residuo_polvora_maos',
-            test_name = 'Teste GSR - Mãos',
+            test_name = L('test.gsr_name'),
             target_citizenid = GetPlayerServerId(targetId),
-            description = hasGSR and 'GSR detectado pelo sistema' or 'Sem GSR detectado',
+            description = hasGSR and L('test.gsr_detected_desc') or L('test.gsr_not_detected_desc'),
         })
 
         if hasGSR then
             lib.notify({
-                title = 'GSR POSITIVO',
-                description = 'Resíduo de pólvora detectado nas mãos do suspeito!',
+                title = L('test.gsr_positive_title'),
+                description = L('test.gsr_positive_desc'),
                 type = 'success',
                 duration = 10000,
             })
         else
             lib.notify({
-                title = 'GSR NEGATIVO',
-                description = 'Nenhum resíduo de pólvora detectado.',
+                title = L('test.gsr_negative_title'),
+                description = L('test.gsr_negative_desc'),
                 type = 'inform',
                 duration = 8000,
             })
