@@ -45,4 +45,7 @@ files {
     'data/*.lua',
     'locales/*.lua',
     'sql/*.sql',
+    'sql/migrations/*.lua',
+    'sql/migrations/*.sql',
+    'sql/backup/*.sql',
 }
