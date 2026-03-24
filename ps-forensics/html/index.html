@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PS-Forensics - Sistema Forense</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <div id="forensics-app" class="hidden">
+        <!-- Header -->
+        <div class="forensics-header">
+            <div class="header-left">
+                <i class="fas fa-microscope"></i>
+                <span class="header-title">SISTEMA FORENSE</span>
+                <span class="header-subtitle" id="playerInfo"></span>
+            </div>
+            <div class="header-right">
+                <span class="role-badge" id="roleBadge"></span>
+                <button class="btn-close" onclick="closeUI()"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="forensics-nav">
+            <button class="nav-btn active" data-tab="scenes" onclick="switchTab('scenes')">
+                <i class="fas fa-map-marked-alt"></i> Cenas
+            </button>
+            <button class="nav-btn" data-tab="evidence" onclick="switchTab('evidence')">
+                <i class="fas fa-fingerprint"></i> Evidências
+            </button>
+            <button class="nav-btn" data-tab="lab" onclick="switchTab('lab')">
+                <i class="fas fa-flask"></i> Laboratório
+            </button>
+            <button class="nav-btn" data-tab="fingerprints" onclick="switchTab('fingerprints')">
+                <i class="fas fa-hand-dots"></i> Digitais
+            </button>
+            <button class="nav-btn" data-tab="dna" onclick="switchTab('dna')">
+                <i class="fas fa-dna"></i> DNA
+            </button>
+            <button class="nav-btn" data-tab="ballistics" onclick="switchTab('ballistics')">
+                <i class="fas fa-crosshairs"></i> Balística
+            </button>
+            <button class="nav-btn" data-tab="drugs" onclick="switchTab('drugs')">
+                <i class="fas fa-pills"></i> Drogas
+            </button>
+            <button class="nav-btn" data-tab="autopsy" onclick="switchTab('autopsy')">
+                <i class="fas fa-skull-crossbones"></i> Legista
+            </button>
+            <button class="nav-btn" data-tab="reports" onclick="switchTab('reports')">
+                <i class="fas fa-file-medical"></i> Laudos
+            </button>
+            <button class="nav-btn" data-tab="crossref" onclick="switchTab('crossref')">
+                <i class="fas fa-project-diagram"></i> Cruzamento
+            </button>
+        </div>
+
+        <!-- Content Area -->
+        <div class="forensics-content">
+            <!-- CENAS DE CRIME -->
+            <div id="tab-scenes" class="tab-content active">
+                <div class="tab-header">
+                    <h2><i class="fas fa-map-marked-alt"></i> Cenas de Crime</h2>
+                    <div class="tab-actions">
+                        <input type="text" id="sceneSearch" placeholder="Buscar cena..." class="search-input" onkeyup="searchScenes()">
+                        <select id="sceneStatusFilter" class="filter-select" onchange="filterScenes()">
+                            <option value="">Todos os Status</option>
+                            <option value="aberta">Aberta</option>
+                            <option value="isolada">Isolada</option>
+                            <option value="em_processamento">Em Processamento</option>
+                            <option value="finalizada">Finalizada</option>
+                        </select>
+                        <button class="btn-primary" onclick="showCreateScene()"><i class="fas fa-plus"></i> Nova Cena</button>
+                    </div>
+                </div>
+                <div id="scenesList" class="items-grid"></div>
+                <div id="sceneDetail" class="detail-panel hidden"></div>
+            </div>
+
+            <!-- EVIDÊNCIAS -->
+            <div id="tab-evidence" class="tab-content">
+                <div class="tab-header">
+                    <h2><i class="fas fa-fingerprint"></i> Evidências Forenses</h2>
+                    <div class="tab-actions">
+                        <input type="text" id="evidenceSearch" placeholder="Buscar evidência..." class="search-input" onkeyup="searchEvidence()">
+                        <select id="evidenceCategoryFilter" class="filter-select" onchange="filterEvidence()">
+                            <option value="">Todas Categorias</option>
+                            <option value="balistica">Balística</option>
+                            <option value="biologica">Biológica</option>
+                            <option value="digital_impressao">Impressões</option>
+                            <option value="quimica">Química</option>
+                            <option value="documental">Documental</option>
+                            <option value="eletronica">Eletrônica</option>
+                            <option value="vestimenta">Vestimenta</option>
+                            <option value="veiculo">Veículo</option>
+                            <option value="objeto_cortante">Obj. Cortante</option>
+                            <option value="objeto_contundente">Obj. Contundente</option>
+                            <option value="outros">Outros</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="evidenceList" class="items-grid"></div>
+                <div id="evidenceDetail" class="detail-panel hidden"></div>
+            </div>
+
+            <!-- LABORATÓRIO -->
+            <div id="tab-lab" class="tab-content">
+                <div class="tab-header">
+                    <h2><i class="fas fa-flask"></i> Laboratório Forense</h2>
+                    <div class="tab-actions">
+                        <select id="labStatusFilter" class="filter-select" onchange="filterLabTests()">
+                            <option value="">Todos</option>
+                            <option value="solicitado">Solicitados</option>
+                            <option value="em_andamento">Em Andamento</option>
+                            <option value="concluido">Concluídos</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="labTestsList" class="items-grid"></div>
+                <div id="labTestDetail" class="detail-panel hidden"></div>
+            </div>
+
+            <!-- DIGITAIS -->
+            <div id="tab-fingerprints" class="tab-content">
+                <div class="tab-header">
+                    <h2><i class="fas fa-hand-dots"></i> Impressões Digitais</h2>
+                    <div class="tab-actions">
+                        <input type="text" id="fpSearch" placeholder="Buscar por cidadão..." class="search-input">
+                        <button class="btn-primary" onclick="showRegisterFingerprint()"><i class="fas fa-plus"></i> Cadastrar Digital</button>
+                    </div>
+                </div>
+                <div id="fingerprintsList" class="items-grid"></div>
+            </div>
+
+            <!-- DNA -->
+            <div id="tab-dna" class="tab-content">
+                <div class="tab-header">
+                    <h2><i class="fas fa-dna"></i> Análise de DNA</h2>
+                    <div class="tab-actions">
+                        <input type="text" id="dnaSearch" placeholder="Buscar por cidadão..." class="search-input">
+                        <button class="btn-primary" onclick="showRegisterDNA()"><i class="fas fa-plus"></i> Cadastrar Perfil</button>
+                    </div>
+                </div>
+                <div id="dnaList" class="items-grid"></div>
+            </div>
+
+            <!-- BALÍSTICA -->
+            <div id="tab-ballistics" class="tab-content">
+                <div class="tab-header">
+                    <h2><i class="fas fa-crosshairs"></i> Balística</h2>
+                    <div class="tab-actions">
+                        <input type="text" id="ballisticSearch" placeholder="Buscar por serial..." class="search-input">
+                    </div>
+                </div>
+                <div id="ballisticsList" class="items-grid"></div>
+            </div>
+
+            <!-- DROGAS -->
+            <div id="tab-drugs" class="tab-content">
+                <div class="tab-header">
+                    <h2><i class="fas fa-pills"></i> Análise de Drogas</h2>
+                </div>
+                <div id="drugsList" class="items-grid"></div>
+            </div>
+
+            <!-- LEGISTA -->
+            <div id="tab-autopsy" class="tab-content">
+                <div class="tab-header">
+                    <h2><i class="fas fa-skull-crossbones"></i> Instituto Médico Legal</h2>
+                    <div class="tab-actions">
+                        <button class="btn-primary" onclick="showCreateAutopsy()" id="btnNewAutopsy"><i class="fas fa-plus"></i> Nova Necropsia</button>
+                    </div>
+                </div>
+                <div id="autopsyList" class="items-grid"></div>
+                <div id="autopsyDetail" class="detail-panel hidden"></div>
+            </div>
+
+            <!-- LAUDOS -->
+            <div id="tab-reports" class="tab-content">
+                <div class="tab-header">
+                    <h2><i class="fas fa-file-medical"></i> Laudos Técnicos</h2>
+                    <div class="tab-actions">
+                        <select id="reportTypeFilter" class="filter-select" onchange="filterReports()">
+                            <option value="">Todos os Tipos</option>
+                            <option value="laudo_pericial">Laudo Pericial</option>
+                            <option value="laudo_balistico">Laudo Balístico</option>
+                            <option value="laudo_toxicologico">Laudo Toxicológico</option>
+                            <option value="laudo_dna">Laudo DNA</option>
+                            <option value="laudo_digital">Laudo Digital</option>
+                            <option value="laudo_necropsia">Laudo Necropsia</option>
+                            <option value="laudo_drogas">Laudo Drogas</option>
+                        </select>
+                        <button class="btn-primary" onclick="showCreateReport()"><i class="fas fa-plus"></i> Novo Laudo</button>
+                    </div>
+                </div>
+                <div id="reportsList" class="items-grid"></div>
+                <div id="reportDetail" class="detail-panel hidden"></div>
+            </div>
+
+            <!-- CRUZAMENTO DE DADOS -->
+            <div id="tab-crossref" class="tab-content">
+                <div class="tab-header">
+                    <h2><i class="fas fa-project-diagram"></i> Cruzamento de Dados</h2>
+                </div>
+                <div class="crossref-search-panel">
+                    <div class="search-group">
+                        <label>Buscar por Cidadão (CitizenID)</label>
+                        <div class="search-row">
+                            <input type="text" id="crossrefCitizenId" placeholder="CitizenID..." class="search-input">
+                            <button class="btn-primary" onclick="searchCrossRefCitizen()"><i class="fas fa-search"></i></button>
+                        </div>
+                    </div>
+                    <div class="search-group">
+                        <label>Buscar por Arma (Serial)</label>
+                        <div class="search-row">
+                            <input type="text" id="crossrefWeaponSerial" placeholder="Serial da arma..." class="search-input">
+                            <button class="btn-primary" onclick="searchCrossRefWeapon()"><i class="fas fa-search"></i></button>
+                        </div>
+                    </div>
+                    <div class="search-group">
+                        <label>Buscar por Veículo (Placa)</label>
+                        <div class="search-row">
+                            <input type="text" id="crossrefVehiclePlate" placeholder="Placa..." class="search-input">
+                            <button class="btn-primary" onclick="searchCrossRefVehicle()"><i class="fas fa-search"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div id="crossrefResults" class="items-grid"></div>
+            </div>
+        </div>
+
+        <!-- Modal -->
+        <div id="modal-overlay" class="modal-overlay hidden" onclick="closeModal()">
+            <div class="modal-content" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                    <h3 id="modalTitle"></h3>
+                    <button class="btn-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body" id="modalBody"></div>
+                <div class="modal-footer" id="modalFooter"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

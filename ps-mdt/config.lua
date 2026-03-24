@@ -262,6 +262,15 @@ Config.ManagementPermissions = {
     'management_tags',
     'management_tracking',
     'management_settings',
+    -- Forensics (ps-forensics integration)
+    'forensics_view',
+    'forensics_collect',
+    'forensics_lab_basic',
+    'forensics_lab_advanced',
+    'forensics_reports',
+    'forensics_autopsy',
+    'forensics_custody',
+    'forensics_crossref',
 }
 
 Config.PoliceHierarchy = {
@@ -350,20 +359,27 @@ local policePermissionTiers = {
         'cameras_view',
         'bodycams_view',
         'notes_edit_department',
+        'forensics_view',
+        'forensics_collect',
+        'forensics_lab_basic',
     },
     [1] = {
         'bolos_create',
         'evidence_create',
+        'forensics_custody',
     },
     [2] = {
         'citizens_edit_licenses',
         'charges_edit',
         'evidence_upload',
+        'forensics_lab_advanced',
+        'forensics_reports',
     },
     [3] = {
         'cases_create',
         'warrants_issue',
         'roster_manage_certifications',
+        'forensics_crossref',
     },
     [4] = {
         'cases_edit',
@@ -433,6 +449,7 @@ Config.AuditTracking = {
     icu = true,              -- ICU record deletion
     cameras = true,          -- Security camera access
     bodycams = true,         -- Officer bodycam access
+    forensics = true,        -- Forensic system actions (ps-forensics)
 }
 
 -- Camera models available for static camera placement
