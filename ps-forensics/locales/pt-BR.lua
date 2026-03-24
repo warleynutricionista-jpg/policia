@@ -191,6 +191,32 @@ return {
         open_storage = 'Depósito de Evidências',
     },
 
+    items = {
+        use_progress = 'Utilizando item pericial...',
+        use = {
+            forensic_kit = 'Kit pericial preparado para uso.',
+            disposable_gloves = 'Luvas descartáveis equipadas.',
+            evidence_bag = 'Saco de evidência pronto para armazenamento.',
+            evidence_seal = 'Lacre aplicado na evidência.',
+            dna_swab = 'Cotonete pronto para coleta de DNA.',
+            fingerprint_kit = 'Kit de digitais preparado.',
+            fingerprint_powder = 'Pó revelador aplicado.',
+            fingerprint_tape = 'Fita de levantamento utilizada.',
+            blood_reagent = 'Reagente de sangue aplicado.',
+            gsr_kit = 'Kit de resíduo de pólvora preparado.',
+            drug_test_kit = 'Kit de narcoteste iniciado.',
+            forensic_tweezers = 'Pinça pericial em uso.',
+            forensic_camera = 'Registro fotográfico pericial realizado.',
+            evidence_marker = 'Marcador de evidência posicionado.',
+            evidence_tag = 'Etiqueta de evidência preenchida.',
+            medical_exam_case = 'Maleta do legista preparada.',
+            body_bag = 'Saco mortuário preparado para remoção.',
+            forensic_flashlight = 'Lanterna forense ativada.',
+            ballistic_kit = 'Kit balístico preparado.',
+            forensic_tablet = 'Tablet pericial conectado ao sistema.',
+        },
+    },
+
     labels = {
         unknown = 'Desconhecido',
         na = 'N/A',

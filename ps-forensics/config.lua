@@ -124,16 +124,26 @@ Config.Commands = {
 -- ITENS NO OX_INVENTORY
 -- ============================================================
 Config.Items = {
-    forensic_kit       = 'forensic_kit',
-    evidence_bag       = 'evidence_bag',
-    swab_kit           = 'swab_kit',
-    fingerprint_kit    = 'fingerprint_kit',
-    gsr_kit            = 'gsr_test_kit',
-    drug_test_kit      = 'drug_test_kit',
-    blood_test_kit     = 'blood_test_kit',
-    evidence_seal      = 'evidence_seal',
-    camera             = 'camera',
-    forensic_tablet    = 'forensic_tablet',
+    forensic_kit          = 'forensic_kit',
+    disposable_gloves     = 'disposable_gloves',
+    evidence_bag          = 'evidence_bag',
+    evidence_seal         = 'evidence_seal',
+    dna_swab              = 'dna_swab',
+    fingerprint_kit       = 'fingerprint_kit',
+    fingerprint_powder    = 'fingerprint_powder',
+    fingerprint_tape      = 'fingerprint_tape',
+    blood_reagent         = 'blood_reagent',
+    gsr_kit               = 'gsr_kit',
+    drug_test_kit         = 'drug_test_kit',
+    forensic_tweezers     = 'forensic_tweezers',
+    forensic_camera       = 'forensic_camera',
+    evidence_marker       = 'evidence_marker',
+    evidence_tag          = 'evidence_tag',
+    medical_exam_case     = 'medical_exam_case',
+    body_bag              = 'body_bag',
+    forensic_flashlight   = 'forensic_flashlight',
+    ballistic_kit         = 'ballistic_kit',
+    forensic_tablet       = 'forensic_tablet',
 }
 
 -- ============================================================
