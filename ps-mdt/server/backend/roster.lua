@@ -122,7 +122,7 @@ local function buildRosterEntry(citizenid, charinfo, metadata, employee, status)
         lastName = lastName,
         rank = rankData.label,
         rankOrder = rankData.level,
-        department = employee.job or 'police',
+        department = employee.job or ((Config and Config.PoliceJobs and Config.PoliceJobs[1]) or 'police'),
         status = status,
         certifications = getCertifications(citizenid),
         badgeNumber = callsign,
@@ -267,7 +267,7 @@ ps.registerCallback('ps-mdt:server:getJobGrades', function(source, payload)
     if not CheckPermission(src, 'roster_manage_officers') then return {} end
 
     payload = payload or {}
-    local jobName = payload.job or 'police'
+    local jobName = payload.job or ps.getJobName(src) or ((Config and Config.PoliceJobs and Config.PoliceJobs[1]) or 'police')
 
     local jobData = ps.getSharedJob(jobName)
     if not jobData or not jobData.grades then return {} end

@@ -31,7 +31,8 @@ end
 
 function GetMdtRankData(jobName, gradeValue, fallbackGradeData)
     local normalizedGrade = NormalizeMdtGradeValue(gradeValue)
-    local hierarchy = IsPoliceJob(jobName, Config.PoliceJobType) and Config.PoliceHierarchy and Config.PoliceHierarchy[normalizedGrade] or nil
+    local hierarchyByJob = IsPoliceJob(jobName, Config.PoliceJobType) and GetMdtHierarchyForJob(jobName) or nil
+    local hierarchy = hierarchyByJob and hierarchyByJob[normalizedGrade] or nil
     local gradeData = type(fallbackGradeData) == 'table' and fallbackGradeData or {}
 
     return {

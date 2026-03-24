@@ -477,7 +477,7 @@ ps.registerCallback(resourceName .. ':server:createCaseFromEvidence', function(s
     local caseId = MySQL.insert.await([[INSERT INTO mdt_cases
         (case_number, title, summary, status, priority, assigned_department, created_by, created_by_name)
         VALUES ('', ?, ?, 'open', 'medium', ?, ?, ?)
-    ]], { 'Evidence Follow-up', 'Case created from evidence link', ps.getJobName(src) or 'police', citizenid, createdByName })
+    ]], { 'Evidence Follow-up', 'Case created from evidence link', ps.getJobName(src) or ((Config and Config.PoliceJobs and Config.PoliceJobs[1]) or 'police'), citizenid, createdByName })
 
     if not caseId then
         return { success = false, error = 'Falha ao criar o caso' }

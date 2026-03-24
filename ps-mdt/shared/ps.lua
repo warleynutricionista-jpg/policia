@@ -192,7 +192,8 @@ end
 
 local function getConfiguredRank(jobName, grade, gradeData)
     local level = getGradeLevel(grade)
-    local hierarchy = isPoliceJobName(jobName, nil) and Config and Config.PoliceHierarchy and Config.PoliceHierarchy[tonumber(level) or 0] or nil
+    local hierarchyByJob = isPoliceJobName(jobName, nil) and GetMdtHierarchyForJob and GetMdtHierarchyForJob(jobName) or nil
+    local hierarchy = hierarchyByJob and hierarchyByJob[tonumber(level) or 0] or nil
 
     return {
         level = tonumber(level) or 0,
