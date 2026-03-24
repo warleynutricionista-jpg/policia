@@ -122,6 +122,14 @@ return {
         errors = {
             no_permission_collect = 'Sem permissão para coletar evidências',
             register_failed = 'Falha ao registrar evidência',
+            invalid_type = 'Tipo de evidência inválido',
+            invalid_category = 'Categoria de evidência inválida',
+            invalid_photo_url = 'URL da foto da evidência inválida',
+            missing_required_item = 'Item obrigatório ausente para coleta: %s',
+            too_far_from_scene = 'Você está longe demais da cena para coletar este vestígio',
+        },
+        custody = {
+            initial_collect = 'Evidência coletada na cena. Lacre: %s',
         },
         category = {
             balistica = 'Balística',
