@@ -9,13 +9,31 @@ local resourceName = GetCurrentResourceName()
 -- ============================================================
 lib.callback.register(resourceName .. ':server:collectEvidence', function(source, data)
     local src = source
-    if not CheckForensicAuth(src) then return { success = false, error = 'Não autorizado' } end
+    if not CheckForensicAuth(src) then return { success = false, error = L('scene.errors.not_authorized') } end
     if not CheckForensicPermission(src, 'canCollectEvidence') then
-        return { success = false, error = 'Sem permissão para coletar evidências' }
+        return { success = false, error = L('evidence.errors.no_permission_collect') }
     end
 
     local playerData = GetPlayerData(src)
-    if not playerData then return { success = false, error = 'Dados indisponíveis' } end
+    if not playerData then return { success = false, error = L('scene.errors.player_data_unavailable') } end
+
+    local sceneId = data.scene_id and tonumber(data.scene_id) or nil
+    local caseId = data.case_id and tonumber(data.case_id) or nil
+    local reportId = data.report_id and tonumber(data.report_id) or nil
+
+    if sceneId then
+        local scene = MySQL.single.await('SELECT id, status, case_id, report_id FROM forensic_crime_scenes WHERE id = ?', { sceneId })
+        if not scene then
+            return { success = false, error = L('scene.errors.not_found') }
+        end
+
+        if scene.status == 'finalizada' then
+            return { success = false, error = L('scene.errors.scene_closed_for_collection') }
+        end
+
+        if not caseId and scene.case_id then caseId = scene.case_id end
+        if not reportId and scene.report_id then reportId = scene.report_id end
+    end
 
     local sealNumber = ForensicUtils.GenerateSealNumber()
 
@@ -27,9 +45,9 @@ lib.callback.register(resourceName .. ':server:collectEvidence', function(source
          photo_url, linked_citizenid, linked_vehicle_plate, linked_weapon_serial, priority)
         VALUES ('', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'coletada', ?, ?, ?, ?, ?)
     ]], {
-        data.scene_id and tonumber(data.scene_id) or nil,
-        data.case_id and tonumber(data.case_id) or nil,
-        data.report_id and tonumber(data.report_id) or nil,
+        sceneId,
+        caseId,
+        reportId,
         data.category or 'outros',
         data.type or 'outros',
         data.subtype or nil,
@@ -48,7 +66,7 @@ lib.callback.register(resourceName .. ':server:collectEvidence', function(source
     })
 
     if not evidenceId then
-        return { success = false, error = 'Falha ao registrar evidência' }
+        return { success = false, error = L('evidence.errors.register_failed') }
     end
 
     -- Gerar número de evidência
@@ -74,8 +92,8 @@ lib.callback.register(resourceName .. ':server:collectEvidence', function(source
         (case_id, report_id, title, type, serial, notes, location, stored, last_holder, created_by)
         VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
     ]], {
-        data.case_id and tonumber(data.case_id) or nil,
-        data.report_id and tonumber(data.report_id) or nil,
+        caseId,
+        reportId,
         ('[FORENSE] %s - %s'):format(ForensicUtils.GetEvidenceTypeLabel(data.type), evidenceNumber),
         data.category or 'Evidence',
         sealNumber,
