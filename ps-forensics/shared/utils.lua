@@ -136,7 +136,7 @@ end
 
 -- Formatar timestamp
 function ForensicUtils.FormatTimestamp(timestamp)
-    if not timestamp then return 'N/A' end
+    if not timestamp then return L('labels.na') end
     return os.date('%d/%m/%Y %H:%M', timestamp)
 end
 
@@ -145,7 +145,7 @@ function ForensicUtils.GetClassificationLabel(value)
     for _, v in ipairs(Config.SceneClassifications or {}) do
         if v.value == value then return v.label end
     end
-    return value or 'Desconhecido'
+    return value or L('labels.unknown')
 end
 
 -- Obter label do tipo de evidência
@@ -153,43 +153,32 @@ function ForensicUtils.GetEvidenceTypeLabel(typeValue)
     for _, v in ipairs(Config.EvidenceTypes or {}) do
         if v.type == typeValue then return v.label end
     end
-    return typeValue or 'Desconhecido'
+    return typeValue or L('labels.unknown')
 end
 
--- Traduzir status de evidência
-ForensicUtils.EvidenceStatusLabels = {
-    coletada = 'Coletada',
-    lacrada = 'Lacrada',
-    em_analise = 'Em Análise',
-    analisada = 'Analisada',
-    armazenada = 'Armazenada',
-    descartada = 'Descartada',
-    devolvida = 'Devolvida',
-    em_julgamento = 'Em Julgamento',
-}
+function ForensicUtils.GetEvidenceStatusLabel(status)
+    local key = ('labels.evidence_status.%s'):format(status or '')
+    local value = L(key)
+    if value == key then
+        return status or L('labels.unknown')
+    end
+    return value
+end
 
--- Traduzir status de teste
-ForensicUtils.TestResultLabels = {
-    pendente = 'Pendente',
-    presumido = 'Presumido',
-    inconclusivo = 'Inconclusivo',
-    compativel = 'Compatível',
-    confirmado = 'Confirmado',
-    negativo = 'Negativo',
-}
+function ForensicUtils.GetTestResultLabel(result)
+    local key = ('labels.test_result.%s'):format(result or '')
+    local value = L(key)
+    if value == key then
+        return result or L('labels.unknown')
+    end
+    return value
+end
 
--- Traduzir causa da morte
-ForensicUtils.CauseOfDeathLabels = {
-    arma_de_fogo = 'Perfuração por Arma de Fogo',
-    arma_branca = 'Ferimento por Arma Branca',
-    trauma_contundente = 'Trauma Contundente',
-    asfixia = 'Asfixia',
-    queimadura = 'Queimadura',
-    overdose = 'Overdose',
-    envenenamento = 'Envenenamento',
-    afogamento = 'Afogamento',
-    eletrocussao = 'Eletrocussão',
-    multiplos_ferimentos = 'Múltiplos Ferimentos',
-    causa_natural = 'Causa Natural',
-    indeterminado = 'Indeterminado',
-}
+function ForensicUtils.GetCauseOfDeathLabel(cause)
+    local key = ('labels.cause_of_death.%s'):format(cause or '')
+    local value = L(key)
+    if value == key then
+        return cause or L('labels.unknown')
+    end
+    return value
+end

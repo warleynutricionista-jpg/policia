@@ -14,7 +14,7 @@ function OpenCreateSceneMenu()
         classOptions[#classOptions + 1] = { value = v.value, label = v.label }
     end
 
-    local input = lib.inputDialog('Criar Cena de Crime', {
+    local input = lib.inputDialog(L('scene.title'), {
         { type = 'select', label = 'Classificação', options = classOptions, required = true },
         { type = 'textarea', label = 'Descrição da Cena', required = false },
         { type = 'number', label = 'Raio do Perímetro (metros)', default = 50, min = 10, max = 200 },
@@ -38,7 +38,7 @@ function OpenCreateSceneMenu()
         lighting = input[5] or '',
         case_id = input[6] ~= '' and input[6] or nil,
         report_id = input[7] ~= '' and input[7] or nil,
-        location_name = streetName or 'Local não identificado',
+        location_name = streetName or L('scene.unidentified_location'),
         x = coords.x,
         y = coords.y,
         z = coords.z,
@@ -46,14 +46,14 @@ function OpenCreateSceneMenu()
 
     if result and result.success then
         lib.notify({
-            title = 'Cena de Crime',
-            description = ('Cena %s criada com sucesso!'):format(result.sceneNumber),
+            title = L('scene.title'),
+            description = L('scene.created_success', result.sceneNumber),
             type = 'success',
         })
     else
         lib.notify({
-            title = 'Erro',
-            description = result and result.error or 'Falha ao criar cena',
+            title = L('common.error_title'),
+            description = result and result.error or L('scene.create_failed'),
             type = 'error',
         })
     end
@@ -78,7 +78,7 @@ function OpenCollectEvidenceMenu()
     }
 
     -- Buscar tipos da categoria
-    local input = lib.inputDialog('Coletar Evidência', {
+    local input = lib.inputDialog(L('evidence.collecting'), {
         { type = 'select', label = 'Categoria', options = categoryOptions, required = true },
         { type = 'input', label = 'Tipo Específico', placeholder = 'Ex: Cápsula, Sangue, Faca...', required = true },
         { type = 'input', label = 'Subtipo', placeholder = 'Ex: 9mm, AB+, Inox...' },
@@ -104,7 +104,7 @@ function OpenCollectEvidenceMenu()
 
     if lib.progressBar({
         duration = 8000,
-        label = 'Coletando evidência...',
+        label = L('evidence.collecting'),
         useWhileDead = false,
         canCancel = true,
         disable = { car = true, move = true, combat = true },
@@ -125,15 +125,15 @@ function OpenCollectEvidenceMenu()
 
         if result and result.success then
             lib.notify({
-                title = 'Evidência Coletada',
-                description = ('%s | Lacre: %s'):format(result.evidenceNumber, result.sealNumber),
+                title = L('evidence.collected_title'),
+                description = L('evidence.collected_message', result.evidenceNumber, result.sealNumber),
                 type = 'success',
                 duration = 8000,
             })
         else
             lib.notify({
-                title = 'Erro',
-                description = result and result.error or 'Falha na coleta',
+                title = L('common.error_title'),
+                description = result and result.error or L('evidence.collect_failed'),
                 type = 'error',
             })
         end
@@ -156,7 +156,7 @@ function OpenRunTestMenu()
         { value = 'alcoolemia', label = 'Teste de Alcoolemia' },
     }
 
-    local input = lib.inputDialog('Teste Forense Rápido', {
+    local input = lib.inputDialog(L('test.quick_title'), {
         { type = 'select', label = 'Tipo de Teste', options = testOptions, required = true },
         { type = 'input', label = 'Nome do Alvo', placeholder = 'Nome do suspeito/objeto' },
         { type = 'input', label = 'CitizenID do Alvo', placeholder = 'Se aplicável' },
@@ -169,11 +169,18 @@ function OpenRunTestMenu()
 
     local testType = input[1]
     local duration = Config.TestProcessingTimes[testType] or 10
+    local selectedTestLabel = testType
+    for _, option in ipairs(testOptions) do
+        if option.value == testType then
+            selectedTestLabel = option.label
+            break
+        end
+    end
 
     -- Solicitar teste
     local testResult = lib.callback.await(resourceName .. ':server:requestLabTest', false, {
         test_type = testType,
-        test_name = 'Teste Rápido - ' .. (testOptions[1] and testOptions[1].label or testType),
+        test_name = 'Teste Rápido - ' .. selectedTestLabel,
         target_name = input[2] or nil,
         target_citizenid = input[3] ~= '' and input[3] or nil,
         description = input[4] or '',
@@ -183,8 +190,8 @@ function OpenRunTestMenu()
 
     if not testResult or not testResult.success then
         lib.notify({
-            title = 'Erro',
-            description = testResult and testResult.error or 'Falha ao solicitar teste',
+            title = L('common.error_title'),
+            description = testResult and testResult.error or L('test.request_failed'),
             type = 'error',
         })
         return
@@ -196,7 +203,7 @@ function OpenRunTestMenu()
 
     if lib.progressBar({
         duration = duration * 1000,
-        label = 'Executando teste forense...',
+        label = L('test.running'),
         useWhileDead = false,
         canCancel = true,
         disable = { car = true, move = true, combat = true },
@@ -215,7 +222,7 @@ function OpenRunTestMenu()
             }
 
             lib.notify({
-                title = 'Resultado do Teste',
+                title = L('test.result_title'),
                 description = performResult.resultDetails or ('Resultado: ' .. (performResult.resultLevel or 'N/A')),
                 type = resultColor[performResult.resultLevel] or 'inform',
                 duration = 12000,
@@ -224,8 +231,8 @@ function OpenRunTestMenu()
     else
         ClearPedTasks(PlayerPedId())
         lib.notify({
-            title = 'Teste Cancelado',
-            description = 'O teste forense foi interrompido',
+            title = L('test.cancelled_title'),
+            description = L('test.cancelled_desc'),
             type = 'error',
         })
     end
@@ -239,13 +246,13 @@ RegisterCommand('gsrtest', function(_, args)
 
     local targetId = tonumber(args[1])
     if not targetId then
-        lib.notify({ title = 'Uso', description = '/gsrtest [id]', type = 'inform' })
+        lib.notify({ title = L('common.usage_title'), description = '/gsrtest [id]', type = 'inform' })
         return
     end
 
     local targetPed = GetPlayerPed(GetPlayerFromServerId(targetId))
     if targetPed == 0 then
-        lib.notify({ title = 'Erro', description = 'Jogador não encontrado', type = 'error' })
+        lib.notify({ title = L('common.error_title'), description = L('common.player_not_found'), type = 'error' })
         return
     end
 
@@ -253,13 +260,13 @@ RegisterCommand('gsrtest', function(_, args)
     local myCoords = GetEntityCoords(PlayerPedId())
     local targetCoords = GetEntityCoords(targetPed)
     if #(myCoords - targetCoords) > 3.0 then
-        lib.notify({ title = 'Erro', description = 'Muito longe do alvo', type = 'error' })
+        lib.notify({ title = L('common.error_title'), description = L('common.too_far_target'), type = 'error' })
         return
     end
 
     if lib.progressBar({
         duration = 10000,
-        label = 'Testando resíduo de pólvora nas mãos...',
+        label = L('test.running_gsr_hands'),
         useWhileDead = false,
         canCancel = true,
         disable = { car = true, move = true, combat = true },
