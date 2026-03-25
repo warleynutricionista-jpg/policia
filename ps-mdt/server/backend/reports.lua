@@ -53,6 +53,68 @@ local function decodeJsonField(value)
     return ok and type(decoded) == 'table' and decoded or {}
 end
 
+local function reportTimestampToSql(value)
+    if not value then
+        return nil
+    end
+
+    local raw = tostring(value)
+    if raw == '' then
+        return nil
+    end
+
+    local normalized = raw:gsub('T', ' '):gsub('Z$', '')
+    local y, m, d, hh, mm, ss = normalized:match('^(%d%d%d%d)%-(%d%d)%-(%d%d)%s+(%d%d):(%d%d):(%d%d)')
+    if y then
+        return ('%s-%s-%s %s:%s:%s'):format(y, m, d, hh, mm, ss)
+    end
+
+    return nil
+end
+
+local function validateEntityReferences(reportData)
+    if type(reportData) ~= 'table' then
+        return true, nil
+    end
+
+    for _, involved in ipairs(reportData.involved or {}) do
+        local cid = involved and involved.citizenid and normalizeSearchTerm(involved.citizenid) or ''
+        if cid ~= '' then
+            local exists = MySQL.scalar.await('SELECT COUNT(*) FROM players WHERE citizenid = ? LIMIT 1', { cid })
+            if tonumber(exists) == 0 then
+                return false, ('Cidadão não encontrado: %s'):format(cid)
+            end
+        end
+    end
+
+    for _, charge in ipairs(reportData.charges or {}) do
+        local cid = charge and charge.citizenid and normalizeSearchTerm(charge.citizenid) or ''
+        if cid ~= '' then
+            local exists = MySQL.scalar.await('SELECT COUNT(*) FROM players WHERE citizenid = ? LIMIT 1', { cid })
+            if tonumber(exists) == 0 then
+                return false, ('Cidadão não encontrado para acusação: %s'):format(cid)
+            end
+        end
+    end
+
+    for _, vehicle in ipairs(reportData.vehicles or {}) do
+        local plate = vehicle and vehicle.plate and normalizeSearchTerm(vehicle.plate) or ''
+        if plate ~= '' then
+            local exists = MySQL.scalar.await([[
+                SELECT COUNT(*)
+                FROM player_vehicles
+                WHERE plate = ?
+                LIMIT 1
+            ]], { plate })
+            if tonumber(exists) == 0 then
+                return false, ('Veículo não encontrado para placa: %s'):format(plate)
+            end
+        end
+    end
+
+    return true, nil
+end
+
 local function canViewReports(src)
     return CheckPermission(src, 'reports_view')
 end
@@ -732,6 +794,15 @@ ps.registerCallback(resourceName..':server:saveReport', function(source, reportD
     local playerName = ps.getPlayerName(src)
     local callsign = normalizeCallsignValue(ps.getMetadata(src, 'callsign'))
 
+    if not identifier or normalizeSearchTerm(identifier) == '' then
+        return { success = false, error = 'Falha ao salvar: oficial responsável não identificado' }
+    end
+
+    local referencesOk, referenceError = validateEntityReferences(reportData)
+    if not referencesOk then
+        return { success = false, error = referenceError }
+    end
+
     local title = reportData.report and reportData.report.title
     if not title or title == "" then
         ps.notify(src, 'Falha ao salvar o relatório: é necessário um título', 'error')
@@ -790,6 +861,23 @@ ps.registerCallback(resourceName..':server:saveReport', function(source, reportD
         end
         if current and current.report_status == 'approved' and current.author ~= identifier and not canApproveReports(src) then
             return { success = false, error = 'Relatório aprovado só pode ser editado por aprovação hierárquica.' }
+        end
+
+        local expectedDateUpdated = reportTimestampToSql(reportData.report and reportData.report.dateupdated)
+        if expectedDateUpdated then
+            local isCurrent = MySQL.scalar.await([[
+                SELECT COUNT(*)
+                FROM mdt_reports
+                WHERE id = ?
+                  AND DATE_FORMAT(dateupdated, '%Y-%m-%d %H:%i:%s') = ?
+            ]], { reportId, expectedDateUpdated })
+            if tonumber(isCurrent) == 0 then
+                return {
+                    success = false,
+                    error = 'Este relatório foi alterado por outro oficial. Reabra o registro para evitar sobrescrita.',
+                    conflict = true,
+                }
+            end
         end
     end
 
@@ -1030,6 +1118,21 @@ ps.registerCallback(resourceName..':server:updateReportContent', function(source
     local callsign = normalizeCallsignValue(ps.getMetadata(src, 'callsign'))
 
     if not identifier then return { success = false, error = "Player not found" } end
+
+    if reportData and reportData.dateupdated and reportId then
+        local expectedDateUpdated = reportTimestampToSql(reportData.dateupdated)
+        if expectedDateUpdated then
+            local isCurrent = MySQL.scalar.await([[
+                SELECT COUNT(*)
+                FROM mdt_reports
+                WHERE id = ?
+                  AND DATE_FORMAT(dateupdated, '%Y-%m-%d %H:%i:%s') = ?
+            ]], { reportId, expectedDateUpdated })
+            if tonumber(isCurrent) == 0 then
+                return { success = false, error = 'Conflito de edição detectado. Reabra o relatório antes de salvar.', conflict = true }
+            end
+        end
+    end
 
     if reportId then
         if not checkReportAccess(src, reportId) then

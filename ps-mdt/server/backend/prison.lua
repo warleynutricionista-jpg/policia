@@ -395,6 +395,16 @@ ps.registerCallback(resourceName .. ':server:prisonTabJail', function(source, pa
     end
 
     payload = payload or {}
+    local reportId = tonumber(payload.reportId)
+    if not reportId then
+        return { success = false, message = 'Prisão exige relatório vinculado (reportId obrigatório)' }
+    end
+
+    local reportExists = MySQL.scalar.await('SELECT id FROM mdt_reports WHERE id = ? LIMIT 1', { reportId })
+    if not reportExists then
+        return { success = false, message = 'Relatório informado para prisão não foi encontrado' }
+    end
+
     local targetSource = tonumber(payload.source)
     if not targetSource or not GetPlayerName(targetSource) then
         return { success = false, message = 'Alvo inválido' }
@@ -412,6 +422,8 @@ ps.registerCallback(resourceName .. ':server:prisonTabJail', function(source, pa
         citizenid = citizenid,
         sentence = payload.sentence,
         reason = payload.reason,
+        reportId = reportId,
+        caseId = fetchCaseIdByReport(reportId),
         action = 'jail',
     })
 end)

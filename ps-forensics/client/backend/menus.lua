@@ -204,6 +204,12 @@ function OpenRunTestMenu()
                 type = resultColor[performResult.resultLevel] or 'inform',
                 duration = 12000,
             })
+        else
+            lib.notify({
+                title = L('common.error_title'),
+                description = performResult and performResult.error or L('test.request_failed'),
+                type = 'error',
+            })
         end
     else
         ClearPedTasks(PlayerPedId())
