@@ -1,0 +1,83 @@
+#mdt-quickbar {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  margin: 8px 12px 6px;
+  border-radius: 10px;
+  background: rgba(16, 22, 32, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  flex-wrap: wrap;
+}
+
+#mdt-quickbar button,
+#mdt-flow-widgets .mini-entry,
+.mdt-inline-btn {
+  background: rgba(53, 90, 142, 0.22);
+  color: #dce6ff;
+  border: 1px solid rgba(118, 155, 216, 0.36);
+  border-radius: 7px;
+  font-size: 12px;
+  padding: 5px 8px;
+  cursor: pointer;
+}
+
+#mdt-quickbar button:hover,
+#mdt-flow-widgets .mini-entry:hover,
+.mdt-inline-btn:hover {
+  background: rgba(78, 124, 192, 0.33);
+}
+
+#mdt-flow-widgets {
+  margin: 0 12px 8px;
+}
+
+#mdt-flow-widgets .widget-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+#mdt-flow-widgets details {
+  background: rgba(11, 16, 24, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+
+#mdt-flow-widgets summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: #c6d3f5;
+}
+
+#mdt-flow-widgets .mini-list {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#mdt-flow-widgets .mini-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#mdt-flow-widgets .mini-type,
+#mdt-flow-widgets .mini-pin {
+  opacity: 0.75;
+  font-size: 11px;
+}
+
+#mdt-flow-widgets .mini-label,
+#mdt-flow-widgets .mini-history,
+#mdt-flow-widgets .mini-empty {
+  font-size: 11px;
+  color: #d0dbf5;
+}
+
+.mdt-collapsed {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+}
