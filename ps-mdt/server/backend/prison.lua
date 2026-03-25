@@ -15,7 +15,7 @@ local function hasPrisonAccess(source)
         return false
     end
 
-    return IsPoliceJob(ps.getJobName(source), ps.getJobType(source))
+    return IsPoliceJob(ps.getJobName(source), ps.getJobType(source)) and CheckPermission(source, 'reports_view')
 end
 
 local function getPrisonExport(name)
@@ -390,6 +390,9 @@ ps.registerCallback(resourceName .. ':server:prisonTabJail', function(source, pa
     if not hasPrisonAccess(src) then
         return { success = false, message = 'Sem permissão para prender' }
     end
+    if not CheckPermission(src, 'warrants_issue') then
+        return { success = false, message = 'Hierarquia insuficiente para aplicar prisão' }
+    end
 
     payload = payload or {}
     local targetSource = tonumber(payload.source)
@@ -417,6 +420,9 @@ ps.registerCallback(resourceName .. ':server:prisonTabUnjail', function(source, 
     local src = source
     if not hasPrisonAccess(src) then
         return { success = false, message = 'Sem permissão para soltar' }
+    end
+    if not CheckPermission(src, 'warrants_close') then
+        return { success = false, message = 'Hierarquia insuficiente para soltura' }
     end
 
     payload = payload or {}
@@ -467,6 +473,9 @@ ps.registerCallback(resourceName .. ':server:prisonFromReport', function(source,
     if not hasPrisonAccess(src) then
         return { success = false, message = 'Sem permissão para prender a partir de relatório' }
     end
+    if not CheckPermission(src, 'warrants_issue') then
+        return { success = false, message = 'Hierarquia insuficiente para prisão por relatório' }
+    end
 
     payload = payload or {}
     local reportId = tonumber(payload.reportId)
@@ -495,6 +504,9 @@ ps.registerCallback(resourceName .. ':server:prisonFromWarrant', function(source
     local src = source
     if not hasPrisonAccess(src) then
         return { success = false, message = 'Sem permissão para prender a partir de mandado' }
+    end
+    if not CheckPermission(src, 'warrants_issue') then
+        return { success = false, message = 'Hierarquia insuficiente para prisão por mandado' }
     end
 
     payload = payload or {}

@@ -239,6 +239,11 @@ Config.ManagementPermissions = {
     -- Reports
     'reports_view',
     'reports_create',
+    'reports_edit',
+    'reports_approve',
+    'reports_sign',
+    'reports_archive',
+    'reports_unarchive',
     'reports_delete',
     -- Warrants
     'warrants_view',
@@ -355,6 +360,7 @@ local policePermissionTiers = {
         'evidence_view',
         'reports_view',
         'reports_create',
+        'reports_edit',
         'warrants_view',
         'charges_view',
         'dispatch_attach',
@@ -390,6 +396,10 @@ local policePermissionTiers = {
         'vehicles_edit_dmv',
     },
     [5] = {
+        'reports_approve',
+        'reports_sign',
+        'reports_archive',
+        'reports_unarchive',
         'warrants_close',
         'management_bulletins',
         'management_activity',
