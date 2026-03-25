@@ -47,8 +47,8 @@ function CheckForensicAuth(src)
 
     if not isPolice and not isMedical then
         lib.notify(src, {
-            title = 'Sistema Forense',
-            description = 'Acesso negado: apenas pessoal autorizado',
+            title = L('ui.system_name'),
+            description = L('ui.access_denied_authorized_only'),
             type = 'error',
             position = Config.Notifications.position,
         })

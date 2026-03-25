@@ -3,28 +3,87 @@
 -- ============================================================
 
 local resourceName = GetCurrentResourceName()
+local allowedSourceTypes = {
+    sangue = true,
+    cabelo = true,
+    saliva = true,
+    tecido = true,
+    suor = true,
+    roupa = true,
+    arma = true,
+    veiculo = true,
+    corpo_vitima = true,
+    corpo_suspeito = true,
+    outro = true,
+}
+
+local sourceAliases = {
+    tecido_biologico = 'tecido',
+    vestigio_biologico = 'tecido',
+    ['vestígio_biológico'] = 'tecido',
+    veículo = 'veiculo',
+}
+
+local requiredItemBySource = {
+    sangue = Config.Items.blood_reagent,
+    cabelo = Config.Items.dna_swab,
+    saliva = Config.Items.dna_swab,
+    suor = Config.Items.dna_swab,
+    tecido = Config.Items.dna_swab,
+    corpo_vitima = Config.Items.dna_swab,
+    corpo_suspeito = Config.Items.dna_swab,
+    roupa = Config.Items.evidence_bag,
+    arma = Config.Items.ballistic_kit,
+    veiculo = Config.Items.evidence_marker,
+    outro = Config.Items.forensic_kit,
+}
+
+local function normalizeSourceType(sourceType)
+    local t = (sourceType or 'outro'):lower():gsub('%s+', '_')
+    t = sourceAliases[t] or t
+    if not allowedSourceTypes[t] then
+        return 'outro'
+    end
+    return t
+end
+
+local function hasRequiredItem(src, itemName)
+    if not itemName then return true end
+    if GetResourceState('ox_inventory') ~= 'started' then return true end
+    return (exports.ox_inventory:GetItemCount(src, itemName) or 0) > 0
+end
+
+local function getCitizenNameFromMDT(citizenid)
+    if not citizenid or citizenid == '' then return nil end
+    local row = MySQL.single.await('SELECT firstname, lastname FROM mdt_profiles WHERE citizenid = ?', { citizenid })
+    if row then
+        return (('%s %s'):format(row.firstname or '', row.lastname or '')):gsub('^%s*(.-)%s*$', '%1')
+    end
+    return nil
+end
 
 -- ============================================================
 -- REGISTRAR PERFIL GENÉTICO DE CIDADÃO
 -- ============================================================
 lib.callback.register(resourceName .. ':server:registerDNAProfile', function(source, citizenid, citizenName, bloodType)
     local src = source
-    if not CheckForensicAuth(src) then return { success = false } end
+    if not CheckForensicAuth(src) then return { success = false, error = L('dna.errors.not_authorized') } end
 
-    if not citizenid then return { success = false, error = 'CitizenID obrigatório' } end
+    if not citizenid then return { success = false, error = L('dna.errors.citizenid_required') } end
 
     local existing = MySQL.scalar.await('SELECT COUNT(*) FROM forensic_dna_profiles WHERE citizenid = ?', { citizenid })
     if existing and existing > 0 then
-        return { success = false, error = 'Perfil genético já cadastrado' }
+        return { success = false, error = L('dna.errors.profile_exists') }
     end
 
     local hash = ForensicUtils.GenerateDNAHash(citizenid)
     local playerData = GetPlayerData(src)
+    local resolvedName = citizenName or getCitizenNameFromMDT(citizenid) or L('labels.unknown')
 
     MySQL.insert.await([[
         INSERT INTO forensic_dna_profiles (citizenid, citizen_name, dna_hash, blood_type, registered_by)
         VALUES (?, ?, ?, ?, ?)
-    ]], { citizenid, citizenName or '', hash, bloodType or 'Desconhecido', playerData and playerData.citizenid or '' })
+    ]], { citizenid, resolvedName, hash, bloodType or L('labels.unknown'), playerData and playerData.citizenid or '' })
 
     ForensicAuditLog(src, 'dna_profile_registered', 'dna_profile', nil, { citizenid = citizenid })
 
@@ -36,30 +95,94 @@ end)
 -- ============================================================
 lib.callback.register(resourceName .. ':server:collectDNASample', function(source, data)
     local src = source
-    if not CheckForensicAuth(src) then return { success = false } end
+    if not CheckForensicAuth(src) then return { success = false, error = L('dna.errors.not_authorized') } end
     if not CheckForensicPermission(src, 'canCollectEvidence') then
-        return { success = false, error = 'Sem permissão' }
+        return { success = false, error = L('dna.errors.no_permission_collect') }
     end
 
     local playerData = GetPlayerData(src)
+    if not playerData then return { success = false, error = L('scene.errors.player_data_unavailable') } end
+    data = data or {}
+
+    local evidenceId = data.evidence_id and tonumber(data.evidence_id) or nil
+    local sceneId = data.scene_id and tonumber(data.scene_id) or nil
+    local sourceType = normalizeSourceType(data.source_type)
+    if data.subject_type == 'vitima' then
+        sourceType = 'corpo_vitima'
+    elseif data.subject_type == 'suspeito' then
+        sourceType = 'corpo_suspeito'
+    elseif data.subject_type == 'cadaver' and sourceType == 'outro' then
+        sourceType = 'tecido'
+    end
+    local sourceDescription = data.source_description or L('dna.defaults.unknown_source')
+    local notes = data.notes or ''
+    local linkedCitizenId = data.linked_citizenid
+
+    if evidenceId then
+        local evidence = MySQL.single.await('SELECT id, scene_id, linked_citizenid FROM forensic_evidence WHERE id = ?', { evidenceId })
+        if not evidence then
+            return { success = false, error = L('dna.errors.evidence_not_found') }
+        end
+        if not sceneId and evidence.scene_id then
+            sceneId = evidence.scene_id
+        end
+        if not linkedCitizenId and evidence.linked_citizenid then
+            linkedCitizenId = evidence.linked_citizenid
+        end
+    end
+
+    if sceneId then
+        local scene = MySQL.single.await('SELECT id, status, location_x, location_y, location_z FROM forensic_crime_scenes WHERE id = ?', { sceneId })
+        if not scene then
+            return { success = false, error = L('scene.errors.not_found') }
+        end
+        if scene.status == 'finalizada' then
+            return { success = false, error = L('scene.errors.scene_closed_for_collection') }
+        end
+
+        local ped = GetPlayerPed(src)
+        if ped and ped > 0 and scene.location_x and scene.location_y and scene.location_z then
+            local pCoords = GetEntityCoords(ped)
+            local distance = #(vector3(scene.location_x, scene.location_y, scene.location_z) - pCoords)
+            if distance > 150.0 then
+                return { success = false, error = L('dna.errors.too_far_from_scene') }
+            end
+        end
+    end
+
+    local requiredItem = requiredItemBySource[sourceType] or Config.Items.dna_swab
+    if not hasRequiredItem(src, requiredItem) then
+        return { success = false, error = L('dna.errors.missing_required_item', requiredItem) }
+    end
+
+    local sampleHash = nil
+    if linkedCitizenId and linkedCitizenId ~= '' then
+        local profile = MySQL.single.await('SELECT dna_hash FROM forensic_dna_profiles WHERE citizenid = ?', { linkedCitizenId })
+        sampleHash = profile and profile.dna_hash or ForensicUtils.GenerateDNAHash(linkedCitizenId)
+    else
+        sampleHash = ForensicUtils.GenerateDNAHash(('%s-%s-%s'):format(sceneId or 0, evidenceId or 0, os.time()))
+    end
 
     local sampleId = MySQL.insert.await([[
         INSERT INTO forensic_dna_samples
-        (evidence_id, scene_id, source_type, source_description,
+        (evidence_id, scene_id, source_type, source_description, dna_hash,
          match_status, collected_by, collected_by_name, notes)
-        VALUES (?, ?, ?, ?, 'pendente', ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, 'pendente', ?, ?, ?)
     ]], {
-        data.evidence_id and tonumber(data.evidence_id) or nil,
-        data.scene_id and tonumber(data.scene_id) or nil,
-        data.source_type or 'outro',
-        data.source_description or '',
+        evidenceId,
+        sceneId,
+        sourceType,
+        sourceDescription,
+        sampleHash,
         playerData.citizenid,
         playerData.name,
-        data.notes or '',
+        notes,
     })
 
     ForensicAuditLog(src, 'dna_sample_collected', 'dna', sampleId, {
-        source_type = data.source_type,
+        source_type = sourceType,
+        linkedCitizenId = linkedCitizenId,
+        requiredItem = requiredItem,
     })
 
     return { success = true, id = sampleId }
@@ -70,17 +193,18 @@ end)
 -- ============================================================
 lib.callback.register(resourceName .. ':server:analyzeDNA', function(source, sampleId)
     local src = source
-    if not CheckForensicAuth(src) then return { success = false } end
+    if not CheckForensicAuth(src) then return { success = false, error = L('dna.errors.not_authorized') } end
     if not CheckForensicPermission(src, 'canRunLabTests') then
-        return { success = false, error = 'Sem permissão para análise laboratorial' }
+        return { success = false, error = L('dna.errors.no_permission_analyze') }
     end
 
     sampleId = tonumber(sampleId)
-    if not sampleId then return { success = false } end
+    if not sampleId then return { success = false, error = L('dna.errors.invalid_id') } end
 
     local playerData = GetPlayerData(src)
+    if not playerData then return { success = false, error = L('scene.errors.player_data_unavailable') } end
     local sample = MySQL.single.await('SELECT * FROM forensic_dna_samples WHERE id = ?', { sampleId })
-    if not sample then return { success = false, error = 'Amostra não encontrada' } end
+    if not sample then return { success = false, error = L('dna.errors.sample_not_found') } end
 
     -- Determinar cidadão-alvo
     local targetCitizenId = nil
@@ -91,7 +215,6 @@ lib.callback.register(resourceName .. ':server:analyzeDNA', function(source, sam
         end
     end
 
-    -- Qualidade de match por tipo de fonte
     local sourceQuality = {
         sangue = 0.95,
         cabelo = 0.80,
@@ -106,51 +229,45 @@ lib.callback.register(resourceName .. ':server:analyzeDNA', function(source, sam
     }
 
     local chance = sourceQuality[sample.source_type] or 0.50
-    local roll = math.random()
 
     local matchStatus = 'sem_correspondencia'
     local matchedCitizenId = nil
     local matchedName = nil
     local confidence = 0
 
-    if targetCitizenId and roll <= chance then
+    if sample.source_type == 'outro' and chance < 0.55 then
+        chance = 0.55
+    end
+
+    if sample.dna_hash and sample.dna_hash ~= '' then
+        local exactProfile = MySQL.single.await(
+            'SELECT citizenid, citizen_name, dna_hash FROM forensic_dna_profiles WHERE dna_hash = ?',
+            { sample.dna_hash }
+        )
+        if exactProfile then
+            matchedCitizenId = exactProfile.citizenid
+            matchedName = exactProfile.citizen_name
+            matchStatus = chance >= 0.75 and 'compativel' or 'parcialmente_compativel'
+            confidence = math.floor((chance * 100) - 5 + math.random(15))
+        end
+    end
+
+    if not matchedCitizenId and targetCitizenId then
         local profile = MySQL.single.await(
-            'SELECT * FROM forensic_dna_profiles WHERE citizenid = ?',
+            'SELECT citizenid, citizen_name, dna_hash FROM forensic_dna_profiles WHERE citizenid = ?',
             { targetCitizenId }
         )
 
         if profile then
-            if chance >= 0.85 then
-                matchStatus = 'compativel'
-                confidence = 80 + math.random(20)
-            elseif chance >= 0.60 then
-                matchStatus = 'parcialmente_compativel'
-                confidence = 50 + math.random(30)
-            else
-                matchStatus = 'parcialmente_compativel'
-                confidence = 30 + math.random(30)
-            end
-
             matchedCitizenId = profile.citizenid
             matchedName = profile.citizen_name
+            matchStatus = chance >= 0.75 and 'compativel' or 'parcialmente_compativel'
+            confidence = math.floor((chance * 100) - 10 + math.random(20))
 
             MySQL.update.await(
                 'UPDATE forensic_dna_samples SET dna_hash = ? WHERE id = ?',
                 { profile.dna_hash, sampleId }
             )
-        end
-    elseif not targetCitizenId then
-        -- Busca no banco inteiro (simulação)
-        local allProfiles = MySQL.query.await('SELECT citizenid, citizen_name, dna_hash FROM forensic_dna_profiles LIMIT 100')
-        if allProfiles and #allProfiles > 0 then
-            -- Chance aleatória de match com alguém no banco
-            if math.random() < 0.3 then
-                local randomProfile = allProfiles[math.random(#allProfiles)]
-                matchStatus = 'parcialmente_compativel'
-                matchedCitizenId = randomProfile.citizenid
-                matchedName = randomProfile.citizen_name
-                confidence = 30 + math.random(40)
-            end
         end
     end
 
@@ -207,6 +324,13 @@ lib.callback.register(resourceName .. ':server:analyzeDNA', function(source, sam
         matchedCitizenId = matchedCitizenId,
         matchedName = matchedName,
         confidence = confidence,
+        resultLabel = L(('dna.result.%s'):format(matchStatus)),
+        forensicReport = ('DNA %s | Fonte: %s | Vínculo: %s | Confiança: %d%%'):format(
+            matchStatus,
+            sample.source_type,
+            matchedName or L('labels.unknown'),
+            confidence
+        ),
     }
 end)
 
