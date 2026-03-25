@@ -144,7 +144,7 @@ function getStatusBadge(status) {
 }
 
 function formatDate(dateStr) {
-    if (!dateStr) return 'N/A';
+    if (!dateStr) return 'N/D';
     const d = new Date(dateStr);
     return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
@@ -171,9 +171,9 @@ async function loadScenes() {
                 ${getStatusBadge(scene.status)}
             </div>
             <div class="card-body">
-                <div class="card-row"><span class="card-label">Classificação</span><span class="card-value">${scene.classification || 'N/A'}</span></div>
-                <div class="card-row"><span class="card-label">Local</span><span class="card-value">${scene.location_name || 'N/A'}</span></div>
-                <div class="card-row"><span class="card-label">Criada por</span><span class="card-value">${scene.created_by_name || 'N/A'}</span></div>
+                <div class="card-row"><span class="card-label">Classificação</span><span class="card-value">${scene.classification || 'N/D'}</span></div>
+                <div class="card-row"><span class="card-label">Local</span><span class="card-value">${scene.location_name || 'N/D'}</span></div>
+                <div class="card-row"><span class="card-label">Criada por</span><span class="card-value">${scene.created_by_name || 'N/D'}</span></div>
                 <div class="card-row"><span class="card-label">Data</span><span class="card-value">${formatDate(scene.created_at)}</span></div>
             </div>
         </div>
@@ -205,14 +205,14 @@ async function viewScene(sceneId) {
         <div class="detail-grid">
             <div class="detail-field"><label>Status</label>${getStatusBadge(scene.status)}</div>
             <div class="detail-field"><label>Classificação</label><span>${scene.classification}</span></div>
-            <div class="detail-field"><label>Local</label><span>${scene.location_name || 'N/A'}</span></div>
-            <div class="detail-field"><label>Departamento</label><span>${scene.department || 'N/A'}</span></div>
-            <div class="detail-field"><label>Criada por</label><span>${scene.created_by_name || 'N/A'}</span></div>
+            <div class="detail-field"><label>Local</label><span>${scene.location_name || 'N/D'}</span></div>
+            <div class="detail-field"><label>Departamento</label><span>${scene.department || 'N/D'}</span></div>
+            <div class="detail-field"><label>Criada por</label><span>${scene.created_by_name || 'N/D'}</span></div>
             <div class="detail-field"><label>Data</label><span>${formatDate(scene.created_at)}</span></div>
             <div class="detail-field"><label>Início Perícia</label><span>${formatDate(scene.processing_start)}</span></div>
             <div class="detail-field"><label>Fim Perícia</label><span>${formatDate(scene.processing_end)}</span></div>
-            <div class="detail-field"><label>Clima</label><span>${scene.weather_conditions || 'N/A'}</span></div>
-            <div class="detail-field"><label>Iluminação</label><span>${scene.lighting_conditions || 'N/A'}</span></div>
+            <div class="detail-field"><label>Clima</label><span>${scene.weather_conditions || 'N/D'}</span></div>
+            <div class="detail-field"><label>Iluminação</label><span>${scene.lighting_conditions || 'N/D'}</span></div>
             <div class="detail-field"><label>Perímetro</label><span>${scene.perimeter_radius || 50}m</span></div>
             <div class="detail-field"><label>Evidências</label><span>${scene.evidence_count || 0}</span></div>
         </div>
@@ -222,7 +222,7 @@ async function viewScene(sceneId) {
                 <h3><i class="fas fa-users"></i> Equipe na Cena</h3>
                 ${scene.personnel.map(p => `
                     <div class="card-row" style="padding:4px 0;">
-                        <span class="card-value">${p.name || 'N/A'}</span>
+                        <span class="card-value">${p.name || 'N/D'}</span>
                         <span class="card-label">${p.role} | ${formatDate(p.arrival_time)}</span>
                     </div>
                 `).join('')}
@@ -267,10 +267,10 @@ async function loadEvidence() {
                 ${getStatusBadge(ev.status)}
             </div>
             <div class="card-body">
-                <div class="card-row"><span class="card-label">Tipo</span><span class="card-value">${ev.type || 'N/A'}</span></div>
-                <div class="card-row"><span class="card-label">Categoria</span><span class="card-value">${ev.category || 'N/A'}</span></div>
-                <div class="card-row"><span class="card-label">Lacre</span><span class="card-value">${ev.seal_number || 'N/A'}</span></div>
-                <div class="card-row"><span class="card-label">Coletada por</span><span class="card-value">${ev.collected_by_name || 'N/A'}</span></div>
+                <div class="card-row"><span class="card-label">Tipo</span><span class="card-value">${ev.type || 'N/D'}</span></div>
+                <div class="card-row"><span class="card-label">Categoria</span><span class="card-value">${ev.category || 'N/D'}</span></div>
+                <div class="card-row"><span class="card-label">Lacre</span><span class="card-value">${ev.seal_number || 'N/D'}</span></div>
+                <div class="card-row"><span class="card-label">Coletada por</span><span class="card-value">${ev.collected_by_name || 'N/D'}</span></div>
                 <div class="card-row"><span class="card-label">Data</span><span class="card-value">${formatDate(ev.collection_time)}</span></div>
             </div>
         </div>
@@ -295,8 +295,8 @@ async function loadFingerprints() {
                 ${getStatusBadge(fp.match_status || 'pendente')}
             </div>
             <div class="card-body">
-                <div class="card-row"><span class="card-label">Origem</span><span class="card-value">${fp.source_description || 'N/A'}</span></div>
-                <div class="card-row"><span class="card-label">Compatível</span><span class="card-value">${fp.matched_name || 'N/A'}</span></div>
+                <div class="card-row"><span class="card-label">Origem</span><span class="card-value">${fp.source_description || 'N/D'}</span></div>
+                <div class="card-row"><span class="card-label">Compatível</span><span class="card-value">${fp.matched_name || 'N/D'}</span></div>
                 <div class="card-row"><span class="card-label">Confiança</span><span class="card-value">${fp.match_confidence || 0}%</span></div>
             </div>
         </div>
@@ -318,8 +318,8 @@ async function loadDNA() {
                 ${getStatusBadge(dna.match_status || 'pendente')}
             </div>
             <div class="card-body">
-                <div class="card-row"><span class="card-label">Fonte</span><span class="card-value">${dna.source_type || 'N/A'}</span></div>
-                <div class="card-row"><span class="card-label">Compatível</span><span class="card-value">${dna.matched_name || 'N/A'}</span></div>
+                <div class="card-row"><span class="card-label">Fonte</span><span class="card-value">${dna.source_type || 'N/D'}</span></div>
+                <div class="card-row"><span class="card-label">Compatível</span><span class="card-value">${dna.matched_name || 'N/D'}</span></div>
                 <div class="card-row"><span class="card-label">Confiança</span><span class="card-value">${dna.match_confidence || 0}%</span></div>
             </div>
         </div>
@@ -337,14 +337,14 @@ async function loadBallistics() {
     list.innerHTML = rows.map(b => `
         <div class="card">
             <div class="card-header">
-                <span class="card-title">${b.matched_weapon_serial || b.weapon_serial || 'N/A'}</span>
+                <span class="card-title">${b.matched_weapon_serial || b.weapon_serial || 'N/D'}</span>
                 ${getStatusBadge(b.rifling_match || 'pendente')}
             </div>
             <div class="card-body">
-                <div class="card-row"><span class="card-label">Item</span><span class="card-value">${b.item_type || 'N/A'}</span></div>
-                <div class="card-row"><span class="card-label">Calibre</span><span class="card-value">${b.caliber || 'N/A'}</span></div>
-                <div class="card-row"><span class="card-label">Cena</span><span class="card-value">${b.scene_number || 'N/A'}</span></div>
-                <div class="card-row"><span class="card-label">Caso</span><span class="card-value">${b.case_id || 'N/A'}</span></div>
+                <div class="card-row"><span class="card-label">Item</span><span class="card-value">${b.item_type || 'N/D'}</span></div>
+                <div class="card-row"><span class="card-label">Calibre</span><span class="card-value">${b.caliber || 'N/D'}</span></div>
+                <div class="card-row"><span class="card-label">Cena</span><span class="card-value">${b.scene_number || 'N/D'}</span></div>
+                <div class="card-row"><span class="card-label">Caso</span><span class="card-value">${b.case_id || 'N/D'}</span></div>
             </div>
         </div>
     `).join('');
@@ -365,9 +365,9 @@ async function loadDrugs() {
                 ${getStatusBadge(d.test_result || 'suspeita')}
             </div>
             <div class="card-body">
-                <div class="card-row"><span class="card-label">Categoria</span><span class="card-value">${d.substance_category || 'N/A'}</span></div>
-                <div class="card-row"><span class="card-label">Caso</span><span class="card-value">${d.case_id || 'N/A'}</span></div>
-                <div class="card-row"><span class="card-label">Relatório</span><span class="card-value">${d.report_id || 'N/A'}</span></div>
+                <div class="card-row"><span class="card-label">Categoria</span><span class="card-value">${d.substance_category || 'N/D'}</span></div>
+                <div class="card-row"><span class="card-label">Caso</span><span class="card-value">${d.case_id || 'N/D'}</span></div>
+                <div class="card-row"><span class="card-label">Relatório</span><span class="card-value">${d.report_id || 'N/D'}</span></div>
             </div>
         </div>
     `).join('');
@@ -389,7 +389,7 @@ async function viewEvidence(evidenceId) {
                     ${ev.custody.map(c => `
                         <div class="custody-item">
                             <div class="custody-action">${c.action}</div>
-                            <div class="custody-info">${c.to_name || c.from_name || 'N/A'} | ${formatDate(c.created_at)}</div>
+                            <div class="custody-info">${c.to_name || c.from_name || 'N/D'} | ${formatDate(c.created_at)}</div>
                             ${c.notes ? `<div class="custody-info">${c.notes}</div>` : ''}
                         </div>
                     `).join('')}
@@ -428,15 +428,15 @@ async function viewEvidence(evidenceId) {
             <div class="detail-field"><label>Status</label>${getStatusBadge(ev.status)}</div>
             <div class="detail-field"><label>Tipo</label><span>${ev.type}</span></div>
             <div class="detail-field"><label>Categoria</label><span>${ev.category}</span></div>
-            <div class="detail-field"><label>Subtipo</label><span>${ev.subtype || 'N/A'}</span></div>
-            <div class="detail-field"><label>Lacre</label><span style="color:#00b4d8;font-family:'Share Tech Mono';">${ev.seal_number || 'N/A'}</span></div>
+            <div class="detail-field"><label>Subtipo</label><span>${ev.subtype || 'N/D'}</span></div>
+            <div class="detail-field"><label>Lacre</label><span style="color:#00b4d8;font-family:'Share Tech Mono';">${ev.seal_number || 'N/D'}</span></div>
             <div class="detail-field"><label>Prioridade</label><span>${ev.priority || 'media'}</span></div>
-            <div class="detail-field"><label>Local</label><span>${ev.collection_location || 'N/A'}</span></div>
-            <div class="detail-field"><label>Método</label><span>${ev.collection_method || 'N/A'}</span></div>
-            <div class="detail-field"><label>Coletada por</label><span>${ev.collected_by_name || 'N/A'}</span></div>
+            <div class="detail-field"><label>Local</label><span>${ev.collection_location || 'N/D'}</span></div>
+            <div class="detail-field"><label>Método</label><span>${ev.collection_method || 'N/D'}</span></div>
+            <div class="detail-field"><label>Coletada por</label><span>${ev.collected_by_name || 'N/D'}</span></div>
             <div class="detail-field"><label>Data Coleta</label><span>${formatDate(ev.collection_time)}</span></div>
-            <div class="detail-field"><label>Armazenamento</label><span>${ev.storage_location || 'N/A'}</span></div>
-            <div class="detail-field"><label>Cena</label><span>${ev.scene_id || 'N/A'}</span></div>
+            <div class="detail-field"><label>Armazenamento</label><span>${ev.storage_location || 'N/D'}</span></div>
+            <div class="detail-field"><label>Cena</label><span>${ev.scene_id || 'N/D'}</span></div>
             ${ev.linked_citizenid ? `<div class="detail-field"><label>Cidadão Vinculado</label><span>${ev.linked_citizenid}</span></div>` : ''}
             ${ev.linked_weapon_serial ? `<div class="detail-field"><label>Arma Vinculada</label><span>${ev.linked_weapon_serial}</span></div>` : ''}
             ${ev.linked_vehicle_plate ? `<div class="detail-field"><label>Veículo Vinculado</label><span>${ev.linked_vehicle_plate}</span></div>` : ''}
@@ -469,7 +469,7 @@ async function loadLabTests() {
             <div class="card-body">
                 <div class="card-row"><span class="card-label">Tipo</span><span class="card-value">${test.test_type}</span></div>
                 <div class="card-row"><span class="card-label">Resultado</span>${getStatusBadge(test.result_level)}</div>
-                <div class="card-row"><span class="card-label">Solicitado por</span><span class="card-value">${test.requested_by_name || 'N/A'}</span></div>
+                <div class="card-row"><span class="card-label">Solicitado por</span><span class="card-value">${test.requested_by_name || 'N/D'}</span></div>
                 <div class="card-row"><span class="card-label">Data</span><span class="card-value">${formatDate(test.created_at)}</span></div>
                 ${test.result_details ? `<div style="margin-top:6px;font-size:11px;color:#9ca3af;border-top:1px solid #1e293b;padding-top:6px;">${test.result_details}</div>` : ''}
             </div>
@@ -507,7 +507,7 @@ async function loadAutopsies() {
             </div>
             <div class="card-body">
                 <div class="card-row"><span class="card-label">Causa da Morte</span><span class="card-value">${causeLabels[autopsy.cause_of_death] || autopsy.cause_of_death}</span></div>
-                <div class="card-row"><span class="card-label">Legista</span><span class="card-value">${autopsy.examiner_name || 'N/A'}</span></div>
+                <div class="card-row"><span class="card-label">Legista</span><span class="card-value">${autopsy.examiner_name || 'N/D'}</span></div>
                 <div class="card-row"><span class="card-label">Data</span><span class="card-value">${formatDate(autopsy.created_at)}</span></div>
                 <div class="card-row"><span class="card-label">Ferimentos</span><span class="card-value">${autopsy.wounds_count || 0}</span></div>
             </div>
@@ -548,12 +548,12 @@ async function viewAutopsy(autopsyId) {
             <div class="detail-field"><label>Causa da Morte</label><span>${causeLabels[autopsy.cause_of_death] || autopsy.cause_of_death}</span></div>
             <div class="detail-field"><label>Modo da Morte</label><span>${autopsy.manner_of_death}</span></div>
             <div class="detail-field"><label>Hora Estimada</label><span>${formatDate(autopsy.estimated_time_of_death)}</span></div>
-            <div class="detail-field"><label>Temperatura Corporal</label><span>${autopsy.body_temperature || 'N/A'}°C</span></div>
-            <div class="detail-field"><label>Rigor Mortis</label><span>${autopsy.rigor_mortis || 'N/A'}</span></div>
+            <div class="detail-field"><label>Temperatura Corporal</label><span>${autopsy.body_temperature || 'N/D'}°C</span></div>
+            <div class="detail-field"><label>Rigor Mortis</label><span>${autopsy.rigor_mortis || 'N/D'}</span></div>
             <div class="detail-field"><label>Ferimentos</label><span>${autopsy.wounds_count || 0}</span></div>
             <div class="detail-field"><label>DNA Coletado</label><span>${autopsy.dna_collected ? 'Sim' : 'Não'}</span></div>
             <div class="detail-field"><label>Digitais Coletadas</label><span>${autopsy.fingerprints_collected ? 'Sim' : 'Não'}</span></div>
-            <div class="detail-field"><label>Legista</label><span>${autopsy.examiner_name || 'N/A'}</span></div>
+            <div class="detail-field"><label>Legista</label><span>${autopsy.examiner_name || 'N/D'}</span></div>
         </div>
         ${autopsy.trauma_description ? `<div class="detail-field"><label>Descrição do Trauma</label><p>${autopsy.trauma_description}</p></div>` : ''}
         ${autopsy.wounds_description ? `<div class="detail-field"><label>Descrição dos Ferimentos</label><p>${autopsy.wounds_description}</p></div>` : ''}
@@ -599,9 +599,9 @@ async function loadReports() {
                 ${getStatusBadge(report.status)}
             </div>
             <div class="card-body">
-                <div class="card-row"><span class="card-label">Título</span><span class="card-value">${report.title || 'N/A'}</span></div>
+                <div class="card-row"><span class="card-label">Título</span><span class="card-value">${report.title || 'N/D'}</span></div>
                 <div class="card-row"><span class="card-label">Tipo</span><span class="card-value">${report.type}</span></div>
-                <div class="card-row"><span class="card-label">Autor</span><span class="card-value">${report.author_name || 'N/A'}</span></div>
+                <div class="card-row"><span class="card-label">Autor</span><span class="card-value">${report.author_name || 'N/D'}</span></div>
                 <div class="card-row"><span class="card-label">Data</span><span class="card-value">${formatDate(report.created_at)}</span></div>
             </div>
         </div>
@@ -633,7 +633,7 @@ async function viewReport(reportId) {
         <div class="detail-grid">
             <div class="detail-field"><label>Status</label>${getStatusBadge(report.status)}</div>
             <div class="detail-field"><label>Tipo</label><span>${report.type}</span></div>
-            <div class="detail-field"><label>Autor</label><span>${report.author_name || 'N/A'} (${report.author_role || 'N/A'})</span></div>
+            <div class="detail-field"><label>Autor</label><span>${report.author_name || 'N/D'} (${report.author_role || 'N/D'})</span></div>
             <div class="detail-field"><label>Data</label><span>${formatDate(report.created_at)}</span></div>
             ${report.finalized_at ? `<div class="detail-field"><label>Finalizado em</label><span>${formatDate(report.finalized_at)}</span></div>` : ''}
             ${report.reviewer_name ? `<div class="detail-field"><label>Revisado por</label><span>${report.reviewer_name}</span></div>` : ''}
@@ -721,9 +721,9 @@ function renderCrossRefResults(dashboard) {
         dashboard.fingerprints.forEach(fp => {
             html += `<div class="card" style="margin-bottom:8px;cursor:default;">
                 <div class="card-body">
-                    <div class="card-row"><span class="card-label">Fonte</span><span class="card-value">${fp.source_description || 'N/A'}</span></div>
-                    <div class="card-row"><span class="card-label">Cena</span><span class="card-value">${fp.scene_number || 'N/A'}</span></div>
-                    <div class="card-row"><span class="card-label">Match</span>${getStatusBadge(fp.match_status)}</div>
+                    <div class="card-row"><span class="card-label">Fonte</span><span class="card-value">${fp.source_description || 'N/D'}</span></div>
+                    <div class="card-row"><span class="card-label">Cena</span><span class="card-value">${fp.scene_number || 'N/D'}</span></div>
+                    <div class="card-row"><span class="card-label">Correspondência</span>${getStatusBadge(fp.match_status)}</div>
                     <div class="card-row"><span class="card-label">Confiança</span><span class="card-value">${fp.match_confidence || 0}%</span></div>
                 </div>
             </div>`;
@@ -737,9 +737,9 @@ function renderCrossRefResults(dashboard) {
         dashboard.dna_matches.forEach(dna => {
             html += `<div class="card" style="margin-bottom:8px;cursor:default;">
                 <div class="card-body">
-                    <div class="card-row"><span class="card-label">Fonte</span><span class="card-value">${dna.source_type || 'N/A'}</span></div>
-                    <div class="card-row"><span class="card-label">Cena</span><span class="card-value">${dna.scene_number || 'N/A'}</span></div>
-                    <div class="card-row"><span class="card-label">Match</span>${getStatusBadge(dna.match_status)}</div>
+                    <div class="card-row"><span class="card-label">Fonte</span><span class="card-value">${dna.source_type || 'N/D'}</span></div>
+                    <div class="card-row"><span class="card-label">Cena</span><span class="card-value">${dna.scene_number || 'N/D'}</span></div>
+                    <div class="card-row"><span class="card-label">Correspondência</span>${getStatusBadge(dna.match_status)}</div>
                     <div class="card-row"><span class="card-label">Confiança</span><span class="card-value">${dna.match_confidence || 0}%</span></div>
                 </div>
             </div>`;
@@ -769,7 +769,7 @@ function renderCrossRefResults(dashboard) {
             html += `<div class="card" style="margin-bottom:8px;cursor:default;">
                 <div class="card-body">
                     <div class="card-row"><span class="card-label">Tipo</span><span class="card-value">${ref.source_type} → ${ref.target_type}</span></div>
-                    <div class="card-row"><span class="card-label">Relação</span><span class="card-value">${ref.relationship || 'N/A'}</span></div>
+                    <div class="card-row"><span class="card-label">Relação</span><span class="card-value">${ref.relationship || 'N/D'}</span></div>
                     <div class="card-row"><span class="card-label">Confiança</span>${getStatusBadge(ref.confidence)}</div>
                     ${ref.notes ? `<div class="card-row"><span class="card-value" style="font-size:11px;color:#9ca3af;">${ref.notes}</span></div>` : ''}
                 </div>
@@ -799,7 +799,7 @@ function renderCrossRefList(refs) {
             <div class="card-body">
                 <div class="card-row"><span class="card-label">Fonte</span><span class="card-value">${ref.source_type} #${ref.source_id}</span></div>
                 <div class="card-row"><span class="card-label">Alvo</span><span class="card-value">${ref.target_type}: ${ref.target_id}</span></div>
-                <div class="card-row"><span class="card-label">Relação</span><span class="card-value">${ref.relationship || 'N/A'}</span></div>
+                <div class="card-row"><span class="card-label">Relação</span><span class="card-value">${ref.relationship || 'N/D'}</span></div>
                 <div class="card-row"><span class="card-label">Confiança</span>${getStatusBadge(ref.confidence)}</div>
                 <div class="card-row"><span class="card-label">Data</span><span class="card-value">${formatDate(ref.created_at)}</span></div>
                 ${ref.notes ? `<div style="margin-top:4px;font-size:11px;color:#9ca3af;">${ref.notes}</div>` : ''}
