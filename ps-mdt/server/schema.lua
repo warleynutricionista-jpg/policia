@@ -348,6 +348,8 @@ function EnsureMdtSchema(force)
         ensureColumn('player_vehicles', 'mdt_vehicle_boloactive', { definition = '`mdt_vehicle_boloactive` TINYINT(1) NOT NULL DEFAULT 0', after = 'mdt_vehicle_stolen' })
         ensureColumn('player_vehicles', 'mdt_vehicle_image', { definition = '`mdt_vehicle_image` VARCHAR(255) NULL', after = 'mdt_vehicle_boloactive' })
         ensureIndex('player_vehicles', 'idx_player_vehicles_citizenid_plate', "INDEX `idx_player_vehicles_citizenid_plate` (`citizenid`, `plate`)", { 'citizenid', 'plate' })
+        ensureIndex('player_vehicles', 'idx_player_vehicles_plate', "INDEX `idx_player_vehicles_plate` (`plate`)", { 'plate' })
+        ensureIndex('players', 'idx_players_citizenid', "INDEX `idx_players_citizenid` (`citizenid`)", { 'citizenid' })
 
         ensureIndex('mdt_evidence_items', 'idx_mdt_evidence_items_case_created', "INDEX `idx_mdt_evidence_items_case_created` (`case_id`, `created_at`)", { 'case_id', 'created_at' })
         ensureIndex('mdt_evidence_items', 'idx_mdt_evidence_items_report_created', "INDEX `idx_mdt_evidence_items_report_created` (`report_id`, `created_at`)", { 'report_id', 'created_at' })
@@ -356,6 +358,8 @@ function EnsureMdtSchema(force)
         ensureIndex('mdt_reports_involved', 'idx_mdt_reports_involved_citizenid', "INDEX `idx_mdt_reports_involved_citizenid` (`citizenid`)", { 'citizenid' })
         ensureIndex('mdt_reports_charges', 'idx_mdt_reports_charges_citizenid', "INDEX `idx_mdt_reports_charges_citizenid` (`citizenid`)", { 'citizenid' })
         ensureIndex('mdt_arrests', 'idx_mdt_arrests_citizenid', "INDEX `idx_mdt_arrests_citizenid` (`citizenid`)", { 'citizenid' })
+        ensureIndex('mdt_reports_warrants', 'idx_mdt_reports_warrants_citizen_expiry', "INDEX `idx_mdt_reports_warrants_citizen_expiry` (`citizenid`, `expirydate`)", { 'citizenid', 'expirydate' })
+        ensureIndex('mdt_profiles', 'idx_mdt_profiles_citizenid', "INDEX `idx_mdt_profiles_citizenid` (`citizenid`)", { 'citizenid' })
 
         if tableExists('mdt_bolos') and columnExists('mdt_bolos', 'status') then
             MySQL.update.await("UPDATE mdt_bolos SET status = 'active' WHERE status IS NULL OR status = ''")

@@ -4,6 +4,7 @@
 -- ============================================================
 
 local resourceName = GetCurrentResourceName()
+local INTEGRATION_CACHE_PREFIX = 'forensics:mdt:'
 
 local function hasMDTAccess(src)
     if not CheckForensicAuth(src) then return false end
@@ -33,30 +34,50 @@ local function safeSingle(sql, params)
     return ok and result or nil
 end
 
+local function clampLimit(value, fallback, maximum)
+    local n = tonumber(value) or fallback
+    n = math.floor(n)
+    if n < 1 then n = fallback end
+    if n > maximum then n = maximum end
+    return n
+end
+
+local function fetchCached(key, ttlSeconds, fetcher)
+    if Cache and Cache.getOrSet then
+        return Cache.getOrSet(INTEGRATION_CACHE_PREFIX .. key, ttlSeconds, fetcher)
+    end
+    return fetcher()
+end
+
 -- ============================================================
 -- BUSCAR DADOS FORENSES POR CASO (para exibir no MDT)
 -- ============================================================
-lib.callback.register(resourceName .. ':server:getForensicDataByCase', function(source, caseId)
+lib.callback.register(resourceName .. ':server:getForensicDataByCase', function(source, caseId, options)
     local src = source
     if not hasMDTAccess(src) then return nil end
 
     caseId = tonumber(caseId)
     if not caseId then return nil end
 
+    options = type(options) == 'table' and options or {}
+    local limit = clampLimit(options.limit, 75, 250)
+    local cacheKey = ('case:%d:%d'):format(caseId, limit)
+
+    return fetchCached(cacheKey, 8, function()
     local data = {
         scenes = MySQL.query.await(
-            'SELECT id, scene_number, classification, status, location_name, created_at FROM forensic_crime_scenes WHERE case_id = ? ORDER BY created_at DESC',
-            { caseId }
+            'SELECT id, scene_number, classification, status, location_name, created_at FROM forensic_crime_scenes WHERE case_id = ? ORDER BY created_at DESC LIMIT ?',
+            { caseId, limit }
         ) or {},
 
         evidence = MySQL.query.await(
-            'SELECT id, evidence_number, type, category, status, seal_number, forensic_report_id, collected_by_name, collection_time FROM forensic_evidence WHERE case_id = ? ORDER BY created_at DESC',
-            { caseId }
+            'SELECT id, evidence_number, type, category, status, seal_number, forensic_report_id, collected_by_name, collection_time FROM forensic_evidence WHERE case_id = ? ORDER BY created_at DESC LIMIT ?',
+            { caseId, limit }
         ) or {},
 
         reports = MySQL.query.await(
-            'SELECT id, report_number, type, title, status, author_name, created_at FROM forensic_reports WHERE case_id = ? ORDER BY created_at DESC',
-            { caseId }
+            'SELECT id, report_number, type, title, status, author_name, created_at FROM forensic_reports WHERE case_id = ? ORDER BY created_at DESC LIMIT ?',
+            { caseId, limit }
         ) or {},
 
         lab_tests = MySQL.query.await([[
@@ -65,7 +86,8 @@ lib.callback.register(resourceName .. ':server:getForensicDataByCase', function(
             INNER JOIN forensic_evidence fe ON lt.evidence_id = fe.id
             WHERE fe.case_id = ?
             ORDER BY lt.created_at DESC
-        ]], { caseId }) or {},
+            LIMIT ?
+        ]], { caseId, limit }) or {},
 
         citizens = MySQL.query.await([[
             SELECT DISTINCT linked_citizenid AS citizenid
@@ -93,32 +115,38 @@ lib.callback.register(resourceName .. ':server:getForensicDataByCase', function(
     }
 
     return data
+    end)
 end)
 
 -- ============================================================
 -- BUSCAR DADOS FORENSES POR RELATÓRIO
 -- ============================================================
-lib.callback.register(resourceName .. ':server:getForensicDataByReport', function(source, reportId)
+lib.callback.register(resourceName .. ':server:getForensicDataByReport', function(source, reportId, options)
     local src = source
     if not hasMDTAccess(src) then return nil end
 
     reportId = tonumber(reportId)
     if not reportId then return nil end
 
+    options = type(options) == 'table' and options or {}
+    local limit = clampLimit(options.limit, 60, 200)
+    local cacheKey = ('report:%d:%d'):format(reportId, limit)
+
+    return fetchCached(cacheKey, 8, function()
     local data = {
         scenes = MySQL.query.await(
-            'SELECT id, scene_number, classification, status FROM forensic_crime_scenes WHERE report_id = ? ORDER BY created_at DESC',
-            { reportId }
+            'SELECT id, scene_number, classification, status FROM forensic_crime_scenes WHERE report_id = ? ORDER BY created_at DESC LIMIT ?',
+            { reportId, limit }
         ) or {},
 
         evidence = MySQL.query.await(
-            'SELECT id, evidence_number, type, category, status, seal_number, forensic_report_id FROM forensic_evidence WHERE report_id = ? ORDER BY created_at DESC',
-            { reportId }
+            'SELECT id, evidence_number, type, category, status, seal_number, forensic_report_id FROM forensic_evidence WHERE report_id = ? ORDER BY created_at DESC LIMIT ?',
+            { reportId, limit }
         ) or {},
 
         reports = MySQL.query.await(
-            'SELECT id, report_number, type, title, status FROM forensic_reports WHERE mdt_report_id = ? ORDER BY created_at DESC',
-            { reportId }
+            'SELECT id, report_number, type, title, status FROM forensic_reports WHERE mdt_report_id = ? ORDER BY created_at DESC LIMIT ?',
+            { reportId, limit }
         ) or {},
         evidence_links = MySQL.query.await([[
             SELECT DISTINCT linked_citizenid, linked_vehicle_plate, linked_weapon_serial
@@ -128,6 +156,7 @@ lib.callback.register(resourceName .. ':server:getForensicDataByReport', functio
     }
 
     return data
+    end)
 end)
 
 -- ============================================================
@@ -138,6 +167,8 @@ lib.callback.register(resourceName .. ':server:getForensicDataByCitizen', functi
     if not hasMDTAccess(src) then return nil end
     if not citizenid then return nil end
 
+    local cacheKey = ('citizen:%s'):format(citizenid)
+    return fetchCached(cacheKey, 10, function()
     local data = {
         -- Digital cadastrada?
         has_fingerprint = MySQL.scalar.await(
@@ -258,6 +289,7 @@ lib.callback.register(resourceName .. ':server:getForensicDataByCitizen', functi
     }
 
     return data
+    end)
 end)
 
 -- ============================================================
@@ -331,6 +363,7 @@ lib.callback.register(resourceName .. ':server:getForensicStats', function(sourc
     local src = source
     if not hasMDTAccess(src) then return nil end
 
+    return fetchCached('stats', 10, function()
     local stats = {
         total_scenes = MySQL.scalar.await('SELECT COUNT(*) FROM forensic_crime_scenes') or 0,
         active_scenes = MySQL.scalar.await("SELECT COUNT(*) FROM forensic_crime_scenes WHERE status != 'finalizada'") or 0,
@@ -344,6 +377,7 @@ lib.callback.register(resourceName .. ':server:getForensicStats', function(sourc
     }
 
     return stats
+    end)
 end)
 
 -- ============================================================
@@ -386,6 +420,7 @@ lib.callback.register(resourceName .. ':server:searchForensicGlobal', function(s
     local serial = normalizeLikeQuery(filters.serial)
 
     local like = query and ('%' .. query .. '%') or nil
+    local resultLimit = clampLimit(filters.limit, 50, 120)
 
     local data = {
         evidence = {},
@@ -401,20 +436,20 @@ lib.callback.register(resourceName .. ':server:searchForensicGlobal', function(s
             SELECT id, evidence_number, type, category, status, seal_number, linked_citizenid, linked_vehicle_plate, linked_weapon_serial, created_at
             FROM forensic_evidence
             WHERE evidence_number LIKE ? OR description LIKE ? OR seal_number LIKE ? OR linked_citizenid LIKE ? OR linked_vehicle_plate LIKE ? OR linked_weapon_serial LIKE ?
-            ORDER BY created_at DESC LIMIT 50
-        ]], { like, like, like, like, like, like }) or {}
+            ORDER BY created_at DESC LIMIT ?
+        ]], { like, like, like, like, like, like, resultLimit }) or {}
     end
 
     if citizenid or like then
         local c = citizenid or query
-        data.dna = MySQL.query.await('SELECT * FROM forensic_dna_samples WHERE matched_citizenid = ? ORDER BY created_at DESC LIMIT 30', { c }) or {}
-        data.fingerprints = MySQL.query.await('SELECT * FROM forensic_fingerprints_collected WHERE matched_citizenid = ? ORDER BY created_at DESC LIMIT 30', { c }) or {}
+        data.dna = MySQL.query.await('SELECT * FROM forensic_dna_samples WHERE matched_citizenid = ? ORDER BY created_at DESC LIMIT ?', { c, math.min(resultLimit, 80) }) or {}
+        data.fingerprints = MySQL.query.await('SELECT * FROM forensic_fingerprints_collected WHERE matched_citizenid = ? ORDER BY created_at DESC LIMIT ?', { c, math.min(resultLimit, 80) }) or {}
         data.citizens = safeQuery('SELECT * FROM mdt_profiles WHERE citizenid = ? LIMIT 1', { c })
     end
 
     if plate or like then
         local p = plate or query
-        data.vehicles = MySQL.query.await('SELECT * FROM forensic_evidence WHERE linked_vehicle_plate = ? ORDER BY created_at DESC LIMIT 30', { p }) or {}
+        data.vehicles = MySQL.query.await('SELECT * FROM forensic_evidence WHERE linked_vehicle_plate = ? ORDER BY created_at DESC LIMIT ?', { p, math.min(resultLimit, 80) }) or {}
     end
 
     if serial or like then
@@ -422,8 +457,8 @@ lib.callback.register(resourceName .. ':server:searchForensicGlobal', function(s
         data.weapons = MySQL.query.await([[
             SELECT * FROM forensic_ballistics
             WHERE weapon_serial = ? OR matched_weapon_serial = ?
-            ORDER BY created_at DESC LIMIT 30
-        ]], { s, s }) or {}
+            ORDER BY created_at DESC LIMIT ?
+        ]], { s, s, math.min(resultLimit, 80) }) or {}
     end
 
     return { success = true, data = data }
