@@ -26,6 +26,13 @@ local function safeQuery(sql, params)
     return ok and (result or {}) or {}
 end
 
+local function safeSingle(sql, params)
+    local ok, result = pcall(function()
+        return MySQL.single.await(sql, params or {})
+    end)
+    return ok and result or nil
+end
+
 -- ============================================================
 -- BUSCAR DADOS FORENSES POR CASO (para exibir no MDT)
 -- ============================================================
@@ -378,8 +385,8 @@ lib.callback.register(resourceName .. ':server:getMDTIntegrationBundle', functio
     local arrestId = filters.arrest_id and tostring(filters.arrest_id) or nil
 
     local bundle = {
-        case = caseId and MySQL.single.await('SELECT * FROM mdt_cases WHERE id = ?', { caseId }) or nil,
-        report = reportId and MySQL.single.await('SELECT * FROM mdt_reports WHERE id = ?', { reportId }) or nil,
+        case = caseId and safeSingle('SELECT * FROM mdt_cases WHERE id = ?', { caseId }) or nil,
+        report = reportId and safeSingle('SELECT * FROM mdt_reports WHERE id = ?', { reportId }) or nil,
         evidence = evidenceId and MySQL.single.await('SELECT * FROM forensic_evidence WHERE id = ?', { evidenceId }) or nil,
         forensic_case = caseId and MySQL.query.await('SELECT id, scene_number, classification, status FROM forensic_crime_scenes WHERE case_id = ? ORDER BY created_at DESC', { caseId }) or {},
         forensic_report = reportId and MySQL.query.await('SELECT id, report_number, type, title, status FROM forensic_reports WHERE mdt_report_id = ? ORDER BY created_at DESC', { reportId }) or {},
