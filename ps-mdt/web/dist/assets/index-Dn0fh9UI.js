@@ -2231,11 +2231,11 @@ const he = {
       GET_REPORT_ANALYTICS: "getReportAnalytics",
       SEARCH_REPORTS: "searchReports",
       GET_AVAILABLE_TAGS: "getAvailableTags",
-      SEARCH_OFFICERS: "searchOficials",
+      SEARCH_OFFICERS: "searchOfficers",
       SEARCH_PLAYERS: "searchPlayers",
       SAVE_REPORT: "saveReport",
       UPDATE_REPORTS: "updateReports",
-      UPLOAD_EVIDENCE_IMAGE: "uploadEvidênciaImagem",
+      UPLOAD_EVIDENCE_IMAGE: "addEvidenceImage",
       GENERATE_REPORT_ID: "generateReportId",
       SEARCH_VEHICLES_FOR_REPORT: "searchVeículosForReport",
     },
@@ -2286,52 +2286,52 @@ const he = {
       ADD_OFFICER: "addOficial",
       REMOVE_OFFICER: "removeOficial",
       GET_ACTIVE_UNITS: "getAtivoUnits",
-      GET_OFFICER_TAGS: "getOficialTags",
-      UPDATE_OFFICER_CERTIFICATIONS: "updateOficialCertificações",
+      GET_OFFICER_TAGS: "getOfficerTags",
+      UPDATE_OFFICER_CERTIFICATIONS: "updateOfficerCertifications",
       GET_JOB_GRADES: "getJobGrades",
-      PROMOTE_OFFICER: "promoteOficial",
-      FIRE_OFFICER: "fireOficial",
-      UPDATE_CALLSIGN: "updateOficialCallsign",
+      PROMOTE_OFFICER: "promoteOfficer",
+      FIRE_OFFICER: "fireOfficer",
+      UPDATE_CALLSIGN: "updateOfficerCallsign",
     },
     CASE: {
       CREATE_CASE: "createCase",
       GET_CASES: "getCases",
       GET_CASE: "getCase",
-      GET_CASE_EVIDENCE_PAGE: "getCaseEvidênciaPage",
+      GET_CASE_EVIDENCE_PAGE: "getCaseEvidencePage",
       UPDATE_CASE: "updateCase",
       DELETE_CASE: "deleteCase",
       LINK_REPORT_TO_CASE: "linkReportToCase",
       UNLINK_REPORT_FROM_CASE: "unlinkReportFromCase",
-      ASSIGN_CASE_OFFICER: "assignCaseOficial",
-      REMOVE_CASE_OFFICER: "removeCaseOficial",
+      ASSIGN_CASE_OFFICER: "assignCaseOfficer",
+      REMOVE_CASE_OFFICER: "removeCaseOfficer",
       ADD_CASE_ATTACHMENT: "addCaseAttachment",
       REMOVE_CASE_ATTACHMENT: "removeCaseAttachment",
       ADD_CASE_ATTACHMENT_UPLOAD: "addCaseAttachmentUpload",
-      ADD_EVIDENCE_ITEM: "addEvidênciaItem",
-      UPDATE_EVIDENCE_ITEM: "updateEvidênciaItem",
-      TRANSFER_EVIDENCE_ITEM: "transferEvidênciaItem",
-      DELETE_EVIDENCE_ITEM: "deleteEvidênciaItem",
-      GET_EVIDENCE_CUSTODY: "getEvidênciaCustody",
-      ADD_EVIDENCE_IMAGE: "addEvidênciaImagem",
-      REMOVE_EVIDENCE_IMAGE: "removeEvidênciaImagem",
-      LINK_EVIDENCE_TO_CASE: "linkEvidênciaToCase",
-      CREATE_CASE_FROM_EVIDENCE: "createCaseFromEvidência",
+      ADD_EVIDENCE_ITEM: "addEvidenceItem",
+      UPDATE_EVIDENCE_ITEM: "updateEvidenceItem",
+      TRANSFER_EVIDENCE_ITEM: "transferEvidenceItem",
+      DELETE_EVIDENCE_ITEM: "deleteEvidenceItem",
+      GET_EVIDENCE_CUSTODY: "getEvidenceCustody",
+      ADD_EVIDENCE_IMAGE: "addEvidenceImage",
+      REMOVE_EVIDENCE_IMAGE: "removeEvidenceImage",
+      LINK_EVIDENCE_TO_CASE: "linkEvidenceToCase",
+      CREATE_CASE_FROM_EVIDENCE: "createCaseFromEvidence",
     },
     EVIDENCE: {
-      GET_EVIDENCE_ITEMS: "getEvidênciaItems",
-      SEARCH_EVIDENCE_ITEMS: "searchEvidênciaItems",
-      ADD_EVIDENCE_ITEM: "addEvidênciaItem",
-      UPDATE_EVIDENCE_ITEM: "updateEvidênciaItem",
-      DELETE_EVIDENCE_ITEM: "deleteEvidênciaItem",
-      TRANSFER_EVIDENCE_ITEM: "transferEvidênciaItem",
-      GET_EVIDENCE_CUSTODY: "getEvidênciaCustody",
-      ADD_EVIDENCE_IMAGE: "addEvidênciaImagem",
-      REMOVE_EVIDENCE_IMAGE: "removeEvidênciaImagem",
-      LINK_EVIDENCE_TO_CASE: "linkEvidênciaToCase",
-      LINK_EVIDENCE_TO_REPORT: "linkEvidênciaToReport",
-      CREATE_CASE_FROM_EVIDENCE: "createCaseFromEvidência",
-      OPEN_EVIDENCE_STASH: "openEvidênciaStash",
-      LOG_EVIDENCE_VIEWED: "logEvidênciaViewed",
+      GET_EVIDENCE_ITEMS: "getEvidenceItems",
+      SEARCH_EVIDENCE_ITEMS: "searchEvidenceItems",
+      ADD_EVIDENCE_ITEM: "addEvidenceItem",
+      UPDATE_EVIDENCE_ITEM: "updateEvidenceItem",
+      DELETE_EVIDENCE_ITEM: "deleteEvidenceItem",
+      TRANSFER_EVIDENCE_ITEM: "transferEvidenceItem",
+      GET_EVIDENCE_CUSTODY: "getEvidenceCustody",
+      ADD_EVIDENCE_IMAGE: "addEvidenceImage",
+      REMOVE_EVIDENCE_IMAGE: "removeEvidenceImage",
+      LINK_EVIDENCE_TO_CASE: "linkEvidenceToCase",
+      LINK_EVIDENCE_TO_REPORT: "linkEvidenceToReport",
+      CREATE_CASE_FROM_EVIDENCE: "createCaseFromEvidence",
+      OPEN_EVIDENCE_STASH: "openEvidenceStash",
+      LOG_EVIDENCE_VIEWED: "logEvidenceViewed",
     },
     AUDIT: {
       GET_AUDIT_LOGS: "getAuditLogs",
@@ -2967,6 +2967,20 @@ const wi = {
     Câmeras: "Cameras",
     Configurações: "Settings",
     Preferências: "Preferences",
+    Dashboard: "Painel",
+    Citizens: "Citizens",
+    Vehicles: "Veículos",
+    Weapons: "Armas",
+    Evidence: "Evidência",
+    Reports: "Reports",
+    Warrants: "Mandados",
+    Charges: "Infrações",
+    Awards: "Awards",
+    Roster: "Escala",
+    Cameras: "Cameras",
+    Bodycams: "Bodycams",
+    Management: "Settings",
+    Settings: "Preferences",
   },
   Hs = {
     INVALID_ID_FORMAT:
@@ -2993,7 +3007,12 @@ function W1(n) {
   return wi.FORBIDDEN_NAME_CHARS.some((e) => n.includes(e));
 }
 function kp(n) {
-  return wi.ALLOWED_TABS.includes(Ty0[n] || n);
+  if (typeof n != "string") return !1;
+  const e = n.trim(),
+    t = Ty0[e] || e;
+  if (wi.ALLOWED_TABS.includes(t)) return !0;
+  const s = t.toLowerCase();
+  return wi.ALLOWED_TABS.some((i) => i.toLowerCase() === s);
 }
 function wp(n) {
   return typeof n == "string" && wi.ALLOWED_ID_PATTERN.test(n);
@@ -3058,6 +3077,7 @@ function Z1(n) {
   return (
     e.forEach((s) => {
       s.currentTab = Ty0[s.currentTab] || s.currentTab;
+      s.data = void 0;
     }),
     e.length !== n.length &&
       console.warn(
