@@ -323,6 +323,20 @@ return {
         },
     },
 
+    autopsy = {
+        errors = {
+            not_authorized = 'Não autorizado para operações de medicina legal',
+            no_permission = 'Apenas legistas podem realizar exames cadavéricos e necropsias',
+            invalid_id = 'ID de necropsia inválido',
+            not_found = 'Necropsia não encontrada',
+            create_failed = 'Falha ao criar registro cadavérico',
+            no_update = 'Nenhuma atualização informada para a necropsia',
+        },
+        defaults = {
+            no_conclusion = 'Conclusão médico-legal pendente.',
+        },
+    },
+
     target = {
         open_lab = 'Abrir Laboratório Forense',
         open_morgue = 'Abrir Instituto Médico Legal',
