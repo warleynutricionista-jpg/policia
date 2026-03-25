@@ -38100,19 +38100,24 @@ function wP(n, e) {
       o(g) !== "all" &&
         (o(g) === "active"
           ? (G = G.filter(
-              (Z) => (Z.status === "valid" || !Z.status) && Z.core_state === 0,
+              (Z) =>
+                ((Z.mdtVehicleStatus ?? Z.status) === "valid" ||
+                  !(Z.mdtVehicleStatus ?? Z.status)) &&
+                Z.core_state === 0,
             ))
           : o(g) === "garaged"
             ? (G = G.filter((Z) => Z.core_state === 1))
             : o(g) === "impounded"
               ? (G = G.filter(
-                  (Z) => Z.core_state === 2 || Z.status === "impounded",
+                  (Z) =>
+                    Z.core_state === 2 ||
+                    (Z.mdtVehicleStatus ?? Z.status) === "impounded",
                 ))
               : o(g) === "stolen" &&
                 (G = G.filter((Z) => {
                   var K;
                   return (
-                    Z.status === "stolen" ||
+                    (Z.mdtVehicleStatus ?? Z.status) === "stolen" ||
                     ((K = Z.flags) == null ? void 0 : K.includes("Roubado"))
                   );
                 })));
@@ -38120,9 +38125,22 @@ function wP(n, e) {
       return (
         q &&
           (G = G.filter(
-            ({ label: Z, plate: K, owner: re, class: j, type: Q }) =>
-              [Z, K, re, j, Q].some(($) =>
-                String($ ?? "").toLowerCase().includes(q),
+            ({
+              label: Z,
+              displayName: K,
+              vehicleName: re,
+              vehicle: j,
+              plate: Q,
+              fakeplate: $,
+              owner: te,
+              ownerName: ee,
+              citizenid: oe,
+              class: ue,
+              type: M,
+              garage: J,
+            }) =>
+              [Z, K, re, j, Q, $, te, ee, oe, ue, M, J].some((se) =>
+                String(se ?? "").toLowerCase().includes(q),
               ),
           )),
         G
@@ -38265,9 +38283,9 @@ function wP(n, e) {
                 (C(J, o(r).label),
                   C(W, o(r).plate),
                   Re(je, 1, `pill ${Pe ?? ""}`, "svelte-5bg8a5"),
-                  C(Je, o(r).status || "Válido"));
+                  C(Je, o(r).mdtVehicleStatus || o(r).status || "Válido"));
               },
-              [() => P(o(r).status || "valid")],
+              [() => P(o(r).mdtVehicleStatus || o(r).status || "valid")],
             ),
               x(ee, oe));
           };
@@ -38680,7 +38698,7 @@ function wP(n, e) {
                             (Ve, ae) => {
                               (C(pt, o(Ge).label),
                                 C(ut, o(Ge).plate),
-                                C(pe, o(Ge).owner),
+                                C(pe, o(Ge).ownerName || o(Ge).owner || "Desconhecido"),
                                 C(ce, o(Ge).class),
                                 (be = Re(
                                   de,
@@ -38697,11 +38715,14 @@ function wP(n, e) {
                                   `status-pill ${ae ?? ""}`,
                                   "svelte-5bg8a5",
                                 ),
-                                C(Ne, o(Ge).status || "Válido"));
+                                C(
+                                  Ne,
+                                  o(Ge).mdtVehicleStatus || o(Ge).status || "Válido",
+                                ));
                             },
                             [
                               () => ({ "accent-red": (o(Ge).points ?? 0) > 0 }),
-                              () => P(o(Ge).status || "valid"),
+                              () => P(o(Ge).mdtVehicleStatus || o(Ge).status || "valid"),
                             ],
                           ),
                           x(Oe, vt));
