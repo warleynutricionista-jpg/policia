@@ -39,8 +39,6 @@ local function getVehicleTableName()
 
     if hasTable('player_vehicles') then
         vehicleTableCache = 'player_vehicles'
-    elseif hasTable('vehicles') then
-        vehicleTableCache = 'vehicles'
     end
 
     return vehicleTableCache
@@ -72,6 +70,36 @@ end
 local function normalizePlate(value)
     local trimmed = normalizeSearchTerm(value)
     return trimmed ~= '' and trimmed:gsub('%s+', ''):upper() or ''
+end
+
+local function toStringOrDefault(value, fallback)
+    if value == nil then
+        return fallback
+    end
+    local cast = tostring(value)
+    if cast == '' then
+        return fallback
+    end
+    return cast
+end
+
+local function toNumberOrDefault(value, fallback)
+    local cast = tonumber(value)
+    if cast == nil then
+        return fallback
+    end
+    return cast
+end
+
+local function isTruthyDbBool(value)
+    if value == true then return true end
+    if value == false or value == nil then return false end
+    local num = tonumber(value)
+    if num ~= nil then
+        return num == 1
+    end
+    local str = tostring(value):lower()
+    return str == '1' or str == 'true' or str == 'yes'
 end
 
 local function buildOwnerName(rawName, citizenid)
@@ -127,42 +155,84 @@ local function countSetItems(set)
     return count
 end
 
+--[[
+    Vehicle tab payload contract (MSI Qbox / player_vehicles source of truth):
+    - snake_case fields (legacy UI compatibility)
+    - camelCase aliases (new contract): vehicleName, ownerName, displayName,
+      mdtVehicleInformation, mdtVehiclePoints, mdtVehicleStatus, mdtVehicleStolen,
+      mdtVehicleBoloactive, mdtVehicleImage
+]]
 local function serializeVehicleRow(v, reportCountsByPlate, activeBoloByPlate)
     local model = normalizeSearchTerm(v.vehicle)
     if model == '' then
         model = 'unknown'
     end
+    local vehicleName = normalizeSearchTerm(v.vehicle_name)
+    local displayName = vehicleName ~= '' and vehicleName or model
     local vehicleData = getVehicleShared(model)
     local plate = normalizePlate(v.plate)
     if plate == '' then
         plate = 'UNKNOWN'
     end
     local reportCount = tonumber(reportCountsByPlate and reportCountsByPlate[plate] or 0) or 0
-    local hasActiveBolo = (activeBoloByPlate and activeBoloByPlate[plate] == true) or v.boloactive == 1
-    local flags = buildVehicleFlags(v.stolen == 1, hasActiveBolo, v.status)
+    local hasActiveBolo = (activeBoloByPlate and activeBoloByPlate[plate] == true) or isTruthyDbBool(v.boloactive)
+    local mdtStatus = normalizeSearchTerm(v.mdt_status)
+    if mdtStatus == '' then
+        mdtStatus = 'valid'
+    end
+    local flags = buildVehicleFlags(isTruthyDbBool(v.stolen), hasActiveBolo, mdtStatus)
 
     return {
         id = v.id,
+        citizenid = toStringOrDefault(v.citizenid, ''),
         model = model,
-        label = vehicleData and vehicleData.name or formatLabel(model),
+        vehicle = model,
+        vehicle_name = vehicleName ~= '' and vehicleName or model,
+        vehicleName = vehicleName ~= '' and vehicleName or model,
+        displayName = displayName,
+        label = displayName ~= '' and displayName or ((vehicleData and vehicleData.name) or formatLabel(model)),
         plate = plate,
+        fakeplate = (v.fakeplate ~= nil and normalizeSearchTerm(v.fakeplate) ~= '') and tostring(v.fakeplate) or nil,
         owner = buildOwnerName(v.owner_name, v.citizenid),
+        ownerName = buildOwnerName(v.owner_name, v.citizenid),
         ownerCitizenId = v.citizenid,
+        garage = toStringOrDefault(v.garage, ''),
+        fuel = toNumberOrDefault(v.fuel, 0),
+        engine = toNumberOrDefault(v.engine, 0),
+        body = toNumberOrDefault(v.body, 0),
+        state = toNumberOrDefault(v.state, 0),
+        status_text = toStringOrDefault(v.status_text, ''),
+        mileage = toNumberOrDefault(v.mileage, 0),
+        mdt_vehicle_information = toStringOrDefault(v.information, ''),
+        mdtVehicleInformation = toStringOrDefault(v.information, ''),
+        mdt_vehicle_points = toNumberOrDefault(v.points, 0),
+        mdtVehiclePoints = toNumberOrDefault(v.points, 0),
+        mdt_vehicle_status = mdtStatus,
+        mdtVehicleStatus = mdtStatus,
+        mdt_vehicle_stolen = isTruthyDbBool(v.stolen),
+        mdtVehicleStolen = isTruthyDbBool(v.stolen),
+        mdt_vehicle_boloactive = hasActiveBolo,
+        mdtVehicleBoloactive = hasActiveBolo,
+        mdt_vehicle_image = (v.image ~= nil and normalizeSearchTerm(v.image) ~= '') and tostring(v.image) or nil,
+        mdtVehicleImage = (v.image ~= nil and normalizeSearchTerm(v.image) ~= '') and tostring(v.image) or nil,
         class = formatLabel(vehicleData and vehicleData.category or 'Desconhecido'),
         type = formatLabel(vehicleData and vehicleData.type or 'Desconhecido'),
         flags = flags,
         image = (v.image and v.image ~= '' and v.image) or ('https://docs.fivem.net/vehicles/' .. model .. '.webp'),
         seenIn = reportCount,
-        points = tonumber(v.points) or 0,
-        status = v.status or 'valid',
-        core_state = tonumber(v.core_state) or 0,
+        information = toStringOrDefault(v.information, ''),
+        points = toNumberOrDefault(v.points, 0),
+        status = mdtStatus,
+        core_state = toNumberOrDefault(v.state, 0),
+        stolen = isTruthyDbBool(v.stolen),
+        boloactive = hasActiveBolo,
     }
 end
 
 
 local function paginateRows(rows, page, limit)
     local safeLimit = math.max(1, tonumber(limit) or (Config.Pagination and Config.Pagination.Vehicles) or 25)
-    safeLimit = math.min(safeLimit, 100)
+    safeLimit = math.min(safeLimit, 5000)
     local safePage = math.max(1, tonumber(page) or 1)
     local total = #rows
     local offset = (safePage - 1) * safeLimit
@@ -209,6 +279,217 @@ local function matchesVehicleQuery(vehicle, normalizedQuery)
     return false
 end
 
+local function getVehicleSelectSql()
+    return [[
+        SELECT
+            pv.id,
+            pv.license,
+            pv.citizenid,
+            COALESCE(NULLIF(TRIM(pv.vehicle), ''), 'unknown') AS vehicle,
+            NULLIF(TRIM(pv.vehicle_name), '') AS vehicle_name,
+            pv.hash,
+            pv.mods,
+            pv.plate,
+            NULLIF(TRIM(pv.fakeplate), '') AS fakeplate,
+            pv.garage,
+            pv.fuel,
+            pv.engine,
+            pv.body,
+            CAST(COALESCE(pv.state, 0) AS SIGNED) AS state,
+            COALESCE(NULLIF(TRIM(pv.status), ''), '') AS status_text,
+            pv.mileage,
+            pv.mdt_vehicle_information AS information,
+            COALESCE(pv.mdt_vehicle_points, 0) AS points,
+            COALESCE(NULLIF(TRIM(pv.mdt_vehicle_status), ''), 'valid') AS mdt_status,
+            COALESCE(pv.mdt_vehicle_stolen, 0) AS stolen,
+            COALESCE(pv.mdt_vehicle_boloactive, 0) AS boloactive,
+            NULLIF(TRIM(pv.mdt_vehicle_image), '') AS image,
+            CONCAT_WS(
+                ' ',
+                NULLIF(
+                    CASE
+                        WHEN JSON_VALID(p.charinfo) THEN JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname'))
+                        ELSE NULL
+                    END,
+                    'null'
+                ),
+                NULLIF(
+                    CASE
+                        WHEN JSON_VALID(p.charinfo) THEN JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname'))
+                        ELSE NULL
+                    END,
+                    'null'
+                )
+            ) AS owner_name
+        FROM player_vehicles pv
+        LEFT JOIN players p
+            ON p.citizenid COLLATE utf8mb4_general_ci = pv.citizenid COLLATE utf8mb4_general_ci
+    ]]
+end
+
+local function buildVehicleSearchWhere(search)
+    local trimmed = normalizeSearchTerm(search)
+    if trimmed == '' then
+        return '', {}
+    end
+
+    local like = ('%%%s%%'):format(trimmed)
+    local compact = normalizePlate(trimmed)
+    local isLikelyPlate = compact ~= '' and compact:match('^[A-Z0-9]+$') ~= nil
+    if isLikelyPlate then
+        local plateWhereSql = [[
+            WHERE (
+                UPPER(REPLACE(pv.plate, ' ', '')) = ?
+                OR UPPER(REPLACE(pv.plate, ' ', '')) LIKE ?
+                OR UPPER(REPLACE(COALESCE(pv.fakeplate, ''), ' ', '')) LIKE ?
+                OR COALESCE(pv.citizenid, '') LIKE ?
+                OR COALESCE(pv.vehicle, '') LIKE ?
+                OR COALESCE(pv.vehicle_name, '') LIKE ?
+                OR COALESCE(pv.garage, '') LIKE ?
+            )
+        ]]
+        local compactLike = ('%%%s%%'):format(compact)
+        return plateWhereSql, { compact, compactLike, compactLike, like, like, like, like }
+    end
+
+    local whereSql = [[
+        WHERE (
+            pv.plate LIKE ?
+            OR COALESCE(pv.fakeplate, '') LIKE ?
+            OR COALESCE(pv.citizenid, '') LIKE ?
+            OR COALESCE(pv.vehicle, '') LIKE ?
+            OR COALESCE(pv.vehicle_name, '') LIKE ?
+            OR COALESCE(pv.garage, '') LIKE ?
+        )
+    ]]
+    return whereSql, { like, like, like, like, like, like }
+end
+
+local function fetchVehicleReportCountsByPlate(normalizedPlates)
+    local counts = {}
+    if not normalizedPlates or #normalizedPlates == 0 then
+        return counts
+    end
+
+    local placeholders = {}
+    for i = 1, #normalizedPlates do
+        placeholders[i] = '?'
+    end
+
+    local rows = MySQL.query.await(([[ 
+        SELECT UPPER(REPLACE(plate, ' ', '')) AS normalized_plate, COUNT(DISTINCT reportid) AS report_count
+        FROM mdt_report_vehicles
+        WHERE UPPER(REPLACE(plate, ' ', '')) IN (%s)
+        GROUP BY normalized_plate
+    ]]):format(table.concat(placeholders, ', ')), normalizedPlates) or {}
+
+    for _, row in ipairs(rows) do
+        if row.normalized_plate and row.normalized_plate ~= '' then
+            counts[row.normalized_plate] = tonumber(row.report_count) or 0
+        end
+    end
+
+    return counts
+end
+
+local function fetchActiveBoloByPlate(normalizedPlates)
+    local active = {}
+    if not normalizedPlates or #normalizedPlates == 0 then
+        return active
+    end
+
+    local placeholders = {}
+    for i = 1, #normalizedPlates do
+        placeholders[i] = '?'
+    end
+
+    local boloRows = MySQL.query.await(([[ 
+        SELECT subject_id
+        FROM mdt_bolos
+        WHERE type = 'vehicle'
+          AND status = 'active'
+          AND UPPER(REPLACE(subject_id, ' ', '')) IN (%s)
+    ]]):format(table.concat(placeholders, ', ')), normalizedPlates) or {}
+
+    for _, bolo in ipairs(boloRows) do
+        local normalized = normalizePlate(bolo.subject_id)
+        if normalized ~= '' then
+            active[normalized] = true
+        end
+    end
+
+    return active
+end
+
+local function fetchVehicleBolos()
+    local boloRows = MySQL.query.await([[
+        SELECT id, reportId, subject_name, notes, status, subject_id, image, type
+        FROM mdt_bolos
+        WHERE type = ? AND status = ?
+    ]], { 'vehicle', 'active' }) or {}
+
+    local bolos = {}
+    for _, bolo in pairs(boloRows) do
+        table.insert(bolos, {
+            id = bolo.id,
+            reportId = bolo.reportId and tostring(bolo.reportId) or 'N/A',
+            name = bolo.subject_name or 'Veículo desconhecido',
+            type = bolo.type,
+            notes = bolo.notes or '',
+            status = bolo.status,
+            plate = bolo.subject_id or 'Desconhecido',
+            image = bolo.image or 'https://docs.fivem.net/vehicles/elegy.webp',
+        })
+    end
+    return bolos
+end
+
+local function queryVehiclesPage(search, page, limit)
+    local safeLimit = math.max(1, tonumber(limit) or (Config.Pagination and Config.Pagination.Vehicles) or 25)
+    safeLimit = math.min(safeLimit, 5000)
+    local safePage = math.max(1, tonumber(page) or 1)
+    local offset = (safePage - 1) * safeLimit
+    local whereSql, whereParams = buildVehicleSearchWhere(search)
+
+    local countSql = ('SELECT COUNT(*) AS total FROM player_vehicles pv %s'):format(whereSql)
+    local countRow = MySQL.single.await(countSql, whereParams) or { total = 0 }
+    local total = tonumber(countRow.total) or 0
+
+    local listSql = ([[%s %s ORDER BY pv.plate ASC LIMIT ? OFFSET ?]]):format(getVehicleSelectSql(), whereSql)
+    local listParams = {}
+    for i = 1, #whereParams do
+        listParams[#listParams + 1] = whereParams[i]
+    end
+    listParams[#listParams + 1] = safeLimit
+    listParams[#listParams + 1] = offset
+
+    local rows = MySQL.query.await(listSql, listParams) or {}
+    local normalizedPlates = {}
+    local seen = {}
+    for _, row in ipairs(rows) do
+        local normalized = normalizePlate(row.plate)
+        if normalized ~= '' and not seen[normalized] then
+            seen[normalized] = true
+            normalizedPlates[#normalizedPlates + 1] = normalized
+        end
+    end
+
+    local reportCountsByPlate = fetchVehicleReportCountsByPlate(normalizedPlates)
+    local activeBoloByPlate = fetchActiveBoloByPlate(normalizedPlates)
+    local vehicles = {}
+    for _, row in ipairs(rows) do
+        vehicles[#vehicles + 1] = serializeVehicleRow(row, reportCountsByPlate, activeBoloByPlate)
+    end
+
+    return {
+        vehicles = vehicles,
+        page = safePage,
+        limit = safeLimit,
+        total = total,
+        hasMore = (offset + safeLimit) < total,
+    }
+end
+
 function GetMdtVehicleDirectory(forceRefresh)
     if forceRefresh then
         Cache.invalidate(VEHICLE_DIRECTORY_CACHE_KEY)
@@ -217,100 +498,23 @@ function GetMdtVehicleDirectory(forceRefresh)
 
     return Cache.getOrSet(VEHICLE_DIRECTORY_CACHE_KEY, VEHICLE_DIRECTORY_TTL, function()
         EnsureMdtSchema()
-        local vehicleTable = getVehicleTableName()
-        if not vehicleTable then
+        if not hasTable('player_vehicles') then
             return { vehicles = {}, bolos = {} }
         end
-
-        local ownerExpr = buildVehicleOwnerExpr(vehicleTable, 'pv')
-        local modelExpr = "COALESCE(NULLIF(pv.vehicle, ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(pv.vehicle, '$.model')), ''), 'unknown')"
-        if hasColumn(vehicleTable, 'mods') then
-            modelExpr = "COALESCE(NULLIF(pv.vehicle, ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(pv.vehicle, '$.model')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(pv.mods, '$.model')), ''), 'unknown')"
-        end
-
-        local infoExpr = hasColumn(vehicleTable, 'mdt_vehicle_information') and 'pv.mdt_vehicle_information' or "NULL"
-        local pointsExpr = hasColumn(vehicleTable, 'mdt_vehicle_points') and 'pv.mdt_vehicle_points' or '0'
-        local statusExpr = hasColumn(vehicleTable, 'mdt_vehicle_status') and 'pv.mdt_vehicle_status' or "'valid'"
-        local stolenExpr = hasColumn(vehicleTable, 'mdt_vehicle_stolen') and 'pv.mdt_vehicle_stolen' or '0'
-        local boloExpr = hasColumn(vehicleTable, 'mdt_vehicle_boloactive') and 'pv.mdt_vehicle_boloactive' or '0'
-        local imageExpr = hasColumn(vehicleTable, 'mdt_vehicle_image') and 'pv.mdt_vehicle_image' or "NULL"
-        local stateExpr = hasColumn(vehicleTable, 'state') and 'pv.state' or '0'
-
-        local vehList = MySQL.query.await(([[
-            SELECT
-                pv.id,
-                pv.plate,
-                %s AS vehicle,
-                %s AS citizenid,
-                %s AS information,
-                %s AS points,
-                %s AS status,
-                %s AS stolen,
-                %s AS boloactive,
-                %s AS image,
-                %s AS core_state,
-                CONCAT_WS(
-                    ' ',
-                    NULLIF(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')), 'null'),
-                    NULLIF(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname')), 'null')
-                ) AS owner_name
-            FROM %s pv
-            LEFT JOIN players p
-                ON p.citizenid COLLATE utf8mb4_general_ci = (%s) COLLATE utf8mb4_general_ci
-            ORDER BY pv.plate ASC
-        ]]):format(
-            modelExpr,
-            ownerExpr,
-            infoExpr,
-            pointsExpr,
-            statusExpr,
-            stolenExpr,
-            boloExpr,
-            imageExpr,
-            stateExpr,
-            vehicleTable,
-            ownerExpr
-        )) or {}
-
-        local boloRows = MySQL.query.await([[
-            SELECT id, reportId, subject_name, notes, status, subject_id, image, type
-            FROM mdt_bolos
-            WHERE type = ? AND status = ?
-        ]], { 'vehicle', 'active' }) or {}
-
-        local reportRows = MySQL.query.await([[
-            SELECT UPPER(REPLACE(plate, ' ', '')) AS normalized_plate, COUNT(DISTINCT reportid) AS report_count
-            FROM mdt_report_vehicles
-            GROUP BY normalized_plate
-        ]]) or {}
-
-        local reportCountsByPlate = {}
-        local activeBoloByPlate = {}
-        local bolos = {}
-
-        for _, reportRow in ipairs(reportRows) do
-            if reportRow.normalized_plate and reportRow.normalized_plate ~= '' then
-                reportCountsByPlate[reportRow.normalized_plate] = tonumber(reportRow.report_count) or 0
+        local vehList = MySQL.query.await(([[%s ORDER BY pv.plate ASC]]):format(getVehicleSelectSql())) or {}
+        local normalizedPlates = {}
+        local seen = {}
+        for _, row in ipairs(vehList) do
+            local plate = normalizePlate(row.plate)
+            if plate ~= '' and not seen[plate] then
+                seen[plate] = true
+                normalizedPlates[#normalizedPlates + 1] = plate
             end
         end
 
-        for _, bolo in pairs(boloRows) do
-            local plate = normalizePlate(bolo.subject_id)
-            if plate ~= '' then
-                activeBoloByPlate[plate] = true
-            end
-
-            table.insert(bolos, {
-                id = bolo.id,
-                reportId = bolo.reportId and tostring(bolo.reportId) or 'N/A',
-                name = bolo.subject_name or 'Veículo desconhecido',
-                type = bolo.type,
-                notes = bolo.notes or '',
-                status = bolo.status,
-                plate = bolo.subject_id or 'Desconhecido',
-                image = bolo.image or 'https://docs.fivem.net/vehicles/elegy.webp',
-            })
-        end
+        local reportCountsByPlate = fetchVehicleReportCountsByPlate(normalizedPlates)
+        local activeBoloByPlate = fetchActiveBoloByPlate(normalizedPlates)
+        local bolos = fetchVehicleBolos()
 
         local vehicles = {}
         for _, v in ipairs(vehList) do
@@ -328,21 +532,20 @@ ps.registerCallback(resourceName .. ':server:GetVehicles', function(source, payl
     local startTime = os.clock()
     local src = source
     if not CheckAuth(src) then return { vehicles = {}, bolos = {}, page = 1, limit = 25, total = 0, hasMore = false } end
+    EnsureMdtSchema()
 
     payload = payload or {}
     local page = payload.page or payload.currentPage or 1
-    local limit = payload.limit
-
-    local directory = GetMdtVehicleDirectory()
-    local bolos = directory.bolos or {}
-    local pageResult = paginateRows(directory.vehicles or {}, page, limit)
+    local limit = payload.limit or 5000
+    local pageResult = queryVehiclesPage(nil, page, limit)
+    local bolos = fetchVehicleBolos()
 
     local endTime = os.clock()
     local elapsedTime = (endTime - startTime) * 1000
     ps.debug(string.format("getVehicles callback executed in %.2f ms (page %s, limit %s)", elapsedTime, tostring(pageResult.page), tostring(pageResult.limit)))
 
     return {
-        vehicles = pageResult.data,
+        vehicles = pageResult.vehicles or {},
         bolos = bolos,
         page = pageResult.page,
         limit = pageResult.limit,
@@ -354,6 +557,7 @@ end)
 ps.registerCallback(resourceName .. ':server:SearchVehicles', function(source, payload)
     local src = source
     if not CheckAuth(src) then return { vehicles = {}, bolos = {}, page = 1, limit = 25, total = 0, hasMore = false } end
+    EnsureMdtSchema()
 
     if type(payload) ~= 'table' then
         payload = { query = payload }
@@ -364,19 +568,10 @@ ps.registerCallback(resourceName .. ':server:SearchVehicles', function(source, p
         return { vehicles = {}, bolos = {}, page = 1, limit = payload.limit or 25, total = 0, hasMore = false }
     end
 
-    local directory = GetMdtVehicleDirectory()
-    local filtered = {}
-
-    for _, vehicle in ipairs(directory.vehicles or {}) do
-        if matchesVehicleQuery(vehicle, trimmedQuery) then
-            filtered[#filtered + 1] = vehicle
-        end
-    end
-
-    local pageResult = paginateRows(filtered, payload.page or 1, payload.limit)
+    local pageResult = queryVehiclesPage(trimmedQuery, payload.page or 1, payload.limit)
 
     return {
-        vehicles = pageResult.data,
+        vehicles = pageResult.vehicles or {},
         bolos = {},
         page = pageResult.page,
         limit = pageResult.limit,
@@ -494,19 +689,39 @@ ps.registerCallback(resourceName .. ':server:GetVehicle', function(source, plate
         SELECT
             pv.id,
             pv.plate,
-            COALESCE(NULLIF(pv.vehicle, ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(pv.vehicle, '$.model')), ''), 'unknown') AS vehicle,
+            COALESCE(NULLIF(TRIM(pv.vehicle), ''), 'unknown') AS vehicle,
+            NULLIF(TRIM(pv.vehicle_name), '') AS vehicle_name,
+            NULLIF(TRIM(pv.fakeplate), '') AS fakeplate,
+            pv.garage,
+            pv.fuel,
+            pv.engine,
+            pv.body,
+            pv.mileage,
+            COALESCE(NULLIF(TRIM(pv.status), ''), '') AS status_text,
             %s AS citizenid,
             %s AS information,
             %s AS points,
-            %s AS status,
+            %s AS mdt_status,
             %s AS stolen,
             %s AS boloactive,
             %s AS image,
-            %s AS core_state,
+            %s AS state,
             CONCAT_WS(
                 ' ',
-                NULLIF(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')), 'null'),
-                NULLIF(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname')), 'null')
+                NULLIF(
+                    CASE
+                        WHEN JSON_VALID(p.charinfo) THEN JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname'))
+                        ELSE NULL
+                    END,
+                    'null'
+                ),
+                NULLIF(
+                    CASE
+                        WHEN JSON_VALID(p.charinfo) THEN JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname'))
+                        ELSE NULL
+                    END,
+                    'null'
+                )
             ) AS owner_name
         FROM %s pv
         LEFT JOIN players p
@@ -552,26 +767,55 @@ ps.registerCallback(resourceName .. ':server:GetVehicle', function(source, plate
     end
 
     local reportCount = countSetItems(reportIdSet)
-    local flags = buildVehicleFlags(row.stolen == 1, hasActiveBolo or row.boloactive == 1, row.status)
+    local normalizedMdtStatus = normalizeSearchTerm(row.mdt_status)
+    if normalizedMdtStatus == '' then normalizedMdtStatus = 'valid' end
+    local flags = buildVehicleFlags(isTruthyDbBool(row.stolen), hasActiveBolo or isTruthyDbBool(row.boloactive), normalizedMdtStatus)
 
     return {
         success = true,
         vehicle = {
             id = row.id,
+            citizenid = toStringOrDefault(row.citizenid, ''),
             model = row.vehicle,
-            label = vehicleData and vehicleData.name or 'Veículo desconhecido',
+            vehicle = row.vehicle,
+            vehicle_name = normalizeSearchTerm(row.vehicle_name) ~= '' and row.vehicle_name or row.vehicle,
+            vehicleName = normalizeSearchTerm(row.vehicle_name) ~= '' and row.vehicle_name or row.vehicle,
+            displayName = (normalizeSearchTerm(row.vehicle_name) ~= '' and row.vehicle_name) or row.vehicle,
+            label = (normalizeSearchTerm(row.vehicle_name) ~= '' and row.vehicle_name) or (vehicleData and vehicleData.name) or row.vehicle or 'Veículo desconhecido',
             brand = vehicleData and vehicleData.brand or nil,
             plate = plateUpper,
+            fakeplate = (row.fakeplate ~= nil and normalizeSearchTerm(row.fakeplate) ~= '') and tostring(row.fakeplate) or nil,
             owner = buildOwnerName(row.owner_name, row.citizenid),
+            ownerName = buildOwnerName(row.owner_name, row.citizenid),
+            ownerCitizenId = row.citizenid,
+            garage = toStringOrDefault(row.garage, ''),
+            fuel = toNumberOrDefault(row.fuel, 0),
+            engine = toNumberOrDefault(row.engine, 0),
+            body = toNumberOrDefault(row.body, 0),
+            state = toNumberOrDefault(row.state, 0),
+            status_text = toStringOrDefault(row.status_text, ''),
+            mileage = toNumberOrDefault(row.mileage, 0),
             class = formatLabel(vehicleData and vehicleData.category or 'Desconhecido'),
             type = formatLabel(vehicleData and vehicleData.type or 'Desconhecido'),
             image = (row.image and row.image ~= '' and row.image) or ('https://docs.fivem.net/vehicles/' .. row.vehicle .. '.webp'),
-            information = row.information or '',
-            points = tonumber(row.points) or 0,
-            status = row.status or 'valid',
-            core_state = tonumber(row.core_state) or 0,
-            stolen = row.stolen == 1,
-            boloactive = row.boloactive == 1,
+            information = toStringOrDefault(row.information, ''),
+            mdt_vehicle_information = toStringOrDefault(row.information, ''),
+            mdtVehicleInformation = toStringOrDefault(row.information, ''),
+            points = toNumberOrDefault(row.points, 0),
+            mdt_vehicle_points = toNumberOrDefault(row.points, 0),
+            mdtVehiclePoints = toNumberOrDefault(row.points, 0),
+            status = normalizedMdtStatus,
+            mdt_vehicle_status = normalizedMdtStatus,
+            mdtVehicleStatus = normalizedMdtStatus,
+            core_state = toNumberOrDefault(row.state, 0),
+            stolen = isTruthyDbBool(row.stolen),
+            mdt_vehicle_stolen = isTruthyDbBool(row.stolen),
+            mdtVehicleStolen = isTruthyDbBool(row.stolen),
+            boloactive = isTruthyDbBool(row.boloactive),
+            mdt_vehicle_boloactive = isTruthyDbBool(row.boloactive),
+            mdtVehicleBoloactive = isTruthyDbBool(row.boloactive),
+            mdt_vehicle_image = (row.image and row.image ~= '' and tostring(row.image)) or nil,
+            mdtVehicleImage = (row.image and row.image ~= '' and tostring(row.image)) or nil,
             flags = flags,
             seenIn = reportCount,
             bolos = bolos,

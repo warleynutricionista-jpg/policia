@@ -38122,7 +38122,7 @@ function wP(n, e) {
           (G = G.filter(
             ({ label: Z, plate: K, owner: re, class: j, type: Q }) =>
               [Z, K, re, j, Q].some(($) =>
-                $ == null ? void 0 : $.toLowerCase().includes(q),
+                String($ ?? "").toLowerCase().includes(q),
               ),
           )),
         G
