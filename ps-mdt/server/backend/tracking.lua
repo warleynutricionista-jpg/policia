@@ -16,21 +16,46 @@ local function getOnlinePlayerObjects(QBCore)
     local players = {}
     if QBCore and QBCore.Functions then
         if QBCore.Functions.GetQBPlayers then
-            local qbPlayers = QBCore.Functions.GetQBPlayers() or {}
-            for _, player in pairs(qbPlayers) do
-                players[#players + 1] = player
-            end
-            if #players > 0 then
-                return players
+            local ok, qbPlayers = pcall(QBCore.Functions.GetQBPlayers)
+            if ok and qbPlayers then
+                for src, player in pairs(qbPlayers) do
+                    -- QBox may return PlayerData directly or a Player object with .PlayerData
+                    if player then
+                        -- Ensure source is available on the player data
+                        if type(player) == 'table' then
+                            if player.PlayerData then
+                                -- Standard QBCore: player object with .PlayerData
+                                if not player.PlayerData.source then
+                                    player.PlayerData.source = tonumber(src)
+                                end
+                            elseif player.citizenid then
+                                -- QBox may return PlayerData table directly
+                                player = { PlayerData = player, source = tonumber(src) }
+                                if not player.PlayerData.source then
+                                    player.PlayerData.source = tonumber(src)
+                                end
+                            end
+                        end
+                        players[#players + 1] = player
+                    end
+                end
+                if #players > 0 then
+                    return players
+                end
             end
         end
 
         if QBCore.Functions.GetPlayers and QBCore.Functions.GetPlayer then
-            local ids = QBCore.Functions.GetPlayers() or {}
-            for _, id in ipairs(ids) do
-                local player = QBCore.Functions.GetPlayer(id)
-                if player then
-                    players[#players + 1] = player
+            local ok, ids = pcall(QBCore.Functions.GetPlayers)
+            if ok and ids then
+                for _, id in ipairs(ids) do
+                    local okP, player = pcall(QBCore.Functions.GetPlayer, id)
+                    if okP and player then
+                        if player.PlayerData and not player.PlayerData.source then
+                            player.PlayerData.source = tonumber(id)
+                        end
+                        players[#players + 1] = player
+                    end
                 end
             end
         end
@@ -42,6 +67,8 @@ local function getPlayerSource(player, data)
     return tonumber(data and data.source)
         or tonumber(player and player.source)
         or tonumber(player and player.PlayerData and player.PlayerData.source)
+        or tonumber(data and data.playerid)
+        or tonumber(data and data.id)
         or tonumber(player and player.PlayerData and player.PlayerData.playerid)
         or tonumber(player and player.PlayerData and player.PlayerData.id)
 end
@@ -63,22 +90,29 @@ local function getOfficerTrackers()
         local players = getOnlinePlayerObjects(QBCore)
         for _, player in pairs(players) do
             local data = player.PlayerData
-            if data and data.job and data.job.onduty then
-                if IsPoliceJob(data.job.name, data.job.type) then
+            if data and data.job then
+                local isOnDuty = data.job.onduty == true or data.job.onduty == 1
+                if isOnDuty and IsPoliceJob(data.job.name, data.job.type) then
                     local src = getPlayerSource(player, data)
-                    local ped = src and GetPlayerPed(src) or 0
-                    if ped and ped ~= 0 then
-                        local coords = GetEntityCoords(ped)
-                        local coordsTable = { x = coords.x, y = coords.y, z = coords.z }
-                        local heading = GetEntityHeading(ped)
-                        officers[#officers + 1] = {
-                            citizenid = data.citizenid,
-                            name = getFullName(data),
-                            callsign = data.metadata and data.metadata.callsign or nil,
-                            rank = data.job.grade and data.job.grade.name or 'Oficial',
-                            coords = coordsTable,
-                            heading = heading,
-                        }
+                    if src then
+                        local okPed, ped = pcall(GetPlayerPed, src)
+                        ped = (okPed and ped) or 0
+                        if ped ~= 0 then
+                            local okCoords, coords = pcall(GetEntityCoords, ped)
+                            if okCoords and coords then
+                                local coordsTable = { x = coords.x, y = coords.y, z = coords.z }
+                                local okHeading, heading = pcall(GetEntityHeading, ped)
+                                heading = (okHeading and heading) or 0.0
+                                officers[#officers + 1] = {
+                                    citizenid = data.citizenid,
+                                    name = getFullName(data),
+                                    callsign = data.metadata and data.metadata.callsign or nil,
+                                    rank = data.job.grade and data.job.grade.name or 'Oficial',
+                                    coords = coordsTable,
+                                    heading = heading,
+                                }
+                            end
+                        end
                     end
                 end
             end
@@ -124,22 +158,33 @@ local function getVehicleTrackers()
         local players = getOnlinePlayerObjects(QBCore)
         for _, player in pairs(players) do
             local data = player.PlayerData
-            if data and data.job and data.job.onduty and IsPoliceJob(data.job.name, data.job.type) then
-                local src = getPlayerSource(player, data)
-                local ped = src and GetPlayerPed(src) or 0
-                if ped and ped ~= 0 then
-                    local veh = GetVehiclePedIsIn(ped, false)
-                    if veh and veh ~= 0 and not seen[veh] then
-                        seen[veh] = true
-                        local coords = GetEntityCoords(veh)
-                        local coordsTable = { x = coords.x, y = coords.y, z = coords.z }
-                        local heading = GetEntityHeading(veh)
-                        local plate = GetVehicleNumberPlateText(veh)
-                        vehicles[#vehicles + 1] = {
-                            plate = plate,
-                            coords = coordsTable,
-                            heading = heading,
-                        }
+            if data and data.job then
+                local isOnDuty = data.job.onduty == true or data.job.onduty == 1
+                if isOnDuty and IsPoliceJob(data.job.name, data.job.type) then
+                    local src = getPlayerSource(player, data)
+                    if src then
+                        local okPed, ped = pcall(GetPlayerPed, src)
+                        ped = (okPed and ped) or 0
+                        if ped ~= 0 then
+                            local okVeh, veh = pcall(GetVehiclePedIsIn, ped, false)
+                            veh = (okVeh and veh) or 0
+                            if veh ~= 0 and not seen[veh] then
+                                seen[veh] = true
+                                local okCoords, coords = pcall(GetEntityCoords, veh)
+                                if okCoords and coords then
+                                    local coordsTable = { x = coords.x, y = coords.y, z = coords.z }
+                                    local okHeading, heading = pcall(GetEntityHeading, veh)
+                                    heading = (okHeading and heading) or 0.0
+                                    local okPlate, plate = pcall(GetVehicleNumberPlateText, veh)
+                                    plate = (okPlate and plate) or ''
+                                    vehicles[#vehicles + 1] = {
+                                        plate = plate,
+                                        coords = coordsTable,
+                                        heading = heading,
+                                    }
+                                end
+                            end
+                        end
                     end
                 end
             end
@@ -185,21 +230,28 @@ local function getBodycamTrackers()
         local players = getOnlinePlayerObjects(QBCore)
         for _, player in pairs(players) do
             local data = player.PlayerData
-            if data and data.job and data.job.onduty then
-                if IsPoliceJob(data.job.name, data.job.type) then
+            if data and data.job then
+                local isOnDuty = data.job.onduty == true or data.job.onduty == 1
+                if isOnDuty and IsPoliceJob(data.job.name, data.job.type) then
                     local src = getPlayerSource(player, data)
-                    local ped = src and GetPlayerPed(src) or 0
-                    if ped and ped ~= 0 then
-                        local coords = GetEntityCoords(ped)
-                        local coordsTable = { x = coords.x, y = coords.y, z = coords.z }
-                        local heading = GetEntityHeading(ped)
-                        bodycams[#bodycams + 1] = {
-                            citizenid = data.citizenid,
-                            name = getFullName(data),
-                            callsign = data.metadata and data.metadata.callsign or nil,
-                            coords = coordsTable,
-                            heading = heading,
-                        }
+                    if src then
+                        local okPed, ped = pcall(GetPlayerPed, src)
+                        ped = (okPed and ped) or 0
+                        if ped ~= 0 then
+                            local okCoords, coords = pcall(GetEntityCoords, ped)
+                            if okCoords and coords then
+                                local coordsTable = { x = coords.x, y = coords.y, z = coords.z }
+                                local okHeading, heading = pcall(GetEntityHeading, ped)
+                                heading = (okHeading and heading) or 0.0
+                                bodycams[#bodycams + 1] = {
+                                    citizenid = data.citizenid,
+                                    name = getFullName(data),
+                                    callsign = data.metadata and data.metadata.callsign or nil,
+                                    coords = coordsTable,
+                                    heading = heading,
+                                }
+                            end
+                        end
                     end
                 end
             end

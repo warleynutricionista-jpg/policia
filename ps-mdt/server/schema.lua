@@ -341,6 +341,22 @@ function EnsureMdtSchema(force)
             ensureIndex('mdt_report_templates', 'idx_mdt_report_templates_type_name', "INDEX `idx_mdt_report_templates_type_name` (`type`, `name`)", { 'type', 'name' })
         end
 
+        if not tableExists('mdt_permission_roles') then
+            MySQL.query.await([[
+                CREATE TABLE IF NOT EXISTS `mdt_permission_roles` (
+                    `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+                    `job` VARCHAR(50) NOT NULL,
+                    `grade` INT(10) UNSIGNED NOT NULL,
+                    `permissions` JSON NOT NULL,
+                    `updated_by` VARCHAR(50) DEFAULT NULL,
+                    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    PRIMARY KEY (`id`),
+                    UNIQUE KEY `job_grade` (`job`, `grade`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            ]])
+            schemaState.tableCache['mdt_permission_roles'] = true
+        end
+
         ensureColumn('player_vehicles', 'mdt_vehicle_information', { definition = '`mdt_vehicle_information` TEXT NULL', after = 'vehicle' })
         ensureColumn('player_vehicles', 'mdt_vehicle_points', { definition = '`mdt_vehicle_points` INT(11) NOT NULL DEFAULT 0', after = 'mdt_vehicle_information' })
         ensureColumn('player_vehicles', 'mdt_vehicle_status', { definition = "`mdt_vehicle_status` ENUM('valid','suspended','expired','impounded') NOT NULL DEFAULT 'valid'", after = 'mdt_vehicle_points' })

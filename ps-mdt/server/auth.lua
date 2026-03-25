@@ -30,9 +30,9 @@ function CheckPermission(source, permName)
     -- Boss always has all permissions
     if rankData.isBoss or (ps.isBoss and ps.isBoss(source)) then return true end
 
-    -- Check database
-    local row = MySQL.single.await('SELECT permissions FROM mdt_permission_roles WHERE job = ? AND grade = ?', { jobName, gradeValue })
-    if row and row.permissions then
+    -- Check database (pcall to handle missing table gracefully)
+    local okDb, row = pcall(MySQL.single.await, 'SELECT permissions FROM mdt_permission_roles WHERE job = ? AND grade = ?', { jobName, gradeValue })
+    if okDb and row and row.permissions then
         local ok, decoded = pcall(json.decode, row.permissions)
         if ok and type(decoded) == 'table' then
             for _, p in ipairs(decoded) do
@@ -198,9 +198,9 @@ ps.registerCallback(tostring(GetCurrentResourceName())..':server:getMyPermission
         return { permissions = GetMdtAllPermissions(), isBoss = true }
     end
 
-    -- Check database for stored permissions
-    local row = MySQL.single.await('SELECT permissions FROM mdt_permission_roles WHERE job = ? AND grade = ?', { jobName, gradeValue })
-    if row and row.permissions then
+    -- Check database for stored permissions (pcall to handle missing table gracefully)
+    local okDb, row = pcall(MySQL.single.await, 'SELECT permissions FROM mdt_permission_roles WHERE job = ? AND grade = ?', { jobName, gradeValue })
+    if okDb and row and row.permissions then
         local ok, decoded = pcall(json.decode, row.permissions)
         if ok and type(decoded) == 'table' then
             return { permissions = decoded, isBoss = false, grade = gradeValue, rank = rankData.label }
