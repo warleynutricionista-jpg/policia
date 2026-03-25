@@ -28,6 +28,26 @@ window.addEventListener('message', function(event) {
             if (btnAutopsy) btnAutopsy.style.display = 'none';
         }
 
+        // Restringir abas por permissão
+        const tabRules = {
+            lab: !!playerPermissions.canRunBasicTests,
+            fingerprints: !!playerPermissions.canCollectEvidence,
+            dna: !!playerPermissions.canCollectEvidence,
+            ballistics: !!playerPermissions.canCollectEvidence,
+            drugs: !!playerPermissions.canRunBasicTests,
+            autopsy: !!playerPermissions.canPerformAutopsy,
+            reports: !!playerPermissions.canEmitReport,
+            crossref: !!playerPermissions.canRunLabTests || !!playerPermissions.canEmitReport,
+        };
+        document.querySelectorAll('.nav-btn').forEach((btn) => {
+            const tab = btn.dataset.tab;
+            if (tabRules[tab] === false) {
+                btn.style.display = 'none';
+            } else {
+                btn.style.display = '';
+            }
+        });
+
         switchTab(data.tab || 'scenes');
     }
 
@@ -77,7 +97,8 @@ function switchTab(tab) {
     document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
 
     document.getElementById('tab-' + tab).classList.add('active');
-    document.querySelector(`.nav-btn[data-tab="${tab}"]`).classList.add('active');
+    const navBtn = document.querySelector(`.nav-btn[data-tab="${tab}"]`);
+    if (navBtn) navBtn.classList.add('active');
 
     // Load data for tab
     loadTabData(tab);
@@ -88,8 +109,13 @@ async function loadTabData(tab) {
         case 'scenes': await loadScenes(); break;
         case 'evidence': await loadEvidence(); break;
         case 'lab': await loadLabTests(); break;
+        case 'fingerprints': await loadFingerprints(); break;
+        case 'dna': await loadDNA(); break;
+        case 'ballistics': await loadBallistics(); break;
+        case 'drugs': await loadDrugs(); break;
         case 'autopsy': await loadAutopsies(); break;
         case 'reports': await loadReports(); break;
+        case 'crossref': await loadCrossRefDashboard(); break;
     }
 }
 
@@ -105,7 +131,7 @@ const statusLabels = {
     solicitado: 'Solicitado', em_andamento: 'Em Andamento', concluido: 'Concluído',
     cancelado: 'Cancelado',
     pendente: 'Pendente', presumido: 'Presumido', inconclusivo: 'Inconclusivo',
-    compativel: 'Compatível', confirmado: 'Confirmado', negativo: 'Negativo',
+    compativel: 'Compatível', confirmado: 'Confirmado', negativo: 'Negativo', suspeita: 'Suspeita',
     rascunho: 'Rascunho', em_revisao: 'Em Revisão', finalizado: 'Finalizado',
     anexado_mdt: 'Anexado ao MDT',
     sem_correspondencia: 'Sem Correspondência', parcial: 'Parcial',
@@ -253,6 +279,99 @@ async function loadEvidence() {
 
 function searchEvidence() { loadEvidence(); }
 function filterEvidence() { loadEvidence(); }
+
+async function loadFingerprints() {
+    const citizenid = document.getElementById('fpSearch')?.value || '';
+    const list = document.getElementById('fingerprintsList');
+    const rows = citizenid ? await fetchNUI('searchFingerprintsByCitizen', { citizenid }) : [];
+    if (!rows || rows.length === 0) {
+        list.innerHTML = '<div class="empty-state"><i class="fas fa-hand-dots"></i><p>Nenhuma digital encontrada</p></div>';
+        return;
+    }
+    list.innerHTML = rows.map(fp => `
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">${fp.evidence_number || 'Sem evidência'}</span>
+                ${getStatusBadge(fp.match_status || 'pendente')}
+            </div>
+            <div class="card-body">
+                <div class="card-row"><span class="card-label">Origem</span><span class="card-value">${fp.source_description || 'N/A'}</span></div>
+                <div class="card-row"><span class="card-label">Compatível</span><span class="card-value">${fp.matched_name || 'N/A'}</span></div>
+                <div class="card-row"><span class="card-label">Confiança</span><span class="card-value">${fp.match_confidence || 0}%</span></div>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function loadDNA() {
+    const citizenid = document.getElementById('dnaSearch')?.value || '';
+    const list = document.getElementById('dnaList');
+    const rows = citizenid ? await fetchNUI('searchDNAByCitizen', { citizenid }) : [];
+    if (!rows || rows.length === 0) {
+        list.innerHTML = '<div class="empty-state"><i class="fas fa-dna"></i><p>Nenhuma análise de DNA encontrada</p></div>';
+        return;
+    }
+    list.innerHTML = rows.map(dna => `
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">${dna.evidence_number || 'Sem evidência'}</span>
+                ${getStatusBadge(dna.match_status || 'pendente')}
+            </div>
+            <div class="card-body">
+                <div class="card-row"><span class="card-label">Fonte</span><span class="card-value">${dna.source_type || 'N/A'}</span></div>
+                <div class="card-row"><span class="card-label">Compatível</span><span class="card-value">${dna.matched_name || 'N/A'}</span></div>
+                <div class="card-row"><span class="card-label">Confiança</span><span class="card-value">${dna.match_confidence || 0}%</span></div>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function loadBallistics() {
+    const serial = document.getElementById('ballisticSearch')?.value || '';
+    const list = document.getElementById('ballisticsList');
+    const rows = serial ? await fetchNUI('getWeaponBallisticHistory', { serial }) : [];
+    if (!rows || rows.length === 0) {
+        list.innerHTML = '<div class="empty-state"><i class="fas fa-crosshairs"></i><p>Nenhum histórico balístico encontrado</p></div>';
+        return;
+    }
+    list.innerHTML = rows.map(b => `
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">${b.matched_weapon_serial || b.weapon_serial || 'N/A'}</span>
+                ${getStatusBadge(b.rifling_match || 'pendente')}
+            </div>
+            <div class="card-body">
+                <div class="card-row"><span class="card-label">Item</span><span class="card-value">${b.item_type || 'N/A'}</span></div>
+                <div class="card-row"><span class="card-label">Calibre</span><span class="card-value">${b.caliber || 'N/A'}</span></div>
+                <div class="card-row"><span class="card-label">Cena</span><span class="card-value">${b.scene_number || 'N/A'}</span></div>
+                <div class="card-row"><span class="card-label">Caso</span><span class="card-value">${b.case_id || 'N/A'}</span></div>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function loadDrugs() {
+    const list = document.getElementById('drugsList');
+    const result = await fetchNUI('getDrugAnalyses', {});
+    const rows = result?.data || [];
+    if (!rows || rows.length === 0) {
+        list.innerHTML = '<div class="empty-state"><i class="fas fa-pills"></i><p>Nenhuma análise de substância encontrada</p></div>';
+        return;
+    }
+    list.innerHTML = rows.map(d => `
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">${d.confirmed_substance || d.preliminary_classification || 'Substância não definida'}</span>
+                ${getStatusBadge(d.test_result || 'suspeita')}
+            </div>
+            <div class="card-body">
+                <div class="card-row"><span class="card-label">Categoria</span><span class="card-value">${d.substance_category || 'N/A'}</span></div>
+                <div class="card-row"><span class="card-label">Caso</span><span class="card-value">${d.case_id || 'N/A'}</span></div>
+                <div class="card-row"><span class="card-label">Relatório</span><span class="card-value">${d.report_id || 'N/A'}</span></div>
+            </div>
+        </div>
+    `).join('');
+}
 
 async function viewEvidence(evidenceId) {
     const ev = await fetchNUI('getEvidence', { id: evidenceId });
@@ -553,6 +672,26 @@ async function searchCrossRefCitizen() {
     if (!result) return;
 
     renderCrossRefResults(result);
+}
+
+async function loadCrossRefDashboard() {
+    const result = await fetchNUI('getForensicStats', {});
+    const container = document.getElementById('crossrefResults');
+    if (!result) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-project-diagram"></i><p>Sem dados de integração forense</p></div>';
+        return;
+    }
+    container.innerHTML = `
+        <div class="card">
+            <div class="card-header"><span class="card-title">Painel de Integração MDT</span></div>
+            <div class="card-body">
+                <div class="card-row"><span class="card-label">Cenas</span><span class="card-value">${result.total_scenes || 0}</span></div>
+                <div class="card-row"><span class="card-label">Evidências</span><span class="card-value">${result.total_evidence || 0}</span></div>
+                <div class="card-row"><span class="card-label">Exames pendentes</span><span class="card-value">${result.pending_tests || 0}</span></div>
+                <div class="card-row"><span class="card-label">Laudos</span><span class="card-value">${result.total_reports || 0}</span></div>
+            </div>
+        </div>
+    `;
 }
 
 async function searchCrossRefWeapon() {

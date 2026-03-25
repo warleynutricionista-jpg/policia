@@ -4,32 +4,79 @@
 
 local resourceName = GetCurrentResourceName()
 
+local BASIC_TESTS = {
+    residuo_polvora_maos = true,
+    residuo_polvora_roupa = true,
+    residuo_polvora_arma = true,
+    residuo_polvora_veiculo = true,
+    teste_droga_presuntivo = true,
+    teste_sangue_presuntivo = true,
+    coleta_digital = true,
+    coleta_dna = true,
+}
+
+local REQUIRED_ITEM_BY_TEST = {
+    residuo_polvora_maos = Config.Items.gsr_kit,
+    residuo_polvora_roupa = Config.Items.gsr_kit,
+    residuo_polvora_arma = Config.Items.gsr_kit,
+    residuo_polvora_veiculo = Config.Items.gsr_kit,
+    teste_droga_presuntivo = Config.Items.drug_test_kit,
+    analise_substancia = Config.Items.drug_test_kit,
+    teste_sangue_presuntivo = Config.Items.blood_reagent,
+}
+
+local VALID_RESULT_LEVELS = {
+    pendente = true,
+    presumido = true,
+    inconclusivo = true,
+    compativel = true,
+    confirmado = true,
+    negativo = true,
+}
+
+local function hasRequiredItem(src, itemName)
+    if not itemName then return true end
+    if GetResourceState('ox_inventory') ~= 'started' then return true end
+    return (exports.ox_inventory:GetItemCount(src, itemName) or 0) > 0
+end
+
+local function isBasicTest(testType)
+    if not testType then return false end
+    return BASIC_TESTS[testType] or testType:find('residuo_polvora') ~= nil
+end
+
+local function normalizeResultLevel(level)
+    local l = (level or 'inconclusivo'):lower()
+    return VALID_RESULT_LEVELS[l] and l or 'inconclusivo'
+end
+
 -- ============================================================
 -- SOLICITAR TESTE
 -- ============================================================
 lib.callback.register(resourceName .. ':server:requestLabTest', function(source, data)
     local src = source
-    if not CheckForensicAuth(src) then return { success = false } end
+    if not CheckForensicAuth(src) then return { success = false, error = L('lab.errors.not_authorized') } end
+    data = data or {}
 
-    local isBasicTest = data.test_type and (
-        data.test_type:find('residuo_polvora') or
-        data.test_type == 'teste_droga_presuntivo' or
-        data.test_type == 'teste_sangue_presuntivo' or
-        data.test_type == 'coleta_digital' or
-        data.test_type == 'coleta_dna'
-    )
+    local isBasic = isBasicTest(data.test_type)
 
-    if isBasicTest then
+    if isBasic then
         if not CheckForensicPermission(src, 'canRunBasicTests') then
-            return { success = false, error = 'Sem permissão para testes básicos' }
+            return { success = false, error = L('lab.errors.no_permission_basic') }
         end
     else
         if not CheckForensicPermission(src, 'canRunLabTests') then
-            return { success = false, error = 'Sem permissão para testes laboratoriais' }
+            return { success = false, error = L('lab.errors.no_permission_lab') }
         end
     end
 
     local playerData = GetPlayerData(src)
+    if not playerData then return { success = false, error = L('scene.errors.player_data_unavailable') } end
+
+    local requiredItem = REQUIRED_ITEM_BY_TEST[data.test_type]
+    if not hasRequiredItem(src, requiredItem) then
+        return { success = false, error = L('lab.errors.missing_required_item', requiredItem) }
+    end
 
     local testId = MySQL.insert.await([[
         INSERT INTO forensic_lab_tests
@@ -42,7 +89,7 @@ lib.callback.register(resourceName .. ':server:requestLabTest', function(source,
         data.evidence_id and tonumber(data.evidence_id) or nil,
         data.scene_id and tonumber(data.scene_id) or nil,
         data.test_type or 'outro',
-        data.test_name or 'Teste não especificado',
+        data.test_name or L('lab.defaults.unnamed_test'),
         data.description or '',
         data.target_citizenid or nil,
         data.target_name or nil,
@@ -66,17 +113,31 @@ end)
 -- ============================================================
 lib.callback.register(resourceName .. ':server:performLabTest', function(source, testId)
     local src = source
-    if not CheckForensicAuth(src) then return { success = false } end
+    if not CheckForensicAuth(src) then return { success = false, error = L('lab.errors.not_authorized') } end
 
     testId = tonumber(testId)
-    if not testId then return { success = false } end
+    if not testId then return { success = false, error = L('lab.errors.invalid_id') } end
 
     local playerData = GetPlayerData(src)
+    if not playerData then return { success = false, error = L('scene.errors.player_data_unavailable') } end
     local test = MySQL.single.await('SELECT * FROM forensic_lab_tests WHERE id = ?', { testId })
-    if not test then return { success = false, error = 'Teste não encontrado' } end
+    if not test then return { success = false, error = L('lab.errors.not_found') } end
+
+    if isBasicTest(test.test_type) then
+        if not CheckForensicPermission(src, 'canRunBasicTests') then
+            return { success = false, error = L('lab.errors.no_permission_basic') }
+        end
+    elseif not CheckForensicPermission(src, 'canRunLabTests') then
+        return { success = false, error = L('lab.errors.no_permission_lab') }
+    end
 
     if test.status == 'concluido' then
-        return { success = false, error = 'Teste já foi concluído' }
+        return { success = false, error = L('lab.errors.already_completed') }
+    end
+
+    local requiredItem = REQUIRED_ITEM_BY_TEST[test.test_type]
+    if not hasRequiredItem(src, requiredItem) then
+        return { success = false, error = L('lab.errors.missing_required_item', requiredItem) }
     end
 
     -- Marcar como em andamento
@@ -89,6 +150,7 @@ lib.callback.register(resourceName .. ':server:performLabTest', function(source,
 
     -- Simular resultado baseado no tipo de teste
     local resultLevel, resultDetails = SimulateTestResult(test)
+    resultLevel = normalizeResultLevel(resultLevel)
 
     -- Atualizar com resultado
     MySQL.update.await([[
@@ -104,6 +166,48 @@ lib.callback.register(resourceName .. ':server:performLabTest', function(source,
             'UPDATE forensic_evidence SET status = ? WHERE id = ?',
             { 'analisada', test.evidence_id }
         )
+    end
+
+    if test.test_type == 'teste_droga_presuntivo' or test.test_type == 'analise_substancia' then
+        local evidenceCase, evidenceReport = nil, nil
+        if test.evidence_id then
+            local evidence = MySQL.single.await('SELECT case_id, report_id FROM forensic_evidence WHERE id = ?', { test.evidence_id })
+            if evidence then
+                evidenceCase = evidence.case_id
+                evidenceReport = evidence.report_id
+            end
+        end
+        if (not evidenceCase or not evidenceReport) and test.scene_id then
+            local scene = MySQL.single.await('SELECT case_id, report_id FROM forensic_crime_scenes WHERE id = ?', { test.scene_id })
+            if scene then
+                evidenceCase = evidenceCase or scene.case_id
+                evidenceReport = evidenceReport or scene.report_id
+            end
+        end
+
+        local existingDrug = MySQL.single.await('SELECT id FROM forensic_drug_analysis WHERE lab_test_id = ?', { testId })
+        if existingDrug then
+            MySQL.update.await([[
+                UPDATE forensic_drug_analysis
+                SET test_result = ?, analyzed_by = ?, case_id = COALESCE(case_id, ?), report_id = COALESCE(report_id, ?)
+                WHERE id = ?
+            ]], { resultLevel, playerData.citizenid, evidenceCase, evidenceReport, existingDrug.id })
+        else
+            MySQL.insert.await([[
+                INSERT INTO forensic_drug_analysis
+                (evidence_id, scene_id, lab_test_id, substance_category, preliminary_classification,
+                 test_result, analyzed_by, notes, case_id, report_id)
+                VALUES (?, ?, ?, 'substancia_desconhecida', ?, ?, ?, ?, ?, ?)
+            ]], {
+                test.evidence_id, test.scene_id, testId,
+                test.target_name or L('labels.unknown'),
+                resultLevel,
+                playerData.citizenid,
+                resultDetails,
+                evidenceCase,
+                evidenceReport,
+            })
+        end
     end
 
     ForensicAuditLog(src, 'lab_test_performed', 'lab_test', testId, {
@@ -126,9 +230,11 @@ function SimulateTestResult(test)
 
     -- RESÍDUO DE PÓLVORA
     if testType:find('residuo_polvora') then
-        if roll <= 70 then
+        if roll <= 55 then
             return 'confirmado', 'Presença de resíduo de pólvora (GSR) confirmada. Partículas de bário, antimônio e chumbo detectadas na amostra.'
-        elseif roll <= 85 then
+        elseif roll <= 75 then
+            return 'compativel', 'Padrão de partículas compatível com resíduo de disparo, porém abaixo do limiar confirmatório.'
+        elseif roll <= 88 then
             return 'presumido', 'Vestígios presumidos de resíduo de disparo. Quantidade insuficiente para confirmação definitiva.'
         elseif roll <= 95 then
             return 'inconclusivo', 'Resultado inconclusivo. Contaminação ambiental pode ter interferido na análise.'
@@ -142,8 +248,10 @@ function SimulateTestResult(test)
         local substances = { 'Cocaína', 'THC (Maconha)', 'Metanfetamina', 'MDMA', 'Heroína', 'Fentanil' }
         local substance = substances[math.random(#substances)]
 
-        if roll <= 65 then
+        if roll <= 45 then
             return 'confirmado', ('Substância identificada: %s. Teste reagente positivo com confirmação cromatográfica.'):format(substance)
+        elseif roll <= 65 then
+            return 'compativel', ('Perfil químico compatível com %s. Indícios robustos, sem confirmação instrumental total.'):format(substance)
         elseif roll <= 80 then
             return 'presumido', ('Teste presuntivo positivo para %s. Recomenda-se análise confirmatória.'):format(substance)
         elseif roll <= 90 then
@@ -155,10 +263,14 @@ function SimulateTestResult(test)
 
     -- TESTE DE SANGUE
     if testType == 'teste_sangue_presuntivo' or testType == 'analise_fluido_biologico' then
-        if roll <= 75 then
+        if roll <= 50 then
             return 'confirmado', 'Presença de sangue humano confirmada. Teste de Kastle-Meyer e teste confirmatório positivos.'
-        elseif roll <= 85 then
+        elseif roll <= 75 then
+            return 'compativel', 'Reação compatível com sangue humano, com necessidade de exame confirmatório complementar.'
+        elseif roll <= 88 then
             return 'presumido', 'Resultado presumido positivo para sangue. Teste de luminol revelou vestígios.'
+        elseif roll <= 95 then
+            return 'inconclusivo', 'Amostra com degradação/contaminação. Resultado inconclusivo para sangue humano.'
         else
             return 'negativo', 'Nenhum vestígio de sangue humano detectado na amostra.'
         end
