@@ -4,6 +4,98 @@
 
 local resourceName = GetCurrentResourceName()
 
+local function normalizeIdList(list)
+    if type(list) ~= 'table' then return {} end
+    local out, seen = {}, {}
+    for _, value in ipairs(list) do
+        local n = tonumber(value)
+        if n and n > 0 and not seen[n] then
+            seen[n] = true
+            out[#out + 1] = n
+        end
+    end
+    return out
+end
+
+local function upsertCrossRef(sourceId, targetType, targetId, relationship, actorCitizenId, notes)
+    if not sourceId or not targetType or not targetId then return end
+    local existing = MySQL.scalar.await([[
+        SELECT id FROM forensic_cross_references
+        WHERE source_type = 'report' AND source_id = ? AND target_type = ? AND target_id = ?
+        LIMIT 1
+    ]], { sourceId, targetType, tostring(targetId) })
+    if existing then return end
+
+    MySQL.insert.await([[
+        INSERT INTO forensic_cross_references
+        (source_type, source_id, target_type, target_id, relationship, confidence, created_by, notes)
+        VALUES ('report', ?, ?, ?, ?, 'alta', ?, ?)
+    ]], { sourceId, targetType, tostring(targetId), relationship, actorCitizenId, notes or '' })
+end
+
+local function syncReportLinks(reportId, payload, actorCitizenId)
+    if not reportId then return end
+    local report = MySQL.single.await('SELECT id, scene_id, case_id, mdt_report_id, report_number FROM forensic_reports WHERE id = ?', { reportId })
+    if not report then return end
+
+    local evidenceIds = normalizeIdList(payload.evidence_ids)
+    if #evidenceIds > 0 then
+        local placeholders = table.concat((function()
+            local t = {}
+            for _ = 1, #evidenceIds do t[#t + 1] = '?' end
+            return t
+        end)(), ',')
+        local params = { report.case_id, report.mdt_report_id, reportId }
+        for _, eid in ipairs(evidenceIds) do params[#params + 1] = eid end
+        MySQL.update.await(([[
+            UPDATE forensic_evidence
+            SET case_id = COALESCE(case_id, ?),
+                report_id = COALESCE(report_id, ?),
+                forensic_report_id = ?
+            WHERE id IN (%s)
+        ]]):format(placeholders), params)
+        for _, eid in ipairs(evidenceIds) do
+            upsertCrossRef(reportId, 'evidence', eid, 'laudo_associado', actorCitizenId, ('Laudo %s vinculado à evidência %s'):format(report.report_number or reportId, eid))
+        end
+    end
+
+    local testIds = normalizeIdList(payload.lab_test_ids)
+    if #testIds > 0 then
+        local placeholders = table.concat((function()
+            local t = {}
+            for _ = 1, #testIds do t[#t + 1] = '?' end
+            return t
+        end)(), ',')
+        local sceneParams = { report.scene_id }
+        for _, tid in ipairs(testIds) do sceneParams[#sceneParams + 1] = tid end
+        MySQL.update.await(([[
+            UPDATE forensic_lab_tests
+            SET scene_id = COALESCE(scene_id, ?)
+            WHERE id IN (%s)
+        ]]):format(placeholders), sceneParams)
+        local params = { report.case_id, report.mdt_report_id, reportId }
+        for _, tid in ipairs(testIds) do params[#params + 1] = tid end
+        MySQL.update.await(([[
+            UPDATE forensic_evidence fe
+            INNER JOIN forensic_lab_tests lt ON lt.evidence_id = fe.id
+            SET fe.case_id = COALESCE(fe.case_id, ?),
+                fe.report_id = COALESCE(fe.report_id, ?),
+                fe.forensic_report_id = ?
+            WHERE lt.id IN (%s)
+        ]]):format(placeholders), params)
+    end
+
+    if report.case_id then
+        upsertCrossRef(reportId, 'case', report.case_id, 'laudo_relacionado_ao_caso', actorCitizenId, ('Laudo %s associado ao caso %s'):format(report.report_number or reportId, report.case_id))
+    end
+    if report.mdt_report_id then
+        upsertCrossRef(reportId, 'report', report.mdt_report_id, 'laudo_relacionado_ao_relatorio', actorCitizenId, ('Laudo %s associado ao relatório MDT %s'):format(report.report_number or reportId, report.mdt_report_id))
+    end
+    if report.scene_id then
+        upsertCrossRef(reportId, 'scene', report.scene_id, 'laudo_relacionado_a_cena', actorCitizenId, ('Laudo %s associado à cena %s'):format(report.report_number or reportId, report.scene_id))
+    end
+end
+
 -- ============================================================
 -- CRIAR LAUDO
 -- ============================================================
@@ -53,6 +145,7 @@ lib.callback.register(resourceName .. ':server:createForensicReport', function(s
     ForensicAuditLog(src, 'report_created', 'forensic_report', reportId, {
         reportNumber = reportNumber, type = data.type,
     })
+    syncReportLinks(reportId, data or {}, playerData.citizenid)
 
     return { success = true, id = reportId, reportNumber = reportNumber }
 end)
@@ -97,6 +190,7 @@ lib.callback.register(resourceName .. ':server:updateForensicReport', function(s
 
     values[#values + 1] = reportId
     MySQL.update.await(('UPDATE forensic_reports SET %s WHERE id = ?'):format(table.concat(updates, ', ')), values)
+    syncReportLinks(reportId, data or {}, playerData.citizenid)
 
     ForensicAuditLog(src, 'report_updated', 'forensic_report', reportId, data)
 

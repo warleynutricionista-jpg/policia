@@ -50,7 +50,7 @@ lib.callback.register(resourceName .. ':server:getForensicDataByCase', function(
         ) or {},
 
         evidence = MySQL.query.await(
-            'SELECT id, evidence_number, type, category, status, seal_number, collected_by_name, collection_time FROM forensic_evidence WHERE case_id = ? ORDER BY created_at DESC',
+            'SELECT id, evidence_number, type, category, status, seal_number, forensic_report_id, collected_by_name, collection_time FROM forensic_evidence WHERE case_id = ? ORDER BY created_at DESC',
             { caseId }
         ) or {},
 
@@ -112,7 +112,7 @@ lib.callback.register(resourceName .. ':server:getForensicDataByReport', functio
         ) or {},
 
         evidence = MySQL.query.await(
-            'SELECT id, evidence_number, type, category, status, seal_number FROM forensic_evidence WHERE report_id = ? ORDER BY created_at DESC',
+            'SELECT id, evidence_number, type, category, status, seal_number, forensic_report_id FROM forensic_evidence WHERE report_id = ? ORDER BY created_at DESC',
             { reportId }
         ) or {},
 
