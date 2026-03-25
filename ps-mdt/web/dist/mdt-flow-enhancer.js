@@ -7,6 +7,9 @@
   const state = {
     officerKey: 'global',
     lastReportSnapshot: null,
+    isMdtVisible: false,
+    observerStarted: false,
+    bootstrapTimer: null,
   };
 
   function normalize(text) {
@@ -80,6 +83,15 @@
 
   function isFavorite(entry) {
     return read('favorites', []).some((x) => x.type === entry.type && x.ref === entry.ref);
+  }
+
+  function removeEnhancerUI() {
+    const quickbar = document.getElementById('mdt-quickbar');
+    if (quickbar) quickbar.remove();
+    const widgets = document.getElementById('mdt-flow-widgets');
+    if (widgets) widgets.remove();
+    const duplicateBtn = document.getElementById('mdt-duplicate-report');
+    if (duplicateBtn) duplicateBtn.remove();
   }
 
   function findOfficerIdentity() {
@@ -303,6 +315,7 @@
   }
 
   function bootstrap() {
+    if (!state.isMdtVisible) return;
     findOfficerIdentity();
     createQuickBar();
     renderWidgets();
@@ -312,24 +325,70 @@
   }
 
   const obs = new MutationObserver(() => {
+    if (!state.isMdtVisible) return;
     bootstrap();
   });
 
-  window.addEventListener('message', () => {
-    bootstrap();
-  });
+  function startEnhancer() {
+    if (state.observerStarted) return;
+    if (!document.body) return;
+    state.observerStarted = true;
+    obs.observe(document.body, { childList: true, subtree: true });
+    state.bootstrapTimer = setInterval(() => {
+      if (!state.isMdtVisible) return;
+      bootstrap();
+    }, 2500);
+  }
 
-  setInterval(() => {
-    bootstrap();
-  }, 2500);
+  function stopEnhancer() {
+    if (!state.observerStarted) {
+      removeEnhancerUI();
+      return;
+    }
+    state.observerStarted = false;
+    obs.disconnect();
+    if (state.bootstrapTimer) {
+      clearInterval(state.bootstrapTimer);
+      state.bootstrapTimer = null;
+    }
+    removeEnhancerUI();
+  }
+
+  function setMdtVisible(visible) {
+    const next = visible === true;
+    if (state.isMdtVisible === next) {
+      if (next) bootstrap();
+      return;
+    }
+
+    state.isMdtVisible = next;
+    if (next) {
+      startEnhancer();
+      bootstrap();
+    } else {
+      stopEnhancer();
+    }
+  }
+
+  window.addEventListener('message', (event) => {
+    const payload = event && event.data;
+    if (!payload || typeof payload !== 'object') return;
+
+    if (payload.action === 'setVisible' && payload.data && typeof payload.data.visible === 'boolean') {
+      setMdtVisible(payload.data.visible);
+      return;
+    }
+
+    if (state.isMdtVisible) {
+      bootstrap();
+    }
+  });
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      bootstrap();
-      obs.observe(document.body, { childList: true, subtree: true });
+      setMdtVisible(false);
     });
   } else {
-    bootstrap();
-    obs.observe(document.body, { childList: true, subtree: true });
+    setMdtVisible(false);
   }
 })();
