@@ -98,6 +98,59 @@ local function getOnDutyOfficers()
     return officers
 end
 
+local function getOfficerSnapshot(player)
+    if not player or not player.PlayerData then
+        return nil
+    end
+
+    local data = player.PlayerData
+    local src = tonumber(data.source or player.source)
+    if not src then
+        return nil
+    end
+
+    local ped = GetPlayerPed(src)
+    if not ped or ped == 0 then
+        return nil
+    end
+
+    local coords = GetEntityCoords(ped)
+    local heading = GetEntityHeading(ped)
+    local firstname = data.charinfo and data.charinfo.firstname or ''
+    local lastname = data.charinfo and data.charinfo.lastname or ''
+    local fullName = (tostring(firstname) .. ' ' .. tostring(lastname)):gsub('^%s*(.-)%s*$', '%1')
+    if fullName == '' then
+        fullName = GetPlayerName(src) or 'Desconhecido'
+    end
+
+    return {
+        source = src,
+        citizenid = data.citizenid,
+        name = fullName,
+        callsign = data.metadata and data.metadata.callsign or nil,
+        rank = (data.job and data.job.grade and data.job.grade.name) or 'Oficial',
+        coords = { x = coords.x, y = coords.y, z = coords.z },
+        heading = heading,
+        ped = ped,
+    }
+end
+
+local function getOnDutyOfficerSnapshots()
+    local snapshots = {}
+    local officers = getOnDutyOfficers()
+
+    for _, player in pairs(officers or {}) do
+        local snapshot = getOfficerSnapshot(player)
+        if snapshot then
+            snapshots[#snapshots + 1] = snapshot
+        end
+    end
+
+    return snapshots
+end
+
+exports('GetOnDutyOfficerSnapshots', getOnDutyOfficerSnapshots)
+
 -- Get all bodycams for on-duty officers
 ps.registerCallback(resourceName .. ':server:getBodycams', function(source)
     local src = source
@@ -111,22 +164,21 @@ ps.registerCallback(resourceName .. ':server:getBodycams', function(source)
     ps.debug('getBodycams: CheckAuth passed for source:', src)
     local bodycams = {}
 
-    local officers = getOnDutyOfficers()
+    local officers = getOnDutyOfficerSnapshots()
     ps.debug('getBodycams: Found on-duty officers:', officers and #officers or 0)
 
-    for _, player in pairs(officers or {}) do
-        local playerData = player.PlayerData
-        if playerData then
-            local bodycamId = tostring(playerData.source)
-            local officerName = playerData.charinfo.firstname .. ' ' .. playerData.charinfo.lastname
+    for _, officer in pairs(officers or {}) do
+        if officer and officer.source then
+            local bodycamId = tostring(officer.source)
+            local officerName = officer.name or 'Desconhecido'
 
             if not bodycamInstances[bodycamId] then
                 bodycamInstances[bodycamId] = {
                     id = bodycamId,
                     officerName = officerName,
-                    callsign = playerData.metadata and playerData.metadata.callsign or 'Desconhecido',
-                    rank = playerData.job.grade and playerData.job.grade.name or 'Oficial',
-                    playerId = playerData.source,
+                    callsign = officer.callsign or 'Desconhecido',
+                    rank = officer.rank or 'Oficial',
+                    playerId = officer.source,
                     isOnline = true,
                     createdAt = os.time()
                 }
@@ -134,8 +186,8 @@ ps.registerCallback(resourceName .. ':server:getBodycams', function(source)
             else
                 local data = bodycamInstances[bodycamId]
                 data.officerName = officerName
-                data.callsign = playerData.metadata and playerData.metadata.callsign or 'Desconhecido'
-                data.rank = playerData.job.grade and playerData.job.grade.name or 'Oficial'
+                data.callsign = officer.callsign or 'Desconhecido'
+                data.rank = officer.rank or 'Oficial'
             end
         end
     end
