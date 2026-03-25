@@ -388,6 +388,39 @@ lib.callback.register(resourceName .. ':server:ballisticComparison', function(so
         playerData.citizenid, playerData.name,
     })
 
+    if matchedSerial and weapon and weapon.owner and ForensicProcessIntelligenceMatch then
+        local ev = ballistic.evidence_id and MySQL.single.await('SELECT id, case_id, report_id, scene_id FROM forensic_evidence WHERE id = ?', { ballistic.evidence_id }) or nil
+        local intelligence = ForensicProcessIntelligenceMatch({
+            citizenid = weapon.owner,
+            case_id = ev and ev.case_id or (linkedCases and linkedCases[1] or nil),
+            report_id = ev and ev.report_id or (linkedReports and linkedReports[1] or nil),
+            scene_id = ballistic.scene_id or (ev and ev.scene_id or nil),
+            evidence_id = ballistic.evidence_id,
+            source_type = 'ballistic',
+            source_id = ballisticId,
+            match_kind = ballistic.item_type == 'projetil' and 'projetil' or (ballistic.item_type == 'capsula' and 'capsula' or 'arma'),
+            association_level = result == 'confirmado' and 'confirmacao' or 'compatibilidade_forte',
+            confidence_score = confidence,
+            algorithm_name = 'ballistic_cross_case_v1',
+            algorithm_version = '2026.03',
+            exam_performed_by = playerData.citizenid,
+            generated_by = playerData.citizenid,
+            exam_origin = ballistic.item_type,
+            rationale = ('Confronto balístico %s com serial %s e confiança %d%%'):format(result, matchedSerial, confidence),
+            metadata = {
+                ballistic_id = ballisticId,
+                weapon_serial = matchedSerial,
+                linked_scenes = linkedScenes,
+            },
+        })
+        if intelligence and intelligence.autoWanted then
+            ForensicAuditLog(src, 'forensic_auto_wanted_from_ballistics', 'ballistic', ballisticId, {
+                citizenid = weapon.owner,
+                confidence = confidence,
+            })
+        end
+    end
+
     ForensicAuditLog(src, 'ballistic_comparison', 'ballistic', ballisticId, {
         weaponSerial = weaponSerial, result = result, confidence = confidence,
         linkedScenes = linkedScenes,

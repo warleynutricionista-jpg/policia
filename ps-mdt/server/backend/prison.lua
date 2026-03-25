@@ -291,6 +291,12 @@ local function jailCitizen(source, payload)
         changedBy = getOfficerLabel(source),
     })
 
+    TriggerEvent('ps-forensics:server:seedProfilesFromPrison', {
+        citizenid = citizenid,
+        actor_citizenid = ps.getIdentifier(source),
+        reason = reason ~= '' and reason or 'Prisão registrada no MDT',
+    })
+
     local newStatus = getPrisonStatusPayload(citizenid, targetSource)
     return {
         success = true,

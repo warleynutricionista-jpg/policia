@@ -223,6 +223,40 @@ lib.callback.register(resourceName .. ':server:performLabTest', function(source,
         )
     end
 
+    if ForensicProcessIntelligenceMatch and test.target_citizenid and test.target_citizenid ~= '' then
+        local mk = nil
+        if tostring(test.test_type):find('residuo_polvora') then
+            mk = 'residuo_polvora'
+        elseif test.test_type == 'teste_sangue_presuntivo' or test.test_type == 'analise_fluido_biologico' then
+            mk = 'material_biologico'
+        end
+
+        if mk and (resultLevel == 'confirmado' or resultLevel == 'compativel' or resultLevel == 'presumido') then
+            local confidenceMap = { confirmado = 92, compativel = 74, presumido = 48 }
+            local ev = test.evidence_id and MySQL.single.await('SELECT id, case_id, report_id, scene_id FROM forensic_evidence WHERE id = ?', { test.evidence_id }) or nil
+            ForensicProcessIntelligenceMatch({
+                citizenid = test.target_citizenid,
+                citizen_name = test.target_name,
+                case_id = ev and ev.case_id or nil,
+                report_id = ev and ev.report_id or nil,
+                scene_id = test.scene_id or (ev and ev.scene_id or nil),
+                evidence_id = test.evidence_id,
+                source_type = 'lab_test',
+                source_id = testId,
+                match_kind = mk,
+                association_level = resultLevel == 'confirmado' and 'confirmacao' or (resultLevel == 'compativel' and 'compatibilidade_forte' or 'vestigio_relacionado'),
+                confidence_score = confidenceMap[resultLevel] or 40,
+                algorithm_name = 'lab_rule_engine_v1',
+                algorithm_version = '2026.03',
+                exam_performed_by = playerData.citizenid,
+                generated_by = playerData.citizenid,
+                exam_origin = test.test_type,
+                rationale = ('Teste %s resultou em %s para o alvo %s'):format(test.test_type, resultLevel, test.target_citizenid),
+                metadata = { result = resultLevel, details = resultDetails },
+            })
+        end
+    end
+
     if test.test_type == 'teste_droga_presuntivo' or test.test_type == 'analise_substancia' then
         local evidenceCase, evidenceReport = nil, nil
         if test.evidence_id then
