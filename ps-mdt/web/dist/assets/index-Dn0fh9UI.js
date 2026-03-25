@@ -36280,7 +36280,7 @@ function dO(n, e) {
             Fe(
               Dt,
               17,
-              () => o(u).flags.slice(0, 5),
+              () => (Array.isArray(o(u).flags) ? o(u).flags : []).slice(0, 5),
               nt,
               (Rt, zt) => {
                 var jt = AI(),
@@ -37300,7 +37300,7 @@ function dO(n, e) {
                         Fe(
                           Me,
                           17,
-                          () => o(Be).flags.slice(0, 3),
+                          () => (Array.isArray(o(Be).flags) ? o(Be).flags : []).slice(0, 3),
                           nt,
                           (Le, wt) => {
                             var Yt = sO(),
@@ -43107,7 +43107,7 @@ function QD(n, e) {
                 },
                 [
                   () => g(o(i).totalMultado),
-                  () => o(i).totalMeses.toLocaleString(),
+                  () => Number(o(i).totalMeses || o(i).totalMonths || 0).toLocaleString(),
                 ],
               ),
                 x(K, re));
@@ -43188,7 +43188,7 @@ function QD(n, e) {
                         [
                           () => ({ "current-user": o(ye).isCurrentUser }),
                           () => g(o(ye).totalMultado),
-                          () => o(ye).score.toLocaleString(),
+                          () => Number(o(ye).score || 0).toLocaleString(),
                         ],
                       ),
                         x(ve, je));
@@ -46035,7 +46035,7 @@ function u5(n, e) {
                 [
                   () => ({ editing: o(u) === o(ve).id }),
                   () => R(o(ve).goalType),
-                  () => o(ve).goalAmount.toLocaleString(),
+                  () => Number(o(ve).goalAmount || 0).toLocaleString(),
                 ],
               ),
               x(X, ye));

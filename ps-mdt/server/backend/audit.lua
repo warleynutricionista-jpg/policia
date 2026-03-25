@@ -1,4 +1,6 @@
 local resourceName = tostring(GetCurrentResourceName())
+local auditDedupCache = {}
+local AUDIT_DEDUP_WINDOW_MS = 1200
 
 local function getActorData(src)
     if not src then
@@ -26,6 +28,21 @@ local function writeAuditLog(src, action, entityType, entityId, details)
     if ps.isActionTracked and not ps.isActionTracked(action) then
         return
     end
+
+    -- Prevent tight-loop duplicates (e.g., fast NUI retries / search spam) from flooding mdt_audit_logs.
+    local now = GetGameTimer()
+    local dedupKey = table.concat({
+        tostring(src or 0),
+        tostring(action or ''),
+        tostring(entityType or ''),
+        tostring(entityId or ''),
+        details and json.encode(details) or ''
+    }, '|')
+    local lastAt = auditDedupCache[dedupKey]
+    if lastAt and (now - lastAt) >= 0 and (now - lastAt) < AUDIT_DEDUP_WINDOW_MS then
+        return
+    end
+    auditDedupCache[dedupKey] = now
 
     local actor = getActorData(src)
 
