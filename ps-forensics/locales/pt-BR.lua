@@ -284,6 +284,45 @@ return {
         },
     },
 
+    lab = {
+        errors = {
+            not_authorized = 'Não autorizado para operações laboratoriais',
+            no_permission_basic = 'Sem permissão para testes básicos',
+            no_permission_lab = 'Sem permissão para testes laboratoriais',
+            missing_required_item = 'Item obrigatório ausente para este teste: %s',
+            invalid_id = 'ID de teste inválido',
+            not_found = 'Teste laboratorial não encontrado',
+            already_completed = 'Este teste já foi concluído',
+        },
+        defaults = {
+            unnamed_test = 'Teste não especificado',
+        },
+    },
+
+    drugs = {
+        errors = {
+            not_authorized = 'Não autorizado para operações de substâncias',
+            no_permission_register = 'Sem permissão para registrar análise de substância',
+            no_permission_confirm = 'Sem permissão para confirmar substância',
+            missing_required_item = 'Item obrigatório ausente para análise de substância: %s',
+            invalid_id = 'ID de análise de substância inválido',
+            not_found = 'Análise de substância não encontrada',
+            invalid_weight = 'Peso da substância inválido',
+            invalid_quantity = 'Quantidade da substância inválida',
+            invalid_purity = 'Percentual de pureza inválido',
+            register_failed = 'Falha ao registrar análise de substância',
+            evidence_or_scene_not_found = 'Evidência ou cena vinculada não encontrada para análise de substância',
+        },
+        result = {
+            suspeita = 'Substância suspeita',
+            presumido = 'Resultado presumido',
+            inconclusivo = 'Resultado inconclusivo',
+            compativel = 'Resultado compatível',
+            confirmado = 'Substância confirmada',
+            negativo = 'Sem substância detectada',
+        },
+    },
+
     target = {
         open_lab = 'Abrir Laboratório Forense',
         open_morgue = 'Abrir Instituto Médico Legal',
