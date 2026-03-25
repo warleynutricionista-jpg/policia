@@ -22,6 +22,47 @@ local Core = getCoreObject()
 local resourceName = tostring(GetCurrentResourceName())
 local VEHICLE_DIRECTORY_CACHE_KEY = 'vehicles:directory'
 local VEHICLE_DIRECTORY_TTL = 15
+local vehicleTableCache = nil
+
+local function hasTable(tableName)
+    return type(MdtTableExists) == 'function' and MdtTableExists(tableName) or false
+end
+
+local function hasColumn(tableName, columnName)
+    return type(MdtColumnExists) == 'function' and MdtColumnExists(tableName, columnName) or false
+end
+
+local function getVehicleTableName()
+    if vehicleTableCache then
+        return vehicleTableCache
+    end
+
+    if hasTable('player_vehicles') then
+        vehicleTableCache = 'player_vehicles'
+    elseif hasTable('vehicles') then
+        vehicleTableCache = 'vehicles'
+    end
+
+    return vehicleTableCache
+end
+
+local function buildVehicleOwnerExpr(tableName, alias)
+    local prefix = alias and (alias .. '.') or ''
+    local candidates = {}
+    if hasColumn(tableName, 'citizenid') then
+        candidates[#candidates + 1] = ("NULLIF(%scitizenid, '')"):format(prefix)
+    end
+    if hasColumn(tableName, 'owner') then
+        candidates[#candidates + 1] = ("NULLIF(%sowner, '')"):format(prefix)
+    end
+    if hasColumn(tableName, 'owner_citizenid') then
+        candidates[#candidates + 1] = ("NULLIF(%sowner_citizenid, '')"):format(prefix)
+    end
+    if #candidates == 0 then
+        return "NULL"
+    end
+    return 'COALESCE(' .. table.concat(candidates, ', ') .. ')'
+end
 
 local function normalizeSearchTerm(value)
     local trimmed = tostring(value or ''):match('^%s*(.-)%s*$') or ''
@@ -87,7 +128,11 @@ local function countSetItems(set)
 end
 
 local function serializeVehicleRow(v, reportCountsByPlate, activeBoloByPlate)
-    local vehicleData = getVehicleShared(v.vehicle)
+    local model = normalizeSearchTerm(v.vehicle)
+    if model == '' then
+        model = 'unknown'
+    end
+    local vehicleData = getVehicleShared(model)
     local plate = normalizePlate(v.plate)
     if plate == '' then
         plate = 'UNKNOWN'
@@ -98,15 +143,15 @@ local function serializeVehicleRow(v, reportCountsByPlate, activeBoloByPlate)
 
     return {
         id = v.id,
-        model = v.vehicle,
-        label = vehicleData and vehicleData.name or formatLabel(v.vehicle),
+        model = model,
+        label = vehicleData and vehicleData.name or formatLabel(model),
         plate = plate,
         owner = buildOwnerName(v.owner_name, v.citizenid),
         ownerCitizenId = v.citizenid,
         class = formatLabel(vehicleData and vehicleData.category or 'Desconhecido'),
         type = formatLabel(vehicleData and vehicleData.type or 'Desconhecido'),
         flags = flags,
-        image = (v.image and v.image ~= '' and v.image) or ('https://docs.fivem.net/vehicles/' .. v.vehicle .. '.webp'),
+        image = (v.image and v.image ~= '' and v.image) or ('https://docs.fivem.net/vehicles/' .. model .. '.webp'),
         seenIn = reportCount,
         points = tonumber(v.points) or 0,
         status = v.status or 'valid',
@@ -167,34 +212,65 @@ end
 function GetMdtVehicleDirectory(forceRefresh)
     if forceRefresh then
         Cache.invalidate(VEHICLE_DIRECTORY_CACHE_KEY)
+        vehicleTableCache = nil
     end
 
     return Cache.getOrSet(VEHICLE_DIRECTORY_CACHE_KEY, VEHICLE_DIRECTORY_TTL, function()
         EnsureMdtSchema()
+        local vehicleTable = getVehicleTableName()
+        if not vehicleTable then
+            return { vehicles = {}, bolos = {} }
+        end
 
-        local vehList = MySQL.query.await([[
+        local ownerExpr = buildVehicleOwnerExpr(vehicleTable, 'pv')
+        local modelExpr = "COALESCE(NULLIF(pv.vehicle, ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(pv.vehicle, '$.model')), ''), 'unknown')"
+        if hasColumn(vehicleTable, 'mods') then
+            modelExpr = "COALESCE(NULLIF(pv.vehicle, ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(pv.vehicle, '$.model')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(pv.mods, '$.model')), ''), 'unknown')"
+        end
+
+        local infoExpr = hasColumn(vehicleTable, 'mdt_vehicle_information') and 'pv.mdt_vehicle_information' or "NULL"
+        local pointsExpr = hasColumn(vehicleTable, 'mdt_vehicle_points') and 'pv.mdt_vehicle_points' or '0'
+        local statusExpr = hasColumn(vehicleTable, 'mdt_vehicle_status') and 'pv.mdt_vehicle_status' or "'valid'"
+        local stolenExpr = hasColumn(vehicleTable, 'mdt_vehicle_stolen') and 'pv.mdt_vehicle_stolen' or '0'
+        local boloExpr = hasColumn(vehicleTable, 'mdt_vehicle_boloactive') and 'pv.mdt_vehicle_boloactive' or '0'
+        local imageExpr = hasColumn(vehicleTable, 'mdt_vehicle_image') and 'pv.mdt_vehicle_image' or "NULL"
+        local stateExpr = hasColumn(vehicleTable, 'state') and 'pv.state' or '0'
+
+        local vehList = MySQL.query.await(([[
             SELECT
                 pv.id,
                 pv.plate,
-                pv.vehicle,
-                pv.citizenid,
-                pv.mdt_vehicle_information AS information,
-                pv.mdt_vehicle_points AS points,
-                pv.mdt_vehicle_status AS status,
-                pv.mdt_vehicle_stolen AS stolen,
-                pv.mdt_vehicle_boloactive AS boloactive,
-                pv.mdt_vehicle_image AS image,
-                pv.state AS core_state,
+                %s AS vehicle,
+                %s AS citizenid,
+                %s AS information,
+                %s AS points,
+                %s AS status,
+                %s AS stolen,
+                %s AS boloactive,
+                %s AS image,
+                %s AS core_state,
                 CONCAT_WS(
                     ' ',
                     NULLIF(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')), 'null'),
                     NULLIF(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname')), 'null')
                 ) AS owner_name
-            FROM player_vehicles pv
+            FROM %s pv
             LEFT JOIN players p
-                ON p.citizenid COLLATE utf8mb4_general_ci = pv.citizenid COLLATE utf8mb4_general_ci
+                ON p.citizenid COLLATE utf8mb4_general_ci = (%s) COLLATE utf8mb4_general_ci
             ORDER BY pv.plate ASC
-        ]]) or {}
+        ]]):format(
+            modelExpr,
+            ownerExpr,
+            infoExpr,
+            pointsExpr,
+            statusExpr,
+            stolenExpr,
+            boloExpr,
+            imageExpr,
+            stateExpr,
+            vehicleTable,
+            ownerExpr
+        )) or {}
 
         local boloRows = MySQL.query.await([[
             SELECT id, reportId, subject_name, notes, status, subject_id, image, type
@@ -319,13 +395,21 @@ ps.registerCallback(resourceName .. ':server:UpdateVehicle', function(source, pa
     if not plate or plate == '' then
         return { success = false, message = 'Faltando placa' }
     end
+    local vehicleTable = getVehicleTableName()
+    if not vehicleTable then
+        return { success = false, message = 'Tabela de veículos não encontrada' }
+    end
 
-    local ownerRow = MySQL.single.await('SELECT citizenid FROM player_vehicles WHERE UPPER(REPLACE(plate, \' \', \'\')) = ? LIMIT 1', { plate })
+    local ownerExpr = buildVehicleOwnerExpr(vehicleTable, nil)
+    local ownerRow = MySQL.single.await(('SELECT %s AS citizenid FROM %s WHERE UPPER(REPLACE(plate, \' \', \'\')) = ? LIMIT 1'):format(ownerExpr, vehicleTable), { plate })
     if not ownerRow or not ownerRow.citizenid then
         return { success = false, message = 'Veículo não encontrado' }
     end
 
-    local existing = MySQL.single.await('SELECT mdt_vehicle_points, mdt_vehicle_status, mdt_vehicle_information FROM player_vehicles WHERE UPPER(REPLACE(plate, \' \', \'\')) = ? LIMIT 1', { plate })
+    local supportsMdtVehicleColumns = hasColumn(vehicleTable, 'mdt_vehicle_points') and hasColumn(vehicleTable, 'mdt_vehicle_status') and hasColumn(vehicleTable, 'mdt_vehicle_information')
+    local existing = supportsMdtVehicleColumns
+        and MySQL.single.await(('SELECT mdt_vehicle_points, mdt_vehicle_status, mdt_vehicle_information FROM %s WHERE UPPER(REPLACE(plate, \' \', \'\')) = ? LIMIT 1'):format(vehicleTable), { plate })
+        or { mdt_vehicle_points = 0, mdt_vehicle_status = 'valid', mdt_vehicle_information = nil }
     local previousPoints = existing and tonumber(existing.mdt_vehicle_points) or 0
 
     local points = tonumber(payload.points)
@@ -347,17 +431,17 @@ ps.registerCallback(resourceName .. ':server:UpdateVehicle', function(source, pa
     local updates = {}
     local values = {}
 
-    if payload.information ~= nil then
+    if payload.information ~= nil and hasColumn(vehicleTable, 'mdt_vehicle_information') then
         updates[#updates + 1] = 'mdt_vehicle_information = ?'
         values[#values + 1] = payload.information
     end
 
-    if points ~= nil then
+    if points ~= nil and hasColumn(vehicleTable, 'mdt_vehicle_points') then
         updates[#updates + 1] = 'mdt_vehicle_points = ?'
         values[#values + 1] = points
     end
 
-    if status ~= nil then
+    if status ~= nil and hasColumn(vehicleTable, 'mdt_vehicle_status') then
         updates[#updates + 1] = 'mdt_vehicle_status = ?'
         values[#values + 1] = status
     end
@@ -368,7 +452,7 @@ ps.registerCallback(resourceName .. ':server:UpdateVehicle', function(source, pa
 
     values[#values + 1] = plate
 
-    MySQL.update.await(('UPDATE player_vehicles SET %s WHERE UPPER(REPLACE(plate, \' \', \'\')) = ?'):format(table.concat(updates, ', ')), values)
+    MySQL.update.await(('UPDATE %s SET %s WHERE UPPER(REPLACE(plate, \' \', \'\')) = ?'):format(vehicleTable, table.concat(updates, ', ')), values)
     Cache.invalidate(VEHICLE_DIRECTORY_CACHE_KEY)
 
     if ps.auditLog then
@@ -392,31 +476,44 @@ ps.registerCallback(resourceName .. ':server:GetVehicle', function(source, plate
     if not plate or plate == '' then
         return { success = false, message = 'Faltando placa' }
     end
+    local vehicleTable = getVehicleTableName()
+    if not vehicleTable then
+        return { success = false, message = 'Tabela de veículos não encontrada' }
+    end
 
-    local vehicleRow = MySQL.query.await([[
+    local informationExpr = hasColumn(vehicleTable, 'mdt_vehicle_information') and 'pv.mdt_vehicle_information' or 'NULL'
+    local pointsExpr = hasColumn(vehicleTable, 'mdt_vehicle_points') and 'pv.mdt_vehicle_points' or '0'
+    local statusExpr = hasColumn(vehicleTable, 'mdt_vehicle_status') and 'pv.mdt_vehicle_status' or "'valid'"
+    local stolenExpr = hasColumn(vehicleTable, 'mdt_vehicle_stolen') and 'pv.mdt_vehicle_stolen' or '0'
+    local boloExpr = hasColumn(vehicleTable, 'mdt_vehicle_boloactive') and 'pv.mdt_vehicle_boloactive' or '0'
+    local imageExpr = hasColumn(vehicleTable, 'mdt_vehicle_image') and 'pv.mdt_vehicle_image' or 'NULL'
+    local stateExpr = hasColumn(vehicleTable, 'state') and 'pv.state' or '0'
+
+    local ownerExpr = buildVehicleOwnerExpr(vehicleTable, 'pv')
+    local vehicleRow = MySQL.query.await(([[
         SELECT
             pv.id,
             pv.plate,
-            pv.vehicle,
-            pv.citizenid,
-            pv.mdt_vehicle_information AS information,
-            pv.mdt_vehicle_points AS points,
-            pv.mdt_vehicle_status AS status,
-            pv.mdt_vehicle_stolen AS stolen,
-            pv.mdt_vehicle_boloactive AS boloactive,
-            pv.mdt_vehicle_image AS image,
-            pv.state AS core_state,
+            COALESCE(NULLIF(pv.vehicle, ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(pv.vehicle, '$.model')), ''), 'unknown') AS vehicle,
+            %s AS citizenid,
+            %s AS information,
+            %s AS points,
+            %s AS status,
+            %s AS stolen,
+            %s AS boloactive,
+            %s AS image,
+            %s AS core_state,
             CONCAT_WS(
                 ' ',
                 NULLIF(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')), 'null'),
                 NULLIF(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname')), 'null')
             ) AS owner_name
-        FROM player_vehicles pv
+        FROM %s pv
         LEFT JOIN players p
-            ON p.citizenid COLLATE utf8mb4_general_ci = pv.citizenid COLLATE utf8mb4_general_ci
+            ON p.citizenid COLLATE utf8mb4_general_ci = (%s) COLLATE utf8mb4_general_ci
         WHERE UPPER(REPLACE(pv.plate, ' ', '')) = ?
         LIMIT 1
-    ]], { plate })
+    ]]):format(ownerExpr, informationExpr, pointsExpr, statusExpr, stolenExpr, boloExpr, imageExpr, stateExpr, vehicleTable, ownerExpr), { plate })
 
     if not vehicleRow or not vehicleRow[1] then
         return { success = false, message = 'Veículo não encontrado' }
