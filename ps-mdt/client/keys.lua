@@ -16,7 +16,6 @@ local GetVehicleDashboardSpeed = GetVehicleDashboardSpeed
 local GetVehiclePedIsIn = GetVehiclePedIsIn
 local SetNuiFocus = SetNuiFocus
 local SetNuiFocusKeepInput = SetNuiFocusKeepInput
-local SendNUI = SendNUI
 local RegisterNUICallback = RegisterNUICallback
 
 -- Permissions check ------------------------------------------
@@ -119,22 +118,57 @@ end
 
 -- MDT Display ------------------------------------------------
 
+local function dispatchVisibilityMessage(visible)
+    local payload = {
+        action = 'setVisible',
+        data = {
+            visible = visible == true,
+            debugMode = Config.Debug
+        },
+        visible = visible == true
+    }
+
+    SendNUIMessage(payload)
+
+    if type(SendNUI) == 'function' then
+        local ok, err = pcall(function()
+            SendNUI('setVisible', payload.data)
+        end)
+        if not ok then
+            ps.warn('SendNUI setVisible failed, using raw SendNUIMessage only: ' .. tostring(err))
+        end
+    end
+end
+
 local function sendMDTVisibility(visible)
-    SendNUI('setVisible', { visible = visible, debugMode = Config.Debug })
+    dispatchVisibilityMessage(visible)
 
     -- Fail-safe para clientes que ocasionalmente perdem o primeiro postMessage.
     CreateThread(function()
         Wait(120)
 
         if visible and MDTOpen then
-            SendNUI('setVisible', { visible = true, debugMode = Config.Debug })
+            dispatchVisibilityMessage(true)
             return
         end
 
         if not visible and not MDTOpen then
-            SendNUI('setVisible', { visible = false })
+            dispatchVisibilityMessage(false)
         end
     end)
+end
+
+local function isViewingMdtCamera()
+    local ok, result = pcall(function()
+        return exports[resourceName]:isViewingCamera()
+    end)
+
+    if not ok then
+        ps.warn('isViewingCamera export unavailable while opening MDT: ' .. tostring(result))
+        return false
+    end
+
+    return result == true
 end
 
 -- Open MDT
@@ -174,7 +208,7 @@ function OpenMDT()
     end
 
     -- Don't allow if viewing a camera
-    if exports[resourceName]:isViewingCamera() then
+    if isViewingMdtCamera() then
         ps.notify('Você não pode abrir o MDT enquanto visualiza uma câmera', 'error')
         return
     end
