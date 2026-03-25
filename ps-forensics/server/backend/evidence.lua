@@ -22,10 +22,10 @@ local typeAliases = {
     vestigio_biologico = 'fluido_biologico',
     ['vestígio_biológico'] = 'fluido_biologico',
     eletronico = 'dispositivo_eletronico',
-    eletrônico = 'dispositivo_eletronico',
+    ['eletrônico'] = 'dispositivo_eletronico',
     objeto = 'outros',
     veiculo = 'veiculo_cena',
-    veículo = 'veiculo_cena',
+    ['veículo'] = 'veiculo_cena',
 }
 
 local requiredItemByType = {

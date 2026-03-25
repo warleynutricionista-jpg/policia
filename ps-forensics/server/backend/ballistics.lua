@@ -12,7 +12,7 @@ local allowedItemTypes = {
 }
 
 local itemTypeAliases = {
-    cápsula = 'capsula',
+    ['cápsula'] = 'capsula',
     projectile = 'projetil',
     cartridge = 'capsula',
     bullet = 'projetil',
