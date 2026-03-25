@@ -5,12 +5,40 @@
 
 local resourceName = GetCurrentResourceName()
 
+local function hasMDTAccess(src)
+    if not CheckForensicAuth(src) then return false end
+    return CheckForensicPermission(src, 'canRunLabTests')
+        or CheckForensicPermission(src, 'canEmitReport')
+        or CheckForensicPermission(src, 'canPerformAutopsy')
+end
+
+local function normalizeLikeQuery(value)
+    if not value then return nil end
+    local v = tostring(value):gsub('^%s*(.-)%s*$', '%1')
+    if v == '' then return nil end
+    return v
+end
+
+local function safeQuery(sql, params)
+    local ok, result = pcall(function()
+        return MySQL.query.await(sql, params or {})
+    end)
+    return ok and (result or {}) or {}
+end
+
+local function safeSingle(sql, params)
+    local ok, result = pcall(function()
+        return MySQL.single.await(sql, params or {})
+    end)
+    return ok and result or nil
+end
+
 -- ============================================================
 -- BUSCAR DADOS FORENSES POR CASO (para exibir no MDT)
 -- ============================================================
 lib.callback.register(resourceName .. ':server:getForensicDataByCase', function(source, caseId)
     local src = source
-    if not CheckForensicAuth(src) then return nil end
+    if not hasMDTAccess(src) then return nil end
 
     caseId = tonumber(caseId)
     if not caseId then return nil end
@@ -38,6 +66,30 @@ lib.callback.register(resourceName .. ':server:getForensicDataByCase', function(
             WHERE fe.case_id = ?
             ORDER BY lt.created_at DESC
         ]], { caseId }) or {},
+
+        citizens = MySQL.query.await([[
+            SELECT DISTINCT linked_citizenid AS citizenid
+            FROM forensic_evidence
+            WHERE case_id = ? AND linked_citizenid IS NOT NULL AND linked_citizenid != ''
+        ]], { caseId }) or {},
+        suspects = MySQL.query.await([[
+            SELECT DISTINCT target_id AS citizenid, relationship, confidence
+            FROM forensic_cross_references
+            WHERE target_type = 'citizenid' AND source_type IN ('evidence','fingerprint','dna','ballistic','autopsy')
+              AND source_id IN (
+                SELECT id FROM forensic_evidence WHERE case_id = ?
+              )
+        ]], { caseId }) or {},
+        vehicles = MySQL.query.await([[
+            SELECT DISTINCT linked_vehicle_plate AS plate
+            FROM forensic_evidence
+            WHERE case_id = ? AND linked_vehicle_plate IS NOT NULL AND linked_vehicle_plate != ''
+        ]], { caseId }) or {},
+        weapons = MySQL.query.await([[
+            SELECT DISTINCT linked_weapon_serial AS serial
+            FROM forensic_evidence
+            WHERE case_id = ? AND linked_weapon_serial IS NOT NULL AND linked_weapon_serial != ''
+        ]], { caseId }) or {},
     }
 
     return data
@@ -48,7 +100,7 @@ end)
 -- ============================================================
 lib.callback.register(resourceName .. ':server:getForensicDataByReport', function(source, reportId)
     local src = source
-    if not CheckForensicAuth(src) then return nil end
+    if not hasMDTAccess(src) then return nil end
 
     reportId = tonumber(reportId)
     if not reportId then return nil end
@@ -68,6 +120,11 @@ lib.callback.register(resourceName .. ':server:getForensicDataByReport', functio
             'SELECT id, report_number, type, title, status FROM forensic_reports WHERE mdt_report_id = ? ORDER BY created_at DESC',
             { reportId }
         ) or {},
+        evidence_links = MySQL.query.await([[
+            SELECT DISTINCT linked_citizenid, linked_vehicle_plate, linked_weapon_serial
+            FROM forensic_evidence
+            WHERE report_id = ?
+        ]], { reportId }) or {},
     }
 
     return data
@@ -78,7 +135,7 @@ end)
 -- ============================================================
 lib.callback.register(resourceName .. ':server:getForensicDataByCitizen', function(source, citizenid)
     local src = source
-    if not CheckForensicAuth(src) then return nil end
+    if not hasMDTAccess(src) then return nil end
     if not citizenid then return nil end
 
     local data = {
@@ -145,7 +202,7 @@ end)
 -- ============================================================
 lib.callback.register(resourceName .. ':server:getForensicDataByWeapon', function(source, weaponSerial)
     local src = source
-    if not CheckForensicAuth(src) then return nil end
+    if not hasMDTAccess(src) then return nil end
     if not weaponSerial then return nil end
 
     local data = {
@@ -177,7 +234,7 @@ end)
 -- ============================================================
 lib.callback.register(resourceName .. ':server:getForensicDataByVehicle', function(source, plate)
     local src = source
-    if not CheckForensicAuth(src) then return nil end
+    if not hasMDTAccess(src) then return nil end
     if not plate then return nil end
 
     local data = {
@@ -209,7 +266,7 @@ end)
 -- ============================================================
 lib.callback.register(resourceName .. ':server:getForensicStats', function(source)
     local src = source
-    if not CheckForensicAuth(src) then return nil end
+    if not hasMDTAccess(src) then return nil end
 
     local stats = {
         total_scenes = MySQL.scalar.await('SELECT COUNT(*) FROM forensic_crime_scenes') or 0,
@@ -224,4 +281,124 @@ lib.callback.register(resourceName .. ':server:getForensicStats', function(sourc
     }
 
     return stats
+end)
+
+-- ============================================================
+-- BUSCAR DADOS FORENSES POR EVIDÊNCIA
+-- ============================================================
+lib.callback.register(resourceName .. ':server:getForensicDataByEvidence', function(source, evidenceId)
+    local src = source
+    if not hasMDTAccess(src) then return nil end
+
+    evidenceId = tonumber(evidenceId)
+    if not evidenceId then return nil end
+
+    local evidence = MySQL.single.await('SELECT * FROM forensic_evidence WHERE id = ?', { evidenceId })
+    if not evidence then return nil end
+
+    evidence.custody = MySQL.query.await('SELECT * FROM forensic_chain_of_custody WHERE evidence_id = ? ORDER BY created_at ASC', { evidenceId }) or {}
+    evidence.tests = MySQL.query.await('SELECT * FROM forensic_lab_tests WHERE evidence_id = ? ORDER BY created_at DESC', { evidenceId }) or {}
+    evidence.dna = MySQL.query.await('SELECT * FROM forensic_dna_samples WHERE evidence_id = ? ORDER BY created_at DESC', { evidenceId }) or {}
+    evidence.fingerprints = MySQL.query.await('SELECT * FROM forensic_fingerprints_collected WHERE evidence_id = ? ORDER BY created_at DESC', { evidenceId }) or {}
+    evidence.ballistics = MySQL.query.await('SELECT * FROM forensic_ballistics WHERE evidence_id = ? ORDER BY created_at DESC', { evidenceId }) or {}
+    evidence.crossrefs = MySQL.query.await(
+        "SELECT * FROM forensic_cross_references WHERE (source_type = 'evidence' AND source_id = ?) OR (target_type = 'evidence' AND target_id = ?) ORDER BY created_at DESC",
+        { evidenceId, tostring(evidenceId) }
+    ) or {}
+
+    return evidence
+end)
+
+-- ============================================================
+-- BUSCA GLOBAL FORENSE (MDT / painel)
+-- ============================================================
+lib.callback.register(resourceName .. ':server:searchForensicGlobal', function(source, filters)
+    local src = source
+    if not hasMDTAccess(src) then return { success = false, data = {} } end
+    filters = filters or {}
+
+    local query = normalizeLikeQuery(filters.query)
+    local citizenid = normalizeLikeQuery(filters.citizenid)
+    local plate = normalizeLikeQuery(filters.plate)
+    local serial = normalizeLikeQuery(filters.serial)
+
+    local like = query and ('%' .. query .. '%') or nil
+
+    local data = {
+        evidence = {},
+        dna = {},
+        fingerprints = {},
+        weapons = {},
+        vehicles = {},
+        citizens = {},
+    }
+
+    if like then
+        data.evidence = MySQL.query.await([[
+            SELECT id, evidence_number, type, category, status, seal_number, linked_citizenid, linked_vehicle_plate, linked_weapon_serial, created_at
+            FROM forensic_evidence
+            WHERE evidence_number LIKE ? OR description LIKE ? OR seal_number LIKE ? OR linked_citizenid LIKE ? OR linked_vehicle_plate LIKE ? OR linked_weapon_serial LIKE ?
+            ORDER BY created_at DESC LIMIT 50
+        ]], { like, like, like, like, like, like }) or {}
+    end
+
+    if citizenid or like then
+        local c = citizenid or query
+        data.dna = MySQL.query.await('SELECT * FROM forensic_dna_samples WHERE matched_citizenid = ? ORDER BY created_at DESC LIMIT 30', { c }) or {}
+        data.fingerprints = MySQL.query.await('SELECT * FROM forensic_fingerprints_collected WHERE matched_citizenid = ? ORDER BY created_at DESC LIMIT 30', { c }) or {}
+        data.citizens = safeQuery('SELECT * FROM mdt_profiles WHERE citizenid = ? LIMIT 1', { c })
+    end
+
+    if plate or like then
+        local p = plate or query
+        data.vehicles = MySQL.query.await('SELECT * FROM forensic_evidence WHERE linked_vehicle_plate = ? ORDER BY created_at DESC LIMIT 30', { p }) or {}
+    end
+
+    if serial or like then
+        local s = serial or query
+        data.weapons = MySQL.query.await([[
+            SELECT * FROM forensic_ballistics
+            WHERE weapon_serial = ? OR matched_weapon_serial = ?
+            ORDER BY created_at DESC LIMIT 30
+        ]], { s, s }) or {}
+    end
+
+    return { success = true, data = data }
+end)
+
+-- ============================================================
+-- BUNDLE DE INTEGRAÇÃO MDT/POLICIAL
+-- ============================================================
+lib.callback.register(resourceName .. ':server:getMDTIntegrationBundle', function(source, filters)
+    local src = source
+    if not hasMDTAccess(src) then return { success = false } end
+    filters = filters or {}
+
+    local caseId = filters.case_id and tonumber(filters.case_id) or nil
+    local reportId = filters.report_id and tonumber(filters.report_id) or nil
+    local evidenceId = filters.evidence_id and tonumber(filters.evidence_id) or nil
+    local citizenid = normalizeLikeQuery(filters.citizenid)
+    local suspectid = normalizeLikeQuery(filters.suspectid) or citizenid
+    local vehiclePlate = normalizeLikeQuery(filters.vehicle_plate)
+    local weaponSerial = normalizeLikeQuery(filters.weapon_serial)
+    local warrantId = filters.warrant_id and tostring(filters.warrant_id) or nil
+    local arrestId = filters.arrest_id and tostring(filters.arrest_id) or nil
+
+    local bundle = {
+        case = caseId and safeSingle('SELECT * FROM mdt_cases WHERE id = ?', { caseId }) or nil,
+        report = reportId and safeSingle('SELECT * FROM mdt_reports WHERE id = ?', { reportId }) or nil,
+        evidence = evidenceId and MySQL.single.await('SELECT * FROM forensic_evidence WHERE id = ?', { evidenceId }) or nil,
+        forensic_case = caseId and MySQL.query.await('SELECT id, scene_number, classification, status FROM forensic_crime_scenes WHERE case_id = ? ORDER BY created_at DESC', { caseId }) or {},
+        forensic_report = reportId and MySQL.query.await('SELECT id, report_number, type, title, status FROM forensic_reports WHERE mdt_report_id = ? ORDER BY created_at DESC', { reportId }) or {},
+        citizen_profile = citizenid and safeQuery('SELECT * FROM mdt_profiles WHERE citizenid = ? LIMIT 1', { citizenid }) or {},
+        suspect_profile = suspectid and safeQuery('SELECT * FROM mdt_profiles WHERE citizenid = ? LIMIT 1', { suspectid }) or {},
+        vehicle_records = vehiclePlate and safeQuery('SELECT * FROM player_vehicles WHERE plate = ? LIMIT 1', { vehiclePlate }) or {},
+        weapon_records = weaponSerial and safeQuery('SELECT * FROM mdt_weapons WHERE serial = ? LIMIT 1', { weaponSerial }) or {},
+        warrants = warrantId and safeQuery('SELECT * FROM mdt_warrants WHERE id = ? LIMIT 1', { warrantId })
+            or (suspectid and safeQuery('SELECT * FROM mdt_warrants WHERE citizenid = ? ORDER BY created_at DESC LIMIT 20', { suspectid }) or {}),
+        arrests = arrestId and safeQuery('SELECT * FROM mdt_arrests WHERE id = ? LIMIT 1', { arrestId })
+            or (suspectid and safeQuery('SELECT * FROM mdt_arrests WHERE citizenid = ? ORDER BY created_at DESC LIMIT 20', { suspectid }) or {}),
+    }
+
+    return { success = true, data = bundle }
 end)
