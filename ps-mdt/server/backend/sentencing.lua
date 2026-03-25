@@ -139,5 +139,5 @@ ps.registerCallback(resourceName .. ':server:giveCitation', function(source, pay
     end
 
     local result = giveCitationItem(src, citizenId, fine, reportId)
-    return { success = result, message = result and 'Citation given' or 'Failed to give citation' }
+    return { success = result, message = result and 'Citação aplicada com sucesso' or 'Falha ao aplicar citação' }
 end)

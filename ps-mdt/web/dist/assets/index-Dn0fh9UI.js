@@ -2546,7 +2546,7 @@ const Ud = [
     { name: "Cases", icon: "folder" },
     { name: "Evidência", icon: "inventory_2" },
     { name: "Procurados", icon: "notification_important" },
-    { name: "Warrants", icon: "gavel" },
+    { name: "Mandados", icon: "gavel" },
     { name: "Veículos", icon: "directions_car" },
     { name: "Armas", icon: "security" },
     { name: "Infrações", icon: "balance" },
@@ -2925,7 +2925,7 @@ const wi = {
       "Cases",
       "Evidência",
       "Reports",
-      "Warrants",
+      "Mandados",
       "Infrações",
       "Awards",
       "Escala",
@@ -2945,7 +2945,7 @@ const wi = {
     cases: "Cases",
     evidence: "Evidência",
     reports: "Reports",
-    warrants: "Warrants",
+    warrants: "Mandados",
     charges: "Infrações",
     awards: "Awards",
     roster: "Escala",
@@ -2959,7 +2959,7 @@ const wi = {
     Casos: "Cases",
     Evidências: "Evidência",
     Relatórios: "Reports",
-    Mandados: "Warrants",
+    Mandados: "Mandados",
     Infrações: "Infrações",
     Premiações: "Awards",
     Escala: "Escala",
@@ -4197,7 +4197,7 @@ function Ry() {
 var zy = (n, e) => e.onToggle(e.report.id),
   By = (n, e) => e.onNavigate(e.report.id),
   Fy = E(
-    '<div class="report-body svelte-2ahog7"><div class="body-label svelte-2ahog7">Details</div> <div class="body-content svelte-2ahog7"><!></div></div>',
+    '<div class="report-body svelte-2ahog7"><div class="body-label svelte-2ahog7">Detalhes</div> <div class="body-content svelte-2ahog7"><!></div></div>',
   ),
   Vy = E(
     '<div><div class="report-row svelte-2ahog7"><div class="report-main svelte-2ahog7"><div class="report-title svelte-2ahog7"> </div> <div class="report-meta svelte-2ahog7"><span class="report-id svelte-2ahog7"> </span> <span class="dot svelte-2ahog7"></span> <span class="report-author svelte-2ahog7"> </span> <span class="dot svelte-2ahog7"></span> <span class="report-date svelte-2ahog7"> </span></div></div> <div class="report-actions svelte-2ahog7"><button class="action-btn svelte-2ahog7"><span class="material-icons svelte-2ahog7"> </span></button> <button class="action-btn goto svelte-2ahog7" title="Ir para o relatório"><span class="material-icons svelte-2ahog7">open_in_new</span></button></div></div> <!></div>',
@@ -4299,7 +4299,7 @@ var Gy = E("<button></button>"),
     '<div class="column svelte-o013ra"><div class="panel svelte-o013ra"><div class="panel-header svelte-o013ra"><span class="panel-title svelte-o013ra">Mandados</span> <span class="panel-count svelte-o013ra"> </span></div> <div class="panel-body svelte-o013ra"><!></div> <!></div> <div class="panel svelte-o013ra"><div class="panel-header svelte-o013ra"><span class="panel-title svelte-o013ra">Procurados</span> <span class="panel-count svelte-o013ra"> </span></div> <div class="panel-body svelte-o013ra"><!></div> <!></div></div>',
   ),
   fb = E('<div class="empty-state svelte-o013ra">No recent reports</div>'),
-  hb = E('<button class="load-more-btn svelte-o013ra">Load more</button>'),
+  hb = E('<button class="load-more-btn svelte-o013ra">Carregar mais</button>'),
   vb = (n, e, t) => e(o(t).id),
   pb = (n, e, t, s, i, r) =>
     e.isUserAttachedToDispatch(o(t), s.playerData) ? i(o(t).id) : r(o(t).id),
@@ -4862,7 +4862,7 @@ var wb = (n, e, t) => {
   },
   xb = (n, e) => y(e, !1),
   Tb = E(
-    '<span class="delete-confirm-group svelte-2iyf5w"><span class="delete-confirm-text svelte-2iyf5w">Delete?</span> <button class="action-btn delete-confirm-btn svelte-2iyf5w" type="button">Yes</button> <button class="action-btn cancel-btn svelte-2iyf5w" type="button">No</button></span>',
+    '<span class="delete-confirm-group svelte-2iyf5w"><span class="delete-confirm-text svelte-2iyf5w">Excluir?</span> <button class="action-btn delete-confirm-btn svelte-2iyf5w" type="button">Sim</button> <button class="action-btn cancel-btn svelte-2iyf5w" type="button">Não</button></span>',
   ),
   Sb = (n, e) => y(e, !0),
   Eb = E(
@@ -4952,10 +4952,10 @@ var Ob = E(
   ),
   Rb = E('<div class="template-dropdown svelte-ltfxc4"></div>'),
   zb = E(
-    '<div class="metadata-item template-item svelte-ltfxc4"><span class="metadata-label svelte-ltfxc4">Template</span> <div class="template-wrapper svelte-ltfxc4"><button class="template-btn svelte-ltfxc4" type="button"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> </button> <!></div></div>',
+    '<div class="metadata-item template-item svelte-ltfxc4"><span class="metadata-label svelte-ltfxc4">Modelo</span> <div class="template-wrapper svelte-ltfxc4"><button class="template-btn svelte-ltfxc4" type="button"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> </button> <!></div></div>',
   ),
   Bb = E(
-    '<div class="report-info svelte-ltfxc4"><input type="text" placeholder="Título do Relatório" class="title-input svelte-ltfxc4"/> <div class="metadata-row svelte-ltfxc4"><div class="metadata-item svelte-ltfxc4"><span class="metadata-label svelte-ltfxc4">ID</span> <span class="metadata-value svelte-ltfxc4"> </span></div> <div class="metadata-item svelte-ltfxc4"><span class="metadata-label svelte-ltfxc4">Oficial</span> <span class="metadata-value officer-value svelte-ltfxc4"><!></span></div> <div class="metadata-item svelte-ltfxc4"><label for="type-select" class="metadata-label svelte-ltfxc4">Tipo</label> <select id="type-select" class="type-select svelte-ltfxc4"></select></div> <!> <div class="metadata-item svelte-ltfxc4"><span class="metadata-label svelte-ltfxc4">Created</span> <span class="metadata-value svelte-ltfxc4"> </span></div></div></div>',
+    '<div class="report-info svelte-ltfxc4"><input type="text" placeholder="Título da Ocorrência" class="title-input svelte-ltfxc4"/> <div class="metadata-row svelte-ltfxc4"><div class="metadata-item svelte-ltfxc4"><span class="metadata-label svelte-ltfxc4">ID</span> <span class="metadata-value svelte-ltfxc4"> </span></div> <div class="metadata-item svelte-ltfxc4"><span class="metadata-label svelte-ltfxc4">Oficial</span> <span class="metadata-value officer-value svelte-ltfxc4"><!></span></div> <div class="metadata-item svelte-ltfxc4"><label for="type-select" class="metadata-label svelte-ltfxc4">Tipo</label> <select id="type-select" class="type-select svelte-ltfxc4"></select></div> <!> <div class="metadata-item svelte-ltfxc4"><span class="metadata-label svelte-ltfxc4">Criado em</span> <span class="metadata-value svelte-ltfxc4"> </span></div></div></div>',
   );
 function Fb(n, e) {
   Vt(e, !0);
@@ -5139,7 +5139,7 @@ var qb = (n, e, t) => e(o(t).name),
     '<button class="dropdown-item svelte-11fvpbb"><span class="tag-color-dot svelte-11fvpbb"></span> <span class="tag-name svelte-11fvpbb"> </span></button>',
   ),
   Ub = E(
-    '<div class="dropdown-empty svelte-11fvpbb">No more tags available</div>',
+    '<div class="dropdown-empty svelte-11fvpbb">Não há mais etiquetas disponíveis</div>',
   ),
   Hb = E(
     '<div class="dropdown svelte-11fvpbb"><div class="dropdown-header svelte-11fvpbb">Etiquetas disponíveis</div> <!> <!></div>',
@@ -5422,10 +5422,10 @@ var s0 = (n, e, t) => e.onUploadPhoto(o(t)),
   u0 = (n, e, t) => e.onIssueWarrant(o(t)),
   f0 = (n, e, t) => e.onIssueBolo(o(t)),
   h0 = E(
-    '<button class="action-btn bolo" type="button" aria-label="Emitir Procurado">Issue Procurado</button>',
+    '<button class="action-btn bolo" type="button" aria-label="Emitir Procurado">Emitir Procurado</button>',
   ),
   v0 = E(
-    '<div class="suspect-actions-row svelte-z34k1u"><button class="action-btn primary" type="button" aria-label="Issue warrant">Issue Warrant</button> <!></div>',
+    '<div class="suspect-actions-row svelte-z34k1u"><button class="action-btn primary" type="button" aria-label="Emitir mandado">Emitir Mandado</button> <!></div>',
   ),
   p0 = E("<!> <!> <!>", 1);
 function m0(n, e) {
@@ -5855,7 +5855,7 @@ var z0 = E("<option> </option>"),
   Y0 = (n, e, t, s) => e.onGiveCitation(t(), s(t())),
   Q0 = (n, e, t) => e(t()),
   X0 = E(
-    '<button class="action-btn reduction-btn svelte-n0gopw">Reduction</button>',
+    '<button class="action-btn reduction-btn svelte-n0gopw">Redução</button>',
   ),
   e2 = (n, e, t) => y(e, o(t), !0),
   t2 = E("<button> </button>"),
@@ -6310,7 +6310,7 @@ var c2 = E('<div class="search-status svelte-uh22ad">Buscando...</div>'),
   m2 = (n, e, t) => e.onRemove(o(t).plate),
   _2 = (n, e, t) => e.onIssueBolo(o(t)),
   g2 = E(
-    '<div class="vehicle-actions svelte-uh22ad"><button class="action-btn bolo svelte-uh22ad" type="button">Issue Procurado</button></div>',
+    '<div class="vehicle-actions svelte-uh22ad"><button class="action-btn bolo svelte-uh22ad" type="button">Emitir Procurado</button></div>',
   ),
   y2 = E(
     '<div class="vehicle-card svelte-uh22ad"><div class="card-header svelte-uh22ad"><div class="vehicle-info svelte-uh22ad"><span class="vehicle-plate svelte-uh22ad"> </span> <span class="vehicle-secondary svelte-uh22ad"> </span></div> <button class="remove-btn svelte-uh22ad" type="button" aria-label="Remove vehicle"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg></button></div> <span class="vehicle-owner svelte-uh22ad"> </span> <!></div>',
@@ -24218,7 +24218,7 @@ function hC(n, e) {
       );
       Array.isArray(ne) && y(P, ne, !0);
     } catch (ne) {
-      console.error("Falha ao carregar o relatório templates:", ne);
+      console.error("Falha ao carregar os modelos de relatório:", ne);
     }
   }
   function B(ne) {
@@ -24378,7 +24378,7 @@ function hC(n, e) {
   async function ee(ne, ce) {
     try {
       const de = await r.giveCitation(ne, ce, o(g).reportId);
-      I(de.message || `Citation issued: $${ce.toLocaleString()}`);
+      I(de.message || `Citação aplicada: $${ce.toLocaleString()}`);
     } catch {
       I("Falha ao aplicar a citação", "error");
     }
@@ -25954,7 +25954,7 @@ function Ld(n, e) {
                       H(() => {
                         (C(qe, o(ve).code),
                           (Ae.disabled = o(r)),
-                          C(pe, o(r) ? "..." : "Save"),
+                          C(pe, o(r) ? "..." : "Salvar"),
                           (ne.disabled = o(r)));
                       }),
                       bt(
@@ -27000,7 +27000,7 @@ function pI(n, e) {
           `${o(u).firstName ?? ""} ${o(u).lastName ?? ""} - ${o(u).callsign ?? ""}`,
         ),
           (Lt.disabled = o(_) || o(h).length === 0),
-          C(Ft, o(_) ? "Salvando..." : "Save"));
+          C(Ft, o(_) ? "Salvando..." : "Salvar"));
       }),
         x(le, Se));
     };
@@ -35764,7 +35764,7 @@ var AI = E("<span> </span>"),
   ),
   sM = (n, e) => y(e, !0),
   iM = E(
-    '<button class="issue-license-btn svelte-h1hdsn"><span class="material-icons svelte-h1hdsn" style="font-size: 12px;">add</span> Issue License</button>',
+    '<button class="issue-license-btn svelte-h1hdsn"><span class="material-icons svelte-h1hdsn" style="font-size: 12px;">add</span> Emitir Licença</button>',
   ),
   rM = E(
     '<div class="sitem svelte-h1hdsn"><div class="sitem-info svelte-h1hdsn"><span class="sitem-primary svelte-h1hdsn"> </span> <span class="sitem-secondary svelte-h1hdsn"> </span></div> <span class="license-status license-active svelte-h1hdsn">Ativo</span></div>',
@@ -35832,7 +35832,7 @@ var AI = E("<span> </span>"),
     '<div class="vd-row svelte-h1hdsn"><span class="vd-label svelte-h1hdsn">Pontos</span><span> </span></div>',
   ),
   VM = E(
-    '<div class="vd-row svelte-h1hdsn"><span class="vd-label svelte-h1hdsn">Roubado</span><span class="vd-value accent-red svelte-h1hdsn">Yes</span></div>',
+    '<div class="vd-row svelte-h1hdsn"><span class="vd-label svelte-h1hdsn">Roubado</span><span class="vd-value accent-red svelte-h1hdsn">Sim</span></div>',
   ),
   qM = E(
     '<div class="vd-row svelte-h1hdsn"><span class="vd-label svelte-h1hdsn">Procurado</span><span class="vd-value svelte-h1hdsn" style="color: #fbbf24;">Ativo</span></div>',
@@ -36433,7 +36433,7 @@ function dO(n, e) {
                   var zt = qI(),
                     jt = f(zt);
                   (H(() =>
-                    C(jt, `+${o(u).activeWarrants.length - 3} more warrants`),
+                    C(jt, `+${o(u).activeWarrants.length - 3} mandados`),
                   ),
                     x(Rt, zt));
                 };
@@ -36507,7 +36507,7 @@ function dO(n, e) {
                 var en = (Rt) => {
                   var zt = $I(),
                     jt = f(zt);
-                  (H(() => C(jt, `+${o(u).activeBolos.length - 3} more Procurados`)),
+                  (H(() => C(jt, `+${o(u).activeBolos.length - 3} procurados`)),
                     x(Rt, zt));
                 };
                 z(Ht, (Rt) => {
@@ -37446,7 +37446,7 @@ var fO = (n, e, t) => y(e, t, !0),
     '<div class="modal-field svelte-6btwh2"><span class="field-label svelte-6btwh2">Oficial</span><span class="field-value svelte-6btwh2"> </span></div>',
   ),
   CO = E(
-    '<div class="modal-field svelte-6btwh2"><span class="field-label svelte-6btwh2">Created</span><span class="field-value svelte-6btwh2"> </span></div>',
+    '<div class="modal-field svelte-6btwh2"><span class="field-label svelte-6btwh2">Criado em</span><span class="field-value svelte-6btwh2"> </span></div>',
   ),
   AO = E(
     '<div class="modal-notes svelte-6btwh2"><span class="field-label svelte-6btwh2">Observações</span> <p class="notes-body svelte-6btwh2"> </p></div>',
@@ -37466,7 +37466,7 @@ var fO = (n, e, t) => y(e, t, !0),
   NO = E('<button class="action-btn svelte-6btwh2">View Report</button>'),
   DO = (n, e) => y(e, null),
   LO = E(
-    '<div class="modal-backdrop svelte-6btwh2"><div class="modal svelte-6btwh2" role="dialog" aria-modal="true" tabindex="-1"><div class="modal-header svelte-6btwh2"><h3 class="svelte-6btwh2">Detalhes do Procurado</h3> <button class="close-btn svelte-6btwh2" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div> <div class="modal-body svelte-6btwh2"><div class="modal-top svelte-6btwh2"><span class="modal-name svelte-6btwh2"> </span> <span> </span></div> <div class="modal-grid svelte-6btwh2"><div class="modal-field svelte-6btwh2"><span class="field-label svelte-6btwh2">Tipo</span><span class="field-value svelte-6btwh2"> </span></div> <div class="modal-field svelte-6btwh2"><span class="field-label svelte-6btwh2">ID do relatório</span><span class="field-value svelte-6btwh2"> </span></div> <!> <!> <!></div> <!></div> <div class="modal-footer svelte-6btwh2"><div class="modal-footer-left svelte-6btwh2"><!> <button class="delete-btn svelte-6btwh2"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Excluir</button></div> <div class="modal-footer-right svelte-6btwh2"><!> <button class="cancel-btn svelte-6btwh2">Fechar</button></div></div></div></div>',
+    '<div class="modal-backdrop svelte-6btwh2"><div class="modal svelte-6btwh2" role="dialog" aria-modal="true" tabindex="-1"><div class="modal-header svelte-6btwh2"><h3 class="svelte-6btwh2">Detalhes do Procurado</h3> <button class="close-btn svelte-6btwh2" aria-label="Fechar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div> <div class="modal-body svelte-6btwh2"><div class="modal-top svelte-6btwh2"><span class="modal-name svelte-6btwh2"> </span> <span> </span></div> <div class="modal-grid svelte-6btwh2"><div class="modal-field svelte-6btwh2"><span class="field-label svelte-6btwh2">Tipo</span><span class="field-value svelte-6btwh2"> </span></div> <div class="modal-field svelte-6btwh2"><span class="field-label svelte-6btwh2">ID do relatório</span><span class="field-value svelte-6btwh2"> </span></div> <!> <!> <!></div> <!></div> <div class="modal-footer svelte-6btwh2"><div class="modal-footer-left svelte-6btwh2"><!> <button class="delete-btn svelte-6btwh2"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Excluir</button></div> <div class="modal-footer-right svelte-6btwh2"><!> <button class="cancel-btn svelte-6btwh2">Fechar</button></div></div></div></div>',
   ),
   RO = (n, e) => {
     n.target === n.currentTarget && y(e, !1);
@@ -37474,7 +37474,7 @@ var fO = (n, e, t) => y(e, t, !0),
   zO = (n, e) => y(e, !1),
   BO = (n, e) => y(e, !1),
   FO = E(
-    '<div class="modal-backdrop svelte-6btwh2"><div class="modal svelte-6btwh2" role="dialog" aria-modal="true" tabindex="-1"><div class="modal-header svelte-6btwh2"><h3 class="svelte-6btwh2">New Procurado</h3> <button class="close-btn svelte-6btwh2" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div> <div class="modal-body form-body svelte-6btwh2"><div class="form-group svelte-6btwh2"><span class="field-label svelte-6btwh2">Nome</span><input class="form-input svelte-6btwh2" placeholder="Nome do alvo"/></div> <div class="form-group svelte-6btwh2"><span class="field-label svelte-6btwh2">Tipo</span> <select class="form-input form-select svelte-6btwh2"><option>Cidadão</option><option>Veículo</option><option>Arma</option><option>Propriedade</option><option>Outro</option></select></div> <div class="form-group svelte-6btwh2"><span class="field-label svelte-6btwh2">Subject ID</span><input class="form-input svelte-6btwh2" placeholder="ID do cidadão / Placa / Série"/></div> <div class="form-group svelte-6btwh2"><span class="field-label svelte-6btwh2">ID do relatório</span><input class="form-input svelte-6btwh2" type="number" placeholder="Vincular ao relatório"/></div> <div class="form-group form-full svelte-6btwh2"><span class="field-label svelte-6btwh2">Observações</span><textarea class="form-input svelte-6btwh2" rows="4" placeholder="Descrição e detalhes do Procurado..."></textarea></div></div> <div class="modal-footer svelte-6btwh2"><button class="cancel-btn svelte-6btwh2">Cancelar</button> <button class="primary-btn svelte-6btwh2">Criar Procurado</button></div></div></div>',
+    '<div class="modal-backdrop svelte-6btwh2"><div class="modal svelte-6btwh2" role="dialog" aria-modal="true" tabindex="-1"><div class="modal-header svelte-6btwh2"><h3 class="svelte-6btwh2">Novo Procurado</h3> <button class="close-btn svelte-6btwh2" aria-label="Fechar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div> <div class="modal-body form-body svelte-6btwh2"><div class="form-group svelte-6btwh2"><span class="field-label svelte-6btwh2">Nome</span><input class="form-input svelte-6btwh2" placeholder="Nome do alvo"/></div> <div class="form-group svelte-6btwh2"><span class="field-label svelte-6btwh2">Tipo</span> <select class="form-input form-select svelte-6btwh2"><option>Cidadão</option><option>Veículo</option><option>Arma</option><option>Propriedade</option><option>Outro</option></select></div> <div class="form-group svelte-6btwh2"><span class="field-label svelte-6btwh2">ID do alvo</span><input class="form-input svelte-6btwh2" placeholder="ID do cidadão / Placa / Série"/></div> <div class="form-group svelte-6btwh2"><span class="field-label svelte-6btwh2">ID do relatório</span><input class="form-input svelte-6btwh2" type="number" placeholder="Vincular ao relatório"/></div> <div class="form-group form-full svelte-6btwh2"><span class="field-label svelte-6btwh2">Observações</span><textarea class="form-input svelte-6btwh2" rows="4" placeholder="Descrição e detalhes do Procurado..."></textarea></div></div> <div class="modal-footer svelte-6btwh2"><button class="cancel-btn svelte-6btwh2">Cancelar</button> <button class="primary-btn svelte-6btwh2">Criar Procurado</button></div></div></div>',
   ),
   VO = E(
     '<div class="page svelte-6btwh2"><div class="topbar svelte-6btwh2"><div class="filters svelte-6btwh2"></div> <button class="new-btn svelte-6btwh2"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"></path></svg> New Procurado</button></div> <!></div> <!> <!>',
@@ -39400,7 +39400,7 @@ async function XP(n, e, t, s, i, r, l, c, u, h) {
     }
   }
 }
-var e4 = E('<span class="topbar-title svelte-1ytieqa">New Case</span>'),
+var e4 = E('<span class="topbar-title svelte-1ytieqa">Novo Caso</span>'),
   t4 = E(
     '<span class="topbar-case-number svelte-1ytieqa"> </span> <span class="topbar-title svelte-1ytieqa"> </span> <span> </span> <span> </span>',
     1,
@@ -39408,7 +39408,7 @@ var e4 = E('<span class="topbar-title svelte-1ytieqa">New Case</span>'),
   n4 = E('<option class="svelte-1ytieqa"> </option>'),
   s4 = E('<option class="svelte-1ytieqa"> </option>'),
   i4 = E(
-    '<p class="muted-text svelte-1ytieqa">All checklist items complete.</p>',
+    '<p class="muted-text svelte-1ytieqa">Todos os itens da checklist foram concluídos.</p>',
   ),
   r4 = E(
     '<div class="detail-scroll svelte-1ytieqa"><div class="create-layout svelte-1ytieqa"><div class="create-main svelte-1ytieqa"><div class="section svelte-1ytieqa"><div class="section-title svelte-1ytieqa">Detalhes do caso</div> <input type="text" placeholder="Título do caso" class="form-input title-input svelte-1ytieqa"/> <div class="field-row svelte-1ytieqa"><div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">Status</span> <select class="form-select svelte-1ytieqa"></select></div> <div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">Prioridade</span> <select class="form-select svelte-1ytieqa"></select></div> <div class="field-group svelte-1ytieqa"><span class="field-label svelte-1ytieqa">Departamento</span> <input class="form-input svelte-1ytieqa" placeholder="Opcional"/></div></div> <div class="field-group svelte-1ytieqa" style="margin-top:12px;"><span class="field-label svelte-1ytieqa">Resumo</span> <textarea rows="8" placeholder="Resumo do caso e observações iniciais..." class="form-textarea svelte-1ytieqa"></textarea></div></div></div> <div class="create-side svelte-1ytieqa"><div class="section svelte-1ytieqa"><div class="section-title svelte-1ytieqa">Checklist</div> <ul class="checklist svelte-1ytieqa"><li><span class="checkmark svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><polyline points="20 6 9 17 4 12" class="svelte-1ytieqa"></polyline></svg></span> Atribuir oficial principal</li> <li><span class="checkmark svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><polyline points="20 6 9 17 4 12" class="svelte-1ytieqa"></polyline></svg></span> Anexar evidências</li> <li><span class="checkmark svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><polyline points="20 6 9 17 4 12" class="svelte-1ytieqa"></polyline></svg></span> Anexar relatórios</li> <li><span class="checkmark svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><polyline points="20 6 9 17 4 12" class="svelte-1ytieqa"></polyline></svg></span> Definir prioridade e status</li></ul></div> <div class="section svelte-1ytieqa"><div class="section-title svelte-1ytieqa">Próximas ações</div> <p class="muted-text svelte-1ytieqa">Após a criação, abra o caso para gerenciar oficiais, evidências, anexos e logs de auditoria.</p> <!></div> <button class="primary-btn create-btn svelte-1ytieqa" type="button">Criar Caso</button></div></div></div>',
@@ -39539,11 +39539,11 @@ var e4 = E('<span class="topbar-title svelte-1ytieqa">New Case</span>'),
     '<button class="table-row svelte-1ytieqa"><span class="col-title row-title svelte-1ytieqa"> </span> <span class="col-case row-case svelte-1ytieqa"> </span> <span class="col-status svelte-1ytieqa"><span> </span></span> <span class="col-priority svelte-1ytieqa"><span> </span></span> <span class="col-dept svelte-1ytieqa"> </span> <span class="col-officer svelte-1ytieqa"> </span> <span class="col-date svelte-1ytieqa"> </span> <span class="col-date svelte-1ytieqa"> </span></button>',
   ),
   lN = E(
-    '<div class="table-header svelte-1ytieqa"><span class="col-title svelte-1ytieqa">Título</span> <span class="col-case svelte-1ytieqa">Caso #</span> <span class="col-status svelte-1ytieqa">Status</span> <span class="col-priority svelte-1ytieqa">Prioridade</span> <span class="col-dept svelte-1ytieqa">Departamento</span> <span class="col-officer svelte-1ytieqa">Primary Oficial</span> <span class="col-date svelte-1ytieqa">Created</span> <span class="col-date svelte-1ytieqa">Updated</span></div> <div class="table-body svelte-1ytieqa"></div>',
+    '<div class="table-header svelte-1ytieqa"><span class="col-title svelte-1ytieqa">Título</span> <span class="col-case svelte-1ytieqa">Caso #</span> <span class="col-status svelte-1ytieqa">Status</span> <span class="col-priority svelte-1ytieqa">Prioridade</span> <span class="col-dept svelte-1ytieqa">Departamento</span> <span class="col-officer svelte-1ytieqa">Oficial principal</span> <span class="col-date svelte-1ytieqa">Criado em</span> <span class="col-date svelte-1ytieqa">Atualizado em</span></div> <div class="table-body svelte-1ytieqa"></div>',
     1,
   ),
   cN = E(
-    '<div class="topbar svelte-1ytieqa"><div class="search-box svelte-1ytieqa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><circle cx="11" cy="11" r="8" class="svelte-1ytieqa"></circle><line x1="21" y1="21" x2="16.65" y2="16.65" class="svelte-1ytieqa"></line></svg> <input type="text" placeholder="Buscar cases..." class="svelte-1ytieqa"/></div> <select class="form-select-sm svelte-1ytieqa"><option class="svelte-1ytieqa">All Status</option><!></select> <select class="form-select-sm svelte-1ytieqa"><option class="svelte-1ytieqa">All Prioridade</option><!></select> <div style="flex:1;" class="svelte-1ytieqa"></div> <button class="action-btn svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><line x1="12" y1="5" x2="12" y2="19" class="svelte-1ytieqa"></line><line x1="5" y1="12" x2="19" y2="12" class="svelte-1ytieqa"></line></svg> New Case</button> <button class="back-btn svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><polyline points="23 4 23 10 17 10" class="svelte-1ytieqa"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" class="svelte-1ytieqa"></path></svg> Atualizar</button></div> <div class="list-panel svelte-1ytieqa"><!> <!></div>',
+    '<div class="topbar svelte-1ytieqa"><div class="search-box svelte-1ytieqa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><circle cx="11" cy="11" r="8" class="svelte-1ytieqa"></circle><line x1="21" y1="21" x2="16.65" y2="16.65" class="svelte-1ytieqa"></line></svg> <input type="text" placeholder="Buscar casos..." class="svelte-1ytieqa"/></div> <select class="form-select-sm svelte-1ytieqa"><option class="svelte-1ytieqa">Todos os status</option><!></select> <select class="form-select-sm svelte-1ytieqa"><option class="svelte-1ytieqa">Todas as prioridades</option><!></select> <div style="flex:1;" class="svelte-1ytieqa"></div> <button class="action-btn svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><line x1="12" y1="5" x2="12" y2="19" class="svelte-1ytieqa"></line><line x1="5" y1="12" x2="19" y2="12" class="svelte-1ytieqa"></line></svg> Novo Caso</button> <button class="back-btn svelte-1ytieqa"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1ytieqa"><polyline points="23 4 23 10 17 10" class="svelte-1ytieqa"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" class="svelte-1ytieqa"></path></svg> Atualizar</button></div> <div class="list-panel svelte-1ytieqa"><!> <!></div>',
     1,
   ),
   dN = E('<div class="cases-page svelte-1ytieqa"><!></div> <!>', 1);
@@ -39726,8 +39726,8 @@ function uN(n, e) {
     Je = F(""),
     Pe = F("");
   const ke = {
-    case_created: "Created case",
-    case_updated: "Updated case",
+    case_created: "Caso criado",
+    case_updated: "Caso atualizado",
     case_deleted: "Deleted case",
     case_officer_assigned: "Assigned officer",
     case_officer_removed: "Removed officer",
@@ -41096,13 +41096,13 @@ var gN = (n, e) => {
     '<div class="form-group svelte-1m4fek"><span class="form-label svelte-1m4fek"> </span> <input class="form-input svelte-1m4fek"/></div>',
   ),
   QN = E(
-    '<div class="form-group svelte-1m4fek"><span class="form-label svelte-1m4fek">Placa Number</span> <input placeholder="Placa" class="form-input svelte-1m4fek"/></div>',
+    '<div class="form-group svelte-1m4fek"><span class="form-label svelte-1m4fek">Número da placa</span> <input placeholder="Placa" class="form-input svelte-1m4fek"/></div>',
   ),
   XN = E(
-    '<div class="form-group svelte-1m4fek"><span class="form-label svelte-1m4fek">Quantity</span> <input placeholder="Quantidade / peso" class="form-input svelte-1m4fek"/></div>',
+    '<div class="form-group svelte-1m4fek"><span class="form-label svelte-1m4fek">Quantidade</span> <input placeholder="Quantidade / peso" class="form-input svelte-1m4fek"/></div>',
   ),
   eD = E(
-    '<div class="form-group svelte-1m4fek"><span class="form-label svelte-1m4fek">Stash ID</span> <input placeholder="LOCKER-001" class="form-input mono-input svelte-1m4fek"/></div>',
+    '<div class="form-group svelte-1m4fek"><span class="form-label svelte-1m4fek">ID do depósito</span> <input placeholder="LOCKER-001" class="form-input mono-input svelte-1m4fek"/></div>',
   ),
   tD = E(
     '<label class="checkbox-label svelte-1m4fek"><input type="checkbox" class="svelte-1m4fek"/> <span class="svelte-1m4fek">A evidência está armazenada / protegida</span></label>',
@@ -42051,7 +42051,7 @@ var hD = E(
     '<div class="camera-section svelte-vryshn"><div class="section-header svelte-vryshn"><span class="section-title svelte-vryshn"><span class="section-label svelte-vryshn"> </span> <span class="section-count svelte-vryshn"> </span></span> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9" class="svelte-vryshn"></polyline></svg></div> <!></div>',
   ),
   SD = E(
-    '<div class="cameras-page svelte-vryshn"><div class="topbar svelte-vryshn"><input type="text" placeholder="Buscar cameras..." class="search-input svelte-vryshn"/> <div class="topbar-right svelte-vryshn"><span class="result-count svelte-vryshn"> </span> <button class="btn-secondary svelte-vryshn"> </button></div></div> <div class="cameras-content svelte-vryshn"><!></div></div>',
+    '<div class="cameras-page svelte-vryshn"><div class="topbar svelte-vryshn"><input type="text" placeholder="Buscar câmeras..." class="search-input svelte-vryshn"/> <div class="topbar-right svelte-vryshn"><span class="result-count svelte-vryshn"> </span> <button class="btn-secondary svelte-vryshn"> </button></div></div> <div class="cameras-content svelte-vryshn"><!></div></div>',
   );
 function ED(n, e) {
   Vt(e, !0);
@@ -45287,7 +45287,7 @@ var AR = E(
     '<span class="no-offers svelte-1v7s77l">Nenhuma oferta de redução configurada</span>',
   ),
   PR = E(
-    '<div class="jf-scroll svelte-1v7s77l"><div class="setting-group svelte-1v7s77l"><div class="setting-group-header svelte-1v7s77l"><span class="group-label svelte-1v7s77l">Reduction Offers</span> <span class="group-desc svelte-1v7s77l">Percentage options shown when offering a reduction on charges</span></div> <div class="offers-list svelte-1v7s77l"><!> <!></div> <div class="add-offer-row svelte-1v7s77l"><input type="number" class="offer-input svelte-1v7s77l" placeholder="e.g. 25" min="1" max="100"/> <span class="offer-input-suffix svelte-1v7s77l">%</span> <button class="add-offer-btn svelte-1v7s77l">Adicionar</button></div></div> <div class="setting-group svelte-1v7s77l"><div class="setting-group-header svelte-1v7s77l"><span class="group-label svelte-1v7s77l">Maximum Fine Amount</span> <span class="group-desc svelte-1v7s77l">The highest fine amount that can be processed through the MDT</span></div> <div class="fine-input-row svelte-1v7s77l"><span class="fine-prefix svelte-1v7s77l">$</span> <input type="number" class="fine-input svelte-1v7s77l" min="0"/></div></div></div>',
+    '<div class="jf-scroll svelte-1v7s77l"><div class="setting-group svelte-1v7s77l"><div class="setting-group-header svelte-1v7s77l"><span class="group-label svelte-1v7s77l">Ofertas de Redução</span> <span class="group-desc svelte-1v7s77l">Percentuais exibidos ao oferecer redução das acusações</span></div> <div class="offers-list svelte-1v7s77l"><!> <!></div> <div class="add-offer-row svelte-1v7s77l"><input type="number" class="offer-input svelte-1v7s77l" placeholder="ex.: 25" min="1" max="100"/> <span class="offer-input-suffix svelte-1v7s77l">%</span> <button class="add-offer-btn svelte-1v7s77l">Adicionar</button></div></div> <div class="setting-group svelte-1v7s77l"><div class="setting-group-header svelte-1v7s77l"><span class="group-label svelte-1v7s77l">Valor Máximo de Multa</span> <span class="group-desc svelte-1v7s77l">Maior valor de multa permitido no MDT</span></div> <div class="fine-input-row svelte-1v7s77l"><span class="fine-prefix svelte-1v7s77l">$</span> <input type="number" class="fine-input svelte-1v7s77l" min="0"/></div></div></div>',
   ),
   NR = E("<span> </span>"),
   DR = E(
@@ -45478,12 +45478,12 @@ async function zR(n, e, t, s, i, r, l, c, u, h, m) {
     w != null && w.success
       ? (t(o(i) ? "Modelo atualizado" : "Modelo criado"), c(), await m())
       : t(
-          (w == null ? void 0 : w.message) || "Falha ao salvar template",
+          (w == null ? void 0 : w.message) || "Falha ao salvar modelo",
           "error",
         );
   } catch (g) {
-    (console.error("Falha ao salvar template:", g),
-      t("Falha ao salvar template", "error"));
+    (console.error("Falha ao salvar modelo:", g),
+      t("Falha ao salvar modelo", "error"));
   } finally {
     y(u, !1);
   }
@@ -45499,7 +45499,7 @@ var FR = E(
   ),
   qR = E('<option class="svelte-2y9yk4"> </option>'),
   jR = E(
-    '<div class="template-form svelte-2y9yk4"><div class="form-row svelte-2y9yk4"><div class="form-group svelte-2y9yk4"><label class="form-label svelte-2y9yk4" for="tmpl-name">Nome do Modelo</label> <input id="tmpl-name" type="text" class="form-input svelte-2y9yk4" placeholder="ex.: Ocorrência padrão"/></div> <div class="form-group svelte-2y9yk4"><label class="form-label svelte-2y9yk4" for="tmpl-type">Tipo do Relatório</label> <select id="tmpl-type" class="form-select svelte-2y9yk4"></select></div></div> <div class="form-group svelte-2y9yk4"><label class="form-label svelte-2y9yk4" for="tmpl-content">Conteúdo do Modelo <span class="form-hint svelte-2y9yk4">(HTML)</span></label> <textarea id="tmpl-content" class="form-textarea svelte-2y9yk4" placeholder="Digite o conteúdo HTML do modelo..."></textarea></div> <div class="form-actions svelte-2y9yk4"><button class="btn-cancel svelte-2y9yk4">Cancelar</button> <button class="btn-save svelte-2y9yk4"><span class="material-icons btn-save-icon svelte-2y9yk4">save</span> </button></div></div>',
+    '<div class="template-form svelte-2y9yk4"><div class="form-row svelte-2y9yk4"><div class="form-group svelte-2y9yk4"><label class="form-label svelte-2y9yk4" for="tmpl-name">Nome do Modelo</label> <input id="tmpl-name" type="text" class="form-input svelte-2y9yk4" placeholder="ex.: Ocorrência padrão"/></div> <div class="form-group svelte-2y9yk4"><label class="form-label svelte-2y9yk4" for="tmpl-type">Tipo da Ocorrência</label> <select id="tmpl-type" class="form-select svelte-2y9yk4"></select></div></div> <div class="form-group svelte-2y9yk4"><label class="form-label svelte-2y9yk4" for="tmpl-content">Conteúdo do Modelo <span class="form-hint svelte-2y9yk4">(HTML)</span></label> <textarea id="tmpl-content" class="form-textarea svelte-2y9yk4" placeholder="Digite o conteúdo HTML do modelo..."></textarea></div> <div class="form-actions svelte-2y9yk4"><button class="btn-cancel svelte-2y9yk4">Cancelar</button> <button class="btn-save svelte-2y9yk4"><span class="material-icons btn-save-icon svelte-2y9yk4">save</span> </button></div></div>',
   ),
   UR = E(
     '<div class="empty-state svelte-2y9yk4"><span class="material-icons svelte-2y9yk4" style="font-size: 20px; color: rgba(255,255,255,0.15); margin-bottom: 6px;">description</span> <p class="svelte-2y9yk4">Nenhum modelo configurado</p> <p class="empty-hint svelte-2y9yk4">Crie um modelo para começar</p></div>',
@@ -45513,7 +45513,7 @@ var FR = E(
   $R = E('<div class="templates-scroll svelte-2y9yk4"><!></div>'),
   JR = E('<div class="save-bar svelte-2y9yk4"><span> </span></div>'),
   KR = E(
-    '<div class="templates-page svelte-2y9yk4"><div class="templates-card svelte-2y9yk4"><div class="card-title-row svelte-2y9yk4"><span class="card-label svelte-2y9yk4">Modelos de Relatório</span> <div class="template-actions svelte-2y9yk4"><!></div></div> <p class="card-subtitle svelte-2y9yk4">Configure os modelos disponíveis ao criar relatórios. Cada modelo é vinculado a um tipo de relatório.</p> <!></div> <!></div>',
+    '<div class="templates-page svelte-2y9yk4"><div class="templates-card svelte-2y9yk4"><div class="card-title-row svelte-2y9yk4"><span class="card-label svelte-2y9yk4">Modelos de Relatório</span> <div class="template-actions svelte-2y9yk4"><!></div></div> <p class="card-subtitle svelte-2y9yk4">Configure os modelos disponíveis ao criar ocorrências. Cada modelo é vinculado a um tipo de ocorrência.</p> <!></div> <!></div>',
   );
 function YR(n, e) {
   Vt(e, !0);

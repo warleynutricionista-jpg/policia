@@ -789,11 +789,258 @@ CREATE TABLE IF NOT EXISTS `mdt_report_templates` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT IGNORE INTO `mdt_report_templates` (`name`, `type`, `content`, `job_type`) VALUES
-('Standard Incident', 'Incident Report', '<h2>Incident Summary</h2>\n<p>On [DATE] at approximately [TIME] hours, [OFFICER NAME/BADGE] responded to a call at [LOCATION] regarding [TYPE OF INCIDENT].</p>\n\n<h2>Details of Incident</h2>\n<p>Upon arrival, officers observed [DESCRIBE SCENE]. [DESCRIBE WHAT HAPPENED IN CHRONOLOGICAL ORDER].</p>\n\n<h2>Parties Involved</h2>\n<p><strong>Reporting Party:</strong> [NAME] - [CONTACT INFO]</p>\n<p><strong>Suspect(s):</strong> [NAME/DESCRIPTION]</p>\n<p><strong>Victim(s):</strong> [NAME]</p>\n<p><strong>Witness(es):</strong> [NAME - STATEMENT SUMMARY]</p>\n\n<h2>Evidence Collected</h2>\n<ul>\n<li>[ITEM 1 - DESCRIPTION AND LOCATION FOUND]</li>\n<li>[ITEM 2 - DESCRIPTION AND LOCATION FOUND]</li>\n</ul>\n\n<h2>Actions Taken</h2>\n<p>[DESCRIBE OFFICER ACTIONS: ARRESTS MADE, CITATIONS ISSUED, MEDICAL ATTENTION PROVIDED, ETC.]</p>\n\n<h2>Conclusion</h2>\n<p>[CASE STATUS: OPEN/CLOSED/PENDING INVESTIGATION]. [ANY FOLLOW-UP REQUIRED].</p>'),
-('Standard Traffic', 'Traffic Report', '<h2>Traffic Incident Summary</h2>\n<p>On [DATE] at approximately [TIME] hours, [OFFICER NAME/BADGE] responded to a traffic incident at [LOCATION/INTERSECTION].</p>\n\n<h2>Vehicle Information</h2>\n<p><strong>Vehicle 1:</strong> [YEAR MAKE MODEL COLOR] - Plate: [PLATE] - Driver: [NAME]</p>\n<p><strong>Vehicle 2:</strong> [YEAR MAKE MODEL COLOR] - Plate: [PLATE] - Driver: [NAME]</p>\n\n<h2>Incident Description</h2>\n<p>[DESCRIBE HOW THE INCIDENT OCCURRED. INCLUDE DIRECTION OF TRAVEL, SPEED, ROAD CONDITIONS, WEATHER.]</p>\n\n<h2>Injuries</h2>\n<p>[DESCRIBE ANY INJURIES. NOTE IF EMS WAS CALLED AND TRANSPORT DESTINATION.]</p>\n\n<h2>Citations Issued</h2>\n<ul>\n<li>[DRIVER NAME] - [VIOLATION CODE] - [DESCRIPTION]</li>\n</ul>\n\n<h2>Witness Statements</h2>\n<p>[NAME]: [BRIEF SUMMARY OF STATEMENT]</p>\n\n<h2>Diagram / Additional Notes</h2>\n<p>[DESCRIBE SCENE LAYOUT OR REFERENCE ATTACHED DIAGRAM]</p>'),
-('Full Investigation', 'Investigation Report', '<h2>Case Overview</h2>\n<p><strong>Case Number:</strong> [CASE #]</p>\n<p><strong>Lead Investigator:</strong> [NAME/BADGE]</p>\n<p><strong>Date Opened:</strong> [DATE]</p>\n<p><strong>Classification:</strong> [FELONY/MISDEMEANOR/OTHER]</p>\n\n<h2>Background</h2>\n<p>[PROVIDE CONTEXT FOR THE INVESTIGATION. WHAT PROMPTED IT. REFERENCE ANY PRIOR REPORTS.]</p>\n\n<h2>Persons of Interest</h2>\n<p><strong>Suspect 1:</strong> [NAME] - [DESCRIPTION, KNOWN ASSOCIATES, LAST KNOWN LOCATION]</p>\n<p><strong>Suspect 2:</strong> [NAME] - [DESCRIPTION]</p>\n\n<h2>Evidence Summary</h2>\n<ul>\n<li>[EVIDENCE ITEM] - [WHERE/HOW OBTAINED] - [RELEVANCE]</li>\n<li>[EVIDENCE ITEM] - [WHERE/HOW OBTAINED] - [RELEVANCE]</li>\n</ul>\n\n<h2>Timeline of Events</h2>\n<ul>\n<li><strong>[DATE/TIME]:</strong> [EVENT]</li>\n<li><strong>[DATE/TIME]:</strong> [EVENT]</li>\n</ul>\n\n<h2>Interviews Conducted</h2>\n<p><strong>[NAME]:</strong> [SUMMARY OF INTERVIEW]</p>\n\n<h2>Findings and Recommendations</h2>\n<p>[SUMMARIZE FINDINGS. RECOMMEND NEXT STEPS: CHARGES, FURTHER INVESTIGATION, CASE CLOSURE.]</p>'),
-('Standard Arrest', 'Arrest Report', '<h2>Arrest Summary</h2>\n<p>On [DATE] at approximately [TIME] hours, [OFFICER NAME/BADGE] placed [SUSPECT NAME] under arrest at [LOCATION].</p>\n\n<h2>Suspect Information</h2>\n<p><strong>Name:</strong> [FULL NAME]</p>\n<p><strong>Citizen ID:</strong> [ID]</p>\n<p><strong>Description:</strong> [HEIGHT, BUILD, CLOTHING, DISTINGUISHING MARKS]</p>\n\n<h2>Probable Cause</h2>\n<p>[DESCRIBE THE CIRCUMSTANCES AND EVIDENCE THAT ESTABLISHED PROBABLE CAUSE FOR THE ARREST]</p>\n\n<h2>Charges</h2>\n<ul>\n<li>[CHARGE CODE] - [CHARGE DESCRIPTION] - [FELONY/MISDEMEANOR]</li>\n<li>[CHARGE CODE] - [CHARGE DESCRIPTION] - [FELONY/MISDEMEANOR]</li>\n</ul>\n\n<h2>Narrative</h2>\n<p>[DETAILED CHRONOLOGICAL ACCOUNT OF EVENTS LEADING TO THE ARREST]</p>\n\n<h2>Evidence Seized</h2>\n<ul>\n<li>[ITEM] - [DESCRIPTION]</li>\n</ul>\n\n<h2>Miranda Rights</h2>\n<p>Suspect was read Miranda rights at [TIME]. Suspect [DID/DID NOT] invoke right to counsel. Suspect [DID/DID NOT] provide a statement.</p>\n\n<h2>Processing</h2>\n<p>Suspect was booked at [FACILITY] at [TIME]. [BAIL/HOLD INFORMATION].</p>'),
-('Evidence Collection', 'Evidence Report', '<h2>Evidence Report Summary</h2>\n<p><strong>Related Case:</strong> [CASE #]</p>\n<p><strong>Collecting Officer:</strong> [NAME/BADGE]</p>\n<p><strong>Date Collected:</strong> [DATE]</p>\n<p><strong>Location:</strong> [COLLECTION SITE]</p>\n\n<h2>Evidence Items</h2>\n<h3>Item 1</h3>\n<p><strong>Description:</strong> [DETAILED DESCRIPTION]</p>\n<p><strong>Serial/ID:</strong> [IF APPLICABLE]</p>\n<p><strong>Location Found:</strong> [EXACT LOCATION AT SCENE]</p>\n<p><strong>Condition:</strong> [CONDITION WHEN FOUND]</p>\n<p><strong>Storage:</strong> [LOCKER/STASH ID]</p>\n\n<h3>Item 2</h3>\n<p><strong>Description:</strong> [DETAILED DESCRIPTION]</p>\n<p><strong>Location Found:</strong> [EXACT LOCATION AT SCENE]</p>\n<p><strong>Storage:</strong> [LOCKER/STASH ID]</p>\n\n<h2>Chain of Custody</h2>\n<ul>\n<li><strong>[DATE/TIME]:</strong> Collected by [NAME] at [LOCATION]</li>\n<li><strong>[DATE/TIME]:</strong> Transferred to [NAME/FACILITY]</li>\n</ul>\n\n<h2>Analysis Requested</h2>\n<p>[DESCRIBE ANY LAB ANALYSIS OR FORENSIC TESTING REQUESTED]</p>\n\n<h2>Notes</h2>\n<p>[ANY ADDITIONAL OBSERVATIONS OR CONTEXT]</p>', 'all');
+('Abordagem Policial', 'Abordagem', '<h2>Resumo da Ocorrência</h2>
+<p>Data/Hora: [DATA_HORA] | Local: [LOCAL] | Guarnição: [EQUIPE]</p>
+
+<h2>Envolvidos</h2>
+<p>Abordado(s): [NOME - RG/CIDADÃO - CONDIÇÃO]</p>
+<p>Testemunha(s): [NOME - CONTATO]</p>
+
+<h2>Materiais Apreendidos</h2>
+<p>[DESCREVER ITEM, QUANTIDADE, SÉRIE E DESTINO]</p>
+
+<h2>Dinâmica</h2>
+<p>[NARRAR FATO EM ORDEM CRONOLÓGICA E OBJETIVA]</p>
+
+<h2>Providências</h2>
+<p>[BUSCAS, CONSULTAS, ORIENTAÇÃO, CONDUÇÃO, AUTUAÇÃO]</p>
+
+<details>
+<summary>Mais detalhes (opcional)</summary>
+<h3>Observações Finais</h3>
+<p>[INFORMAÇÕES COMPLEMENTARES E ENCAMINHAMENTOS]</p>
+</details>', 'leo'),
+('Roubo', 'Roubo', '<h2>Resumo da Ocorrência</h2>
+<p>Data/Hora: [DATA_HORA] | Local: [LOCAL] | Natureza: Roubo</p>
+
+<h2>Envolvidos</h2>
+<p>Vítima(s): [NOME - CONTATO - LESÕES]</p>
+<p>Autor(es): [NOME/APELIDO - CARACTERÍSTICAS - DESTINO]</p>
+
+<h2>Materiais Apreendidos</h2>
+<p>[BENS SUBTRAÍDOS/RECUPERADOS, ARMAS, VEÍCULOS]</p>
+
+<h2>Dinâmica</h2>
+<p>[COMO OCORREU A GRAVE AMEAÇA/VIOLÊNCIA E A SUBTRAÇÃO]</p>
+
+<h2>Providências</h2>
+<p>[ISOLAMENTO, DILIGÊNCIAS, BOLETIM, GUIAS, ENCAMINHAMENTOS]</p>
+
+<details>
+<summary>Mais detalhes (opcional)</summary>
+<h3>Observações Finais</h3>
+<p>[IMAGENS, TESTEMUNHAS, CÂMERAS, VÍNCULO COM OUTRAS OCORRÊNCIAS]</p>
+</details>', 'leo'),
+('Furto', 'Furto', '<h2>Resumo da Ocorrência</h2>
+<p>Data/Hora: [DATA_HORA] | Local: [LOCAL] | Natureza: Furto</p>
+
+<h2>Envolvidos</h2>
+<p>Vítima(s): [NOME - CONTATO]</p>
+<p>Suspeito(s): [NOME/APELIDO - CARACTERÍSTICAS]</p>
+
+<h2>Materiais Apreendidos</h2>
+<p>[BENS SUBTRAÍDOS/RECUPERADOS, FERRAMENTAS, VEÍCULOS]</p>
+
+<h2>Dinâmica</h2>
+<p>[DESCREVER SUBTRAÇÃO SEM VIOLÊNCIA/AMEAÇA E CIRCUNSTÂNCIAS]</p>
+
+<h2>Providências</h2>
+<p>[DILIGÊNCIAS, PERÍCIA, IMAGENS, REGISTROS COMPLEMENTARES]</p>
+
+<details>
+<summary>Mais detalhes (opcional)</summary>
+<h3>Observações Finais</h3>
+<p>[PONTOS DE INVESTIGAÇÃO E INFORMAÇÕES ADICIONAIS]</p>
+</details>', 'leo'),
+('Tráfico de Drogas', 'Tráfico', '<h2>Resumo da Ocorrência</h2>
+<p>Data/Hora: [DATA_HORA] | Local: [LOCAL] | Natureza: Tráfico de Drogas</p>
+
+<h2>Envolvidos</h2>
+<p>Suspeito(s): [NOME - FUNÇÃO - CONDUTA]</p>
+<p>Usuário(s)/Testemunha(s): [NOME - CONTATO]</p>
+
+<h2>Materiais Apreendidos</h2>
+<p>[TIPO DE DROGA, PESO, EMBALAGEM, VALORES, APARELHOS]</p>
+
+<h2>Dinâmica</h2>
+<p>[CONTEXTUALIZAR CAMPANA, FLAGRANTE, VENDA, GUARDA OU TRANSPORTE]</p>
+
+<h2>Providências</h2>
+<p>[PRISÃO, APREENSÃO, LACRE, PERÍCIA, APRESENTAÇÃO À AUTORIDADE]</p>
+
+<details>
+<summary>Mais detalhes (opcional)</summary>
+<h3>Observações Finais</h3>
+<p>[CADEIA DE CUSTÓDIA, TESTES PRELIMINARES, OUTROS INVESTIGADOS]</p>
+</details>', 'leo'),
+('Violência Doméstica', 'Violência Doméstica', '<h2>Resumo da Ocorrência</h2>
+<p>Data/Hora: [DATA_HORA] | Local: [LOCAL] | Natureza: Violência Doméstica</p>
+
+<h2>Envolvidos</h2>
+<p>Vítima(s): [NOME - RELAÇÃO - ESTADO FÍSICO/EMOCIONAL]</p>
+<p>Autor(a): [NOME - RELAÇÃO - CONDIÇÃO]</p>
+
+<h2>Materiais Apreendidos</h2>
+<p>[ARMAS, OBJETOS, DOCUMENTOS, REGISTROS]</p>
+
+<h2>Dinâmica</h2>
+<p>[RELATO DA AGRESSÃO, AMEAÇA, CONTEXTO FAMILIAR E RECORRÊNCIA]</p>
+
+<h2>Providências</h2>
+<p>[ACOLHIMENTO, MEDIDAS PROTETIVAS, PRISÃO, ENCAMINHAMENTO À REDE]</p>
+
+<details>
+<summary>Mais detalhes (opcional)</summary>
+<h3>Observações Finais</h3>
+<p>[DECLARAÇÕES, HISTÓRICO, RISCO IMINENTE, CRIANÇAS ENVOLVIDAS]</p>
+</details>', 'leo'),
+('Cumprimento de Mandado', 'Cumprimento de Mandado', '<h2>Resumo da Ocorrência</h2>
+<p>Data/Hora: [DATA_HORA] | Local: [LOCAL] | Tipo de Mandado: [PRISÃO/BUSCA]</p>
+
+<h2>Envolvidos</h2>
+<p>Alvo(s): [NOME - ID - SITUAÇÃO]</p>
+<p>Equipe(s): [UNIDADE - INTEGRANTES]</p>
+
+<h2>Materiais Apreendidos</h2>
+<p>[ITENS LOCALIZADOS, ARMAS, DROGAS, DOCUMENTOS]</p>
+
+<h2>Dinâmica</h2>
+<p>[DESCREVER ABORDAGEM, LEITURA DO MANDADO, BUSCAS E REAÇÃO]</p>
+
+<h2>Providências</h2>
+<p>[CUMPRIMENTO FORMAL, CONDUÇÃO, APRESENTAÇÃO, APREENSÕES]</p>
+
+<details>
+<summary>Mais detalhes (opcional)</summary>
+<h3>Observações Finais</h3>
+<p>[Nº DO MANDADO, AUTORIDADE EXPEDIDORA, RESULTADOS COMPLEMENTARES]</p>
+</details>', 'leo'),
+('Prisão em Flagrante', 'Flagrante', '<h2>Resumo da Ocorrência</h2>
+<p>Data/Hora: [DATA_HORA] | Local: [LOCAL] | Natureza: Prisão em Flagrante</p>
+
+<h2>Envolvidos</h2>
+<p>Conduzido(s): [NOME - CONDUTA - RESISTÊNCIA]</p>
+<p>Vítima(s)/Testemunha(s): [NOME - CONTATO]</p>
+
+<h2>Materiais Apreendidos</h2>
+<p>[OBJETOS RELACIONADOS AO CRIME, ARMAS, DROGAS, VALORES]</p>
+
+<h2>Dinâmica</h2>
+<p>[NARRAR SITUAÇÃO FLAGRANCIAL E ATOS IMEDIATOS]</p>
+
+<h2>Providências</h2>
+<p>[VOZ DE PRISÃO, DIREITOS, ALGEMAS, CONDUÇÃO, AUTO DE APREENSÃO]</p>
+
+<details>
+<summary>Mais detalhes (opcional)</summary>
+<h3>Observações Finais</h3>
+<p>[INTEGRIDADE FÍSICA, USO DE FORÇA, FILMAGENS E TESTEMUNHAS]</p>
+</details>', 'leo'),
+('Confronto Policial', 'Confronto', '<h2>Resumo da Ocorrência</h2>
+<p>Data/Hora: [DATA_HORA] | Local: [LOCAL] | Natureza: Confronto</p>
+
+<h2>Envolvidos</h2>
+<p>Policiais: [NOME - MATRÍCULA - FUNÇÃO]</p>
+<p>Oponente(s): [NOME/APELIDO - SITUAÇÃO]</p>
+
+<h2>Materiais Apreendidos</h2>
+<p>[ARMAS, MUNIÇÕES, VEÍCULOS, OUTROS ITENS]</p>
+
+<h2>Dinâmica</h2>
+<p>[DESCREVER AGRESSÃO INJUSTA, REAÇÃO PROPORCIONAL E CESSAÇÃO]</p>
+
+<h2>Providências</h2>
+<p>[SOCORRO, ISOLAMENTO, PERÍCIA, COMUNICAÇÃO À CORREGEDORIA]</p>
+
+<details>
+<summary>Mais detalhes (opcional)</summary>
+<h3>Observações Finais</h3>
+<p>[CÂMERAS, TRAJETÓRIA, TESTEMUNHAS, PRESERVAÇÃO DE LOCAL]</p>
+</details>', 'leo'),
+('Apreensão de Arma', 'Apreensão de Arma', '<h2>Resumo da Ocorrência</h2>
+<p>Data/Hora: [DATA_HORA] | Local: [LOCAL] | Natureza: Apreensão de Arma</p>
+
+<h2>Envolvidos</h2>
+<p>Portador/Responsável: [NOME - SITUAÇÃO LEGAL]</p>
+<p>Equipe: [INTEGRANTES]</p>
+
+<h2>Materiais Apreendidos</h2>
+<p>[TIPO, MARCA, MODELO, CALIBRE, Nº DE SÉRIE, MUNIÇÃO]</p>
+
+<h2>Dinâmica</h2>
+<p>[CIRCUNSTÂNCIA DA LOCALIZAÇÃO E APREENSÃO]</p>
+
+<h2>Providências</h2>
+<p>[CONFERÊNCIA, LACRE, CADASTRO, ENCAMINHAMENTO AO DEPÓSITO]</p>
+
+<details>
+<summary>Mais detalhes (opcional)</summary>
+<h3>Observações Finais</h3>
+<p>[POSSÍVEL VÍNCULO COM OUTROS CRIMES E SOLICITAÇÃO DE PERÍCIA]</p>
+</details>', 'leo'),
+('Apreensão de Droga', 'Apreensão de Droga', '<h2>Resumo da Ocorrência</h2>
+<p>Data/Hora: [DATA_HORA] | Local: [LOCAL] | Natureza: Apreensão de Droga</p>
+
+<h2>Envolvidos</h2>
+<p>Suspeito(s): [NOME - CONDIÇÃO]</p>
+<p>Testemunha(s): [NOME - CONTATO]</p>
+
+<h2>Materiais Apreendidos</h2>
+<p>[TIPO, PESO, PORCIONAMENTO, EMBALAGEM, VALORES, APETRECHOS]</p>
+
+<h2>Dinâmica</h2>
+<p>[COMO A SUBSTÂNCIA FOI LOCALIZADA E A CONTEXTUALIZAÇÃO]</p>
+
+<h2>Providências</h2>
+<p>[LACRE, TESTE PRELIMINAR, REGISTRO, ENCAMINHAMENTO PERICIAL]</p>
+
+<details>
+<summary>Mais detalhes (opcional)</summary>
+<h3>Observações Finais</h3>
+<p>[CADEIA DE CUSTÓDIA, NÚMERO DE VOLUMES, FOTOS]</p>
+</details>', 'leo'),
+('Homicídio', 'Homicídio', '<h2>Resumo da Ocorrência</h2>
+<p>Data/Hora: [DATA_HORA] | Local: [LOCAL] | Natureza: Homicídio</p>
+
+<h2>Envolvidos</h2>
+<p>Vítima(s): [NOME - CONDIÇÃO NO LOCAL]</p>
+<p>Suspeito(s): [NOME/APELIDO - CARACTERÍSTICAS]</p>
+
+<h2>Materiais Apreendidos</h2>
+<p>[ARMAS, PROJÉTEIS, CÁPSULAS, VESTÍGIOS, IMAGENS]</p>
+
+<h2>Dinâmica</h2>
+<p>[RECONSTRUÇÃO INICIAL DOS FATOS E LINHA DO TEMPO]</p>
+
+<h2>Providências</h2>
+<p>[ISOLAMENTO, PERÍCIA, IML, DILIGÊNCIAS, COMUNICAÇÃO À AUTORIDADE]</p>
+
+<details>
+<summary>Mais detalhes (opcional)</summary>
+<h3>Observações Finais</h3>
+<p>[POSSÍVEIS MOTIVAÇÕES, TESTEMUNHAS, CÂMERAS, HIPÓTESES]</p>
+</details>', 'leo'),
+('Acidente de Trânsito', 'Acidente de Trânsito', '<h2>Resumo da Ocorrência</h2>
+<p>Data/Hora: [DATA_HORA] | Local: [LOCAL] | Natureza: Acidente de Trânsito</p>
+
+<h2>Envolvidos</h2>
+<p>Condutor(es): [NOME - HABILITAÇÃO - ESTADO]</p>
+<p>Vítima(s)/Passageiro(s): [NOME - LESÕES]</p>
+
+<h2>Materiais Apreendidos</h2>
+<p>[VEÍCULOS ENVOLVIDOS, DOCUMENTOS, OBJETOS, IMAGENS]</p>
+
+<h2>Dinâmica</h2>
+<p>[DESCREVER CONDIÇÕES DA VIA, SINALIZAÇÃO, MANOBRAS E IMPACTO]</p>
+
+<h2>Providências</h2>
+<p>[SINALIZAÇÃO DA VIA, SOCORRO, TESTES, REMOÇÃO, AUTUAÇÕES]</p>
+
+<details>
+<summary>Mais detalhes (opcional)</summary>
+<h3>Observações Finais</h3>
+<p>[CROQUI, LAUDO, TESTEMUNHAS, CÂMERAS E RESPONSABILIZAÇÃO]</p>
+</details>', 'leo');
 
 CREATE TABLE IF NOT EXISTS `mdt_awards` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
