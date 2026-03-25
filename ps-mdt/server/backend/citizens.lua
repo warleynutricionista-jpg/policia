@@ -88,11 +88,27 @@ end
 
 local function getGender(gen)
     if gen == 0 then
-        return 'Male'
+        return 'Masculino'
     elseif gen == 1 then
-        return 'Female'
+        return 'Feminino'
     end
     return 'Desconhecido'
+end
+
+local function normalizeSearchQuery(raw)
+    local query = tostring(raw or ''):gsub('^%s*(.-)%s*$', '%1')
+    if query == '' then
+        return nil
+    end
+    return query
+end
+
+local function buildSearchLike(search)
+    local escaped = search
+        :gsub('\\', '\\\\')
+        :gsub('%%', '\\%%')
+        :gsub('_', '\\_')
+    return '%' .. escaped:lower() .. '%'
 end
 
 -- getCitizens - pulls citizens from database with pagination support
@@ -232,7 +248,7 @@ ps.registerCallback(resourceName .. ':server:searchCitizens', function(source, p
         payload = { query = payload }
     end
 
-    local query = tostring(payload.query or '')
+    local query = normalizeSearchQuery(payload.query)
     local page = math.max(1, tonumber(payload.page) or 1)
     local searchLimit = math.min(math.max(1, tonumber(payload.limit) or (Config.Pagination and Config.Pagination.CitizenSearch or 20)), 100)
     local offset = (page - 1) * searchLimit
@@ -248,7 +264,7 @@ ps.registerCallback(resourceName .. ':server:searchCitizens', function(source, p
     end
 
     -- Sanitize the query for SQL LIKE operations
-    local searchTerm = '%' .. query:lower() .. '%'
+    local searchTerm = buildSearchLike(query)
 
     -- Build a complex search query that searches across multiple fields and returns same data as getCitizens
     local sqlQuery = [[
@@ -264,12 +280,13 @@ ps.registerCallback(resourceName .. ':server:searchCitizens', function(source, p
         FROM players AS p
         LEFT JOIN mdt_profiles AS mp ON p.citizenid COLLATE utf8mb4_general_ci = mp.citizenid COLLATE utf8mb4_general_ci
         WHERE 
-            LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname'))) LIKE ? OR
-            LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname'))) LIKE ? OR
-            LOWER(CONCAT(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')), ' ', JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname')))) LIKE ? OR
-            LOWER(p.citizenid) LIKE ? OR
-            LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.phone'))) LIKE ? OR
-            LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.job, '$.label'))) LIKE ?
+            LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname'))) LIKE ? ESCAPE '\\' OR
+            LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname'))) LIKE ? ESCAPE '\\' OR
+            LOWER(CONCAT(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')), ' ', JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname')))) LIKE ? ESCAPE '\\' OR
+            LOWER(p.citizenid) LIKE ? ESCAPE '\\' OR
+            LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.phone'))) LIKE ? ESCAPE '\\' OR
+            LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.job, '$.label'))) LIKE ? ESCAPE '\\'
+        ORDER BY p.citizenid ASC
         LIMIT ?
     ]]
 
@@ -283,12 +300,12 @@ ps.registerCallback(resourceName .. ':server:searchCitizens', function(source, p
         SELECT COUNT(*)
         FROM players AS p
         WHERE
-            LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname'))) LIKE ? OR
-            LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname'))) LIKE ? OR
-            LOWER(CONCAT(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')), ' ', JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname')))) LIKE ? OR
-            LOWER(p.citizenid) LIKE ? OR
-            LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.phone'))) LIKE ? OR
-            LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.job, '$.label'))) LIKE ?
+            LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname'))) LIKE ? ESCAPE '\\' OR
+            LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname'))) LIKE ? ESCAPE '\\' OR
+            LOWER(CONCAT(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')), ' ', JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname')))) LIKE ? ESCAPE '\\' OR
+            LOWER(p.citizenid) LIKE ? ESCAPE '\\' OR
+            LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.phone'))) LIKE ? ESCAPE '\\' OR
+            LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.job, '$.label'))) LIKE ? ESCAPE '\\'
     ]]
     local total = MySQL.scalar.await(countQuery, { searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm }) or 0
 
