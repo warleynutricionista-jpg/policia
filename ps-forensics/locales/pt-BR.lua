@@ -240,6 +240,29 @@ return {
         },
     },
 
+    dna = {
+        errors = {
+            not_authorized = 'Não autorizado para operações de DNA',
+            citizenid_required = 'CitizenID é obrigatório para cadastro genético',
+            profile_exists = 'Perfil genético já cadastrado',
+            no_permission_collect = 'Sem permissão para coletar amostra de DNA',
+            no_permission_analyze = 'Sem permissão para análise de DNA',
+            invalid_id = 'ID de amostra de DNA inválido',
+            sample_not_found = 'Amostra de DNA não encontrada',
+            evidence_not_found = 'Evidência vinculada ao DNA não encontrada',
+            too_far_from_scene = 'Você está longe demais da cena para coletar material biológico',
+            missing_required_item = 'Item obrigatório ausente para coleta de DNA: %s',
+        },
+        defaults = {
+            unknown_source = 'Origem biológica não especificada',
+        },
+        result = {
+            sem_correspondencia = 'Sem correspondência genética',
+            parcialmente_compativel = 'Compatibilidade genética parcial',
+            compativel = 'Compatibilidade genética positiva',
+        },
+    },
+
     target = {
         open_lab = 'Abrir Laboratório Forense',
         open_morgue = 'Abrir Instituto Médico Legal',
