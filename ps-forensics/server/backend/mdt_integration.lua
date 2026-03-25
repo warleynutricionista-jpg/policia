@@ -192,6 +192,34 @@ lib.callback.register(resourceName .. ':server:getForensicDataByCitizen', functi
             INNER JOIN forensic_evidence fe ON fb.evidence_id = fe.id
             WHERE fe.linked_citizenid = ? AND fb.weapon_serial IS NOT NULL
         ]], { citizenid }) or {},
+
+        forensic_intelligence = MySQL.query.await([[
+            SELECT id, case_id, report_id, scene_id, evidence_id, source_type, source_id,
+                   match_kind, association_level, confidence_score, rationale, exam_origin,
+                   exam_performed_by, created_at
+            FROM forensic_intelligence_links
+            WHERE citizenid = ?
+            ORDER BY created_at DESC
+            LIMIT 50
+        ]], { citizenid }) or {},
+
+        auto_watchlist_history = MySQL.query.await([[
+            SELECT id, event_type, report_id, case_id, reason, source_type, source_id,
+                   algorithm_name, algorithm_version, confidence_score, association_level,
+                   occurred_at
+            FROM forensic_watchlist_events
+            WHERE citizenid = ?
+              AND event_type IN ('suspect_linked', 'auto_wanted_added', 'auto_wanted_removed')
+            ORDER BY occurred_at DESC
+            LIMIT 50
+        ]], { citizenid }) or {},
+
+        active_warrants = MySQL.query.await([[
+            SELECT reportid, expirydate, felonies, misdemeanors, infractions
+            FROM mdt_reports_warrants
+            WHERE citizenid = ? AND expirydate >= NOW()
+            ORDER BY expirydate ASC
+        ]], { citizenid }) or {},
     }
 
     return data

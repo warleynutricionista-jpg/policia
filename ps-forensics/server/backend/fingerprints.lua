@@ -277,6 +277,40 @@ lib.callback.register(resourceName .. ':server:analyzeFingerprint', function(sou
         playerData.citizenid, playerData.name,
     })
 
+    if matchedCitizenId and ForensicProcessIntelligenceMatch then
+        local evidence = fp.evidence_id and MySQL.single.await('SELECT id, case_id, report_id, scene_id FROM forensic_evidence WHERE id = ?', { fp.evidence_id }) or nil
+        local intelligence = ForensicProcessIntelligenceMatch({
+            citizenid = matchedCitizenId,
+            citizen_name = matchedName,
+            case_id = evidence and evidence.case_id or nil,
+            report_id = evidence and evidence.report_id or nil,
+            scene_id = fp.scene_id or (evidence and evidence.scene_id or nil),
+            evidence_id = fp.evidence_id,
+            source_type = 'fingerprint',
+            source_id = fingerprintId,
+            match_kind = 'fingerprint',
+            association_level = matchStatus == 'positiva' and 'confirmacao' or 'compatibilidade_parcial',
+            confidence_score = confidence,
+            algorithm_name = 'fingerprint_profile_match_v1',
+            algorithm_version = '2026.03',
+            exam_performed_by = playerData.citizenid,
+            generated_by = playerData.citizenid,
+            exam_origin = fp.source_type,
+            rationale = ('Match de digital (%s) com confiança %d%%'):format(matchStatus, confidence),
+            metadata = {
+                fingerprint_id = fingerprintId,
+                source_type = fp.source_type,
+                match_status = matchStatus,
+            },
+        })
+        if intelligence and intelligence.autoWanted then
+            ForensicAuditLog(src, 'forensic_auto_wanted_from_fingerprint', 'fingerprint', fingerprintId, {
+                citizenid = matchedCitizenId,
+                confidence = confidence,
+            })
+        end
+    end
+
     ForensicAuditLog(src, 'fingerprint_analyzed', 'fingerprint', fingerprintId, {
         matchStatus = matchStatus,
         matchedCitizenId = matchedCitizenId,

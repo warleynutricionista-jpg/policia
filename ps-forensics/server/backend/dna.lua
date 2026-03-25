@@ -314,6 +314,40 @@ lib.callback.register(resourceName .. ':server:analyzeDNA', function(source, sam
         playerData.citizenid, playerData.name,
     })
 
+    if matchedCitizenId and ForensicProcessIntelligenceMatch then
+        local evidence = sample.evidence_id and MySQL.single.await('SELECT id, case_id, report_id, scene_id FROM forensic_evidence WHERE id = ?', { sample.evidence_id }) or nil
+        local intelligence = ForensicProcessIntelligenceMatch({
+            citizenid = matchedCitizenId,
+            citizen_name = matchedName,
+            case_id = evidence and evidence.case_id or nil,
+            report_id = evidence and evidence.report_id or nil,
+            scene_id = sample.scene_id or (evidence and evidence.scene_id or nil),
+            evidence_id = sample.evidence_id,
+            source_type = 'dna',
+            source_id = sampleId,
+            match_kind = 'dna',
+            association_level = matchStatus == 'compativel' and 'confirmacao' or 'compatibilidade_parcial',
+            confidence_score = confidence,
+            algorithm_name = 'dna_profile_match_v1',
+            algorithm_version = '2026.03',
+            exam_performed_by = playerData.citizenid,
+            generated_by = playerData.citizenid,
+            exam_origin = sample.source_type,
+            rationale = ('Match de DNA (%s) com confiança %d%%'):format(matchStatus, confidence),
+            metadata = {
+                sample_id = sampleId,
+                source_type = sample.source_type,
+                match_status = matchStatus,
+            },
+        })
+        if intelligence and intelligence.autoWanted then
+            ForensicAuditLog(src, 'forensic_auto_wanted_from_dna', 'dna', sampleId, {
+                citizenid = matchedCitizenId,
+                confidence = confidence,
+            })
+        end
+    end
+
     ForensicAuditLog(src, 'dna_analyzed', 'dna', sampleId, {
         matchStatus = matchStatus, matchedCitizenId = matchedCitizenId, confidence = confidence,
     })
