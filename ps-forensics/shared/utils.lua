@@ -136,60 +136,118 @@ end
 
 -- Formatar timestamp
 function ForensicUtils.FormatTimestamp(timestamp)
-    if not timestamp then return 'N/A' end
+    if not timestamp then return L('labels.na') end
     return os.date('%d/%m/%Y %H:%M', timestamp)
 end
 
 -- Obter label da classificação da cena
 function ForensicUtils.GetClassificationLabel(value)
     for _, v in ipairs(Config.SceneClassifications or {}) do
-        if v.value == value then return v.label end
+        if v.value == value then
+            if v.labelKey then
+                local localized = L(v.labelKey)
+                if localized ~= v.labelKey then
+                    return localized
+                end
+            end
+            return v.label or value
+        end
     end
-    return value or 'Desconhecido'
+    return value or L('labels.unknown')
 end
 
 -- Obter label do tipo de evidência
 function ForensicUtils.GetEvidenceTypeLabel(typeValue)
     for _, v in ipairs(Config.EvidenceTypes or {}) do
-        if v.type == typeValue then return v.label end
+        if v.type == typeValue then
+            if v.labelKey then
+                local localized = L(v.labelKey)
+                if localized ~= v.labelKey then
+                    return localized
+                end
+            end
+            return v.label or typeValue
+        end
     end
-    return typeValue or 'Desconhecido'
+    return typeValue or L('labels.unknown')
 end
 
--- Traduzir status de evidência
-ForensicUtils.EvidenceStatusLabels = {
-    coletada = 'Coletada',
-    lacrada = 'Lacrada',
-    em_analise = 'Em Análise',
-    analisada = 'Analisada',
-    armazenada = 'Armazenada',
-    descartada = 'Descartada',
-    devolvida = 'Devolvida',
-    em_julgamento = 'Em Julgamento',
-}
+function ForensicUtils.GetSceneClassificationOptions()
+    local options = {}
+    for _, classification in ipairs(Config.SceneClassifications or {}) do
+        options[#options + 1] = {
+            value = classification.value,
+            label = ForensicUtils.GetClassificationLabel(classification.value),
+        }
+    end
+    return options
+end
 
--- Traduzir status de teste
-ForensicUtils.TestResultLabels = {
-    pendente = 'Pendente',
-    presumido = 'Presumido',
-    inconclusivo = 'Inconclusivo',
-    compativel = 'Compatível',
-    confirmado = 'Confirmado',
-    negativo = 'Negativo',
-}
+function ForensicUtils.GetEvidenceCategoryOptions()
+    local options = {}
+    for _, category in ipairs(Config.EvidenceCategories or {}) do
+        local label = category.value
+        if category.labelKey then
+            local localized = L(category.labelKey)
+            if localized ~= category.labelKey then
+                label = localized
+            end
+        elseif category.label then
+            label = category.label
+        end
 
--- Traduzir causa da morte
-ForensicUtils.CauseOfDeathLabels = {
-    arma_de_fogo = 'Perfuração por Arma de Fogo',
-    arma_branca = 'Ferimento por Arma Branca',
-    trauma_contundente = 'Trauma Contundente',
-    asfixia = 'Asfixia',
-    queimadura = 'Queimadura',
-    overdose = 'Overdose',
-    envenenamento = 'Envenenamento',
-    afogamento = 'Afogamento',
-    eletrocussao = 'Eletrocussão',
-    multiplos_ferimentos = 'Múltiplos Ferimentos',
-    causa_natural = 'Causa Natural',
-    indeterminado = 'Indeterminado',
-}
+        options[#options + 1] = {
+            value = category.value,
+            label = label,
+        }
+    end
+    return options
+end
+
+function ForensicUtils.GetQuickTestOptions()
+    local options = {}
+    for _, test in ipairs(Config.QuickTests or {}) do
+        local label = test.value
+        if test.labelKey then
+            local localized = L(test.labelKey)
+            if localized ~= test.labelKey then
+                label = localized
+            end
+        elseif test.label then
+            label = test.label
+        end
+
+        options[#options + 1] = {
+            value = test.value,
+            label = label,
+        }
+    end
+    return options
+end
+
+function ForensicUtils.GetEvidenceStatusLabel(status)
+    local key = ('labels.evidence_status.%s'):format(status or '')
+    local value = L(key)
+    if value == key then
+        return status or L('labels.unknown')
+    end
+    return value
+end
+
+function ForensicUtils.GetTestResultLabel(result)
+    local key = ('labels.test_result.%s'):format(result or '')
+    local value = L(key)
+    if value == key then
+        return result or L('labels.unknown')
+    end
+    return value
+end
+
+function ForensicUtils.GetCauseOfDeathLabel(cause)
+    local key = ('labels.cause_of_death.%s'):format(cause or '')
+    local value = L(key)
+    if value == key then
+        return cause or L('labels.unknown')
+    end
+    return value
+end
