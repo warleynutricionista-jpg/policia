@@ -43,8 +43,8 @@ end)
 function OpenForensicsUI(tab)
     if not hasAccess() then
         lib.notify({
-            title = 'Sistema Forense',
-            description = 'Acesso negado',
+            title = L('ui.system_name'),
+            description = L('ui.access_denied'),
             type = 'error',
         })
         return
@@ -61,7 +61,7 @@ function OpenForensicsUI(tab)
         tab = tab or 'scenes',
         role = roleName,
         permissions = roleConfig,
-        playerName = QBX and QBX.Functions.GetPlayerData().charinfo.firstname .. ' ' .. QBX.Functions.GetPlayerData().charinfo.lastname or 'Oficial',
+        playerName = QBX and QBX.Functions.GetPlayerData().charinfo.firstname .. ' ' .. QBX.Functions.GetPlayerData().charinfo.lastname or L('ui.officer_fallback_name'),
         playerJob = jobName,
         playerGrade = grade,
     })
@@ -98,7 +98,7 @@ end, false)
 -- ============================================================
 -- KEYBIND
 -- ============================================================
-RegisterKeyMapping(Config.Commands.OpenForensics, 'Abrir Sistema Forense', 'keyboard', 'F10')
+RegisterKeyMapping(Config.Commands.OpenForensics, L('commands.open_forensics'), 'keyboard', 'F10')
 
 -- ============================================================
 -- NUI CALLBACKS
@@ -125,7 +125,7 @@ RegisterNUICallback('createScene', function(data, cb)
     data.z = coords.z
 
     local streetHash, _ = GetStreetNameAtCoord(coords.x, coords.y, coords.z)
-    data.location_name = data.location_name or GetStreetNameFromHashKey(streetHash) or 'Local desconhecido'
+    data.location_name = data.location_name or GetStreetNameFromHashKey(streetHash) or L('scene.unknown_location')
 
     local result = lib.callback.await(resourceName .. ':server:createScene', false, data)
     cb(result)
@@ -162,7 +162,7 @@ RegisterNUICallback('collectEvidence', function(data, cb)
     local processingTime = Config.TestProcessingTimes['coleta_digital'] or 10
     if lib.progressBar({
         duration = processingTime * 1000,
-        label = 'Coletando evidência...',
+        label = L('evidence.collecting'),
         useWhileDead = false,
         canCancel = true,
         disable = { car = true, move = true, combat = true },
@@ -175,7 +175,7 @@ RegisterNUICallback('collectEvidence', function(data, cb)
         cb(result)
     else
         ClearPedTasks(PlayerPedId())
-        cb({ success = false, error = 'Coleta cancelada' })
+        cb({ success = false, error = L('evidence.collect_cancelled') })
     end
 end)
 
@@ -198,7 +198,7 @@ end)
 RegisterNUICallback('collectFingerprint', function(data, cb)
     if lib.progressBar({
         duration = (Config.TestProcessingTimes['coleta_digital'] or 12) * 1000,
-        label = 'Coletando impressão digital...',
+        label = L('test.collecting_fingerprint'),
         useWhileDead = false,
         canCancel = true,
         disable = { car = true, move = true, combat = true },
@@ -207,14 +207,14 @@ RegisterNUICallback('collectFingerprint', function(data, cb)
         local result = lib.callback.await(resourceName .. ':server:collectFingerprint', false, data)
         cb(result)
     else
-        cb({ success = false, error = 'Cancelado' })
+        cb({ success = false, error = L('test.canceled') })
     end
 end)
 
 RegisterNUICallback('analyzeFingerprint', function(data, cb)
     if lib.progressBar({
         duration = (Config.TestProcessingTimes['comparacao_digital'] or 40) * 1000,
-        label = 'Processando impressão digital...',
+        label = L('test.processing_fingerprint'),
         useWhileDead = false,
         canCancel = true,
         disable = { car = true, move = true, combat = true },
@@ -222,7 +222,7 @@ RegisterNUICallback('analyzeFingerprint', function(data, cb)
         local result = lib.callback.await(resourceName .. ':server:analyzeFingerprint', false, data.id)
         cb(result)
     else
-        cb({ success = false, error = 'Cancelado' })
+        cb({ success = false, error = L('test.canceled') })
     end
 end)
 
@@ -235,7 +235,7 @@ end)
 RegisterNUICallback('collectDNA', function(data, cb)
     if lib.progressBar({
         duration = (Config.TestProcessingTimes['coleta_dna'] or 15) * 1000,
-        label = 'Coletando amostra de DNA...',
+        label = L('test.collecting_dna'),
         useWhileDead = false,
         canCancel = true,
         disable = { car = true, move = true, combat = true },
@@ -244,14 +244,14 @@ RegisterNUICallback('collectDNA', function(data, cb)
         local result = lib.callback.await(resourceName .. ':server:collectDNASample', false, data)
         cb(result)
     else
-        cb({ success = false, error = 'Cancelado' })
+        cb({ success = false, error = L('test.canceled') })
     end
 end)
 
 RegisterNUICallback('analyzeDNA', function(data, cb)
     if lib.progressBar({
         duration = (Config.TestProcessingTimes['comparacao_dna'] or 60) * 1000,
-        label = 'Processando DNA no laboratório...',
+        label = L('test.processing_dna'),
         useWhileDead = false,
         canCancel = true,
         disable = { car = true, move = true, combat = true },
@@ -259,7 +259,7 @@ RegisterNUICallback('analyzeDNA', function(data, cb)
         local result = lib.callback.await(resourceName .. ':server:analyzeDNA', false, data.id)
         cb(result)
     else
-        cb({ success = false, error = 'Cancelado' })
+        cb({ success = false, error = L('test.canceled') })
     end
 end)
 
@@ -268,16 +268,31 @@ RegisterNUICallback('registerDNA', function(data, cb)
     cb(result)
 end)
 
+RegisterNUICallback('searchFingerprintsByCitizen', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:searchFingerprintsByCitizen', false, data.citizenid)
+    cb(result or {})
+end)
+
+RegisterNUICallback('searchDNAByCitizen', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:searchDNAByCitizen', false, data.citizenid)
+    cb(result or {})
+end)
+
 -- Balística
 RegisterNUICallback('registerBallistic', function(data, cb)
     local result = lib.callback.await(resourceName .. ':server:registerBallistic', false, data)
     cb(result)
 end)
 
+RegisterNUICallback('getWeaponBallisticHistory', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:getWeaponBallisticHistory', false, data.serial)
+    cb(result or {})
+end)
+
 RegisterNUICallback('ballisticComparison', function(data, cb)
     if lib.progressBar({
         duration = (Config.TestProcessingTimes['confronto_balistico'] or 45) * 1000,
-        label = 'Realizando confronto balístico...',
+        label = L('test.running_ballistics'),
         useWhileDead = false,
         canCancel = true,
         disable = { car = true, move = true, combat = true },
@@ -285,7 +300,7 @@ RegisterNUICallback('ballisticComparison', function(data, cb)
         local result = lib.callback.await(resourceName .. ':server:ballisticComparison', false, data.ballisticId, data.weaponSerial)
         cb(result)
     else
-        cb({ success = false, error = 'Cancelado' })
+        cb({ success = false, error = L('test.canceled') })
     end
 end)
 
@@ -301,7 +316,7 @@ RegisterNUICallback('performLabTest', function(data, cb)
 
     if lib.progressBar({
         duration = duration * 1000,
-        label = 'Executando teste forense...',
+        label = L('test.running'),
         useWhileDead = false,
         canCancel = true,
         disable = { car = true, move = true, combat = true },
@@ -309,7 +324,7 @@ RegisterNUICallback('performLabTest', function(data, cb)
         local result = lib.callback.await(resourceName .. ':server:performLabTest', false, data.id)
         cb(result)
     else
-        cb({ success = false, error = 'Cancelado' })
+        cb({ success = false, error = L('test.canceled') })
     end
 end)
 
@@ -326,6 +341,11 @@ end)
 
 RegisterNUICallback('confirmDrug', function(data, cb)
     local result = lib.callback.await(resourceName .. ':server:confirmDrugSubstance', false, data.id, data.substance, data.purity, data.result)
+    cb(result)
+end)
+
+RegisterNUICallback('getDrugAnalyses', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:getDrugAnalyses', false, data)
     cb(result)
 end)
 
@@ -353,7 +373,7 @@ end)
 RegisterNUICallback('performToxicology', function(data, cb)
     if lib.progressBar({
         duration = (Config.TestProcessingTimes['toxicologico'] or 50) * 1000,
-        label = 'Realizando exame toxicológico...',
+        label = L('test.running_toxicology'),
         useWhileDead = false,
         canCancel = true,
         disable = { car = true, move = true, combat = true },
@@ -361,7 +381,7 @@ RegisterNUICallback('performToxicology', function(data, cb)
         local result = lib.callback.await(resourceName .. ':server:performToxicology', false, data.id)
         cb(result)
     else
-        cb({ success = false, error = 'Cancelado' })
+        cb({ success = false, error = L('test.canceled') })
     end
 end)
 
@@ -417,6 +437,52 @@ RegisterNUICallback('getInvestigationDashboard', function(data, cb)
     cb(result)
 end)
 
+-- Integração MDT / sistema policial
+RegisterNUICallback('getForensicDataByCase', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:getForensicDataByCase', false, data.caseId)
+    cb(result)
+end)
+
+RegisterNUICallback('getForensicDataByReport', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:getForensicDataByReport', false, data.reportId)
+    cb(result)
+end)
+
+RegisterNUICallback('getForensicDataByCitizen', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:getForensicDataByCitizen', false, data.citizenid)
+    cb(result)
+end)
+
+RegisterNUICallback('getForensicDataByWeapon', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:getForensicDataByWeapon', false, data.serial)
+    cb(result)
+end)
+
+RegisterNUICallback('getForensicDataByVehicle', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:getForensicDataByVehicle', false, data.plate)
+    cb(result)
+end)
+
+RegisterNUICallback('getForensicDataByEvidence', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:getForensicDataByEvidence', false, data.evidenceId)
+    cb(result)
+end)
+
+RegisterNUICallback('searchForensicGlobal', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:searchForensicGlobal', false, data)
+    cb(result)
+end)
+
+RegisterNUICallback('getMDTIntegrationBundle', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:getMDTIntegrationBundle', false, data)
+    cb(result)
+end)
+
+RegisterNUICallback('getForensicStats', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:getForensicStats', false)
+    cb(result)
+end)
+
 -- ============================================================
 -- BLIPS DE CENAS ATIVAS
 -- ============================================================
@@ -437,8 +503,8 @@ RegisterNetEvent(resourceName .. ':client:sceneCreated', function(scene)
     sceneBlips[scene.id] = blip
 
     lib.notify({
-        title = 'Cena de Crime',
-        description = ('Nova cena criada: %s por %s'):format(scene.sceneNumber, scene.createdBy),
+        title = L('scene.title'),
+        description = L('scene.new_scene', scene.sceneNumber, scene.createdBy),
         type = 'inform',
         duration = 8000,
     })
@@ -468,7 +534,7 @@ CreateThread(function()
                 {
                     name = 'open_forensic_lab',
                     icon = 'fa-solid fa-microscope',
-                    label = 'Abrir Laboratório Forense',
+                    label = L('target.open_lab'),
                     onSelect = function()
                         OpenForensicsUI('lab')
                     end,
@@ -501,7 +567,7 @@ CreateThread(function()
                 {
                     name = 'open_forensic_morgue',
                     icon = 'fa-solid fa-skull',
-                    label = 'Abrir Instituto Médico Legal',
+                    label = L('target.open_morgue'),
                     onSelect = function()
                         OpenForensicsUI('autopsy')
                     end,
@@ -534,7 +600,7 @@ CreateThread(function()
                 {
                     name = 'open_evidence_storage',
                     icon = 'fa-solid fa-box-archive',
-                    label = 'Depósito de Evidências',
+                    label = L('target.open_storage'),
                     onSelect = function()
                         OpenForensicsUI('evidence')
                     end,
