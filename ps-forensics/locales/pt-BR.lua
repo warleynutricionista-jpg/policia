@@ -263,6 +263,27 @@ return {
         },
     },
 
+    ballistics = {
+        errors = {
+            not_authorized = 'Não autorizado para operações balísticas',
+            no_permission_collect = 'Sem permissão para registrar item balístico',
+            no_permission_analyze = 'Sem permissão para confronto balístico',
+            invalid_id = 'ID balístico inválido',
+            not_found = 'Registro balístico não encontrado',
+            evidence_not_found = 'Evidência vinculada ao registro balístico não encontrada',
+            too_far_from_scene = 'Você está longe demais da cena para registrar vestígio balístico',
+            missing_required_item = 'Item obrigatório ausente para registro balístico: %s',
+            weapon_serial_required = 'Número de série da arma é obrigatório (exceto arma raspada)',
+            weapon_serial_compare_required = 'Informe o número de série da arma para o confronto',
+            register_failed = 'Falha ao registrar item balístico',
+        },
+        result = {
+            sem_correspondencia = 'Sem correspondência balística',
+            compativel = 'Compatibilidade balística',
+            confirmado = 'Correspondência balística confirmada',
+        },
+    },
+
     target = {
         open_lab = 'Abrir Laboratório Forense',
         open_morgue = 'Abrir Instituto Médico Legal',
