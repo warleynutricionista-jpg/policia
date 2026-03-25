@@ -12,10 +12,18 @@
   color: #fff;
 }
 
+.psmdt-prison-card {
+  background: rgba(11, 15, 25, 0.9);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  padding: 1rem;
+}
+
 .psmdt-prison-header,
 .psmdt-prison-toolbar,
 .psmdt-prison-layout,
-.psmdt-prison-actions {
+.psmdt-prison-actions,
+.psmdt-prison-quick-grid {
   display: flex;
   gap: 0.75rem;
 }
@@ -27,7 +35,8 @@
 }
 
 .psmdt-prison-header h2,
-.psmdt-prison-header p {
+.psmdt-prison-header p,
+.psmdt-prison-quick-item h4 {
   margin: 0;
 }
 
@@ -42,10 +51,6 @@
 .psmdt-prison-panel {
   flex: 1;
   min-width: 0;
-  background: rgba(16, 20, 30, 0.72);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 16px;
-  padding: 1rem;
 }
 
 .psmdt-prison-panel-title {
@@ -149,7 +154,8 @@
 
 .psmdt-prison-selected,
 .psmdt-prison-status,
-.psmdt-prison-empty {
+.psmdt-prison-empty,
+.psmdt-prison-history-item {
   background: rgba(255,255,255,0.03);
   border-radius: 14px;
   padding: 0.9rem;
@@ -167,10 +173,34 @@
   color: #fed7aa;
 }
 
+.psmdt-prison-quick-item {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.psmdt-prison-history {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 320px;
+  overflow: auto;
+}
+
+.psmdt-prison-history-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+}
+
 @media (max-width: 1100px) {
   .psmdt-prison-layout,
   .psmdt-prison-toolbar,
-  .psmdt-prison-actions {
+  .psmdt-prison-actions,
+  .psmdt-prison-quick-grid {
     flex-direction: column;
   }
 

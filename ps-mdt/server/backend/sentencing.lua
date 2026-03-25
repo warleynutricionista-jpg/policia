@@ -58,6 +58,32 @@ ps.registerCallback(resourceName .. ':server:sendToJail', function(source, paylo
         return { success = false, message = ('Falha ao enviar para o pickle_prisons: %s'):format(tostring(jailError)) }
     end
 
+    local caseId = nil
+    if payload.reportId then
+        caseId = tonumber(MySQL.scalar.await('SELECT case_id FROM mdt_case_reports WHERE report_id = ? ORDER BY case_id DESC LIMIT 1', { tonumber(payload.reportId) }))
+    end
+
+    local officerLabel = (ps.getName and ps.getName(src) or GetPlayerName(src) or 'Oficial') .. ' (' .. tostring(ps.getIdentifier(src) or src) .. ')'
+    local reason = type(payload.reason) == 'string' and payload.reason:gsub('^%s+', ''):gsub('%s+$', '') or nil
+    pcall(function()
+        MySQL.insert.await([[
+            INSERT INTO mdt_prison_history (
+                citizenid, identifier, action, reason, report_id, case_id, time_before, time_after, applied_by, changed_by
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ]], {
+            citizenId,
+            citizenId,
+            'jail_from_report',
+            reason,
+            tonumber(payload.reportId) or nil,
+            caseId,
+            0,
+            sentence,
+            officerLabel,
+            officerLabel,
+        })
+    end)
+
     -- Process fine if applicable
     if fine > 0 and QBCore then
         local Player = QBCore.Functions.GetPlayerByCitizenId(citizenId)
