@@ -336,6 +336,18 @@ lib.callback.register(resourceName .. ':server:collectEvidence', function(source
         WHERE id = ?
     ]], { playerData.citizenid, playerData.name, evidenceId })
 
+    if ForensicAttachEvidenceToCitizen and data.linked_citizenid and data.linked_citizenid ~= '' then
+        ForensicAttachEvidenceToCitizen({
+            evidence_id = evidenceId,
+            citizenid = data.linked_citizenid,
+            actor_citizenid = playerData.citizenid,
+            possession_type = data.possession_type or 'ambiente',
+            link_origin = data.link_origin or 'apreensao',
+            confidence_score = tonumber(data.link_confidence_score) or 65,
+            notes = data.link_notes or description,
+        })
+    end
+
     ForensicAuditLog(src, 'evidence_collected', 'evidence', evidenceId, {
         evidenceNumber = evidenceNumber,
         type = evidenceType,

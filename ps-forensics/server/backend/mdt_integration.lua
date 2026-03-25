@@ -220,6 +220,41 @@ lib.callback.register(resourceName .. ':server:getForensicDataByCitizen', functi
             WHERE citizenid = ? AND expirydate >= NOW()
             ORDER BY expirydate ASC
         ]], { citizenid }) or {},
+
+        forensic_profile = MySQL.single.await([[
+            SELECT id, citizenid, citizen_name, job_name, identification_status, dna_profile_id, fingerprint_profile_id,
+                   suspicion_level, suspicion_score, risk_level, last_match_at, notes, created_at, updated_at
+            FROM forensic_citizen_profiles
+            WHERE citizenid = ?
+            LIMIT 1
+        ]], { citizenid }),
+
+        suspicion_timeline = MySQL.query.await([[
+            SELECT id, case_id, report_id, scene_id, source_type, source_id, suspicion_level, score_total, triggered_rule,
+                   auto_wanted_candidate, created_at
+            FROM forensic_suspicion_snapshots
+            WHERE citizenid = ?
+            ORDER BY created_at DESC
+            LIMIT 50
+        ]], { citizenid }) or {},
+
+        intelligence_alerts = MySQL.query.await([[
+            SELECT id, severity, title, message, status, created_at, updated_at
+            FROM forensic_intelligence_alerts
+            WHERE citizenid = ?
+            ORDER BY created_at DESC
+            LIMIT 50
+        ]], { citizenid }) or {},
+
+        evidence_person_links = MySQL.query.await([[
+            SELECT epl.id, epl.evidence_id, epl.possession_type, epl.link_origin, epl.confidence_score,
+                   epl.notes, epl.created_at, fe.evidence_number, fe.type, fe.category
+            FROM forensic_evidence_person_links epl
+            LEFT JOIN forensic_evidence fe ON fe.id = epl.evidence_id
+            WHERE epl.citizenid = ?
+            ORDER BY epl.created_at DESC
+            LIMIT 80
+        ]], { citizenid }) or {},
     }
 
     return data
@@ -429,4 +464,38 @@ lib.callback.register(resourceName .. ':server:getMDTIntegrationBundle', functio
     }
 
     return { success = true, data = bundle }
+end)
+
+lib.callback.register(resourceName .. ':server:getForensicIntelligenceByCase', function(source, caseId)
+    local src = source
+    if not hasMDTAccess(src) then return nil end
+
+    caseId = tonumber(caseId)
+    if not caseId then return nil end
+
+    return {
+        intelligence_links = MySQL.query.await([[
+            SELECT id, citizenid, citizen_name, report_id, scene_id, evidence_id,
+                   match_kind, association_level, confidence_score, review_status, rationale, created_at
+            FROM forensic_intelligence_links
+            WHERE case_id = ?
+            ORDER BY created_at DESC
+            LIMIT 150
+        ]], { caseId }) or {},
+        suspicion = MySQL.query.await([[
+            SELECT id, citizenid, report_id, scene_id, suspicion_level, score_total, triggered_rule,
+                   auto_wanted_candidate, created_at
+            FROM forensic_suspicion_snapshots
+            WHERE case_id = ?
+            ORDER BY created_at DESC
+            LIMIT 150
+        ]], { caseId }) or {},
+        alerts = MySQL.query.await([[
+            SELECT id, citizenid, report_id, severity, title, status, created_at
+            FROM forensic_intelligence_alerts
+            WHERE case_id = ?
+            ORDER BY created_at DESC
+            LIMIT 100
+        ]], { caseId }) or {},
+    }
 end)
