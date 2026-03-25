@@ -370,12 +370,25 @@
     }
   }
 
+  function parseVisibleFromMessage(payload) {
+    if (payload.action !== 'setVisible') return null;
+
+    const data = payload.data;
+    if (typeof data === 'boolean') return data;
+    if (data && typeof data.visible === 'boolean') return data.visible;
+    if (typeof payload.visible === 'boolean') return payload.visible;
+    if (data && (data.visible === 1 || data.visible === '1' || data.visible === 'true')) return true;
+    if (data && (data.visible === 0 || data.visible === '0' || data.visible === 'false')) return false;
+    return null;
+  }
+
   window.addEventListener('message', (event) => {
     const payload = event && event.data;
     if (!payload || typeof payload !== 'object') return;
 
-    if (payload.action === 'setVisible' && payload.data && typeof payload.data.visible === 'boolean') {
-      setMdtVisible(payload.data.visible);
+    const nextVisible = parseVisibleFromMessage(payload);
+    if (nextVisible !== null) {
+      setMdtVisible(nextVisible);
       return;
     }
 

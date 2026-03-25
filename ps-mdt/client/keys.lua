@@ -119,6 +119,24 @@ end
 
 -- MDT Display ------------------------------------------------
 
+local function sendMDTVisibility(visible)
+    SendNUI('setVisible', { visible = visible, debugMode = Config.Debug })
+
+    -- Fail-safe para clientes que ocasionalmente perdem o primeiro postMessage.
+    CreateThread(function()
+        Wait(120)
+
+        if visible and MDTOpen then
+            SendNUI('setVisible', { visible = true, debugMode = Config.Debug })
+            return
+        end
+
+        if not visible and not MDTOpen then
+            SendNUI('setVisible', { visible = false })
+        end
+    end)
+end
+
 -- Open MDT
 function OpenMDT()
     -- Check auth
@@ -164,7 +182,7 @@ function OpenMDT()
     -- Check if MDT is already open (toggle behavior)
     if MDTOpen then
         StopTabletAnimation()
-        SendNUI('setVisible', { visible = false })
+        sendMDTVisibility(false)
         SetNuiFocus(false, false)
         SetNuiFocusKeepInput(false)
         toggleControls(false)
@@ -174,7 +192,7 @@ function OpenMDT()
 
     MDTOpen = true
 
-    SendNUI('setVisible', { visible = true, debugMode = Config.Debug })
+    sendMDTVisibility(true)
 
     PlayMDTSound('open')
     PlayTabletAnimation()
@@ -198,7 +216,7 @@ function CloseMDT()
 
         StopTabletAnimation()
 
-        SendNUI('setVisible', { visible = false })
+        sendMDTVisibility(false)
         SetNuiFocus(false, false)
 
         -- Prevent ESC pause menu conflict - only spawn one delayed thread at a time
