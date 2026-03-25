@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS `mdt_prison_history` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `citizenid` VARCHAR(64) NOT NULL,
+    `identifier` VARCHAR(64) NULL,
+    `action` VARCHAR(32) NOT NULL,
+    `reason` TEXT NULL,
+    `report_id` INT UNSIGNED NULL,
+    `case_id` INT UNSIGNED NULL,
+    `warrant_report_id` INT UNSIGNED NULL,
+    `time_before` INT NOT NULL DEFAULT 0,
+    `time_after` INT NOT NULL DEFAULT 0,
+    `applied_by` VARCHAR(128) NULL,
+    `released_by` VARCHAR(128) NULL,
+    `changed_by` VARCHAR(128) NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_mdt_prison_history_citizen` (`citizenid`, `created_at`),
+    KEY `idx_mdt_prison_history_report` (`report_id`),
+    KEY `idx_mdt_prison_history_case` (`case_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

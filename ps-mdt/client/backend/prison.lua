@@ -20,27 +20,23 @@ RegisterNUICallback('getPrisonTargetStatus', function(data, cb)
     cb(ps.callback(resourceName .. ':server:getPrisonTargetStatus', targetSource) or { success = false, message = 'Falha ao consultar status' })
 end)
 
+RegisterNUICallback('getPrisonStatusByCitizen', function(data, cb)
+    if not MDTOpen then
+        cb({ success = false, message = 'O MDT não está aberto' })
+        return
+    end
+
+    local citizenid = type(data) == 'table' and data.citizenid or nil
+    cb(ps.callback(resourceName .. ':server:getPrisonStatusByCitizen', citizenid) or { success = false, message = 'Falha ao consultar o preso' })
+end)
+
 RegisterNUICallback('prisonTabJail', function(data, cb)
     if not MDTOpen then
         cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
-    if GetResourceState('pickle_prisons') ~= 'started' then
-        cb({ success = false, message = 'pickle_prisons não está em execução' })
-        return
-    end
-
-    local targetSource = type(data) == 'table' and tonumber(data.source) or nil
-    local sentence = type(data) == 'table' and tonumber(data.sentence) or nil
-
-    if not targetSource or not sentence or sentence <= 0 then
-        cb({ success = false, message = 'Selecione um alvo e informe um tempo válido' })
-        return
-    end
-
-    TriggerServerEvent('pickle_prisons:jailPlayer', targetSource, sentence, 'default')
-    cb({ success = true, message = 'Ação de prisão enviada ao pickle_prisons' })
+    cb(ps.callback(resourceName .. ':server:prisonTabJail', data or {}) or { success = false, message = 'Falha ao prender o alvo' })
 end)
 
 RegisterNUICallback('prisonTabUnjail', function(data, cb)
@@ -49,17 +45,23 @@ RegisterNUICallback('prisonTabUnjail', function(data, cb)
         return
     end
 
-    if GetResourceState('pickle_prisons') ~= 'started' then
-        cb({ success = false, message = 'pickle_prisons não está em execução' })
+    cb(ps.callback(resourceName .. ':server:prisonTabUnjail', data or {}) or { success = false, message = 'Falha ao soltar o alvo' })
+end)
+
+RegisterNUICallback('prisonFromReport', function(data, cb)
+    if not MDTOpen then
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
-    local targetSource = type(data) == 'table' and tonumber(data.source) or nil
-    if not targetSource then
-        cb({ success = false, message = 'Selecione um preso válido' })
+    cb(ps.callback(resourceName .. ':server:prisonFromReport', data or {}) or { success = false, message = 'Falha ao prender via relatório' })
+end)
+
+RegisterNUICallback('prisonFromWarrant', function(data, cb)
+    if not MDTOpen then
+        cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
 
-    TriggerServerEvent('pickle_prisons:unjailPlayer', targetSource)
-    cb({ success = true, message = 'Ação de soltura enviada ao pickle_prisons' })
+    cb(ps.callback(resourceName .. ':server:prisonFromWarrant', data or {}) or { success = false, message = 'Falha ao prender via mandado' })
 end)
