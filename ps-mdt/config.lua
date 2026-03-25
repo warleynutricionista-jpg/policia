@@ -389,6 +389,7 @@ local policePermissionTiers = {
         'warrants_issue',
         'roster_manage_certifications',
         'forensics_crossref',
+        'management_activity',
     },
     [4] = {
         'cases_edit',

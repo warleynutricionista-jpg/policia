@@ -295,30 +295,48 @@ local function matchesVehicleQuery(vehicle, normalizedQuery)
 end
 
 local function getVehicleSelectSql()
-    return [[
+    local tbl = 'player_vehicles'
+    local hasVehicleName = hasColumn(tbl, 'vehicle_name')
+    local hasFakeplate = hasColumn(tbl, 'fakeplate')
+    local hasLicense = hasColumn(tbl, 'license')
+    local hasMileage = hasColumn(tbl, 'mileage')
+    local hasFuel = hasColumn(tbl, 'fuel')
+    local hasEngine = hasColumn(tbl, 'engine')
+    local hasBody = hasColumn(tbl, 'body')
+    local hasState = hasColumn(tbl, 'state')
+    local hasStatus = hasColumn(tbl, 'status')
+    local hasGarage = hasColumn(tbl, 'garage')
+    local hasMdtInfo = hasColumn(tbl, 'mdt_vehicle_information')
+    local hasMdtPoints = hasColumn(tbl, 'mdt_vehicle_points')
+    local hasMdtStatus = hasColumn(tbl, 'mdt_vehicle_status')
+    local hasMdtStolen = hasColumn(tbl, 'mdt_vehicle_stolen')
+    local hasMdtBolo = hasColumn(tbl, 'mdt_vehicle_boloactive')
+    local hasMdtImage = hasColumn(tbl, 'mdt_vehicle_image')
+
+    return ([[
         SELECT
             pv.id,
-            pv.license,
+            %s
             pv.citizenid,
             COALESCE(NULLIF(TRIM(pv.vehicle), ''), 'unknown') AS vehicle,
-            NULLIF(TRIM(pv.vehicle_name), '') AS vehicle_name,
+            %s
             pv.hash,
             pv.mods,
             pv.plate,
-            NULLIF(TRIM(pv.fakeplate), '') AS fakeplate,
-            pv.garage,
-            pv.fuel,
-            pv.engine,
-            pv.body,
-            CAST(COALESCE(pv.state, 0) AS SIGNED) AS state,
-            COALESCE(NULLIF(TRIM(pv.status), ''), '') AS status_text,
-            pv.mileage,
-            pv.mdt_vehicle_information AS information,
-            COALESCE(pv.mdt_vehicle_points, 0) AS points,
-            COALESCE(NULLIF(TRIM(pv.mdt_vehicle_status), ''), 'valid') AS mdt_status,
-            COALESCE(pv.mdt_vehicle_stolen, 0) AS stolen,
-            COALESCE(pv.mdt_vehicle_boloactive, 0) AS boloactive,
-            NULLIF(TRIM(pv.mdt_vehicle_image), '') AS image,
+            %s
+            %s
+            %s
+            %s
+            %s
+            %s
+            %s
+            %s
+            %s
+            %s
+            %s
+            %s
+            %s
+            %s
             CONCAT_WS(
                 ' ',
                 NULLIF(
@@ -339,7 +357,24 @@ local function getVehicleSelectSql()
         FROM player_vehicles pv
         LEFT JOIN players p
             ON p.citizenid = pv.citizenid
-    ]]
+    ]]):format(
+        hasLicense and 'pv.license,' or '',
+        hasVehicleName and "NULLIF(TRIM(pv.vehicle_name), '') AS vehicle_name," or "NULL AS vehicle_name,",
+        hasFakeplate and "NULLIF(TRIM(pv.fakeplate), '') AS fakeplate," or "NULL AS fakeplate,",
+        hasGarage and 'pv.garage,' or "NULL AS garage,",
+        hasFuel and 'pv.fuel,' or "NULL AS fuel,",
+        hasEngine and 'pv.engine,' or "NULL AS engine,",
+        hasBody and 'pv.body,' or "NULL AS body,",
+        hasState and 'CAST(COALESCE(pv.state, 0) AS SIGNED) AS state,' or "0 AS state,",
+        hasStatus and "COALESCE(NULLIF(TRIM(pv.status), ''), '') AS status_text," or "'' AS status_text,",
+        hasMileage and 'pv.mileage,' or "NULL AS mileage,",
+        hasMdtInfo and 'pv.mdt_vehicle_information AS information,' or "NULL AS information,",
+        hasMdtPoints and 'COALESCE(pv.mdt_vehicle_points, 0) AS points,' or "0 AS points,",
+        hasMdtStatus and [[COALESCE(NULLIF(TRIM(pv.mdt_vehicle_status), ''), 'valid') AS mdt_status,]] or "'valid' AS mdt_status,",
+        hasMdtStolen and 'COALESCE(pv.mdt_vehicle_stolen, 0) AS stolen,' or "0 AS stolen,",
+        hasMdtBolo and 'COALESCE(pv.mdt_vehicle_boloactive, 0) AS boloactive,' or "0 AS boloactive,",
+        hasMdtImage and "NULLIF(TRIM(pv.mdt_vehicle_image), '') AS image," or "NULL AS image,"
+    )
 end
 
 local function buildVehicleSearchWhere(search)
@@ -348,36 +383,65 @@ local function buildVehicleSearchWhere(search)
         return '', {}
     end
 
+    local tbl = 'player_vehicles'
+    local hasFakeplate = hasColumn(tbl, 'fakeplate')
+    local hasVehicleName = hasColumn(tbl, 'vehicle_name')
+    local hasGarage = hasColumn(tbl, 'garage')
+
     local like = ('%%%s%%'):format(trimmed)
     local compact = normalizePlate(trimmed)
     local isLikelyPlate = compact ~= '' and compact:match('^[A-Z0-9]+$') ~= nil
     if isLikelyPlate then
-        local plateWhereSql = [[
-            WHERE (
-                UPPER(REPLACE(pv.plate, ' ', '')) = ?
-                OR UPPER(REPLACE(pv.plate, ' ', '')) LIKE ?
-                OR UPPER(REPLACE(COALESCE(pv.fakeplate, ''), ' ', '')) LIKE ?
-                OR COALESCE(pv.citizenid, '') LIKE ?
-                OR COALESCE(pv.vehicle, '') LIKE ?
-                OR COALESCE(pv.vehicle_name, '') LIKE ?
-                OR COALESCE(pv.garage, '') LIKE ?
-            )
-        ]]
+        local conditions = {
+            "UPPER(REPLACE(pv.plate, ' ', '')) = ?",
+            "UPPER(REPLACE(pv.plate, ' ', '')) LIKE ?",
+        }
         local compactLike = ('%%%s%%'):format(compact)
-        return plateWhereSql, { compact, compactLike, compactLike, like, like, like, like }
+        local params = { compact, compactLike }
+
+        if hasFakeplate then
+            conditions[#conditions + 1] = "UPPER(REPLACE(COALESCE(pv.fakeplate, ''), ' ', '')) LIKE ?"
+            params[#params + 1] = compactLike
+        end
+        conditions[#conditions + 1] = "COALESCE(pv.citizenid, '') LIKE ?"
+        params[#params + 1] = like
+        conditions[#conditions + 1] = "COALESCE(pv.vehicle, '') LIKE ?"
+        params[#params + 1] = like
+        if hasVehicleName then
+            conditions[#conditions + 1] = "COALESCE(pv.vehicle_name, '') LIKE ?"
+            params[#params + 1] = like
+        end
+        if hasGarage then
+            conditions[#conditions + 1] = "COALESCE(pv.garage, '') LIKE ?"
+            params[#params + 1] = like
+        end
+
+        return ('WHERE (%s)'):format(table.concat(conditions, ' OR ')), params
     end
 
-    local whereSql = [[
-        WHERE (
-            COALESCE(pv.plate, '') LIKE ?
-            OR COALESCE(pv.fakeplate, '') LIKE ?
-            OR COALESCE(pv.citizenid, '') LIKE ?
-            OR COALESCE(pv.vehicle, '') LIKE ?
-            OR COALESCE(pv.vehicle_name, '') LIKE ?
-            OR COALESCE(pv.garage, '') LIKE ?
-        )
-    ]]
-    return whereSql, { like, like, like, like, like, like }
+    local conditions = {
+        "COALESCE(pv.plate, '') LIKE ?",
+    }
+    local params = { like }
+
+    if hasFakeplate then
+        conditions[#conditions + 1] = "COALESCE(pv.fakeplate, '') LIKE ?"
+        params[#params + 1] = like
+    end
+    conditions[#conditions + 1] = "COALESCE(pv.citizenid, '') LIKE ?"
+    params[#params + 1] = like
+    conditions[#conditions + 1] = "COALESCE(pv.vehicle, '') LIKE ?"
+    params[#params + 1] = like
+    if hasVehicleName then
+        conditions[#conditions + 1] = "COALESCE(pv.vehicle_name, '') LIKE ?"
+        params[#params + 1] = like
+    end
+    if hasGarage then
+        conditions[#conditions + 1] = "COALESCE(pv.garage, '') LIKE ?"
+        params[#params + 1] = like
+    end
+
+    return ('WHERE (%s)'):format(table.concat(conditions, ' OR ')), params
 end
 
 local function fetchVehicleReportCountsByPlate(normalizedPlates)
@@ -698,6 +762,14 @@ ps.registerCallback(resourceName .. ':server:GetVehicle', function(source, plate
     local boloExpr = hasColumn(vehicleTable, 'mdt_vehicle_boloactive') and 'pv.mdt_vehicle_boloactive' or '0'
     local imageExpr = hasColumn(vehicleTable, 'mdt_vehicle_image') and 'pv.mdt_vehicle_image' or 'NULL'
     local stateExpr = hasColumn(vehicleTable, 'state') and 'pv.state' or '0'
+    local vehicleNameExpr = hasColumn(vehicleTable, 'vehicle_name') and "NULLIF(TRIM(pv.vehicle_name), '')" or 'NULL'
+    local fakeplateExpr = hasColumn(vehicleTable, 'fakeplate') and "NULLIF(TRIM(pv.fakeplate), '')" or 'NULL'
+    local garageExpr = hasColumn(vehicleTable, 'garage') and 'pv.garage' or 'NULL'
+    local fuelExpr = hasColumn(vehicleTable, 'fuel') and 'pv.fuel' or 'NULL'
+    local engineExpr = hasColumn(vehicleTable, 'engine') and 'pv.engine' or 'NULL'
+    local bodyExpr = hasColumn(vehicleTable, 'body') and 'pv.body' or 'NULL'
+    local mileageExpr = hasColumn(vehicleTable, 'mileage') and 'pv.mileage' or 'NULL'
+    local statusTextExpr = hasColumn(vehicleTable, 'status') and "COALESCE(NULLIF(TRIM(pv.status), ''), '')" or "''"
 
     local ownerExpr = buildVehicleOwnerExpr(vehicleTable, 'pv')
     local vehicleRow = MySQL.query.await(([[
@@ -705,14 +777,14 @@ ps.registerCallback(resourceName .. ':server:GetVehicle', function(source, plate
             pv.id,
             pv.plate,
             COALESCE(NULLIF(TRIM(pv.vehicle), ''), 'unknown') AS vehicle,
-            NULLIF(TRIM(pv.vehicle_name), '') AS vehicle_name,
-            NULLIF(TRIM(pv.fakeplate), '') AS fakeplate,
-            pv.garage,
-            pv.fuel,
-            pv.engine,
-            pv.body,
-            pv.mileage,
-            COALESCE(NULLIF(TRIM(pv.status), ''), '') AS status_text,
+            %s AS vehicle_name,
+            %s AS fakeplate,
+            %s AS garage,
+            %s AS fuel,
+            %s AS engine,
+            %s AS body,
+            %s AS mileage,
+            %s AS status_text,
             %s AS citizenid,
             %s AS information,
             %s AS points,
@@ -743,7 +815,7 @@ ps.registerCallback(resourceName .. ':server:GetVehicle', function(source, plate
             ON p.citizenid = (%s)
         WHERE UPPER(REPLACE(pv.plate, ' ', '')) = ?
         LIMIT 1
-    ]]):format(ownerExpr, informationExpr, pointsExpr, statusExpr, stolenExpr, boloExpr, imageExpr, stateExpr, vehicleTable, ownerExpr), { plate })
+    ]]):format(vehicleNameExpr, fakeplateExpr, garageExpr, fuelExpr, engineExpr, bodyExpr, mileageExpr, statusTextExpr, ownerExpr, informationExpr, pointsExpr, statusExpr, stolenExpr, boloExpr, imageExpr, stateExpr, vehicleTable, ownerExpr), { plate })
 
     if not vehicleRow or not vehicleRow[1] then
         return { success = false, message = 'Veículo não encontrado' }
