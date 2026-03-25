@@ -35951,7 +35951,9 @@ function dO(n, e) {
   async function T() {
     y(c, !0);
     try {
-      y(l, await Te(he.CITIZEN.GET_CITIZENS), !0);
+      const fe = await Te(he.CITIZEN.GET_CITIZENS, { page: 1, limit: 100 });
+      const ge = Array.isArray(fe) ? fe : Array.isArray(fe == null ? void 0 : fe.citizens) ? fe.citizens : [];
+      y(l, ge, !0);
     } catch {
       (un.error("Falha ao buscar cidadãos"), y(l, [], !0));
     }
@@ -35961,7 +35963,8 @@ function dO(n, e) {
     await T();
   }),
     ts(he.CITIZEN.UPDATE_CITIZENS, (fe) => {
-      fe && y(l, fe, !0);
+      const ge = Array.isArray(fe) ? fe : Array.isArray(fe == null ? void 0 : fe.citizens) ? fe.citizens : null;
+      ge && y(l, ge, !0);
     }));
   function A(fe) {
     switch (fe) {
@@ -46350,6 +46353,12 @@ function C5(n, e) {
       : e.authService.hasPermission(k.permission);
   }
   let l = F("bulletins");
+  Pn(() => {
+    const k = o(i).filter((T) => r(T));
+    if (!k.length) return;
+    const T = k.some((A) => A.key === o(l));
+    T || y(l, k[0].key, !0);
+  });
   var c = E5(),
     u = f(c),
     h = f(u);
