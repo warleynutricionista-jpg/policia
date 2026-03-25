@@ -7,7 +7,10 @@ local citizenSearchState = {
 local SEARCH_DEBOUNCE_MS = 250
 
 RegisterNUICallback('getCitizens', function(data, cb)
-    if not MDTOpen then cb({}) return end
+    if not MDTOpen then
+        cb({ citizens = {}, page = 1, limit = (data and data.limit) or 20, total = 0, hasMore = false })
+        return
+    end
     if type(data) ~= 'table' then
         data = {page = 1}
     end
@@ -18,9 +21,12 @@ RegisterNUICallback('getCitizens', function(data, cb)
 end)
 
 RegisterNUICallback('searchCitizens', function(data, cb)
-    if not MDTOpen then cb({}) return end
+    if not MDTOpen then
+        cb({ citizens = {}, page = 1, limit = (data and data.limit) or 20, total = 0, hasMore = false })
+        return
+    end
     if not data or not data.query then
-        cb({})
+        cb({ citizens = {}, page = 1, limit = (data and data.limit) or 20, total = 0, hasMore = false })
         return
     end
     local query = tostring(data.query)

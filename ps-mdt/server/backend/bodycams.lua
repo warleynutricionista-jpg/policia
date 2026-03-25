@@ -36,13 +36,39 @@ local function getQbCoreObject()
     return nil
 end
 
+local function getOnlinePlayerObjects(QBCore)
+    local players = {}
+    if QBCore and QBCore.Functions then
+        if QBCore.Functions.GetQBPlayers then
+            local qbPlayers = QBCore.Functions.GetQBPlayers() or {}
+            for _, player in pairs(qbPlayers) do
+                players[#players + 1] = player
+            end
+            if #players > 0 then
+                return players
+            end
+        end
+
+        if QBCore.Functions.GetPlayers and QBCore.Functions.GetPlayer then
+            local ids = QBCore.Functions.GetPlayers() or {}
+            for _, id in ipairs(ids) do
+                local player = QBCore.Functions.GetPlayer(id)
+                if player then
+                    players[#players + 1] = player
+                end
+            end
+        end
+    end
+    return players
+end
+
 local function getOnDutyOfficers()
     local officers = {}
 
     if shouldUseQbCore() then
         local QBCore = getQbCoreObject()
-        if QBCore and QBCore.Functions and QBCore.Functions.GetQBPlayers then
-            local players = QBCore.Functions.GetQBPlayers() or {}
+        if QBCore and QBCore.Functions then
+            local players = getOnlinePlayerObjects(QBCore)
             for _, player in pairs(players) do
                 local data = player.PlayerData
                 if data and data.job and data.job.onduty and IsPoliceJob(data.job.name, data.job.type) then

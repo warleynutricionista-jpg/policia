@@ -508,16 +508,35 @@ ps.registerCallback(resourceName .. ':server:deleteAward', function(source, payl
     return { success = true }
 end)
 
+local function buildEmptyAwardsStats()
+    return {
+        name = 'Desconhecido',
+        callsign = '',
+        rank = '',
+        reports = 0,
+        arrests = 0,
+        cases = 0,
+        evidence = 0,
+        bolos = 0,
+        warrants = 0,
+        totalFined = 0,
+        totalMonths = 0,
+        totalMultado = 0, -- frontend compatibility
+        totalMeses = 0, -- frontend compatibility
+        citations = 0,
+    }
+end
+
 ps.registerCallback(resourceName .. ':server:getAwardsData', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { success = false, stats = nil, awards = {}, leaderboard = {} } end
+    if not CheckAuth(src) then return { success = false, stats = buildEmptyAwardsStats(), awards = {}, leaderboard = {} } end
     if not CheckPermission(src, 'management_settings') then
-        return { success = false, stats = nil, awards = {}, leaderboard = {} }
+        return { success = false, stats = buildEmptyAwardsStats(), awards = {}, leaderboard = {} }
     end
     EnsureMdtSchema()
 
     local citizenid = ps.getIdentifier(src)
-    if not citizenid then return { success = false, stats = nil, awards = {}, leaderboard = {} } end
+    if not citizenid then return { success = false, stats = buildEmptyAwardsStats(), awards = {}, leaderboard = {} } end
 
     -- Get officer info
     local playerName = ps.getName(src) or 'Desconhecido'
@@ -582,6 +601,8 @@ ps.registerCallback(resourceName .. ':server:getAwardsData', function(source, pa
         warrants = warrantCount,
         totalFined = totalFined,
         totalMonths = totalMonths,
+        totalMultado = totalFined, -- frontend compatibility
+        totalMeses = totalMonths, -- frontend compatibility
         citations = citations,
     }
 
@@ -675,6 +696,8 @@ ps.registerCallback(resourceName .. ':server:getAwardsData', function(source, pa
             warrants = oWarrants,
             totalFined = oFined,
             totalMonths = oMonths,
+            totalMultado = oFined, -- frontend compatibility
+            totalMeses = oMonths, -- frontend compatibility
             score = score,
             isCurrentUser = (cid == citizenid),
         }

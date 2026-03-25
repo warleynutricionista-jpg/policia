@@ -15,6 +15,33 @@ local function hasTable(tableName)
     return type(MdtTableExists) == 'function' and MdtTableExists(tableName) or false
 end
 
+local function getVehicleTableName()
+    if hasTable('player_vehicles') then
+        return 'player_vehicles'
+    end
+    if hasTable('vehicles') then
+        return 'vehicles'
+    end
+    return nil
+end
+
+local function buildVehicleOwnerExpr(tableName)
+    local parts = {}
+    if type(MdtColumnExists) == 'function' and MdtColumnExists(tableName, 'citizenid') then
+        parts[#parts + 1] = "NULLIF(citizenid, '')"
+    end
+    if type(MdtColumnExists) == 'function' and MdtColumnExists(tableName, 'owner') then
+        parts[#parts + 1] = "NULLIF(owner, '')"
+    end
+    if type(MdtColumnExists) == 'function' and MdtColumnExists(tableName, 'owner_citizenid') then
+        parts[#parts + 1] = "NULLIF(owner_citizenid, '')"
+    end
+    if #parts == 0 then
+        return "NULL"
+    end
+    return 'COALESCE(' .. table.concat(parts, ', ') .. ')'
+end
+
 local function queryCitizenProperties(inClause, citizenids)
     if not hasTable('player_houses') then
         return {}
@@ -185,10 +212,15 @@ ps.registerCallback(resourceName .. ':server:getCitizens', function(source, payl
             propCounts[row.citizenid] = tonumber(row.cnt) or 0
         end
 
-        local vehRows = MySQL.query.await(
-            ('SELECT citizenid, COUNT(*) AS cnt FROM player_vehicles WHERE citizenid IN (%s) GROUP BY citizenid'):format(inClause),
-            citizenids
-        )
+        local vehicleTable = getVehicleTableName()
+        local vehRows = {}
+        if vehicleTable then
+            local ownerExpr = buildVehicleOwnerExpr(vehicleTable)
+            vehRows = MySQL.query.await(
+                ('SELECT %s AS citizenid, COUNT(*) AS cnt FROM %s WHERE %s IN (%s) GROUP BY citizenid'):format(ownerExpr, vehicleTable, ownerExpr, inClause),
+                citizenids
+            ) or {}
+        end
         for _, row in ipairs(vehRows or {}) do
             vehCounts[row.citizenid] = tonumber(row.cnt) or 0
         end
@@ -346,10 +378,15 @@ ps.registerCallback(resourceName .. ':server:searchCitizens', function(source, p
             propCounts[row.citizenid] = tonumber(row.cnt) or 0
         end
 
-        local vehRows = MySQL.query.await(
-            ('SELECT citizenid, COUNT(*) AS cnt FROM player_vehicles WHERE citizenid IN (%s) GROUP BY citizenid'):format(inClause),
-            citizenids
-        )
+        local vehicleTable = getVehicleTableName()
+        local vehRows = {}
+        if vehicleTable then
+            local ownerExpr = buildVehicleOwnerExpr(vehicleTable)
+            vehRows = MySQL.query.await(
+                ('SELECT %s AS citizenid, COUNT(*) AS cnt FROM %s WHERE %s IN (%s) GROUP BY citizenid'):format(ownerExpr, vehicleTable, ownerExpr, inClause),
+                citizenids
+            ) or {}
+        end
         for _, row in ipairs(vehRows or {}) do
             vehCounts[row.citizenid] = tonumber(row.cnt) or 0
         end
@@ -490,7 +527,15 @@ ps.registerCallback(resourceName .. ':server:getCitizenProfile', function(source
         end
     end
     local flags = collectCitizenFlags({ citizenid })
-    local vehicles = MySQL.query.await('SELECT plate, vehicle FROM player_vehicles WHERE citizenid = ?', { citizenid }) or {}
+    local vehicleTable = getVehicleTableName()
+    local vehicles = {}
+    if vehicleTable then
+        local ownerExpr = buildVehicleOwnerExpr(vehicleTable)
+        vehicles = MySQL.query.await(
+            ('SELECT plate, COALESCE(NULLIF(vehicle, \'\'), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(vehicle, \'$.model\')), \'\'), \'unknown\') AS vehicle FROM %s WHERE %s = ?'):format(vehicleTable, ownerExpr),
+            { citizenid }
+        ) or {}
+    end
     local vehiclesCount = #vehicles
     local properties = queryCitizenPropertyList(citizenid)
     local propertiesCount = #properties

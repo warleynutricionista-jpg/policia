@@ -6059,7 +6059,7 @@ function o2(n, e) {
               var Oe = fs();
               (H(
                 (Ge) => C(Oe, `$${Ge ?? ""}`),
-                [() => o(W).fine.toLocaleString()],
+                [() => Number(o(W).fine || 0).toLocaleString()],
               ),
                 x(ge, Oe));
             };
@@ -6148,7 +6148,7 @@ function o2(n, e) {
                       C(Ie, `$${Ft ?? ""}`),
                       C(Ye, `x${o(be).count ?? ""}`));
                   },
-                  [() => (o(be).fine * o(be).count).toLocaleString()],
+                  [() => Number((o(be).fine || 0) * (o(be).count || 0)).toLocaleString()],
                 ),
                 x(de, le));
             });
@@ -6250,13 +6250,13 @@ function o2(n, e) {
                         () => k(xe()),
                         () => A(xe(), o(c)),
                         () => k(xe()) - A(xe(), o(c)),
-                        () => w(xe()).toLocaleString(),
-                        () => T(xe(), o(c)).toLocaleString(),
-                        () => (w(xe()) - T(xe(), o(c))).toLocaleString(),
+                        () => Number(w(xe()) || 0).toLocaleString(),
+                        () => Number(T(xe(), o(c)) || 0).toLocaleString(),
+                        () => Number((w(xe()) || 0) - (T(xe(), o(c)) || 0)).toLocaleString(),
                         () => k(xe()) <= 0,
                         () => A(xe(), o(c)),
                         () => w(xe()) <= 0,
-                        () => T(xe(), o(c)).toLocaleString(),
+                        () => Number(T(xe(), o(c)) || 0).toLocaleString(),
                       ],
                     ),
                       x(Ve, ae));
@@ -6283,7 +6283,7 @@ function o2(n, e) {
               [
                 () => g(xe()),
                 () => k(xe()),
-                () => w(xe()).toLocaleString(),
+                () => Number(w(xe()) || 0).toLocaleString(),
                 () => !xe() || k(xe()) <= 0,
                 () => !xe() || w(xe()) <= 0,
               ],
@@ -6302,7 +6302,7 @@ function o2(n, e) {
           (X) => {
             (C(J, `${o(_) ?? ""} months`), C(Y, `$${X ?? ""}`));
           },
-          [() => o(m).toLocaleString()],
+          [() => Number(o(m) || 0).toLocaleString()],
         ),
           x($, te));
       };
@@ -24398,7 +24398,7 @@ function hC(n, e) {
   async function ee(ne, ce) {
     try {
       const de = await r.giveCitation(ne, ce, o(g).reportId);
-      I(de.message || `Citação aplicada: $${ce.toLocaleString()}`);
+      I(de.message || `Citação aplicada: $${Number(ce || 0).toLocaleString()}`);
     } catch {
       I("Falha ao aplicar a citação", "error");
     }
@@ -25894,7 +25894,7 @@ function Ld(n, e) {
     }
   }
   function k(Z) {
-    return `$${Z.toLocaleString()}`;
+    return `$${Number(Z || 0).toLocaleString()}`;
   }
   function T(Z) {
     return Z === 0 ? "-" : `${Z}mo`;
@@ -36280,7 +36280,7 @@ function dO(n, e) {
             Fe(
               Dt,
               17,
-              () => o(u).flags.slice(0, 5),
+              () => (Array.isArray(o(u).flags) ? o(u).flags : []).slice(0, 5),
               nt,
               (Rt, zt) => {
                 var jt = AI(),
@@ -37300,7 +37300,7 @@ function dO(n, e) {
                         Fe(
                           Me,
                           17,
-                          () => o(Be).flags.slice(0, 3),
+                          () => (Array.isArray(o(Be).flags) ? o(Be).flags : []).slice(0, 3),
                           nt,
                           (Le, wt) => {
                             var Yt = sO(),
@@ -42573,7 +42573,7 @@ function QD(n, e) {
     m = et(() => o(r).filter((V) => V.earned)),
     _ = et(() => o(r).filter((V) => !V.earned));
   function g(V) {
-    return "$" + V.toLocaleString();
+    return "$" + Number(V || 0).toLocaleString();
   }
   kn(async () => {
     try {
@@ -43107,7 +43107,7 @@ function QD(n, e) {
                 },
                 [
                   () => g(o(i).totalMultado),
-                  () => o(i).totalMeses.toLocaleString(),
+                  () => Number(o(i).totalMeses || o(i).totalMonths || 0).toLocaleString(),
                 ],
               ),
                 x(K, re));
@@ -43188,7 +43188,7 @@ function QD(n, e) {
                         [
                           () => ({ "current-user": o(ye).isCurrentUser }),
                           () => g(o(ye).totalMultado),
-                          () => o(ye).score.toLocaleString(),
+                          () => Number(o(ye).score || 0).toLocaleString(),
                         ],
                       ),
                         x(ve, je));
@@ -46035,7 +46035,7 @@ function u5(n, e) {
                 [
                   () => ({ editing: o(u) === o(ve).id }),
                   () => R(o(ve).goalType),
-                  () => o(ve).goalAmount.toLocaleString(),
+                  () => Number(o(ve).goalAmount || 0).toLocaleString(),
                 ],
               ),
               x(X, ye));

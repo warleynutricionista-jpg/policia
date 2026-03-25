@@ -115,6 +115,26 @@ RegisterNUICallback('searchVeículos', function(data, cb)
     cb(vehicleSearchState.lastResult)
 end)
 
+RegisterNUICallback('searchVehicles', function(data, cb)
+    if not MDTOpen then
+        cb({ vehicles = {}, bolos = {}, page = 1, limit = data and data.limit or 25, total = 0, hasMore = false })
+        return
+    end
+
+    local query = data and data.query or ''
+    if query == '' then
+        cb({ vehicles = {}, bolos = {}, page = 1, limit = data and data.limit or 25, total = 0, hasMore = false })
+        return
+    end
+
+    local result = ps.callback(resourceName .. ':server:SearchVehicles', {
+        query = query,
+        page = data and data.page or 1,
+        limit = data and data.limit or nil
+    })
+    cb(result or { vehicles = {}, bolos = {}, page = data and data.page or 1, limit = data and data.limit or 25, total = 0, hasMore = false })
+end)
+
 RegisterNUICallback('getReportsByPlate', function(data, cb)
     if not MDTOpen then
         cb({ success = false, reports = {} })
