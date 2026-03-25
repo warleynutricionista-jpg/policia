@@ -9,19 +9,16 @@ local resourceName = GetCurrentResourceName()
 -- MENU: CRIAR CENA DE CRIME
 -- ============================================================
 function OpenCreateSceneMenu()
-    local classOptions = {}
-    for _, v in ipairs(Config.SceneClassifications) do
-        classOptions[#classOptions + 1] = { value = v.value, label = v.label }
-    end
+    local classOptions = ForensicUtils.GetSceneClassificationOptions()
 
-    local input = lib.inputDialog('Criar Cena de Crime', {
-        { type = 'select', label = 'Classificação', options = classOptions, required = true },
-        { type = 'textarea', label = 'Descrição da Cena', required = false },
-        { type = 'number', label = 'Raio do Perímetro (metros)', default = 50, min = 10, max = 200 },
-        { type = 'input', label = 'Condições Climáticas', placeholder = 'Ex: Chuvoso, Ensolarado' },
-        { type = 'input', label = 'Iluminação', placeholder = 'Ex: Noturno, Diurno, Artificial' },
-        { type = 'input', label = 'ID do Caso (MDT)', placeholder = 'Opcional' },
-        { type = 'input', label = 'ID do Relatório (MDT)', placeholder = 'Opcional' },
+    local input = lib.inputDialog(L('scene.title'), {
+        { type = 'select', label = L('form.scene.classification'), options = classOptions, required = true },
+        { type = 'textarea', label = L('form.scene.description'), required = false },
+        { type = 'number', label = L('form.scene.perimeter_radius'), default = 50, min = 10, max = 200 },
+        { type = 'input', label = L('form.scene.weather'), placeholder = L('form.scene.weather_placeholder') },
+        { type = 'input', label = L('form.scene.lighting'), placeholder = L('form.scene.lighting_placeholder') },
+        { type = 'input', label = L('form.scene.case_id'), placeholder = L('common.optional') },
+        { type = 'input', label = L('form.scene.report_id'), placeholder = L('common.optional') },
     })
 
     if not input then return end
@@ -38,7 +35,7 @@ function OpenCreateSceneMenu()
         lighting = input[5] or '',
         case_id = input[6] ~= '' and input[6] or nil,
         report_id = input[7] ~= '' and input[7] or nil,
-        location_name = streetName or 'Local não identificado',
+        location_name = streetName or L('scene.unidentified_location'),
         x = coords.x,
         y = coords.y,
         z = coords.z,
@@ -46,14 +43,14 @@ function OpenCreateSceneMenu()
 
     if result and result.success then
         lib.notify({
-            title = 'Cena de Crime',
-            description = ('Cena %s criada com sucesso!'):format(result.sceneNumber),
+            title = L('scene.title'),
+            description = L('scene.created_success', result.sceneNumber),
             type = 'success',
         })
     else
         lib.notify({
-            title = 'Erro',
-            description = result and result.error or 'Falha ao criar cena',
+            title = L('common.error_title'),
+            description = result and result.error or L('scene.create_failed'),
             type = 'error',
         })
     end
@@ -63,33 +60,21 @@ end
 -- MENU: COLETAR EVIDÊNCIA
 -- ============================================================
 function OpenCollectEvidenceMenu()
-    local categoryOptions = {
-        { value = 'balistica', label = 'Balística' },
-        { value = 'biologica', label = 'Biológica' },
-        { value = 'digital_impressao', label = 'Impressões' },
-        { value = 'quimica', label = 'Química' },
-        { value = 'documental', label = 'Documental' },
-        { value = 'eletronica', label = 'Eletrônica' },
-        { value = 'vestimenta', label = 'Vestimenta' },
-        { value = 'veiculo', label = 'Veículo' },
-        { value = 'objeto_cortante', label = 'Objeto Cortante' },
-        { value = 'objeto_contundente', label = 'Objeto Contundente' },
-        { value = 'outros', label = 'Outros' },
-    }
+    local categoryOptions = ForensicUtils.GetEvidenceCategoryOptions()
 
     -- Buscar tipos da categoria
-    local input = lib.inputDialog('Coletar Evidência', {
-        { type = 'select', label = 'Categoria', options = categoryOptions, required = true },
-        { type = 'input', label = 'Tipo Específico', placeholder = 'Ex: Cápsula, Sangue, Faca...', required = true },
-        { type = 'input', label = 'Subtipo', placeholder = 'Ex: 9mm, AB+, Inox...' },
-        { type = 'textarea', label = 'Descrição', placeholder = 'Descreva a evidência detalhadamente' },
-        { type = 'input', label = 'Método de Coleta', placeholder = 'Ex: Pinça, Swab, Saco plástico' },
-        { type = 'number', label = 'ID da Cena', placeholder = 'ID da cena de crime' },
-        { type = 'select', label = 'Prioridade', options = {
-            { value = 'baixa', label = 'Baixa' },
-            { value = 'media', label = 'Média' },
-            { value = 'alta', label = 'Alta' },
-            { value = 'urgente', label = 'Urgente' },
+    local input = lib.inputDialog(L('evidence.collecting'), {
+        { type = 'select', label = L('form.evidence.category'), options = categoryOptions, required = true },
+        { type = 'input', label = L('form.evidence.type'), placeholder = L('form.evidence.type_placeholder'), required = true },
+        { type = 'input', label = L('form.evidence.subtype'), placeholder = L('form.evidence.subtype_placeholder') },
+        { type = 'textarea', label = L('form.evidence.description'), placeholder = L('form.evidence.description_placeholder') },
+        { type = 'input', label = L('form.evidence.collection_method'), placeholder = L('form.evidence.collection_method_placeholder') },
+        { type = 'number', label = L('form.evidence.scene_id'), placeholder = L('form.evidence.scene_id_placeholder') },
+        { type = 'select', label = L('form.evidence.priority'), options = {
+            { value = 'baixa', label = L('form.priority.baixa') },
+            { value = 'media', label = L('form.priority.media') },
+            { value = 'alta', label = L('form.priority.alta') },
+            { value = 'urgente', label = L('form.priority.urgente') },
         }, default = 'media' },
     })
 
@@ -104,7 +89,7 @@ function OpenCollectEvidenceMenu()
 
     if lib.progressBar({
         duration = 8000,
-        label = 'Coletando evidência...',
+        label = L('evidence.collecting'),
         useWhileDead = false,
         canCancel = true,
         disable = { car = true, move = true, combat = true },
@@ -125,15 +110,15 @@ function OpenCollectEvidenceMenu()
 
         if result and result.success then
             lib.notify({
-                title = 'Evidência Coletada',
-                description = ('%s | Lacre: %s'):format(result.evidenceNumber, result.sealNumber),
+                title = L('evidence.collected_title'),
+                description = L('evidence.collected_message', result.evidenceNumber, result.sealNumber),
                 type = 'success',
                 duration = 8000,
             })
         else
             lib.notify({
-                title = 'Erro',
-                description = result and result.error or 'Falha na coleta',
+                title = L('common.error_title'),
+                description = result and result.error or L('evidence.collect_failed'),
                 type = 'error',
             })
         end
@@ -146,34 +131,33 @@ end
 -- MENU: EXECUTAR TESTE RÁPIDO
 -- ============================================================
 function OpenRunTestMenu()
-    local testOptions = {
-        { value = 'residuo_polvora_maos', label = 'Resíduo de Pólvora (Mãos)' },
-        { value = 'residuo_polvora_roupa', label = 'Resíduo de Pólvora (Roupa)' },
-        { value = 'residuo_polvora_arma', label = 'Resíduo de Pólvora (Arma)' },
-        { value = 'residuo_polvora_veiculo', label = 'Resíduo de Pólvora (Veículo)' },
-        { value = 'teste_droga_presuntivo', label = 'Teste Presuntivo de Drogas' },
-        { value = 'teste_sangue_presuntivo', label = 'Teste Presuntivo de Sangue' },
-        { value = 'alcoolemia', label = 'Teste de Alcoolemia' },
-    }
+    local testOptions = ForensicUtils.GetQuickTestOptions()
 
-    local input = lib.inputDialog('Teste Forense Rápido', {
-        { type = 'select', label = 'Tipo de Teste', options = testOptions, required = true },
-        { type = 'input', label = 'Nome do Alvo', placeholder = 'Nome do suspeito/objeto' },
-        { type = 'input', label = 'CitizenID do Alvo', placeholder = 'Se aplicável' },
-        { type = 'textarea', label = 'Observações', placeholder = 'Notas adicionais' },
-        { type = 'number', label = 'ID da Evidência', placeholder = 'Se vinculado a evidência' },
-        { type = 'number', label = 'ID da Cena', placeholder = 'Se vinculado a cena' },
+    local input = lib.inputDialog(L('test.quick_title'), {
+        { type = 'select', label = L('form.test.type'), options = testOptions, required = true },
+        { type = 'input', label = L('form.test.target_name'), placeholder = L('form.test.target_name_placeholder') },
+        { type = 'input', label = L('form.test.target_citizenid'), placeholder = L('form.test.target_citizenid_placeholder') },
+        { type = 'textarea', label = L('form.test.notes'), placeholder = L('form.test.notes_placeholder') },
+        { type = 'number', label = L('form.test.evidence_id'), placeholder = L('form.test.evidence_id_placeholder') },
+        { type = 'number', label = L('form.test.scene_id'), placeholder = L('form.test.scene_id_placeholder') },
     })
 
     if not input then return end
 
     local testType = input[1]
     local duration = Config.TestProcessingTimes[testType] or 10
+    local selectedTestLabel = testType
+    for _, option in ipairs(testOptions) do
+        if option.value == testType then
+            selectedTestLabel = option.label
+            break
+        end
+    end
 
     -- Solicitar teste
     local testResult = lib.callback.await(resourceName .. ':server:requestLabTest', false, {
         test_type = testType,
-        test_name = 'Teste Rápido - ' .. (testOptions[1] and testOptions[1].label or testType),
+        test_name = L('test.quick_name_prefix') .. selectedTestLabel,
         target_name = input[2] or nil,
         target_citizenid = input[3] ~= '' and input[3] or nil,
         description = input[4] or '',
@@ -183,8 +167,8 @@ function OpenRunTestMenu()
 
     if not testResult or not testResult.success then
         lib.notify({
-            title = 'Erro',
-            description = testResult and testResult.error or 'Falha ao solicitar teste',
+            title = L('common.error_title'),
+            description = testResult and testResult.error or L('test.request_failed'),
             type = 'error',
         })
         return
@@ -196,7 +180,7 @@ function OpenRunTestMenu()
 
     if lib.progressBar({
         duration = duration * 1000,
-        label = 'Executando teste forense...',
+        label = L('test.running'),
         useWhileDead = false,
         canCancel = true,
         disable = { car = true, move = true, combat = true },
@@ -215,8 +199,8 @@ function OpenRunTestMenu()
             }
 
             lib.notify({
-                title = 'Resultado do Teste',
-                description = performResult.resultDetails or ('Resultado: ' .. (performResult.resultLevel or 'N/A')),
+                title = L('test.result_title'),
+                description = performResult.resultDetails or (L('test.result_prefix') .. (performResult.resultLevel or L('labels.na'))),
                 type = resultColor[performResult.resultLevel] or 'inform',
                 duration = 12000,
             })
@@ -224,8 +208,8 @@ function OpenRunTestMenu()
     else
         ClearPedTasks(PlayerPedId())
         lib.notify({
-            title = 'Teste Cancelado',
-            description = 'O teste forense foi interrompido',
+            title = L('test.cancelled_title'),
+            description = L('test.cancelled_desc'),
             type = 'error',
         })
     end
@@ -239,13 +223,13 @@ RegisterCommand('gsrtest', function(_, args)
 
     local targetId = tonumber(args[1])
     if not targetId then
-        lib.notify({ title = 'Uso', description = '/gsrtest [id]', type = 'inform' })
+        lib.notify({ title = L('common.usage_title'), description = '/gsrtest [id]', type = 'inform' })
         return
     end
 
     local targetPed = GetPlayerPed(GetPlayerFromServerId(targetId))
     if targetPed == 0 then
-        lib.notify({ title = 'Erro', description = 'Jogador não encontrado', type = 'error' })
+        lib.notify({ title = L('common.error_title'), description = L('common.player_not_found'), type = 'error' })
         return
     end
 
@@ -253,13 +237,13 @@ RegisterCommand('gsrtest', function(_, args)
     local myCoords = GetEntityCoords(PlayerPedId())
     local targetCoords = GetEntityCoords(targetPed)
     if #(myCoords - targetCoords) > 3.0 then
-        lib.notify({ title = 'Erro', description = 'Muito longe do alvo', type = 'error' })
+        lib.notify({ title = L('common.error_title'), description = L('common.too_far_target'), type = 'error' })
         return
     end
 
     if lib.progressBar({
         duration = 10000,
-        label = 'Testando resíduo de pólvora nas mãos...',
+        label = L('test.running_gsr_hands'),
         useWhileDead = false,
         canCancel = true,
         disable = { car = true, move = true, combat = true },
@@ -273,22 +257,22 @@ RegisterCommand('gsrtest', function(_, args)
 
         local testResult = lib.callback.await(resourceName .. ':server:requestLabTest', false, {
             test_type = 'residuo_polvora_maos',
-            test_name = 'Teste GSR - Mãos',
+            test_name = L('test.gsr_name'),
             target_citizenid = GetPlayerServerId(targetId),
-            description = hasGSR and 'GSR detectado pelo sistema' or 'Sem GSR detectado',
+            description = hasGSR and L('test.gsr_detected_desc') or L('test.gsr_not_detected_desc'),
         })
 
         if hasGSR then
             lib.notify({
-                title = 'GSR POSITIVO',
-                description = 'Resíduo de pólvora detectado nas mãos do suspeito!',
+                title = L('test.gsr_positive_title'),
+                description = L('test.gsr_positive_desc'),
                 type = 'success',
                 duration = 10000,
             })
         else
             lib.notify({
-                title = 'GSR NEGATIVO',
-                description = 'Nenhum resíduo de pólvora detectado.',
+                title = L('test.gsr_negative_title'),
+                description = L('test.gsr_negative_desc'),
                 type = 'inform',
                 duration = 8000,
             })
