@@ -1,12 +1,45 @@
 local resourceName = tostring(GetCurrentResourceName())
 
 -- AUTH -----------------------------------------------
+local function resolveAuthState()
+    local job = ps.getJob()
+    if type(job) ~= 'table' then
+        return false, 'leo'
+    end
+
+    local jobName = job.name and tostring(job.name) or ''
+    local jobType = job.type and tostring(job.type) or ''
+    local isPolice = jobType == Config.PoliceJobType
+    local isMedical = jobType == Config.MedicalJobType
+
+    if not isPolice and Config.PoliceJobs then
+        for _, configuredJob in ipairs(Config.PoliceJobs) do
+            if tostring(configuredJob) == jobName then
+                isPolice = true
+                break
+            end
+        end
+    end
+
+    if not isMedical and Config.MedicalJobs then
+        for _, configuredJob in ipairs(Config.MedicalJobs) do
+            if tostring(configuredJob) == jobName then
+                isMedical = true
+                break
+            end
+        end
+    end
+
+    if isMedical then
+        return true, 'ems'
+    end
+
+    return isPolice, 'leo'
+end
 
 -- Job and Duty Check
 RegisterNUICallback('checkAuth', function(_, cb)
-    local jobType = ps.getJobType()
-    local isAuthorized = jobType == Config.PoliceJobType or jobType == Config.MedicalJobType
-    local mdtJobType = jobType == Config.MedicalJobType and 'ems' or 'leo'
+    local isAuthorized, mdtJobType = resolveAuthState()
     local onDuty = ps.getJobDuty() or false
     local playerData = ps.getPlayerData()
 
@@ -36,9 +69,7 @@ end)
 
 -- Update Auth NUI Wrapper
 function NUIUpdateAuth()
-    local jobType = ps.getJobType()
-    local isAuthorized = jobType == Config.PoliceJobType or jobType == Config.MedicalJobType
-    local mdtJobType = jobType == Config.MedicalJobType and 'ems' or 'leo'
+    local isAuthorized, mdtJobType = resolveAuthState()
     local playerData = ps.getPlayerData()
     SendNUI('updateAuth', {
         authorized = isAuthorized and (ps.getJobDuty() or false),
