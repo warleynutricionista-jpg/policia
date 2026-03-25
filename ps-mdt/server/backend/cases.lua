@@ -539,6 +539,12 @@ ps.registerCallback(resourceName .. ':server:addEvidenceItem', function(source, 
     local src = source
     if not CheckAuth(src) then return { success = false, error = 'Não autorizado' } end
 
+    if type(caseId) == 'table' and evidence == nil then
+        local payload = caseId
+        caseId = payload.caseId
+        evidence = payload.evidence or payload
+    end
+
     caseId = tonumber(caseId)
     if not caseId or not evidence or not evidence.title then
         return { success = false, error = 'Invalid evidence' }
@@ -546,10 +552,11 @@ ps.registerCallback(resourceName .. ':server:addEvidenceItem', function(source, 
 
     local evidenceId = MySQL.insert.await([[
         INSERT INTO mdt_evidence_items
-        (case_id, title, type, serial, notes, location, stash_id, stored, last_holder, created_by)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (case_id, report_id, title, type, serial, notes, location, stash_id, stored, last_holder, created_by)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ]], {
         caseId,
+        tonumber(evidence.reportId) or nil,
         evidence.title,
         evidence.type or 'Evidence',
         evidence.serial or '',
