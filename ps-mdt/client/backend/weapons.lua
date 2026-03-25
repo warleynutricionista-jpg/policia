@@ -1,10 +1,17 @@
 local resourceName = tostring(GetCurrentResourceName())
+local weaponSearchState = {
+    lastQuery = '',
+    lastAt = 0,
+    lastResult = { weapons = {}, bolos = {}, page = 1, limit = 25, total = 0, hasMore = false }
+}
+local WEAPON_SEARCH_DEBOUNCE_MS = 250
 
-local function handleGetWeapons(cb)
+local function handleGetWeapons(data, cb)
     if not MDTOpen then cb({}) return end
-    local weaponList = ps.callback('ps-mdt:server:getWeapons')
+    data = data or {}
+    local weaponList = ps.callback('ps-mdt:server:getWeapons', { page = data.page or 1, limit = data.limit })
     ps.debug('getWeapons', weaponList)
-    cb(weaponList)
+    cb(weaponList or { weapons = {}, bolos = {}, page = data.page or 1, limit = data.limit or 25, total = 0, hasMore = false })
 end
 
 local function handleGetWeaponHistory(data, cb)
@@ -18,12 +25,12 @@ local function handleGetWeaponHistory(data, cb)
     cb(result or {})
 end
 
-RegisterNUICallback('getWeapons', function(_, cb)
-    handleGetWeapons(cb)
+RegisterNUICallback('getWeapons', function(data, cb)
+    handleGetWeapons(data, cb)
 end)
 
-RegisterNUICallback('getArmas', function(_, cb)
-    handleGetWeapons(cb)
+RegisterNUICallback('getArmas', function(data, cb)
+    handleGetWeapons(data, cb)
 end)
 
 RegisterNUICallback('getWeaponBolos', function(data, cb)
@@ -97,8 +104,27 @@ RegisterNUICallback('searchArmas', function(data, cb)
         return
     end
 
-    local result = ps.callback(resourceName .. ':server:searchWeapons', data and data.query or '')
-    cb(result or { weapons = {}, bolos = {} })
+    local query = data and data.query or ''
+    if query == '' then
+        cb({ weapons = {}, bolos = {}, page = 1, limit = data and data.limit or 25, total = 0, hasMore = false })
+        return
+    end
+
+    local now = GetGameTimer()
+    if weaponSearchState.lastQuery == query and (now - weaponSearchState.lastAt) < WEAPON_SEARCH_DEBOUNCE_MS then
+        cb(weaponSearchState.lastResult)
+        return
+    end
+
+    local result = ps.callback(resourceName .. ':server:searchWeapons', {
+        query = query,
+        page = data and data.page or 1,
+        limit = data and data.limit or nil
+    })
+    weaponSearchState.lastQuery = query
+    weaponSearchState.lastAt = now
+    weaponSearchState.lastResult = result or { weapons = {}, bolos = {}, page = data and data.page or 1, limit = data and data.limit or 25, total = 0, hasMore = false }
+    cb(weaponSearchState.lastResult)
 end)
 
 -- Delete Weapon Record

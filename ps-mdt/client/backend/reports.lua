@@ -1,4 +1,8 @@
 local resourceName = tostring(GetCurrentResourceName())
+local searchDebounceMs = 250
+local officerSearchState = { lastQuery = '', lastAt = 0, lastResult = {} }
+local playerSearchState = { lastQuery = '', lastAt = 0, lastResult = {} }
+local reportVehicleSearchState = { lastQuery = '', lastAt = 0, lastResult = {} }
 
 RegisterNUICallback('getReports', function(data, cb)
     if not MDTOpen then
@@ -10,16 +14,22 @@ RegisterNUICallback('getReports', function(data, cb)
     local page = tonumber(data.page) or 1
     page = math.max(1, page)
     local filters = data and data.filters or nil
-    local reports = ps.callback(resourceName .. ':server:getReports', page, filters)
+    local response = ps.callback(resourceName .. ':server:getReports', page, filters)
 
-    if reports then
-        local response = {
-            reports = reports,
-            hasMore = #reports >= 20
-        }
-        cb(response)
+    if response then
+        if response.reports then
+            cb(response)
+        else
+            cb({
+                reports = response,
+                page = page,
+                limit = 20,
+                total = #response,
+                hasMore = #response >= 20
+            })
+        end
     else
-        cb({ reports = {}, hasMore = false })
+        cb({ reports = {}, page = page, limit = 20, total = 0, hasMore = false })
     end
 end)
 
@@ -290,8 +300,21 @@ RegisterNUICallback('searchOfficers', function(data, cb)
     end
 
     local query = data and data.query or ''
-    local result = ps.callback(resourceName .. ':server:searchOfficers', query)
-    cb(result or {})
+    local now = GetGameTimer()
+    if officerSearchState.lastQuery == query and (now - officerSearchState.lastAt) < searchDebounceMs then
+        cb(officerSearchState.lastResult)
+        return
+    end
+
+    local result = ps.callback(resourceName .. ':server:searchOfficers', {
+        query = query,
+        page = data and data.page or 1,
+        limit = data and data.limit or nil
+    }) or { officers = {}, page = 1, limit = 25, total = 0, hasMore = false }
+    officerSearchState.lastQuery = query
+    officerSearchState.lastAt = now
+    officerSearchState.lastResult = result
+    cb(result.officers or result)
 end)
 
 RegisterNUICallback('searchPlayers', function(data, cb)
@@ -301,8 +324,16 @@ RegisterNUICallback('searchPlayers', function(data, cb)
     end
 
     local query = data and data.query or ''
-    local result = ps.callback(resourceName .. ':server:searchPlayers', query)
-    cb(result or {})
+    local now = GetGameTimer()
+    if playerSearchState.lastQuery == query and (now - playerSearchState.lastAt) < searchDebounceMs then
+        cb(playerSearchState.lastResult)
+        return
+    end
+    local result = ps.callback(resourceName .. ':server:searchPlayers', query) or {}
+    playerSearchState.lastQuery = query
+    playerSearchState.lastAt = now
+    playerSearchState.lastResult = result
+    cb(result)
 end)
 
 RegisterNUICallback('searchVehiclesForReport', function(data, cb)
@@ -312,8 +343,16 @@ RegisterNUICallback('searchVehiclesForReport', function(data, cb)
     end
 
     local query = data and data.query or ''
-    local result = ps.callback(resourceName .. ':server:searchVehiclesForReport', query)
-    cb(result or {})
+    local now = GetGameTimer()
+    if reportVehicleSearchState.lastQuery == query and (now - reportVehicleSearchState.lastAt) < searchDebounceMs then
+        cb(reportVehicleSearchState.lastResult)
+        return
+    end
+    local result = ps.callback(resourceName .. ':server:searchVehiclesForReport', query) or {}
+    reportVehicleSearchState.lastQuery = query
+    reportVehicleSearchState.lastAt = now
+    reportVehicleSearchState.lastResult = result
+    cb(result)
 end)
 
 RegisterNUICallback('searchVeículosForReport', function(data, cb)

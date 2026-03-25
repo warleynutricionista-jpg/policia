@@ -1,4 +1,7 @@
 local resourceName = tostring(GetCurrentResourceName())
+local CITIZEN_LIST_CACHE_PREFIX = 'citizens:list:'
+local CITIZEN_SEARCH_CACHE_PREFIX = 'citizens:search:'
+local CITIZEN_CACHE_TTL = 8
 
 local function buildInClause(values)
     local placeholders = {}
@@ -93,25 +96,43 @@ local function getGender(gen)
 end
 
 -- getCitizens - pulls citizens from database with pagination support
-ps.registerCallback(resourceName .. ':server:getCitizens', function(source, page)
+ps.registerCallback(resourceName .. ':server:getCitizens', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return {} end
+    if not CheckAuth(src) then return { citizens = {}, page = 1, limit = 20, total = 0, hasMore = false } end
     local startTime = os.clock()
-    page = page or 1 -- Default to page 1 if not provided
-    local limit = Config.Pagination and Config.Pagination.Citizens or 20
-    local offset = (page - 1) * limit
 
-    -- Main query with pagination
+    local page = 1
+    local limit = Config.Pagination and Config.Pagination.Citizens or 20
+    if type(payload) == 'table' then
+        page = tonumber(payload.page or payload.currentPage) or 1
+        limit = tonumber(payload.limit) or limit
+    else
+        page = tonumber(payload) or 1
+    end
+
+    page = math.max(1, page)
+    limit = math.min(math.max(1, limit), 100)
+    local offset = (page - 1) * limit
+    local cacheKey = ('%s%s:%s'):format(CITIZEN_LIST_CACHE_PREFIX, page, limit)
+
+    local cached = Cache.get(cacheKey)
+    if cached then
+        return cached
+    end
+
+    local total = MySQL.scalar.await('SELECT COUNT(*) FROM players') or 0
+
     local query = [[
-        SELECT mp.id, p.citizenid, JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')) AS firstname, 
-        JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname')) AS lastname, 
-        JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.gender')) AS gender, 
-        JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.birthdate')) AS dateofbirth, 
-        JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.phone')) AS phone, 
-        JSON_UNQUOTE(JSON_EXTRACT(p.job, '$.label')) AS job 
-        FROM players AS p 
-        LEFT JOIN mdt_profiles AS mp 
-        ON CONVERT(p.citizenid USING utf8mb4) COLLATE utf8mb4_general_ci = CONVERT(mp.citizenid USING utf8mb4) COLLATE utf8mb4_general_ci 
+        SELECT mp.id, p.citizenid, JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')) AS firstname,
+        JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname')) AS lastname,
+        JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.gender')) AS gender,
+        JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.birthdate')) AS dateofbirth,
+        JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.phone')) AS phone,
+        JSON_UNQUOTE(JSON_EXTRACT(p.job, '$.label')) AS job
+        FROM players AS p
+        LEFT JOIN mdt_profiles AS mp
+        ON CONVERT(p.citizenid USING utf8mb4) COLLATE utf8mb4_general_ci = CONVERT(mp.citizenid USING utf8mb4) COLLATE utf8mb4_general_ci
+        ORDER BY p.citizenid ASC
         LIMIT ? OFFSET ?
     ]]
     local result = MySQL.query.await(query, { limit, offset })
@@ -188,18 +209,36 @@ ps.registerCallback(resourceName .. ':server:getCitizens', function(source, page
         ps.debug('[getCitizens] Sample citizen data structure:', result[1])
     end
 
-    return result
+    local response = {
+        citizens = result,
+        page = page,
+        limit = limit,
+        total = tonumber(total) or 0,
+        hasMore = (offset + #result) < (tonumber(total) or 0)
+    }
+
+    Cache.set(cacheKey, response, CITIZEN_CACHE_TTL)
+    return response
 end)
 
 -- searchPlayers - searches the database for citizens by provided query (first/last name, citizenid, phone number, occupation)
 -- Returns the same data structure as getCitizens but filtered by search query
-ps.registerCallback(resourceName .. ':server:searchCitizens', function(source, query)
+ps.registerCallback(resourceName .. ':server:searchCitizens', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return {} end
+    if not CheckAuth(src) then return { citizens = {}, page = 1, limit = 20, total = 0, hasMore = false } end
     local startTime = os.clock()
 
+    if type(payload) ~= 'table' then
+        payload = { query = payload }
+    end
+
+    local query = tostring(payload.query or '')
+    local page = math.max(1, tonumber(payload.page) or 1)
+    local searchLimit = math.min(math.max(1, tonumber(payload.limit) or (Config.Pagination and Config.Pagination.CitizenSearch or 20)), 100)
+    local offset = (page - 1) * searchLimit
+
     if not query or string.len(query) < 2 then
-        return {}
+        return { citizens = {}, page = page, limit = searchLimit, total = 0, hasMore = false }
     end
 
     if ps.auditLog then
@@ -234,9 +273,27 @@ ps.registerCallback(resourceName .. ':server:searchCitizens', function(source, q
         LIMIT ?
     ]]
 
-    local searchLimit = Config.Pagination and Config.Pagination.CitizenSearch or 20
-    local result = MySQL.query.await(sqlQuery, {
-        searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchLimit
+    local cacheKey = ('%s%s:%s:%s'):format(CITIZEN_SEARCH_CACHE_PREFIX, query:lower(), page, searchLimit)
+    local cached = Cache.get(cacheKey)
+    if cached then
+        return cached
+    end
+
+    local countQuery = [[
+        SELECT COUNT(*)
+        FROM players AS p
+        WHERE
+            LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname'))) LIKE ? OR
+            LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname'))) LIKE ? OR
+            LOWER(CONCAT(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')), ' ', JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname')))) LIKE ? OR
+            LOWER(p.citizenid) LIKE ? OR
+            LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.phone'))) LIKE ? OR
+            LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.job, '$.label'))) LIKE ?
+    ]]
+    local total = MySQL.scalar.await(countQuery, { searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm }) or 0
+
+    local result = MySQL.query.await(sqlQuery .. ' OFFSET ?', {
+        searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchLimit, offset
     })
 
     -- Process results to match getCitizens format exactly
@@ -313,7 +370,16 @@ ps.registerCallback(resourceName .. ':server:searchCitizens', function(source, q
         ps.debug('[searchCitizens] Sample citizen data structure:', result[1])
     end
 
-    return result
+    local response = {
+        citizens = result,
+        page = page,
+        limit = searchLimit,
+        total = tonumber(total) or 0,
+        hasMore = (offset + #result) < (tonumber(total) or 0)
+    }
+
+    Cache.set(cacheKey, response, CITIZEN_CACHE_TTL)
+    return response
 end)
 
 -- getCitizenBOLOs - gets active BOLOs by type, probably have a table of active bolos load on script start and use that then save it to db periodically or on resource stop

@@ -1,13 +1,20 @@
 local resourceName = tostring(GetCurrentResourceName())
+local vehicleSearchState = {
+    lastQuery = '',
+    lastAt = 0,
+    lastResult = { vehicles = {}, bolos = {}, page = 1, limit = 25, total = 0, hasMore = false }
+}
+local VEHICLE_SEARCH_DEBOUNCE_MS = 250
 
-local function handleGetVehicles(cb)
+local function handleGetVehicles(data, cb)
     if not MDTOpen then
-        cb({ success = false, message = 'O MDT não está aberto', vehicles = {}, bolos = {} })
+        cb({ success = false, message = 'O MDT não está aberto', vehicles = {}, bolos = {}, page = 1, limit = 25, total = 0, hasMore = false })
         return
     end
-    local vehicleList = ps.callback(resourceName .. ':server:GetVehicles')
+    data = data or {}
+    local vehicleList = ps.callback(resourceName .. ':server:GetVehicles', { page = data.page or 1, limit = data.limit })
     ps.debug('[getVehicles] Triggered NUI callback on client', vehicleList)
-    cb(vehicleList)
+    cb(vehicleList or { vehicles = {}, bolos = {}, page = data.page or 1, limit = data.limit or 25, total = 0, hasMore = false })
 end
 
 local function handleGetVehicle(data, cb)
@@ -48,12 +55,12 @@ local function handleUpdateVehicle(data, cb)
     end
 end
 
-RegisterNUICallback('getVehicles', function(_, cb)
-    handleGetVehicles(cb)
+RegisterNUICallback('getVehicles', function(data, cb)
+    handleGetVehicles(data, cb)
 end)
 
-RegisterNUICallback('getVeículos', function(_, cb)
-    handleGetVehicles(cb)
+RegisterNUICallback('getVeículos', function(data, cb)
+    handleGetVehicles(data, cb)
 end)
 
 RegisterNUICallback('getVehicleBolos', function(data, cb)
@@ -86,8 +93,26 @@ RegisterNUICallback('searchVeículos', function(data, cb)
     end
 
     local query = data and data.query or ''
-    local result = ps.callback(resourceName .. ':server:SearchVehicles', query)
-    cb(result or { vehicles = {}, bolos = {} })
+    if query == '' then
+        cb({ vehicles = {}, bolos = {}, page = 1, limit = data and data.limit or 25, total = 0, hasMore = false })
+        return
+    end
+
+    local now = GetGameTimer()
+    if vehicleSearchState.lastQuery == query and (now - vehicleSearchState.lastAt) < VEHICLE_SEARCH_DEBOUNCE_MS then
+        cb(vehicleSearchState.lastResult)
+        return
+    end
+
+    local result = ps.callback(resourceName .. ':server:SearchVehicles', {
+        query = query,
+        page = data and data.page or 1,
+        limit = data and data.limit or nil
+    })
+    vehicleSearchState.lastQuery = query
+    vehicleSearchState.lastAt = now
+    vehicleSearchState.lastResult = result or { vehicles = {}, bolos = {}, page = data and data.page or 1, limit = data and data.limit or 25, total = 0, hasMore = false }
+    cb(vehicleSearchState.lastResult)
 end)
 
 RegisterNUICallback('getReportsByPlate', function(data, cb)

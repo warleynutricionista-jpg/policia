@@ -114,6 +114,28 @@ local function serializeVehicleRow(v, reportCountsByPlate, activeBoloByPlate)
     }
 end
 
+
+local function paginateRows(rows, page, limit)
+    local safeLimit = math.max(1, tonumber(limit) or (Config.Pagination and Config.Pagination.Vehicles) or 25)
+    safeLimit = math.min(safeLimit, 100)
+    local safePage = math.max(1, tonumber(page) or 1)
+    local total = #rows
+    local offset = (safePage - 1) * safeLimit
+    local paginated = {}
+
+    for i = offset + 1, math.min(total, offset + safeLimit) do
+        paginated[#paginated + 1] = rows[i]
+    end
+
+    return {
+        data = paginated,
+        page = safePage,
+        limit = safeLimit,
+        total = total,
+        hasMore = (offset + safeLimit) < total,
+    }
+end
+
 local function matchesVehicleQuery(vehicle, normalizedQuery)
     if not normalizedQuery or normalizedQuery == '' then
         return true
@@ -226,46 +248,65 @@ function GetMdtVehicleDirectory(forceRefresh)
     end) or { vehicles = {}, bolos = {} }
 end
 
-ps.registerCallback(resourceName .. ':server:GetVehicles', function(source)
+ps.registerCallback(resourceName .. ':server:GetVehicles', function(source, payload)
     local startTime = os.clock()
     local src = source
-    if not CheckAuth(src) then return { vehicles = {}, bolos = {} } end
+    if not CheckAuth(src) then return { vehicles = {}, bolos = {}, page = 1, limit = 25, total = 0, hasMore = false } end
+
+    payload = payload or {}
+    local page = payload.page or payload.currentPage or 1
+    local limit = payload.limit
+
     local directory = GetMdtVehicleDirectory()
-    local vehicles = directory.vehicles or {}
     local bolos = directory.bolos or {}
+    local pageResult = paginateRows(directory.vehicles or {}, page, limit)
 
     local endTime = os.clock()
     local elapsedTime = (endTime - startTime) * 1000
-    ps.debug(string.format("getVehicles callback executed in %.2f ms", elapsedTime))
+    ps.debug(string.format("getVehicles callback executed in %.2f ms (page %s, limit %s)", elapsedTime, tostring(pageResult.page), tostring(pageResult.limit)))
 
-    if vehicles[1] then
-        ps.debug('[getVehicles] Sample vehicle data structure:', vehicles[1])
-    end
-    if bolos[1] then
-        ps.debug('[getVehicles] Sample bolo data structure:', bolos[1])
-    end
-
-    return {vehicles = vehicles, bolos = bolos}
+    return {
+        vehicles = pageResult.data,
+        bolos = bolos,
+        page = pageResult.page,
+        limit = pageResult.limit,
+        total = pageResult.total,
+        hasMore = pageResult.hasMore,
+    }
 end)
 
-ps.registerCallback(resourceName .. ':server:SearchVehicles', function(source, query)
+ps.registerCallback(resourceName .. ':server:SearchVehicles', function(source, payload)
     local src = source
-    if not CheckAuth(src) then return { vehicles = {}, bolos = {} } end
+    if not CheckAuth(src) then return { vehicles = {}, bolos = {}, page = 1, limit = 25, total = 0, hasMore = false } end
 
-    local trimmedQuery = normalizeSearchTerm(query)
+    if type(payload) ~= 'table' then
+        payload = { query = payload }
+    end
+
+    local trimmedQuery = normalizeSearchTerm(payload.query)
+    if trimmedQuery == '' then
+        return { vehicles = {}, bolos = {}, page = 1, limit = payload.limit or 25, total = 0, hasMore = false }
+    end
+
     local directory = GetMdtVehicleDirectory()
-    local vehicles = {}
+    local filtered = {}
 
     for _, vehicle in ipairs(directory.vehicles or {}) do
         if matchesVehicleQuery(vehicle, trimmedQuery) then
-            vehicles[#vehicles + 1] = vehicle
-            if #vehicles >= 50 then
-                break
-            end
+            filtered[#filtered + 1] = vehicle
         end
     end
 
-    return { vehicles = vehicles, bolos = {} }
+    local pageResult = paginateRows(filtered, payload.page or 1, payload.limit)
+
+    return {
+        vehicles = pageResult.data,
+        bolos = {},
+        page = pageResult.page,
+        limit = pageResult.limit,
+        total = pageResult.total,
+        hasMore = pageResult.hasMore,
+    }
 end)
 
 ps.registerCallback(resourceName .. ':server:UpdateVehicle', function(source, payload)
