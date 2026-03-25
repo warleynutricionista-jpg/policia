@@ -12,7 +12,7 @@ local allowedSourceTypes = {
 }
 
 local sourceTypeAliases = {
-    veículo = 'veiculo',
+    ['veículo'] = 'veiculo',
     arma_fogo = 'arma',
     weapon = 'arma',
     vehicle = 'veiculo',

@@ -21,7 +21,7 @@ local sourceAliases = {
     tecido_biologico = 'tecido',
     vestigio_biologico = 'tecido',
     ['vestígio_biológico'] = 'tecido',
-    veículo = 'veiculo',
+    ['veículo'] = 'veiculo',
 }
 
 local requiredItemBySource = {
