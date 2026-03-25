@@ -91,6 +91,17 @@ local function toNumberOrDefault(value, fallback)
     return cast
 end
 
+local function toNumberOrNil(value)
+    if value == nil then
+        return nil
+    end
+    local cast = tonumber(value)
+    if cast == nil then
+        return nil
+    end
+    return cast
+end
+
 local function isTruthyDbBool(value)
     if value == true then return true end
     if value == false or value == nil then return false end
@@ -176,6 +187,10 @@ local function serializeVehicleRow(v, reportCountsByPlate, activeBoloByPlate)
     end
     local reportCount = tonumber(reportCountsByPlate and reportCountsByPlate[plate] or 0) or 0
     local hasActiveBolo = (activeBoloByPlate and activeBoloByPlate[plate] == true) or isTruthyDbBool(v.boloactive)
+    local rawStatus = normalizeSearchTerm(v.status_text)
+    if rawStatus == '' then
+        rawStatus = 'unknown'
+    end
     local mdtStatus = normalizeSearchTerm(v.mdt_status)
     if mdtStatus == '' then
         mdtStatus = 'valid'
@@ -197,12 +212,12 @@ local function serializeVehicleRow(v, reportCountsByPlate, activeBoloByPlate)
         ownerName = buildOwnerName(v.owner_name, v.citizenid),
         ownerCitizenId = v.citizenid,
         garage = toStringOrDefault(v.garage, ''),
-        fuel = toNumberOrDefault(v.fuel, 0),
-        engine = toNumberOrDefault(v.engine, 0),
-        body = toNumberOrDefault(v.body, 0),
+        fuel = toNumberOrNil(v.fuel),
+        engine = toNumberOrNil(v.engine),
+        body = toNumberOrNil(v.body),
         state = toNumberOrDefault(v.state, 0),
-        status_text = toStringOrDefault(v.status_text, ''),
-        mileage = toNumberOrDefault(v.mileage, 0),
+        status_text = rawStatus,
+        mileage = toNumberOrNil(v.mileage),
         mdt_vehicle_information = toStringOrDefault(v.information, ''),
         mdtVehicleInformation = toStringOrDefault(v.information, ''),
         mdt_vehicle_points = toNumberOrDefault(v.points, 0),
@@ -222,7 +237,7 @@ local function serializeVehicleRow(v, reportCountsByPlate, activeBoloByPlate)
         seenIn = reportCount,
         information = toStringOrDefault(v.information, ''),
         points = toNumberOrDefault(v.points, 0),
-        status = mdtStatus,
+        status = rawStatus,
         core_state = toNumberOrDefault(v.state, 0),
         stolen = isTruthyDbBool(v.stolen),
         boloactive = hasActiveBolo,
@@ -323,7 +338,7 @@ local function getVehicleSelectSql()
             ) AS owner_name
         FROM player_vehicles pv
         LEFT JOIN players p
-            ON p.citizenid COLLATE utf8mb4_general_ci = pv.citizenid COLLATE utf8mb4_general_ci
+            ON p.citizenid = pv.citizenid
     ]]
 end
 
@@ -354,7 +369,7 @@ local function buildVehicleSearchWhere(search)
 
     local whereSql = [[
         WHERE (
-            pv.plate LIKE ?
+            COALESCE(pv.plate, '') LIKE ?
             OR COALESCE(pv.fakeplate, '') LIKE ?
             OR COALESCE(pv.citizenid, '') LIKE ?
             OR COALESCE(pv.vehicle, '') LIKE ?
@@ -455,7 +470,7 @@ local function queryVehiclesPage(search, page, limit)
     local countRow = MySQL.single.await(countSql, whereParams) or { total = 0 }
     local total = tonumber(countRow.total) or 0
 
-    local listSql = ([[%s %s ORDER BY pv.plate ASC LIMIT ? OFFSET ?]]):format(getVehicleSelectSql(), whereSql)
+    local listSql = ([[%s %s ORDER BY pv.id DESC LIMIT ? OFFSET ?]]):format(getVehicleSelectSql(), whereSql)
     local listParams = {}
     for i = 1, #whereParams do
         listParams[#listParams + 1] = whereParams[i]
@@ -536,7 +551,7 @@ ps.registerCallback(resourceName .. ':server:GetVehicles', function(source, payl
 
     payload = payload or {}
     local page = payload.page or payload.currentPage or 1
-    local limit = payload.limit or 5000
+    local limit = payload.limit or (Config.Pagination and Config.Pagination.Vehicles) or 25
     local pageResult = queryVehiclesPage(nil, page, limit)
     local bolos = fetchVehicleBolos()
 
@@ -725,7 +740,7 @@ ps.registerCallback(resourceName .. ':server:GetVehicle', function(source, plate
             ) AS owner_name
         FROM %s pv
         LEFT JOIN players p
-            ON p.citizenid COLLATE utf8mb4_general_ci = (%s) COLLATE utf8mb4_general_ci
+            ON p.citizenid = (%s)
         WHERE UPPER(REPLACE(pv.plate, ' ', '')) = ?
         LIMIT 1
     ]]):format(ownerExpr, informationExpr, pointsExpr, statusExpr, stolenExpr, boloExpr, imageExpr, stateExpr, vehicleTable, ownerExpr), { plate })
@@ -769,6 +784,10 @@ ps.registerCallback(resourceName .. ':server:GetVehicle', function(source, plate
     local reportCount = countSetItems(reportIdSet)
     local normalizedMdtStatus = normalizeSearchTerm(row.mdt_status)
     if normalizedMdtStatus == '' then normalizedMdtStatus = 'valid' end
+    local rawStatus = normalizeSearchTerm(row.status_text)
+    if rawStatus == '' then
+        rawStatus = 'unknown'
+    end
     local flags = buildVehicleFlags(isTruthyDbBool(row.stolen), hasActiveBolo or isTruthyDbBool(row.boloactive), normalizedMdtStatus)
 
     return {
@@ -789,12 +808,12 @@ ps.registerCallback(resourceName .. ':server:GetVehicle', function(source, plate
             ownerName = buildOwnerName(row.owner_name, row.citizenid),
             ownerCitizenId = row.citizenid,
             garage = toStringOrDefault(row.garage, ''),
-            fuel = toNumberOrDefault(row.fuel, 0),
-            engine = toNumberOrDefault(row.engine, 0),
-            body = toNumberOrDefault(row.body, 0),
+            fuel = toNumberOrNil(row.fuel),
+            engine = toNumberOrNil(row.engine),
+            body = toNumberOrNil(row.body),
             state = toNumberOrDefault(row.state, 0),
-            status_text = toStringOrDefault(row.status_text, ''),
-            mileage = toNumberOrDefault(row.mileage, 0),
+            status_text = rawStatus,
+            mileage = toNumberOrNil(row.mileage),
             class = formatLabel(vehicleData and vehicleData.category or 'Desconhecido'),
             type = formatLabel(vehicleData and vehicleData.type or 'Desconhecido'),
             image = (row.image and row.image ~= '' and row.image) or ('https://docs.fivem.net/vehicles/' .. row.vehicle .. '.webp'),
@@ -804,7 +823,7 @@ ps.registerCallback(resourceName .. ':server:GetVehicle', function(source, plate
             points = toNumberOrDefault(row.points, 0),
             mdt_vehicle_points = toNumberOrDefault(row.points, 0),
             mdtVehiclePoints = toNumberOrDefault(row.points, 0),
-            status = normalizedMdtStatus,
+            status = rawStatus,
             mdt_vehicle_status = normalizedMdtStatus,
             mdtVehicleStatus = normalizedMdtStatus,
             core_state = toNumberOrDefault(row.state, 0),
