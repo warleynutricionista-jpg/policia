@@ -68,6 +68,44 @@ local function getUnixFromSQLTimestamp(ts)
     })
 end
 
+local function validateEvidenceAndSceneLinks(data)
+    local evidenceId = data.evidence_id and tonumber(data.evidence_id) or nil
+    local sceneId = data.scene_id and tonumber(data.scene_id) or nil
+    local resolvedReportId = nil
+
+    if evidenceId then
+        local evidence = MySQL.single.await('SELECT id, status, report_id, scene_id FROM forensic_evidence WHERE id = ?', { evidenceId })
+        if not evidence then
+            return false, L('evidence.errors.not_found')
+        end
+        if evidence.status == 'descartada' or evidence.status == 'devolvida' then
+            return false, L('lab.errors.evidence_finalized')
+        end
+        resolvedReportId = evidence.report_id
+        sceneId = sceneId or evidence.scene_id
+    end
+
+    if sceneId then
+        local scene = MySQL.single.await('SELECT id, status, report_id FROM forensic_crime_scenes WHERE id = ?', { sceneId })
+        if not scene then
+            return false, L('scene.errors.not_found')
+        end
+        resolvedReportId = resolvedReportId or scene.report_id
+    end
+
+    if resolvedReportId then
+        local report = MySQL.single.await('SELECT id, report_status FROM mdt_reports WHERE id = ? LIMIT 1', { resolvedReportId })
+        if not report then
+            return false, L('reports.errors.not_found')
+        end
+        if report.report_status == 'archived' then
+            return false, L('reports.errors.archived')
+        end
+    end
+
+    return true, nil
+end
+
 -- ============================================================
 -- SOLICITAR TESTE
 -- ============================================================
@@ -90,6 +128,11 @@ lib.callback.register(resourceName .. ':server:requestLabTest', function(source,
 
     local playerData = GetPlayerData(src)
     if not playerData then return { success = false, error = L('scene.errors.player_data_unavailable') } end
+
+    local linksOk, linksError = validateEvidenceAndSceneLinks(data)
+    if not linksOk then
+        return { success = false, error = linksError }
+    end
 
     local requiredItem = REQUIRED_ITEM_BY_TEST[data.test_type]
     if not hasRequiredItem(src, requiredItem) then

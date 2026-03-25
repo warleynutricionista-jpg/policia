@@ -137,6 +137,7 @@ return {
             final_destination_notes_required = 'Informe observações obrigatórias para descarte ou devolução',
             target_required = 'Destinatário da transferência de custódia é obrigatório',
             transfer_not_allowed_finalized = 'Não é possível transferir evidência já devolvida ou descartada',
+            already_collected = 'Esta evidência já foi coletada recentemente neste ponto',
         },
         custody = {
             initial_collect = 'Evidência coletada na cena. Lacre: %s',
@@ -191,6 +192,13 @@ return {
             objeto_contundente = 'Objeto Contundente',
             objeto_queimado = 'Objeto Queimado',
             outros = 'Outros',
+        },
+    },
+
+    reports = {
+        errors = {
+            not_found = 'Relatório não encontrado',
+            archived = 'Relatório arquivado: operação não permitida',
         },
     },
 
@@ -304,6 +312,7 @@ return {
             invalid_id = 'ID de teste inválido',
             not_found = 'Teste laboratorial não encontrado',
             already_completed = 'Este teste já foi concluído',
+            evidence_finalized = 'A evidência vinculada foi finalizada e não pode receber novos exames',
         },
         defaults = {
             unnamed_test = 'Teste não especificado',

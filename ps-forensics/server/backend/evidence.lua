@@ -64,6 +64,27 @@ local function isValidURL(url)
     return url:match('^https?://') ~= nil or url:match('^forensic%-') ~= nil
 end
 
+local function validateCaseAndReport(caseId, reportId)
+    if caseId then
+        local caseExists = MySQL.scalar.await('SELECT COUNT(*) FROM mdt_cases WHERE id = ? LIMIT 1', { caseId })
+        if tonumber(caseExists) == 0 then
+            return false, L('scene.errors.not_found')
+        end
+    end
+
+    if reportId then
+        local report = MySQL.single.await('SELECT id, report_status FROM mdt_reports WHERE id = ? LIMIT 1', { reportId })
+        if not report then
+            return false, L('reports.errors.not_found')
+        end
+        if report.report_status == 'archived' then
+            return false, L('reports.errors.archived')
+        end
+    end
+
+    return true, nil
+end
+
 local function generateUniqueSealNumber()
     local tries = 0
     while tries < 5 do
@@ -205,6 +226,26 @@ lib.callback.register(resourceName .. ':server:collectEvidence', function(source
 
         if not caseId and scene.case_id then caseId = scene.case_id end
         if not reportId and scene.report_id then reportId = scene.report_id end
+    end
+
+    local linksOk, linksError = validateCaseAndReport(caseId, reportId)
+    if not linksOk then
+        return { success = false, error = linksError }
+    end
+
+    local duplicateEvidence = MySQL.scalar.await([[
+        SELECT id
+        FROM forensic_evidence
+        WHERE type = ?
+          AND IFNULL(scene_id, 0) = IFNULL(?, 0)
+          AND ABS(IFNULL(collection_x, 0) - IFNULL(?, 0)) < 1.0
+          AND ABS(IFNULL(collection_y, 0) - IFNULL(?, 0)) < 1.0
+          AND TIMESTAMPDIFF(SECOND, created_at, NOW()) <= 180
+        ORDER BY id DESC
+        LIMIT 1
+    ]], { evidenceType, sceneId, data.x or 0.0, data.y or 0.0 })
+    if duplicateEvidence then
+        return { success = false, error = L('evidence.errors.already_collected') }
     end
 
     local sealNumber = generateUniqueSealNumber()
