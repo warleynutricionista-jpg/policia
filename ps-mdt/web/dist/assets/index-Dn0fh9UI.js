@@ -35538,7 +35538,7 @@ function wI(n, e) {
           for (const ye of ve.vehicles || []) {
             const xe = I(ye.coords);
             if (!xe) continue;
-            const je = `Veículo ${ye.plate || ""}`.trim();
+            const je = `Veículo ${ye.plate || ""}${ye.callsign ? ` · ${ye.callsign}` : ""}${ye.officerName ? ` · ${ye.officerName}` : ""}`.trim();
             A("vehicle", xe, je).addTo(_);
           }
         if (o(u))

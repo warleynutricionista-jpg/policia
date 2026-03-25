@@ -4,287 +4,84 @@ local trackingCache = {
     expiresAt = 0,
 }
 
-local function getCoreObject()
-    local okQbx, qbx = pcall(function() return exports['qbx_core']:GetCoreObject() end)
-    if okQbx and qbx then return qbx end
-    local okQb, qb = pcall(function() return exports['qb-core']:GetCoreObject() end)
-    if okQb and qb then return qb end
-    return nil
-end
+local function getOnDutyOfficerSnapshots()
+    local ok, snapshots = pcall(function()
+        return exports[resourceName]:GetOnDutyOfficerSnapshots()
+    end)
 
-local function getOnlinePlayerObjects(QBCore)
-    local players = {}
-    if QBCore and QBCore.Functions then
-        if QBCore.Functions.GetQBPlayers then
-            local ok, qbPlayers = pcall(QBCore.Functions.GetQBPlayers)
-            if ok and qbPlayers then
-                for src, player in pairs(qbPlayers) do
-                    -- QBox may return PlayerData directly or a Player object with .PlayerData
-                    if player then
-                        -- Ensure source is available on the player data
-                        if type(player) == 'table' then
-                            if player.PlayerData then
-                                -- Standard QBCore: player object with .PlayerData
-                                if not player.PlayerData.source then
-                                    player.PlayerData.source = tonumber(src)
-                                end
-                            elseif player.citizenid then
-                                -- QBox may return PlayerData table directly
-                                player = { PlayerData = player, source = tonumber(src) }
-                                if not player.PlayerData.source then
-                                    player.PlayerData.source = tonumber(src)
-                                end
-                            end
-                        end
-                        players[#players + 1] = player
-                    end
-                end
-                if #players > 0 then
-                    return players
-                end
-            end
-        end
-
-        if QBCore.Functions.GetPlayers and QBCore.Functions.GetPlayer then
-            local ok, ids = pcall(QBCore.Functions.GetPlayers)
-            if ok and ids then
-                for _, id in ipairs(ids) do
-                    local okP, player = pcall(QBCore.Functions.GetPlayer, id)
-                    if okP and player then
-                        if player.PlayerData and not player.PlayerData.source then
-                            player.PlayerData.source = tonumber(id)
-                        end
-                        players[#players + 1] = player
-                    end
-                end
-            end
-        end
+    if not ok or type(snapshots) ~= 'table' then
+        return {}
     end
-    return players
+
+    return snapshots
 end
 
-local function getPlayerSource(player, data)
-    return tonumber(data and data.source)
-        or tonumber(player and player.source)
-        or tonumber(player and player.PlayerData and player.PlayerData.source)
-        or tonumber(data and data.playerid)
-        or tonumber(data and data.id)
-        or tonumber(player and player.PlayerData and player.PlayerData.playerid)
-        or tonumber(player and player.PlayerData and player.PlayerData.id)
-end
-
-local function getFullName(data)
-    local ci = data and data.charinfo or nil
-    local first = ci and ci.firstname or ''
-    local last = ci and ci.lastname or ''
-    local name = (tostring(first) .. ' ' .. tostring(last)):gsub('^%s*(.-)%s*$', '%1')
-    if name == '' then return 'Desconhecido' end
-    return name
-end
-
-local function getOfficerTrackers()
+local function getOfficerTrackers(officerSnapshots)
     local officers = {}
-    local QBCore = getCoreObject()
 
-    if QBCore and QBCore.Functions then
-        local players = getOnlinePlayerObjects(QBCore)
-        for _, player in pairs(players) do
-            local data = player.PlayerData
-            if data and data.job then
-                local isOnDuty = data.job.onduty == true or data.job.onduty == 1
-                if isOnDuty and IsPoliceJob(data.job.name, data.job.type) then
-                    local src = getPlayerSource(player, data)
-                    if src then
-                        local okPed, ped = pcall(GetPlayerPed, src)
-                        ped = (okPed and ped) or 0
-                        if ped ~= 0 then
-                            local okCoords, coords = pcall(GetEntityCoords, ped)
-                            if okCoords and coords then
-                                local coordsTable = { x = coords.x, y = coords.y, z = coords.z }
-                                local okHeading, heading = pcall(GetEntityHeading, ped)
-                                heading = (okHeading and heading) or 0.0
-                                officers[#officers + 1] = {
-                                    citizenid = data.citizenid,
-                                    name = getFullName(data),
-                                    callsign = data.metadata and data.metadata.callsign or nil,
-                                    rank = data.job.grade and data.job.grade.name or 'Oficial',
-                                    coords = coordsTable,
-                                    heading = heading,
-                                }
-                            end
-                        end
-                    end
-                end
-            end
-        end
-        return officers
-    end
-
-    if ps and ps.getAllPlayers then
-        local players = ps.getAllPlayers() or {}
-        for _, playerId in pairs(players) do
-            if ps.getJobDuty and ps.getJobDuty(playerId) then
-                local jobName = ps.getJobName and ps.getJobName(playerId) or nil
-                local jobType = ps.getJobType and ps.getJobType(playerId) or nil
-                if IsPoliceJob(jobName, jobType) then
-                    local ped = GetPlayerPed(playerId)
-                    if ped and ped ~= 0 then
-                        local coords = GetEntityCoords(ped)
-                        local coordsTable = { x = coords.x, y = coords.y, z = coords.z }
-                        local heading = GetEntityHeading(ped)
-                        officers[#officers + 1] = {
-                            citizenid = ps.getIdentifier and ps.getIdentifier(playerId) or nil,
-                            name = ps.getPlayerName and ps.getPlayerName(playerId) or GetPlayerName(playerId) or 'Desconhecido',
-                            callsign = ps.getMetadata and ps.getMetadata(playerId, 'callsign') or nil,
-                            rank = ps.getJobGradeName and ps.getJobGradeName(playerId) or 'Oficial',
-                            coords = coordsTable,
-                            heading = heading,
-                        }
-                    end
-                end
-            end
-        end
+    for _, officer in ipairs(officerSnapshots) do
+        officers[#officers + 1] = {
+            citizenid = officer.citizenid,
+            name = officer.name,
+            callsign = officer.callsign,
+            rank = officer.rank,
+            coords = officer.coords,
+            heading = officer.heading,
+        }
     end
 
     return officers
 end
 
-local function getVehicleTrackers()
-    local vehicles = {}
-    local seen = {}
-    local QBCore = getCoreObject()
+local function getBodycamTrackers(officerSnapshots)
+    local bodycams = {}
 
-    if QBCore and QBCore.Functions then
-        local players = getOnlinePlayerObjects(QBCore)
-        for _, player in pairs(players) do
-            local data = player.PlayerData
-            if data and data.job then
-                local isOnDuty = data.job.onduty == true or data.job.onduty == 1
-                if isOnDuty and IsPoliceJob(data.job.name, data.job.type) then
-                    local src = getPlayerSource(player, data)
-                    if src then
-                        local okPed, ped = pcall(GetPlayerPed, src)
-                        ped = (okPed and ped) or 0
-                        if ped ~= 0 then
-                            local okVeh, veh = pcall(GetVehiclePedIsIn, ped, false)
-                            veh = (okVeh and veh) or 0
-                            if veh ~= 0 and not seen[veh] then
-                                seen[veh] = true
-                                local okCoords, coords = pcall(GetEntityCoords, veh)
-                                if okCoords and coords then
-                                    local coordsTable = { x = coords.x, y = coords.y, z = coords.z }
-                                    local okHeading, heading = pcall(GetEntityHeading, veh)
-                                    heading = (okHeading and heading) or 0.0
-                                    local okPlate, plate = pcall(GetVehicleNumberPlateText, veh)
-                                    plate = (okPlate and plate) or ''
-                                    vehicles[#vehicles + 1] = {
-                                        plate = plate,
-                                        coords = coordsTable,
-                                        heading = heading,
-                                    }
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
+    for _, officer in ipairs(officerSnapshots) do
+        bodycams[#bodycams + 1] = {
+            citizenid = officer.citizenid,
+            name = officer.name,
+            callsign = officer.callsign,
+            coords = officer.coords,
+            heading = officer.heading,
+        }
     end
 
-    if #vehicles == 0 and ps and ps.getAllPlayers then
-        local players = ps.getAllPlayers() or {}
-        for _, playerId in pairs(players) do
-            if ps.getJobDuty and ps.getJobDuty(playerId) then
-                local jobName = ps.getJobName and ps.getJobName(playerId) or nil
-                local jobType = ps.getJobType and ps.getJobType(playerId) or nil
-                if IsPoliceJob(jobName, jobType) then
-                    local ped = GetPlayerPed(playerId)
-                    if ped and ped ~= 0 then
-                        local veh = GetVehiclePedIsIn(ped, false)
-                        if veh and veh ~= 0 and not seen[veh] then
-                            seen[veh] = true
-                            local coords = GetEntityCoords(veh)
-                            local coordsTable = { x = coords.x, y = coords.y, z = coords.z }
-                            local heading = GetEntityHeading(veh)
-                            local plate = GetVehicleNumberPlateText(veh)
-                            vehicles[#vehicles + 1] = {
-                                plate = plate,
-                                coords = coordsTable,
-                                heading = heading,
-                            }
-                        end
-                    end
+    return bodycams
+end
+
+local function getVehicleTrackers(officerSnapshots)
+    local vehicles = {}
+    local seenVehicles = {}
+
+    for _, officer in ipairs(officerSnapshots) do
+        local ped = officer.ped or GetPlayerPed(officer.source)
+        if ped and ped ~= 0 then
+            local vehicle = GetVehiclePedIsIn(ped, false)
+            if vehicle and vehicle ~= 0 and not seenVehicles[vehicle] then
+                seenVehicles[vehicle] = true
+
+                local vehicleClass = GetVehicleClass(vehicle)
+                local isEmergency = vehicleClass == 18
+                local hasPoliceSiren = IsVehicleSirenOn(vehicle) or IsVehicleSirenAudioOn(vehicle)
+
+                if isEmergency or hasPoliceSiren then
+                    local coords = GetEntityCoords(vehicle)
+                    local heading = GetEntityHeading(vehicle)
+                    local plate = (GetVehicleNumberPlateText(vehicle) or ''):gsub('^%s*(.-)%s*$', '%1')
+
+                    vehicles[#vehicles + 1] = {
+                        plate = plate,
+                        coords = { x = coords.x, y = coords.y, z = coords.z },
+                        heading = heading,
+                        officerName = officer.name,
+                        callsign = officer.callsign,
+                    }
                 end
             end
         end
     end
 
     return vehicles
-end
-
-local function getBodycamTrackers()
-    local bodycams = {}
-    local QBCore = getCoreObject()
-
-    if QBCore and QBCore.Functions then
-        local players = getOnlinePlayerObjects(QBCore)
-        for _, player in pairs(players) do
-            local data = player.PlayerData
-            if data and data.job then
-                local isOnDuty = data.job.onduty == true or data.job.onduty == 1
-                if isOnDuty and IsPoliceJob(data.job.name, data.job.type) then
-                    local src = getPlayerSource(player, data)
-                    if src then
-                        local okPed, ped = pcall(GetPlayerPed, src)
-                        ped = (okPed and ped) or 0
-                        if ped ~= 0 then
-                            local okCoords, coords = pcall(GetEntityCoords, ped)
-                            if okCoords and coords then
-                                local coordsTable = { x = coords.x, y = coords.y, z = coords.z }
-                                local okHeading, heading = pcall(GetEntityHeading, ped)
-                                heading = (okHeading and heading) or 0.0
-                                bodycams[#bodycams + 1] = {
-                                    citizenid = data.citizenid,
-                                    name = getFullName(data),
-                                    callsign = data.metadata and data.metadata.callsign or nil,
-                                    coords = coordsTable,
-                                    heading = heading,
-                                }
-                            end
-                        end
-                    end
-                end
-            end
-        end
-        return bodycams
-    end
-
-    if ps and ps.getAllPlayers then
-        local players = ps.getAllPlayers() or {}
-        for _, playerId in pairs(players) do
-            if ps.getJobDuty and ps.getJobDuty(playerId) then
-                local jobName = ps.getJobName and ps.getJobName(playerId) or nil
-                local jobType = ps.getJobType and ps.getJobType(playerId) or nil
-                if IsPoliceJob(jobName, jobType) then
-                    local ped = GetPlayerPed(playerId)
-                    if ped and ped ~= 0 then
-                        local coords = GetEntityCoords(ped)
-                        local coordsTable = { x = coords.x, y = coords.y, z = coords.z }
-                        local heading = GetEntityHeading(ped)
-                        bodycams[#bodycams + 1] = {
-                            citizenid = ps.getIdentifier and ps.getIdentifier(playerId) or nil,
-                            name = ps.getPlayerName and ps.getPlayerName(playerId) or GetPlayerName(playerId) or 'Desconhecido',
-                            callsign = ps.getMetadata and ps.getMetadata(playerId, 'callsign') or nil,
-                            coords = coordsTable,
-                            heading = heading,
-                        }
-                    end
-                end
-            end
-        end
-    end
-
-    return bodycams
 end
 
 ps.registerCallback(resourceName .. ':server:getTracking', function(source)
@@ -296,11 +93,13 @@ ps.registerCallback(resourceName .. ':server:getTracking', function(source)
         return trackingCache.payload
     end
 
+    local snapshots = getOnDutyOfficerSnapshots()
     local payload = {
-        officers = getOfficerTrackers(),
-        vehicles = getVehicleTrackers(),
-        bodycams = getBodycamTrackers(),
+        officers = getOfficerTrackers(snapshots),
+        vehicles = getVehicleTrackers(snapshots),
+        bodycams = getBodycamTrackers(snapshots),
     }
+
     trackingCache.payload = payload
     trackingCache.expiresAt = now + 1000
 
