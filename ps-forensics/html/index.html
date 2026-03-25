@@ -126,7 +126,7 @@
                 <div class="tab-header">
                     <h2><i class="fas fa-hand-dots"></i> Impressões Digitais</h2>
                     <div class="tab-actions">
-                        <input type="text" id="fpSearch" placeholder="Buscar por cidadão..." class="search-input">
+                        <input type="text" id="fpSearch" placeholder="Buscar por cidadão..." class="search-input" onkeyup="loadFingerprints()">
                         <button class="btn-primary" onclick="showRegisterFingerprint()"><i class="fas fa-plus"></i> Cadastrar Digital</button>
                     </div>
                 </div>
@@ -138,7 +138,7 @@
                 <div class="tab-header">
                     <h2><i class="fas fa-dna"></i> Análise de DNA</h2>
                     <div class="tab-actions">
-                        <input type="text" id="dnaSearch" placeholder="Buscar por cidadão..." class="search-input">
+                        <input type="text" id="dnaSearch" placeholder="Buscar por cidadão..." class="search-input" onkeyup="loadDNA()">
                         <button class="btn-primary" onclick="showRegisterDNA()"><i class="fas fa-plus"></i> Cadastrar Perfil</button>
                     </div>
                 </div>
@@ -150,7 +150,7 @@
                 <div class="tab-header">
                     <h2><i class="fas fa-crosshairs"></i> Balística</h2>
                     <div class="tab-actions">
-                        <input type="text" id="ballisticSearch" placeholder="Buscar por serial..." class="search-input">
+                        <input type="text" id="ballisticSearch" placeholder="Buscar por serial..." class="search-input" onkeyup="loadBallistics()">
                     </div>
                 </div>
                 <div id="ballisticsList" class="items-grid"></div>

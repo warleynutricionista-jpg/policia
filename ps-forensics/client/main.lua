@@ -268,10 +268,25 @@ RegisterNUICallback('registerDNA', function(data, cb)
     cb(result)
 end)
 
+RegisterNUICallback('searchFingerprintsByCitizen', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:searchFingerprintsByCitizen', false, data.citizenid)
+    cb(result or {})
+end)
+
+RegisterNUICallback('searchDNAByCitizen', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:searchDNAByCitizen', false, data.citizenid)
+    cb(result or {})
+end)
+
 -- Balística
 RegisterNUICallback('registerBallistic', function(data, cb)
     local result = lib.callback.await(resourceName .. ':server:registerBallistic', false, data)
     cb(result)
+end)
+
+RegisterNUICallback('getWeaponBallisticHistory', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:getWeaponBallisticHistory', false, data.serial)
+    cb(result or {})
 end)
 
 RegisterNUICallback('ballisticComparison', function(data, cb)
@@ -326,6 +341,11 @@ end)
 
 RegisterNUICallback('confirmDrug', function(data, cb)
     local result = lib.callback.await(resourceName .. ':server:confirmDrugSubstance', false, data.id, data.substance, data.purity, data.result)
+    cb(result)
+end)
+
+RegisterNUICallback('getDrugAnalyses', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:getDrugAnalyses', false, data)
     cb(result)
 end)
 
@@ -414,6 +434,52 @@ end)
 
 RegisterNUICallback('getInvestigationDashboard', function(data, cb)
     local result = lib.callback.await(resourceName .. ':server:getInvestigationDashboard', false, data.citizenid)
+    cb(result)
+end)
+
+-- Integração MDT / sistema policial
+RegisterNUICallback('getForensicDataByCase', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:getForensicDataByCase', false, data.caseId)
+    cb(result)
+end)
+
+RegisterNUICallback('getForensicDataByReport', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:getForensicDataByReport', false, data.reportId)
+    cb(result)
+end)
+
+RegisterNUICallback('getForensicDataByCitizen', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:getForensicDataByCitizen', false, data.citizenid)
+    cb(result)
+end)
+
+RegisterNUICallback('getForensicDataByWeapon', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:getForensicDataByWeapon', false, data.serial)
+    cb(result)
+end)
+
+RegisterNUICallback('getForensicDataByVehicle', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:getForensicDataByVehicle', false, data.plate)
+    cb(result)
+end)
+
+RegisterNUICallback('getForensicDataByEvidence', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:getForensicDataByEvidence', false, data.evidenceId)
+    cb(result)
+end)
+
+RegisterNUICallback('searchForensicGlobal', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:searchForensicGlobal', false, data)
+    cb(result)
+end)
+
+RegisterNUICallback('getMDTIntegrationBundle', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:getMDTIntegrationBundle', false, data)
+    cb(result)
+end)
+
+RegisterNUICallback('getForensicStats', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:getForensicStats', false)
     cb(result)
 end)
 
