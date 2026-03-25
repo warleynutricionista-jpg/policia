@@ -91,6 +91,13 @@ ps.registerCallback(resourceName .. ':server:getCases', function(source, page, f
         clauses[#clauses + 1] = 'assigned_department = ?'
         values[#values + 1] = filters.department
     end
+    if filters.query and tostring(filters.query):match('%S') then
+        local q = ('%%%s%%'):format(tostring(filters.query):match('^%s*(.-)%s*$'))
+        clauses[#clauses + 1] = '(mc.case_number LIKE ? OR mc.title LIKE ? OR CAST(mc.id AS CHAR) LIKE ?)'
+        values[#values + 1] = q
+        values[#values + 1] = q
+        values[#values + 1] = q
+    end
 
     local whereClause = ''
     if #clauses > 0 then

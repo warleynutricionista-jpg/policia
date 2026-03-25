@@ -400,8 +400,23 @@ ps.registerCallback(resourceName .. ':server:getReports', function(source, page,
 	for _, value in ipairs(filterValues or {}) do
 		params[#params + 1] = value
 	end
-	local reports = MySQL.query.await(reportsQuery, params)
-	return reports
+	local reports = MySQL.query.await(reportsQuery, params) or {}
+
+    local countQuery = ([[
+        SELECT COUNT(DISTINCT mr.id) AS total
+        FROM mdt_reports AS mr
+        LEFT JOIN mdt_reports_restrictions AS mrr ON mr.id = mrr.reportid
+        WHERE %s%s
+    ]]):format(buildReportAccessClause(), filterClause)
+    local total = MySQL.scalar.await(countQuery, params) or 0
+
+	return {
+        reports = reports,
+        page = pageNumber,
+        limit = limit,
+        total = tonumber(total) or 0,
+        hasMore = (offset + #reports) < (tonumber(total) or 0)
+    }
 end)
 
 ps.registerCallback(resourceName..':server:getReport', function(source, reportid)
@@ -596,8 +611,14 @@ ps.registerCallback(resourceName .. ':server:searchOfficers', function(source, q
     local src = source
     if not CheckAuth(src) then return {} end
 
-    query = tostring(query or '')
-    local trimmedQuery = query:match('^%s*(.-)%s*$') or ''
+    local payload = query
+    if type(payload) ~= 'table' then
+        payload = { query = payload }
+    end
+
+    local page = math.max(1, tonumber(payload.page) or 1)
+    local limit = math.min(math.max(1, tonumber(payload.limit) or (Config.Pagination and Config.Pagination.Officers or 25)), 100)
+    local trimmedQuery = tostring(payload.query or ''):match('^%s*(.-)%s*$') or ''
     local hasSearch = trimmedQuery ~= ''
     local likeQuery = '%' .. trimmedQuery .. '%'
 
@@ -607,7 +628,20 @@ ps.registerCallback(resourceName .. ':server:searchOfficers', function(source, q
         })
     end
 
-    return searchOfficerDirectory(trimmedQuery)
+    local matched = searchOfficerDirectory(trimmedQuery)
+    local offset = (page - 1) * limit
+    local paged = {}
+    for i = offset + 1, math.min(#matched, offset + limit) do
+        paged[#paged + 1] = matched[i]
+    end
+
+    return {
+        officers = paged,
+        page = page,
+        limit = limit,
+        total = #matched,
+        hasMore = (offset + limit) < #matched
+    }
 end)
 
 ps.registerCallback(resourceName .. ':server:searchVehiclesForReport', function(source, query)

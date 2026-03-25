@@ -162,6 +162,9 @@ Config.Pagination = {
     Citizens = 20, -- Citizens per page
     CitizenSearch = 20, -- Max citizen search results
     Cases = 20, -- Cases per page
+    Vehicles = 25, -- Vehicles per page
+    Weapons = 25, -- Weapons per page
+    Officers = 25, -- Officers per page
 }
 
 -- Fine Processing

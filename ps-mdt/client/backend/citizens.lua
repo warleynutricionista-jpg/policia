@@ -1,4 +1,10 @@
 local resourceName = tostring(GetCurrentResourceName())
+local citizenSearchState = {
+    lastQuery = '',
+    lastAt = 0,
+    lastResult = { citizens = {}, page = 1, limit = 20, total = 0, hasMore = false }
+}
+local SEARCH_DEBOUNCE_MS = 250
 
 RegisterNUICallback('getCitizens', function(data, cb)
     if not MDTOpen then cb({}) return end
@@ -6,9 +12,9 @@ RegisterNUICallback('getCitizens', function(data, cb)
         data = {page = 1}
     end
     local page = data.page or 1 -- Default to page 1 if not provided
-    local result = ps.callback(resourceName..':server:getCitizens', page)
+    local result = ps.callback(resourceName..':server:getCitizens', { page = page, limit = data.limit })
     ps.debug(('[getCitizens] Triggered NUI callback on client for page %d'):format(page), result)
-    cb(result)
+    cb(result or { citizens = {}, page = page, limit = data.limit or 20, total = 0, hasMore = false })
 end)
 
 RegisterNUICallback('searchCitizens', function(data, cb)
@@ -19,11 +25,27 @@ RegisterNUICallback('searchCitizens', function(data, cb)
     end
     local query = tostring(data.query)
     if #query < 2 then
-        cb({})
+        citizenSearchState.lastResult = { citizens = {}, page = 1, limit = data.limit or 20, total = 0, hasMore = false }
+        cb(citizenSearchState.lastResult)
         return
     end
-    local result = ps.callback(resourceName..':server:searchCitizens', query)
-    cb(result)
+
+    local now = GetGameTimer()
+    if citizenSearchState.lastQuery == query and (now - citizenSearchState.lastAt) < SEARCH_DEBOUNCE_MS then
+        cb(citizenSearchState.lastResult)
+        return
+    end
+
+    local result = ps.callback(resourceName..':server:searchCitizens', {
+        query = query,
+        page = data.page or 1,
+        limit = data.limit
+    })
+
+    citizenSearchState.lastQuery = query
+    citizenSearchState.lastAt = now
+    citizenSearchState.lastResult = result or { citizens = {}, page = data.page or 1, limit = data.limit or 20, total = 0, hasMore = false }
+    cb(citizenSearchState.lastResult)
 end)
 
 RegisterNUICallback('getBolos', function(data, cb)
