@@ -50,6 +50,24 @@ local function normalizeResultLevel(level)
     return VALID_RESULT_LEVELS[l] and l or 'inconclusivo'
 end
 
+local function getProcessingTier(seconds)
+    local s = tonumber(seconds) or 0
+    if s <= 15 then return 'simples' end
+    if s <= 60 then return 'medio' end
+    return 'complexo'
+end
+
+local function getUnixFromSQLTimestamp(ts)
+    if not ts or ts == '' then return nil end
+    if type(ts) == 'number' then return ts end
+    local y, m, d, h, mi, s = tostring(ts):match('^(%d+)%-(%d+)%-(%d+)%s+(%d+):(%d+):(%d+)')
+    if not y then return nil end
+    return os.time({
+        year = tonumber(y), month = tonumber(m), day = tonumber(d),
+        hour = tonumber(h), min = tonumber(mi), sec = tonumber(s),
+    })
+end
+
 -- ============================================================
 -- SOLICITAR TESTE
 -- ============================================================
@@ -78,13 +96,16 @@ lib.callback.register(resourceName .. ':server:requestLabTest', function(source,
         return { success = false, error = L('lab.errors.missing_required_item', requiredItem) }
     end
 
+    local processingSeconds = Config.TestProcessingTimes[data.test_type] or 0
+    local processingTier = getProcessingTier(processingSeconds)
+
     local testId = MySQL.insert.await([[
         INSERT INTO forensic_lab_tests
         (evidence_id, scene_id, test_type, test_name, description,
          target_citizenid, target_name, target_vehicle, target_weapon_serial,
-         result_level, processing_time_minutes,
+         result_level, processing_time_minutes, processing_time_seconds, processing_tier,
          requested_by, requested_by_name, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendente', ?, ?, ?, 'solicitado')
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendente', ?, ?, ?, ?, ?, ?, 'solicitado')
     ]], {
         data.evidence_id and tonumber(data.evidence_id) or nil,
         data.scene_id and tonumber(data.scene_id) or nil,
@@ -95,7 +116,9 @@ lib.callback.register(resourceName .. ':server:requestLabTest', function(source,
         data.target_name or nil,
         data.target_vehicle or nil,
         data.target_weapon_serial or nil,
-        Config.TestProcessingTimes[data.test_type] and math.ceil(Config.TestProcessingTimes[data.test_type] / 60) or 0,
+        processingSeconds > 0 and math.ceil(processingSeconds / 60) or 0,
+        processingSeconds,
+        processingTier,
         playerData.citizenid,
         playerData.name,
     })
@@ -140,13 +163,45 @@ lib.callback.register(resourceName .. ':server:performLabTest', function(source,
         return { success = false, error = L('lab.errors.missing_required_item', requiredItem) }
     end
 
-    -- Marcar como em andamento
-    MySQL.update.await([[
-        UPDATE forensic_lab_tests
-        SET status = 'em_andamento', started_at = NOW(),
-            performed_by = ?, performed_by_name = ?
-        WHERE id = ?
-    ]], { playerData.citizenid, playerData.name, testId })
+    local processingSeconds = tonumber(test.processing_time_seconds)
+    if not processingSeconds then
+        processingSeconds = (tonumber(test.processing_time_minutes) or 0) * 60
+    end
+    local processingTier = test.processing_tier or getProcessingTier(processingSeconds)
+
+    local startedUnix = getUnixFromSQLTimestamp(test.started_at)
+    if not startedUnix then
+        MySQL.update.await([[
+            UPDATE forensic_lab_tests
+            SET status = 'em_andamento', started_at = NOW(),
+                available_at = DATE_ADD(NOW(), INTERVAL ? SECOND),
+                processing_time_seconds = ?, processing_tier = ?,
+                performed_by = ?, performed_by_name = ?
+            WHERE id = ?
+        ]], { processingSeconds, processingSeconds, processingTier, playerData.citizenid, playerData.name, testId })
+
+        startedUnix = os.time()
+        if processingSeconds > 15 then
+            return {
+                success = true,
+                pending = true,
+                processingTier = processingTier,
+                waitSeconds = processingSeconds,
+                message = ('Exame iniciado (%s). Retorne após o tempo de processamento.'):format(processingTier),
+            }
+        end
+    elseif processingSeconds > 0 then
+        local elapsed = os.time() - startedUnix
+        if elapsed < processingSeconds then
+            return {
+                success = true,
+                pending = true,
+                processingTier = processingTier,
+                waitSeconds = processingSeconds - elapsed,
+                message = ('Exame em processamento (%s).'):format(processingTier),
+            }
+        end
+    end
 
     -- Simular resultado baseado no tipo de teste
     local resultLevel, resultDetails = SimulateTestResult(test)
@@ -218,6 +273,7 @@ lib.callback.register(resourceName .. ':server:performLabTest', function(source,
         success = true,
         resultLevel = resultLevel,
         resultDetails = resultDetails,
+        processingTier = processingTier,
     }
 end)
 
@@ -387,12 +443,15 @@ lib.callback.register(resourceName .. ':server:setTestResult', function(source, 
     testId = tonumber(testId)
     local playerData = GetPlayerData(src)
 
+    resultLevel = normalizeResultLevel(resultLevel)
+    local processingSeconds = Config.TestProcessingTimes[(MySQL.single.await('SELECT test_type FROM forensic_lab_tests WHERE id = ?', { testId }) or {}).test_type or ''] or 0
     MySQL.update.await([[
         UPDATE forensic_lab_tests
         SET result_level = ?, result_details = ?, status = 'concluido',
-            completed_at = NOW(), performed_by = ?, performed_by_name = ?
+            completed_at = NOW(), processing_time_seconds = ?, processing_tier = ?,
+            performed_by = ?, performed_by_name = ?
         WHERE id = ?
-    ]], { resultLevel, resultDetails, playerData.citizenid, playerData.name, testId })
+    ]], { resultLevel, resultDetails, processingSeconds, getProcessingTier(processingSeconds), playerData.citizenid, playerData.name, testId })
 
     ForensicAuditLog(src, 'test_result_set', 'lab_test', testId, {
         resultLevel = resultLevel,

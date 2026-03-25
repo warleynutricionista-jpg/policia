@@ -106,12 +106,28 @@ local actionByStatus = {
 }
 
 local function recordCustody(evidenceId, action, fromCitizenId, fromName, toCitizenId, toName, location, notes)
+    local previousHash = MySQL.scalar.await(
+        'SELECT integrity_hash FROM forensic_chain_of_custody WHERE evidence_id = ? ORDER BY id DESC LIMIT 1',
+        { evidenceId }
+    )
+    local raw = table.concat({
+        tostring(evidenceId or ''),
+        tostring(action or ''),
+        tostring(fromCitizenId or ''),
+        tostring(toCitizenId or ''),
+        tostring(location or ''),
+        tostring(notes or ''),
+        tostring(previousHash or ''),
+        tostring(os.time()),
+    }, '|')
+    local integrityHash = MySQL.scalar.await('SELECT SHA2(?, 256)', { raw })
+
     return MySQL.insert.await([[
         INSERT INTO forensic_chain_of_custody
-        (evidence_id, action, from_citizenid, from_name, to_citizenid, to_name, location, notes)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        (evidence_id, action, from_citizenid, from_name, to_citizenid, to_name, location, notes, integrity_hash, previous_integrity_hash)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ]], {
-        evidenceId, action, fromCitizenId, fromName, toCitizenId, toName, location or '', notes or ''
+        evidenceId, action, fromCitizenId, fromName, toCitizenId, toName, location or '', notes or '', integrityHash, previousHash
     })
 end
 
@@ -232,14 +248,18 @@ lib.callback.register(resourceName .. ':server:collectEvidence', function(source
     -- Registrar na cadeia de custódia
     MySQL.insert.await([[
         INSERT INTO forensic_chain_of_custody
-        (evidence_id, action, to_citizenid, to_name, location, notes)
-        VALUES (?, 'coletada', ?, ?, ?, ?)
+        (evidence_id, action, to_citizenid, to_name, location, notes, integrity_hash, previous_integrity_hash)
+        VALUES (?, 'coletada', ?, ?, ?, ?, SHA2(CONCAT(?, '|coletada|', COALESCE(?, ''), '|', COALESCE(?, ''), '|', COALESCE(?, '')), 256), NULL)
     ]], {
         evidenceId,
         playerData.citizenid,
         playerData.name,
         locationName,
         L('evidence.custody.initial_collect', sealNumber),
+        evidenceId,
+        playerData.citizenid,
+        locationName,
+        sealNumber,
     })
 
     -- Sincronizar com mdt_evidence_items do ps-mdt
@@ -268,6 +288,12 @@ lib.callback.register(resourceName .. ':server:collectEvidence', function(source
             VALUES (?, NULL, ?, 'collected', ?)
         ]], { mdtEvidenceId, playerData.citizenid, ('Evidência forense #%s coletada'):format(evidenceNumber) })
     end
+
+    MySQL.update.await([[
+        UPDATE forensic_evidence
+        SET current_holder_citizenid = ?, current_holder_name = ?, sealed_at = NOW()
+        WHERE id = ?
+    ]], { playerData.citizenid, playerData.name, evidenceId })
 
     ForensicAuditLog(src, 'evidence_collected', 'evidence', evidenceId, {
         evidenceNumber = evidenceNumber,
@@ -458,8 +484,14 @@ lib.callback.register(resourceName .. ':server:updateEvidence', function(source,
         local newSeal = generateUniqueSealNumber()
         updates[#updates + 1] = 'seal_number = ?'
         values[#values + 1] = newSeal
+        updates[#updates + 1] = 'sealed_at = NOW()'
         evidence.seal_number = newSeal
     end
+
+    updates[#updates + 1] = 'current_holder_citizenid = ?'
+    values[#values + 1] = playerData.citizenid
+    updates[#updates + 1] = 'current_holder_name = ?'
+    values[#values + 1] = playerData.name
 
     values[#values + 1] = evidenceId
     MySQL.update.await(('UPDATE forensic_evidence SET %s WHERE id = ?'):format(table.concat(updates, ', ')), values)
@@ -546,8 +578,8 @@ lib.callback.register(resourceName .. ':server:transferEvidence', function(sourc
     )
 
     MySQL.update.await(
-        'UPDATE forensic_evidence SET status = ? WHERE id = ?',
-        { 'armazenada', evidenceId }
+        'UPDATE forensic_evidence SET status = ?, current_holder_citizenid = ?, current_holder_name = ? WHERE id = ?',
+        { 'armazenada', toCitizenId, toName, evidenceId }
     )
 
     ForensicAuditLog(src, 'evidence_transferred', 'evidence', evidenceId, {
