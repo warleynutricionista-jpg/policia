@@ -2967,6 +2967,20 @@ const wi = {
     Câmeras: "Cameras",
     Configurações: "Settings",
     Preferências: "Preferences",
+    Dashboard: "Painel",
+    Citizens: "Citizens",
+    Vehicles: "Veículos",
+    Weapons: "Armas",
+    Evidence: "Evidência",
+    Reports: "Reports",
+    Warrants: "Mandados",
+    Charges: "Infrações",
+    Awards: "Awards",
+    Roster: "Escala",
+    Cameras: "Cameras",
+    Bodycams: "Bodycams",
+    Management: "Settings",
+    Settings: "Preferences",
   },
   Hs = {
     INVALID_ID_FORMAT:
@@ -2993,7 +3007,12 @@ function W1(n) {
   return wi.FORBIDDEN_NAME_CHARS.some((e) => n.includes(e));
 }
 function kp(n) {
-  return wi.ALLOWED_TABS.includes(Ty0[n] || n);
+  if (typeof n != "string") return !1;
+  const e = n.trim(),
+    t = Ty0[e] || e;
+  if (wi.ALLOWED_TABS.includes(t)) return !0;
+  const s = t.toLowerCase();
+  return wi.ALLOWED_TABS.some((i) => i.toLowerCase() === s);
 }
 function wp(n) {
   return typeof n == "string" && wi.ALLOWED_ID_PATTERN.test(n);
@@ -3058,6 +3077,7 @@ function Z1(n) {
   return (
     e.forEach((s) => {
       s.currentTab = Ty0[s.currentTab] || s.currentTab;
+      s.data = void 0;
     }),
     e.length !== n.length &&
       console.warn(
