@@ -38,6 +38,23 @@ local function getOnlinePlayerObjects(QBCore)
     return players
 end
 
+local function getPlayerSource(player, data)
+    return tonumber(data and data.source)
+        or tonumber(player and player.source)
+        or tonumber(player and player.PlayerData and player.PlayerData.source)
+        or tonumber(player and player.PlayerData and player.PlayerData.playerid)
+        or tonumber(player and player.PlayerData and player.PlayerData.id)
+end
+
+local function getFullName(data)
+    local ci = data and data.charinfo or nil
+    local first = ci and ci.firstname or ''
+    local last = ci and ci.lastname or ''
+    local name = (tostring(first) .. ' ' .. tostring(last)):gsub('^%s*(.-)%s*$', '%1')
+    if name == '' then return 'Desconhecido' end
+    return name
+end
+
 local function getOfficerTrackers()
     local officers = {}
     local QBCore = getCoreObject()
@@ -48,15 +65,15 @@ local function getOfficerTrackers()
             local data = player.PlayerData
             if data and data.job and data.job.onduty then
                 if IsPoliceJob(data.job.name, data.job.type) then
-                    local src = data.source
-                    local ped = GetPlayerPed(src)
+                    local src = getPlayerSource(player, data)
+                    local ped = src and GetPlayerPed(src) or 0
                     if ped and ped ~= 0 then
                         local coords = GetEntityCoords(ped)
                         local coordsTable = { x = coords.x, y = coords.y, z = coords.z }
                         local heading = GetEntityHeading(ped)
                         officers[#officers + 1] = {
                             citizenid = data.citizenid,
-                            name = (data.charinfo.firstname .. ' ' .. data.charinfo.lastname),
+                            name = getFullName(data),
                             callsign = data.metadata and data.metadata.callsign or nil,
                             rank = data.job.grade and data.job.grade.name or 'Oficial',
                             coords = coordsTable,
@@ -108,7 +125,8 @@ local function getVehicleTrackers()
         for _, player in pairs(players) do
             local data = player.PlayerData
             if data and data.job and data.job.onduty and IsPoliceJob(data.job.name, data.job.type) then
-                local ped = GetPlayerPed(data.source)
+                local src = getPlayerSource(player, data)
+                local ped = src and GetPlayerPed(src) or 0
                 if ped and ped ~= 0 then
                     local veh = GetVehiclePedIsIn(ped, false)
                     if veh and veh ~= 0 and not seen[veh] then
@@ -128,6 +146,34 @@ local function getVehicleTrackers()
         end
     end
 
+    if #vehicles == 0 and ps and ps.getAllPlayers then
+        local players = ps.getAllPlayers() or {}
+        for _, playerId in pairs(players) do
+            if ps.getJobDuty and ps.getJobDuty(playerId) then
+                local jobName = ps.getJobName and ps.getJobName(playerId) or nil
+                local jobType = ps.getJobType and ps.getJobType(playerId) or nil
+                if IsPoliceJob(jobName, jobType) then
+                    local ped = GetPlayerPed(playerId)
+                    if ped and ped ~= 0 then
+                        local veh = GetVehiclePedIsIn(ped, false)
+                        if veh and veh ~= 0 and not seen[veh] then
+                            seen[veh] = true
+                            local coords = GetEntityCoords(veh)
+                            local coordsTable = { x = coords.x, y = coords.y, z = coords.z }
+                            local heading = GetEntityHeading(veh)
+                            local plate = GetVehicleNumberPlateText(veh)
+                            vehicles[#vehicles + 1] = {
+                                plate = plate,
+                                coords = coordsTable,
+                                heading = heading,
+                            }
+                        end
+                    end
+                end
+            end
+        end
+    end
+
     return vehicles
 end
 
@@ -141,14 +187,15 @@ local function getBodycamTrackers()
             local data = player.PlayerData
             if data and data.job and data.job.onduty then
                 if IsPoliceJob(data.job.name, data.job.type) then
-                    local ped = GetPlayerPed(data.source)
+                    local src = getPlayerSource(player, data)
+                    local ped = src and GetPlayerPed(src) or 0
                     if ped and ped ~= 0 then
                         local coords = GetEntityCoords(ped)
                         local coordsTable = { x = coords.x, y = coords.y, z = coords.z }
                         local heading = GetEntityHeading(ped)
                         bodycams[#bodycams + 1] = {
                             citizenid = data.citizenid,
-                            name = (data.charinfo.firstname .. ' ' .. data.charinfo.lastname),
+                            name = getFullName(data),
                             callsign = data.metadata and data.metadata.callsign or nil,
                             coords = coordsTable,
                             heading = heading,
