@@ -53,6 +53,48 @@ local function decodeJsonField(value)
     return ok and type(decoded) == 'table' and decoded or {}
 end
 
+local function canViewReports(src)
+    return CheckPermission(src, 'reports_view')
+end
+
+local function canCreateReports(src)
+    return CheckPermission(src, 'reports_create')
+end
+
+local function canEditReports(src)
+    return CheckPermission(src, 'reports_edit')
+end
+
+local function canDeleteReports(src)
+    return CheckPermission(src, 'reports_delete')
+end
+
+local function canApproveReports(src)
+    return CheckPermission(src, 'reports_approve')
+end
+
+local function canArchiveReports(src)
+    return CheckPermission(src, 'reports_archive')
+end
+
+local function canUnarchiveReports(src)
+    return CheckPermission(src, 'reports_unarchive')
+end
+
+local function canSignReports(src)
+    return CheckPermission(src, 'reports_sign')
+end
+
+local function buildDigitalSignature(identifier, reportId, content)
+    local base = ('%s|%s|%s|%s'):format(
+        tostring(identifier or 'unknown'),
+        tostring(reportId or '0'),
+        tostring(GetGameTimer()),
+        tostring(content or '')
+    )
+    return tostring(GetHashKey(base))
+end
+
 local function getOfficerEmployment(citizenid, primaryJob)
     local primaryJobName = primaryJob and primaryJob.name and tostring(primaryJob.name) or nil
     if primaryJobName and IsPoliceJob(primaryJobName, primaryJob.type) then
@@ -355,6 +397,9 @@ end
 ps.registerCallback(resourceName .. ':server:getReports', function(source, page, filters)
 	local src = source
 	if not CheckAuth(src) then return end
+    if not canViewReports(src) then
+        return { reports = {}, page = 1, limit = 20, total = 0, hasMore = false }
+    end
 
     local identifier = ps.getIdentifier(src)
     local job = ps.getJobName(src)
@@ -422,6 +467,7 @@ end)
 ps.registerCallback(resourceName..':server:getReport', function(source, reportid)
     local src = source
 	if not CheckAuth(src) then return end
+    if not canViewReports(src) then return nil end
 
 	local identifier = ps.getIdentifier(src)
     local job = ps.getJobName(src)
@@ -708,6 +754,13 @@ ps.registerCallback(resourceName..':server:saveReport', function(source, reportD
     end
 
     local reportId = reportData.report and tonumber(reportData.report.id) or nil
+    if not reportId and not canCreateReports(src) then
+        return { success = false, error = 'Sem permissão para criar relatório' }
+    end
+    if reportId and not canEditReports(src) then
+        return { success = false, error = 'Sem permissão para editar relatório' }
+    end
+
     local reportType = reportData.report and reportData.report.type or 'Incident Report'
 
     local citizenids = collectCitizenIds(reportData)
@@ -729,6 +782,14 @@ ps.registerCallback(resourceName..':server:saveReport', function(source, reportD
             ps.warn(('[Failed to save] Player [%s] %s tried to save a report (%s), but it was not found or they do not have access.')
                 :format(src, playerName, reportId))
             return { success = false, error = "Report not found or access denied" }
+        end
+
+        local current = MySQL.single.await('SELECT author, report_status FROM mdt_reports WHERE id = ? LIMIT 1', { reportId })
+        if current and current.report_status == 'archived' and not canUnarchiveReports(src) then
+            return { success = false, error = 'Relatório arquivado. Apenas cargos autorizados podem desarquivar e editar.' }
+        end
+        if current and current.report_status == 'approved' and current.author ~= identifier and not canApproveReports(src) then
+            return { success = false, error = 'Relatório aprovado só pode ser editado por aprovação hierárquica.' }
         end
     end
 
@@ -752,10 +813,22 @@ ps.registerCallback(resourceName..':server:saveReport', function(source, reportD
             return { success = false, error = 'Falha ao inserir o relatório' }
         end
         reportId = insertResult
+        MySQL.update.await([[
+            UPDATE mdt_reports
+            SET report_status = ?, requires_approval = ?
+            WHERE id = ?
+        ]], {
+            canApproveReports(src) and 'approved' or 'pending_review',
+            canApproveReports(src) and 0 or 1,
+            reportId
+        })
     else
         local updateSuccess = MySQL.update.await([[
             UPDATE mdt_reports
-            SET title = ?, type = ?, contentyjs = ?, contentplaintext = ?, author = ?, authorplaintext = ?, dateupdated = CURRENT_TIMESTAMP
+            SET title = ?, type = ?, contentyjs = ?, contentplaintext = ?, author = ?, authorplaintext = ?,
+                report_status = IF(report_status = 'archived', report_status, IF(? = 1, report_status, 'pending_review')),
+                requires_approval = IF(? = 1, 0, 1),
+                dateupdated = CURRENT_TIMESTAMP
             WHERE id = ?
         ]], {
             title,
@@ -764,6 +837,8 @@ ps.registerCallback(resourceName..':server:saveReport', function(source, reportD
             type(content) == "string" and content or json.encode(content),
             identifier,
             formatOfficerDisplayName(callsign, playerName or 'Desconhecido'),
+            canApproveReports(src) and 1 or 0,
+            canApproveReports(src) and 1 or 0,
             reportId
         })
 
@@ -960,6 +1035,11 @@ ps.registerCallback(resourceName..':server:updateReportContent', function(source
         if not checkReportAccess(src, reportId) then
             return { success = false, error = "Report not found or access denied" }
         end
+        if not canEditReports(src) then
+            return { success = false, error = 'Sem permissão para editar relatório' }
+        end
+    elseif not canCreateReports(src) then
+        return { success = false, error = 'Sem permissão para criar relatório' }
     end
 
     if not reportId then
@@ -978,6 +1058,16 @@ ps.registerCallback(resourceName..':server:updateReportContent', function(source
         if not insertResult then
             return { success = false, error = "Failed to save content" }
         end
+
+        MySQL.update.await([[
+            UPDATE mdt_reports
+            SET report_status = ?, requires_approval = ?
+            WHERE id = ?
+        ]], {
+            canApproveReports(src) and 'approved' or 'pending_review',
+            canApproveReports(src) and 0 or 1,
+            insertResult
+        })
 
         return {
             success = true,
@@ -1016,6 +1106,9 @@ ps.registerCallback(resourceName..':server:deleteReport', function(source, repor
     reportId = tonumber(reportId)
     if not reportId then
         return { success = false, error = "Missing/Invalid report ID" }
+    end
+    if not canDeleteReports(src) then
+        return { success = false, error = 'Sem permissão para excluir relatório' }
     end
 
     local playerName = ps.getPlayerName(src)
@@ -1060,6 +1153,106 @@ ps.registerCallback(resourceName..':server:deleteReport', function(source, repor
             error = "Falha ao excluir o relatório from database"
         }
     end
+end)
+
+ps.registerCallback(resourceName .. ':server:approveReport', function(source, reportId)
+    local src = source
+    if not CheckAuth(src) then return { success = false, error = 'Não autorizado' } end
+    if not canApproveReports(src) then return { success = false, error = 'Sem permissão para aprovar relatório' } end
+
+    reportId = tonumber(reportId)
+    if not reportId then return { success = false, error = 'Relatório inválido' } end
+    if not checkReportAccess(src, reportId) then return { success = false, error = 'Sem acesso ao relatório' } end
+
+    local actor = ps.getIdentifier(src)
+    MySQL.update.await([[
+        UPDATE mdt_reports
+        SET report_status = 'approved',
+            requires_approval = 0,
+            approved_by = ?,
+            approved_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+    ]], { actor, reportId })
+
+    if ps.auditLog then
+        ps.auditLog(src, 'report_approved', 'report', reportId, {})
+    end
+
+    return { success = true, reportId = reportId }
+end)
+
+ps.registerCallback(resourceName .. ':server:signReport', function(source, reportId)
+    local src = source
+    if not CheckAuth(src) then return { success = false, error = 'Não autorizado' } end
+    if not canSignReports(src) then return { success = false, error = 'Sem permissão para assinar relatório' } end
+
+    reportId = tonumber(reportId)
+    if not reportId then return { success = false, error = 'Relatório inválido' } end
+    if not checkReportAccess(src, reportId) then return { success = false, error = 'Sem acesso ao relatório' } end
+
+    local actor = ps.getIdentifier(src)
+    local signatureHash = buildDigitalSignature(actor, reportId, os.time())
+    MySQL.update.await([[
+        UPDATE mdt_reports
+        SET signed_by = ?, signed_at = CURRENT_TIMESTAMP, signature_hash = ?
+        WHERE id = ?
+    ]], { actor, signatureHash, reportId })
+
+    if ps.auditLog then
+        ps.auditLog(src, 'report_signed', 'report', reportId, { signatureHash = signatureHash })
+    end
+
+    return { success = true, reportId = reportId, signatureHash = signatureHash }
+end)
+
+ps.registerCallback(resourceName .. ':server:archiveReport', function(source, reportId)
+    local src = source
+    if not CheckAuth(src) then return { success = false, error = 'Não autorizado' } end
+    if not canArchiveReports(src) then return { success = false, error = 'Sem permissão para arquivar relatório' } end
+
+    reportId = tonumber(reportId)
+    if not reportId then return { success = false, error = 'Relatório inválido' } end
+    if not checkReportAccess(src, reportId) then return { success = false, error = 'Sem acesso ao relatório' } end
+
+    local actor = ps.getIdentifier(src)
+    MySQL.update.await([[
+        UPDATE mdt_reports
+        SET report_status = 'archived', archived_by = ?, archived_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+    ]], { actor, reportId })
+
+    if ps.auditLog then
+        ps.auditLog(src, 'report_archived', 'report', reportId, {})
+    end
+
+    return { success = true, reportId = reportId }
+end)
+
+ps.registerCallback(resourceName .. ':server:unarchiveReport', function(source, reportId)
+    local src = source
+    if not CheckAuth(src) then return { success = false, error = 'Não autorizado' } end
+    if not canUnarchiveReports(src) then return { success = false, error = 'Sem permissão para desarquivar relatório' } end
+
+    reportId = tonumber(reportId)
+    if not reportId then return { success = false, error = 'Relatório inválido' } end
+    if not checkReportAccess(src, reportId) then return { success = false, error = 'Sem acesso ao relatório' } end
+
+    local actor = ps.getIdentifier(src)
+    MySQL.update.await([[
+        UPDATE mdt_reports
+        SET report_status = 'approved',
+            archived_by = NULL,
+            archived_at = NULL,
+            unarchived_by = ?,
+            unarchived_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+    ]], { actor, reportId })
+
+    if ps.auditLog then
+        ps.auditLog(src, 'report_unarchived', 'report', reportId, {})
+    end
+
+    return { success = true, reportId = reportId }
 end)
 
 ps.registerCallback(resourceName..':server:getAvailableTags', function(source, playerJobType)

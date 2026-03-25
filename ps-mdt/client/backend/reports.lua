@@ -257,6 +257,46 @@ RegisterNUICallback('deleteReport', function(data, cb)
     end
 end)
 
+RegisterNUICallback('approveReport', function(data, cb)
+    if not MDTOpen then
+        cb({ success = false, message = 'O MDT não está aberto' })
+        return
+    end
+
+    local result = ps.callback(resourceName .. ':server:approveReport', data and data.reportId)
+    cb(result or { success = false, message = 'Falha ao aprovar relatório' })
+end)
+
+RegisterNUICallback('signReport', function(data, cb)
+    if not MDTOpen then
+        cb({ success = false, message = 'O MDT não está aberto' })
+        return
+    end
+
+    local result = ps.callback(resourceName .. ':server:signReport', data and data.reportId)
+    cb(result or { success = false, message = 'Falha ao assinar relatório' })
+end)
+
+RegisterNUICallback('archiveReport', function(data, cb)
+    if not MDTOpen then
+        cb({ success = false, message = 'O MDT não está aberto' })
+        return
+    end
+
+    local result = ps.callback(resourceName .. ':server:archiveReport', data and data.reportId)
+    cb(result or { success = false, message = 'Falha ao arquivar relatório' })
+end)
+
+RegisterNUICallback('unarchiveReport', function(data, cb)
+    if not MDTOpen then
+        cb({ success = false, message = 'O MDT não está aberto' })
+        return
+    end
+
+    local result = ps.callback(resourceName .. ':server:unarchiveReport', data and data.reportId)
+    cb(result or { success = false, message = 'Falha ao desarquivar relatório' })
+end)
+
 RegisterNUICallback('getAvailableTags', function(data, cb)
     if not MDTOpen then
         cb({ success = false, message = 'O MDT não está aberto' })

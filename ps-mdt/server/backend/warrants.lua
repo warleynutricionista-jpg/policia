@@ -45,6 +45,7 @@ end
 ps.registerCallback(resourceName .. ':server:getActiveWarrants', function(source)
     local src = source
     if not CheckAuth(src) then return {} end
+    if not CheckPermission(src, 'warrants_view') then return {} end
 
     local rows = MySQL.query.await([[
         SELECT
@@ -85,6 +86,7 @@ end)
 ps.registerCallback(resourceName .. ':server:issueWarrant', function(source, data)
     local src = source
     if not CheckAuth(src) then return { success = false, error = 'Não autorizado' } end
+    if not CheckPermission(src, 'warrants_issue') then return { success = false, error = 'Sem permissão para emitir mandado' } end
 
     data = data or {}
     local reportId = tonumber(data.reportId)
@@ -123,6 +125,7 @@ end)
 ps.registerCallback(resourceName .. ':server:closeWarrant', function(source, data)
     local src = source
     if not CheckAuth(src) then return { success = false, error = 'Não autorizado' } end
+    if not CheckPermission(src, 'warrants_close') then return { success = false, error = 'Sem permissão para encerrar mandado' } end
 
     data = data or {}
     local reportId = tonumber(data.reportId)
