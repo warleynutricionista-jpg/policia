@@ -77,6 +77,55 @@ local function generateUniqueSealNumber()
     return ForensicUtils.GenerateSealNumber() .. tostring(math.random(10, 99))
 end
 
+local validEvidenceStatuses = {}
+for _, status in ipairs((Config.Enums and Config.Enums.EvidenceStatus) or {
+    'coletada', 'lacrada', 'em_analise', 'analisada', 'armazenada', 'descartada', 'devolvida', 'em_julgamento'
+}) do
+    validEvidenceStatuses[status] = true
+end
+
+local statusTransitions = {
+    coletada = { lacrada = true, em_analise = true, armazenada = true, devolvida = true, descartada = true },
+    lacrada = { em_analise = true, armazenada = true, devolvida = true, em_julgamento = true },
+    em_analise = { analisada = true, lacrada = true },
+    analisada = { lacrada = true, armazenada = true, devolvida = true, em_julgamento = true, descartada = true },
+    armazenada = { em_analise = true, devolvida = true, em_julgamento = true, descartada = true },
+    em_julgamento = { armazenada = true, devolvida = true },
+    devolvida = {},
+    descartada = {},
+}
+
+local actionByStatus = {
+    lacrada = 'lacrada',
+    em_analise = 'aberta_analise',
+    analisada = 'relacrada',
+    armazenada = 'armazenada',
+    descartada = 'descartada',
+    devolvida = 'devolvida',
+    em_julgamento = 'encaminhada_julgamento',
+}
+
+local function recordCustody(evidenceId, action, fromCitizenId, fromName, toCitizenId, toName, location, notes)
+    return MySQL.insert.await([[
+        INSERT INTO forensic_chain_of_custody
+        (evidence_id, action, from_citizenid, from_name, to_citizenid, to_name, location, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ]], {
+        evidenceId, action, fromCitizenId, fromName, toCitizenId, toName, location or '', notes or ''
+    })
+end
+
+local function syncMDTCustody(mdtId, fromCitizenId, toCitizenId, action, notes)
+    if not mdtId then return end
+    if toCitizenId and toCitizenId ~= '' then
+        MySQL.update.await('UPDATE mdt_evidence_items SET last_holder = ? WHERE id = ?', { toCitizenId, mdtId })
+    end
+    MySQL.insert.await([[
+        INSERT INTO mdt_evidence_custody (evidence_id, from_citizenid, to_citizenid, action, notes)
+        VALUES (?, ?, ?, ?, ?)
+    ]], { mdtId, fromCitizenId, toCitizenId, action, notes or '' })
+end
+
 -- ============================================================
 -- COLETAR EVIDÊNCIA
 -- ============================================================
@@ -357,10 +406,15 @@ end)
 -- ============================================================
 lib.callback.register(resourceName .. ':server:updateEvidence', function(source, evidenceId, data)
     local src = source
-    if not CheckForensicAuth(src) then return { success = false } end
+    if not CheckForensicAuth(src) then return { success = false, error = L('scene.errors.not_authorized') } end
 
     evidenceId = tonumber(evidenceId)
-    if not evidenceId then return { success = false } end
+    if not evidenceId then return { success = false, error = L('evidence.errors.invalid_id') } end
+    data = data or {}
+    local playerData = GetPlayerData(src)
+    if not playerData then return { success = false, error = L('scene.errors.player_data_unavailable') } end
+    local evidence = MySQL.single.await('SELECT * FROM forensic_evidence WHERE id = ?', { evidenceId })
+    if not evidence then return { success = false, error = L('evidence.errors.not_found') } end
 
     local updates = {}
     local values = {}
@@ -373,13 +427,38 @@ lib.callback.register(resourceName .. ':server:updateEvidence', function(source,
 
     for _, field in ipairs(allowedFields) do
         if data[field] ~= nil then
+            if field == 'status' and not validEvidenceStatuses[data[field]] then
+                return { success = false, error = L('evidence.errors.invalid_status') }
+            end
             updates[#updates + 1] = field .. ' = ?'
             values[#values + 1] = data[field]
         end
     end
 
     if #updates == 0 then
-        return { success = false, error = 'Nenhuma atualização' }
+        return { success = false, error = L('evidence.errors.no_update') }
+    end
+
+    if data.status and data.status ~= evidence.status then
+        local allowed = statusTransitions[evidence.status] or {}
+        if not allowed[data.status] then
+            return { success = false, error = L('evidence.errors.invalid_status_transition') }
+        end
+    end
+
+    if (data.status == 'em_analise' or data.status == 'analisada') and (not data.notes or data.notes == '') then
+        return { success = false, error = L('evidence.errors.analysis_notes_required') }
+    end
+
+    if (data.status == 'devolvida' or data.status == 'descartada') and (not data.notes or data.notes == '') then
+        return { success = false, error = L('evidence.errors.final_destination_notes_required') }
+    end
+
+    if data.status == 'lacrada' and (not evidence.seal_number or evidence.seal_number == '') then
+        local newSeal = generateUniqueSealNumber()
+        updates[#updates + 1] = 'seal_number = ?'
+        values[#values + 1] = newSeal
+        evidence.seal_number = newSeal
     end
 
     values[#values + 1] = evidenceId
@@ -387,31 +466,30 @@ lib.callback.register(resourceName .. ':server:updateEvidence', function(source,
 
     -- Registrar mudança de status na cadeia de custódia
     if data.status then
-        local playerData = GetPlayerData(src)
-        local actionMap = {
-            lacrada = 'lacrada',
-            em_analise = 'aberta_analise',
-            analisada = 'relacrada',
-            armazenada = 'armazenada',
-            descartada = 'descartada',
-            devolvida = 'devolvida',
-            em_julgamento = 'encaminhada_julgamento',
-        }
+        local action = actionByStatus[data.status] or 'transferida'
+        local custodyNotes = data.notes or ('Status alterado para: ' .. data.status)
+        if evidence.seal_number and evidence.seal_number ~= '' then
+            custodyNotes = ('%s | Lacre: %s'):format(custodyNotes, evidence.seal_number)
+        end
 
-        local action = actionMap[data.status] or 'transferida'
-        MySQL.insert.await([[
-            INSERT INTO forensic_chain_of_custody
-            (evidence_id, action, from_citizenid, from_name, to_citizenid, to_name, location, notes)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ]], {
-            evidenceId, action,
+        recordCustody(
+            evidenceId,
+            action,
             playerData and playerData.citizenid or nil,
             playerData and playerData.name or nil,
             playerData and playerData.citizenid or nil,
             playerData and playerData.name or nil,
             data.storage_location or '',
-            data.notes or ('Status alterado para: ' .. data.status),
-        })
+            custodyNotes
+        )
+
+        syncMDTCustody(
+            evidence.mdt_evidence_id,
+            playerData and playerData.citizenid or nil,
+            playerData and playerData.citizenid or nil,
+            action,
+            custodyNotes
+        )
     end
 
     ForensicAuditLog(src, 'evidence_updated', 'evidence', evidenceId, data)
@@ -424,35 +502,53 @@ end)
 -- ============================================================
 lib.callback.register(resourceName .. ':server:transferEvidence', function(source, evidenceId, toCitizenId, toName, notes)
     local src = source
-    if not CheckForensicAuth(src) then return { success = false } end
+    if not CheckForensicAuth(src) then return { success = false, error = L('scene.errors.not_authorized') } end
     if not CheckForensicPermission(src, 'canModifyCustody') then
-        return { success = false, error = 'Sem permissão' }
+        return { success = false, error = L('evidence.errors.no_permission_transfer') }
     end
 
     evidenceId = tonumber(evidenceId)
+    if not evidenceId then return { success = false, error = L('evidence.errors.invalid_id') } end
+    if not toCitizenId or toCitizenId == '' then
+        return { success = false, error = L('evidence.errors.target_required') }
+    end
     local playerData = GetPlayerData(src)
+    if not playerData then return { success = false, error = L('scene.errors.player_data_unavailable') } end
+    local evidence = MySQL.single.await('SELECT * FROM forensic_evidence WHERE id = ?', { evidenceId })
+    if not evidence then return { success = false, error = L('evidence.errors.not_found') } end
+    if evidence.status == 'descartada' or evidence.status == 'devolvida' then
+        return { success = false, error = L('evidence.errors.transfer_not_allowed_finalized') }
+    end
 
-    MySQL.insert.await([[
-        INSERT INTO forensic_chain_of_custody
-        (evidence_id, action, from_citizenid, from_name, to_citizenid, to_name, notes)
-        VALUES (?, 'transferida', ?, ?, ?, ?, ?)
-    ]], {
+    local custodyNotes = notes or L('evidence.custody.transfer_default_note')
+    if evidence.seal_number and evidence.seal_number ~= '' then
+        custodyNotes = ('%s | Lacre: %s'):format(custodyNotes, evidence.seal_number)
+    end
+
+    recordCustody(
         evidenceId,
+        'transferida',
         playerData and playerData.citizenid or nil,
         playerData and playerData.name or nil,
-        toCitizenId, toName,
-        notes or '',
-    })
+        toCitizenId,
+        toName,
+        evidence.storage_location or '',
+        custodyNotes
+    )
 
     -- Atualizar no MDT também
-    local mdtId = MySQL.scalar.await('SELECT mdt_evidence_id FROM forensic_evidence WHERE id = ?', { evidenceId })
-    if mdtId then
-        MySQL.update.await('UPDATE mdt_evidence_items SET last_holder = ? WHERE id = ?', { toCitizenId, mdtId })
-        MySQL.insert.await([[
-            INSERT INTO mdt_evidence_custody (evidence_id, from_citizenid, to_citizenid, action, notes)
-            VALUES (?, ?, ?, 'transferred', ?)
-        ]], { mdtId, playerData and playerData.citizenid, toCitizenId, notes or '' })
-    end
+    syncMDTCustody(
+        evidence.mdt_evidence_id,
+        playerData and playerData.citizenid or nil,
+        toCitizenId,
+        'transferred',
+        custodyNotes
+    )
+
+    MySQL.update.await(
+        'UPDATE forensic_evidence SET status = ? WHERE id = ?',
+        { 'armazenada', evidenceId }
+    )
 
     ForensicAuditLog(src, 'evidence_transferred', 'evidence', evidenceId, {
         to = toCitizenId, toName = toName
