@@ -118,41 +118,42 @@ end
 
 -- MDT Display ------------------------------------------------
 
-local function sendMDTVisibility(visible)
+local function dispatchVisibilityMessage(visible)
+    local payload = {
+        action = 'setVisible',
+        data = {
+            visible = visible == true,
+            debugMode = Config.Debug
+        },
+        visible = visible == true
+    }
+
+    SendNUIMessage(payload)
+
     if type(SendNUI) == 'function' then
-        SendNUI('setVisible', { visible = visible, debugMode = Config.Debug })
-    else
-        SendNUIMessage({
-            action = 'setVisible',
-            data = { visible = visible, debugMode = Config.Debug }
-        })
+        local ok, err = pcall(function()
+            SendNUI('setVisible', payload.data)
+        end)
+        if not ok then
+            ps.warn('SendNUI setVisible failed, using raw SendNUIMessage only: ' .. tostring(err))
+        end
     end
+end
+
+local function sendMDTVisibility(visible)
+    dispatchVisibilityMessage(visible)
 
     -- Fail-safe para clientes que ocasionalmente perdem o primeiro postMessage.
     CreateThread(function()
         Wait(120)
 
         if visible and MDTOpen then
-            if type(SendNUI) == 'function' then
-                SendNUI('setVisible', { visible = true, debugMode = Config.Debug })
-            else
-                SendNUIMessage({
-                    action = 'setVisible',
-                    data = { visible = true, debugMode = Config.Debug }
-                })
-            end
+            dispatchVisibilityMessage(true)
             return
         end
 
         if not visible and not MDTOpen then
-            if type(SendNUI) == 'function' then
-                SendNUI('setVisible', { visible = false })
-            else
-                SendNUIMessage({
-                    action = 'setVisible',
-                    data = { visible = false }
-                })
-            end
+            dispatchVisibilityMessage(false)
         end
     end)
 end
