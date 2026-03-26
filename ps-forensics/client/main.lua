@@ -14,13 +14,13 @@ local function hasAccess()
     local playerData = QBX and QBX.Functions.GetPlayerData() or nil
     if not playerData then return false end
     local job = playerData.job and playerData.job.name or ''
-    return ForensicUtils.IsPoliceJob(job) or ForensicUtils.IsMedicalJob(job)
+    return ForensicUtils.IsAuthorizedForensicsJob(job)
 end
 
 local function getPlayerJob()
     local playerData = QBX and QBX.Functions.GetPlayerData() or nil
-    if not playerData then return '', 0 end
-    return playerData.job.name, playerData.job.grade.level
+    if not playerData then return '', 0, '' end
+    return playerData.job.name, playerData.job.grade.level, playerData.job.grade.name or ''
 end
 
 -- ============================================================
@@ -50,8 +50,8 @@ function OpenForensicsUI(tab)
         return
     end
 
-    local jobName, grade = getPlayerJob()
-    local roleName, roleConfig = ForensicUtils.GetPlayerRole(jobName, grade)
+    local jobName, grade, gradeName = getPlayerJob()
+    local roleName, roleConfig = ForensicUtils.GetPlayerRole(jobName, grade, gradeName)
 
     SetNuiFocus(true, true)
     isForensicsOpen = true
