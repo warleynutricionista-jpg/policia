@@ -217,12 +217,12 @@ ps.registerCallback(resourceName .. ':server:getCitizens', function(source, payl
         if vehicleTable then
             local ownerExpr = buildVehicleOwnerExpr(vehicleTable)
             vehRows = MySQL.query.await(
-                ('SELECT %s AS citizenid, COUNT(*) AS cnt FROM %s WHERE %s IN (%s) GROUP BY citizenid'):format(ownerExpr, vehicleTable, ownerExpr, inClause),
+                ('SELECT %s AS owner_cid, COUNT(*) AS cnt FROM %s WHERE %s IN (%s) GROUP BY owner_cid'):format(ownerExpr, vehicleTable, ownerExpr, inClause),
                 citizenids
             ) or {}
         end
         for _, row in ipairs(vehRows or {}) do
-            vehCounts[row.citizenid] = tonumber(row.cnt) or 0
+            vehCounts[row.owner_cid] = tonumber(row.cnt) or 0
         end
 
         local arrestRows = MySQL.query.await(
@@ -383,12 +383,12 @@ ps.registerCallback(resourceName .. ':server:searchCitizens', function(source, p
         if vehicleTable then
             local ownerExpr = buildVehicleOwnerExpr(vehicleTable)
             vehRows = MySQL.query.await(
-                ('SELECT %s AS citizenid, COUNT(*) AS cnt FROM %s WHERE %s IN (%s) GROUP BY citizenid'):format(ownerExpr, vehicleTable, ownerExpr, inClause),
+                ('SELECT %s AS owner_cid, COUNT(*) AS cnt FROM %s WHERE %s IN (%s) GROUP BY owner_cid'):format(ownerExpr, vehicleTable, ownerExpr, inClause),
                 citizenids
             ) or {}
         end
         for _, row in ipairs(vehRows or {}) do
-            vehCounts[row.citizenid] = tonumber(row.cnt) or 0
+            vehCounts[row.owner_cid] = tonumber(row.cnt) or 0
         end
 
         local arrestRows = MySQL.query.await(

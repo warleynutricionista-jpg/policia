@@ -57,11 +57,35 @@ local function normalizeCoords(coords)
     return nil
 end
 
+-- Models that should always be recognized as official police patrol vehicles
+local POLICE_VEHICLE_MODELS = {
+    [`s10pf`] = true,
+    [`police`] = true,
+    [`police2`] = true,
+    [`police3`] = true,
+    [`police4`] = true,
+    [`policeb`] = true,
+    [`policet`] = true,
+    [`sheriff`] = true,
+    [`sheriff2`] = true,
+    [`riot`] = true,
+    [`riot2`] = true,
+    [`fbi`] = true,
+    [`fbi2`] = true,
+}
+
 local function isPoliceVehicleByModel(vehicleEntity)
     if not vehicleEntity or vehicleEntity == 0 then return false end
 
+    -- Check by vehicle class (Emergency = 18)
     local vehicleClass = GetVehicleClass(vehicleEntity)
     if vehicleClass == 18 then
+        return true
+    end
+
+    -- Check by specific model hash (e.g. custom models like s10pf)
+    local modelHash = GetEntityModel(vehicleEntity)
+    if modelHash and POLICE_VEHICLE_MODELS[modelHash] then
         return true
     end
 
