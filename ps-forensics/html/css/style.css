@@ -747,3 +747,15 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+/* Notification animation */
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* Modal scrollable body */
+.modal-body {
+    max-height: 60vh;
+    overflow-y: auto;
+}

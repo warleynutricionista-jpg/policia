@@ -280,15 +280,61 @@ async function viewScene(sceneId) {
 async function updateSceneStatus(sceneId, status) {
     const result = await fetchNUI('updateScene', { id: sceneId, status });
     if (result && result.success) {
+        showNotification(`Status da cena atualizado para: ${statusLabels[status] || status}`, 'success');
         await loadScenes();
         await viewScene(sceneId);
+    } else {
+        showNotification(result?.error || 'Erro ao atualizar status da cena', 'error');
     }
 }
 
 function showCreateScene() {
-    // Delegate to client-side ox_lib menu
-    fetchNUI('close');
-    // The actual menu is opened via client Lua
+    showModal('Nova Cena de Crime', `
+        <div class="form-group"><label>Classificação</label>
+            <select id="sceneClassification">
+                <option value="homicidio">Homicídio</option>
+                <option value="tentativa_homicidio">Tentativa de Homicídio</option>
+                <option value="latrocinio">Latrocínio</option>
+                <option value="roubo">Roubo</option>
+                <option value="furto">Furto</option>
+                <option value="trafico">Tráfico</option>
+                <option value="confronto">Confronto</option>
+                <option value="acidente">Acidente</option>
+                <option value="sequestro">Sequestro</option>
+                <option value="violencia_domestica">Violência Doméstica</option>
+                <option value="ocultacao_cadaver">Ocultação de Cadáver</option>
+                <option value="incendio_criminoso">Incêndio Criminoso</option>
+                <option value="explosao">Explosão</option>
+                <option value="envenenamento">Envenenamento</option>
+                <option value="estupro">Estupro</option>
+                <option value="outros" selected>Outros</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Descrição</label><textarea id="sceneDescription" rows="3" placeholder="Descreva a cena..."></textarea></div>
+        <div class="form-group"><label>Raio do Perímetro (m)</label><input type="number" id="scenePerimeter" value="50" min="10" max="500"></div>
+        <div class="form-group"><label>Condições Climáticas</label><input type="text" id="sceneWeather" placeholder="Ex: Chuvoso, Ensolarado..."></div>
+        <div class="form-group"><label>Iluminação</label><input type="text" id="sceneLighting" placeholder="Ex: Boa, Precária, Noturna..."></div>
+        <div class="form-group"><label>ID do Caso (MDT) - opcional</label><input type="number" id="sceneCaseId" placeholder="Número do caso no MDT"></div>
+    `, `<button class="btn-primary" onclick="doCreateScene()"><i class="fas fa-plus"></i> Criar Cena</button>`);
+}
+
+async function doCreateScene() {
+    const data = {
+        classification: getEl('sceneClassification')?.value || 'outros',
+        description: getEl('sceneDescription')?.value || '',
+        perimeter_radius: parseFloat(getEl('scenePerimeter')?.value) || 50,
+        weather: getEl('sceneWeather')?.value || '',
+        lighting: getEl('sceneLighting')?.value || '',
+        case_id: getEl('sceneCaseId')?.value || null,
+    };
+    const result = await fetchNUI('createScene', data);
+    if (result && result.success) {
+        closeModal();
+        showNotification('Cena de crime criada: ' + (result.sceneNumber || ''), 'success');
+        await loadScenes();
+    } else {
+        showNotification(result?.error || 'Erro ao criar cena', 'error');
+    }
 }
 
 // ============================================================
@@ -329,9 +375,26 @@ function filterEvidence() { loadEvidence(); }
 async function loadFingerprints() {
     const citizenid = document.getElementById('fpSearch')?.value || '';
     const list = document.getElementById('fingerprintsList');
-    const rows = citizenid ? asArrayResponse(await fetchNUI('searchFingerprintsByCitizen', { citizenid })) : [];
+    let rows = [];
+    if (citizenid) {
+        rows = asArrayResponse(await fetchNUI('searchFingerprintsByCitizen', { citizenid }));
+    } else {
+        // Load all recent fingerprints when no search term
+        const result = await fetchNUI('getLabTests', { test_type: 'comparacao_digital' });
+        rows = (result && result.data && result.data.items) ? result.data.items : [];
+        // Map lab test fields to fingerprint display format
+        rows = rows.map(t => ({
+            evidence_number: t.evidence_id ? `EV-${t.evidence_id}` : 'N/D',
+            match_status: t.result_level || 'pendente',
+            source_description: t.test_name || 'Comparação Digital',
+            matched_name: t.target_name || 'N/D',
+            match_confidence: t.result_level === 'confirmado' ? 95 : (t.result_level === 'compativel' ? 75 : 0),
+            result_details: t.result_details || '',
+            created_at: t.created_at,
+        }));
+    }
     if (!rows || rows.length === 0) {
-        list.innerHTML = '<div class="empty-state"><i class="fas fa-hand-dots"></i><p>Nenhuma digital encontrada</p></div>';
+        list.innerHTML = '<div class="empty-state"><i class="fas fa-hand-dots"></i><p>' + (citizenid ? 'Nenhuma digital encontrada para este cidadão' : 'Digite um CitizenID para buscar digitais ou cadastre uma nova') + '</p></div>';
         return;
     }
     list.innerHTML = rows.map(fp => `
@@ -344,6 +407,7 @@ async function loadFingerprints() {
                 <div class="card-row"><span class="card-label">Origem</span><span class="card-value">${fp.source_description || 'N/D'}</span></div>
                 <div class="card-row"><span class="card-label">Compatível</span><span class="card-value">${fp.matched_name || 'N/D'}</span></div>
                 <div class="card-row"><span class="card-label">Confiança</span><span class="card-value">${fp.match_confidence || 0}%</span></div>
+                ${fp.result_details ? `<div class="card-row"><span class="card-value" style="font-size:11px;color:#9ca3af;">${fp.result_details}</span></div>` : ''}
             </div>
         </div>
     `).join('');
@@ -352,9 +416,24 @@ async function loadFingerprints() {
 async function loadDNA() {
     const citizenid = document.getElementById('dnaSearch')?.value || '';
     const list = document.getElementById('dnaList');
-    const rows = citizenid ? asArrayResponse(await fetchNUI('searchDNAByCitizen', { citizenid })) : [];
+    let rows = [];
+    if (citizenid) {
+        rows = asArrayResponse(await fetchNUI('searchDNAByCitizen', { citizenid }));
+    } else {
+        const result = await fetchNUI('getLabTests', { test_type: 'comparacao_dna' });
+        rows = (result && result.data && result.data.items) ? result.data.items : [];
+        rows = rows.map(t => ({
+            evidence_number: t.evidence_id ? `EV-${t.evidence_id}` : 'N/D',
+            match_status: t.result_level || 'pendente',
+            source_type: t.test_name || 'Comparação DNA',
+            matched_name: t.target_name || 'N/D',
+            match_confidence: t.result_level === 'confirmado' ? 94 : (t.result_level === 'compativel' ? 78 : 0),
+            result_details: t.result_details || '',
+            created_at: t.created_at,
+        }));
+    }
     if (!rows || rows.length === 0) {
-        list.innerHTML = '<div class="empty-state"><i class="fas fa-dna"></i><p>Nenhuma análise de DNA encontrada</p></div>';
+        list.innerHTML = '<div class="empty-state"><i class="fas fa-dna"></i><p>' + (citizenid ? 'Nenhuma análise de DNA encontrada para este cidadão' : 'Digite um CitizenID para buscar DNA ou cadastre um novo perfil') + '</p></div>';
         return;
     }
     list.innerHTML = rows.map(dna => `
@@ -367,6 +446,7 @@ async function loadDNA() {
                 <div class="card-row"><span class="card-label">Fonte</span><span class="card-value">${dna.source_type || 'N/D'}</span></div>
                 <div class="card-row"><span class="card-label">Compatível</span><span class="card-value">${dna.matched_name || 'N/D'}</span></div>
                 <div class="card-row"><span class="card-label">Confiança</span><span class="card-value">${dna.match_confidence || 0}%</span></div>
+                ${dna.result_details ? `<div class="card-row"><span class="card-value" style="font-size:11px;color:#9ca3af;">${dna.result_details}</span></div>` : ''}
             </div>
         </div>
     `).join('');
@@ -375,9 +455,27 @@ async function loadDNA() {
 async function loadBallistics() {
     const serial = document.getElementById('ballisticSearch')?.value || '';
     const list = document.getElementById('ballisticsList');
-    const rows = serial ? asArrayResponse(await fetchNUI('getWeaponBallisticHistory', { serial })) : [];
+    let rows = [];
+    if (serial) {
+        rows = asArrayResponse(await fetchNUI('getWeaponBallisticHistory', { serial }));
+    } else {
+        // Load recent ballistic lab tests as overview
+        const result = await fetchNUI('getLabTests', { test_type: 'confronto_balistico' });
+        rows = (result && result.data && result.data.items) ? result.data.items : [];
+        rows = rows.map(t => ({
+            weapon_serial: t.target_weapon_serial || 'N/D',
+            matched_weapon_serial: t.target_weapon_serial,
+            rifling_match: t.result_level || 'pendente',
+            item_type: 'Confronto',
+            caliber: 'N/D',
+            scene_number: t.scene_id ? `Cena #${t.scene_id}` : 'N/D',
+            case_id: 'N/D',
+            result_details: t.result_details || '',
+            created_at: t.created_at,
+        }));
+    }
     if (!rows || rows.length === 0) {
-        list.innerHTML = '<div class="empty-state"><i class="fas fa-crosshairs"></i><p>Nenhum histórico balístico encontrado</p></div>';
+        list.innerHTML = '<div class="empty-state"><i class="fas fa-crosshairs"></i><p>' + (serial ? 'Nenhum histórico balístico encontrado para este serial' : 'Digite um serial de arma para buscar histórico balístico') + '</p></div>';
         return;
     }
     list.innerHTML = rows.map(b => `
@@ -391,6 +489,7 @@ async function loadBallistics() {
                 <div class="card-row"><span class="card-label">Calibre</span><span class="card-value">${b.caliber || 'N/D'}</span></div>
                 <div class="card-row"><span class="card-label">Cena</span><span class="card-value">${b.scene_number || 'N/D'}</span></div>
                 <div class="card-row"><span class="card-label">Caso</span><span class="card-value">${b.case_id || 'N/D'}</span></div>
+                ${b.result_details ? `<div class="card-row"><span class="card-value" style="font-size:11px;color:#9ca3af;">${b.result_details}</span></div>` : ''}
             </div>
         </div>
     `).join('');
@@ -525,6 +624,53 @@ async function loadLabTests() {
 
 function filterLabTests() { loadLabTests(); }
 
+async function viewLabTest(testId) {
+    // Show test details in a modal
+    const result = await fetchNUI('getLabTests', { test_id: testId });
+    const tests = (result && result.data && result.data.items) ? result.data.items : [];
+    const test = tests.find(t => t.id === testId) || tests[0];
+    if (!test) {
+        showNotification('Teste não encontrado', 'error');
+        return;
+    }
+
+    const canProcess = test.status !== 'concluido' && playerPermissions.canRunLabTests;
+
+    showModal(`Teste: ${test.test_name || 'Detalhes'}`, `
+        <div class="detail-grid">
+            <div class="detail-field"><label>Status</label>${getStatusBadge(test.status)}</div>
+            <div class="detail-field"><label>Tipo</label><span>${test.test_type || 'N/D'}</span></div>
+            <div class="detail-field"><label>Resultado</label>${getStatusBadge(test.result_level || 'pendente')}</div>
+            <div class="detail-field"><label>Solicitado por</label><span>${test.requested_by_name || 'N/D'}</span></div>
+            <div class="detail-field"><label>Executado por</label><span>${test.performed_by_name || 'Pendente'}</span></div>
+            <div class="detail-field"><label>Data Solicitação</label><span>${formatDate(test.created_at)}</span></div>
+            ${test.completed_at ? `<div class="detail-field"><label>Data Conclusão</label><span>${formatDate(test.completed_at)}</span></div>` : ''}
+            ${test.evidence_id ? `<div class="detail-field"><label>Evidência</label><span>#${test.evidence_id}</span></div>` : ''}
+            ${test.scene_id ? `<div class="detail-field"><label>Cena</label><span>#${test.scene_id}</span></div>` : ''}
+            ${test.target_citizenid ? `<div class="detail-field"><label>Alvo</label><span>${test.target_name || test.target_citizenid}</span></div>` : ''}
+            ${test.target_weapon_serial ? `<div class="detail-field"><label>Arma</label><span>${test.target_weapon_serial}</span></div>` : ''}
+            ${test.target_vehicle ? `<div class="detail-field"><label>Veículo</label><span>${test.target_vehicle}</span></div>` : ''}
+        </div>
+        ${test.description ? `<div class="detail-field"><label>Descrição</label><p>${test.description}</p></div>` : ''}
+        ${test.result_details ? `<div class="detail-section"><h3>Resultado Detalhado</h3><p style="white-space:pre-wrap;">${test.result_details}</p></div>` : ''}
+    `, canProcess ? `<button class="btn-primary" onclick="doPerformLabTest(${test.id})"><i class="fas fa-flask"></i> Processar Teste</button>` : '');
+}
+
+async function doPerformLabTest(testId) {
+    closeModal();
+    const result = await fetchNUI('performLabTest', { id: testId });
+    if (result && result.success) {
+        if (result.pending) {
+            showNotification(result.message || 'Teste em processamento...', 'info');
+        } else {
+            showNotification('Teste concluído: ' + (result.resultLevel || ''), 'success');
+        }
+        await loadLabTests();
+    } else {
+        showNotification(result?.error || 'Erro ao processar teste', 'error');
+    }
+}
+
 // ============================================================
 // AUTOPSIES
 // ============================================================
@@ -613,15 +759,21 @@ async function viewAutopsy(autopsyId) {
 async function performToxicology(autopsyId) {
     const result = await fetchNUI('performToxicology', { id: autopsyId });
     if (result && result.success) {
+        showNotification('Exame toxicológico concluído: ' + (result.result || ''), 'success');
         await viewAutopsy(autopsyId);
+    } else {
+        showNotification(result?.error || 'Erro ao realizar toxicológico', 'error');
     }
 }
 
 async function completeAutopsy(autopsyId) {
     const result = await fetchNUI('updateAutopsy', { id: autopsyId, status: 'concluido' });
     if (result && result.success) {
+        showNotification('Necropsia concluída com sucesso. Laudo gerado automaticamente.', 'success');
         await loadAutopsies();
         await viewAutopsy(autopsyId);
+    } else {
+        showNotification(result?.error || 'Erro ao concluir necropsia', 'error');
     }
 }
 
@@ -694,16 +846,22 @@ async function viewReport(reportId) {
 async function finalizeReport(reportId) {
     const result = await fetchNUI('finalizeReport', { id: reportId });
     if (result && result.success) {
+        showNotification('Laudo finalizado com sucesso', 'success');
         await loadReports();
         await viewReport(reportId);
+    } else {
+        showNotification(result?.error || 'Erro ao finalizar laudo', 'error');
     }
 }
 
 async function attachToMDT(reportId) {
     const result = await fetchNUI('attachReportToMDT', { id: reportId });
     if (result && result.success) {
+        showNotification('Laudo anexado ao MDT com sucesso', 'success');
         await loadReports();
         await viewReport(reportId);
+    } else {
+        showNotification(result?.error || 'Erro ao anexar ao MDT', 'error');
     }
 }
 
@@ -868,6 +1026,37 @@ function closeModal() {
     document.getElementById('modal-overlay').classList.add('hidden');
 }
 
+function showNotification(message, type) {
+    const colors = {
+        success: '#22c55e',
+        error: '#ef4444',
+        info: '#3b82f6',
+        warning: '#f59e0b',
+    };
+    const icons = {
+        success: 'fa-check-circle',
+        error: 'fa-exclamation-circle',
+        info: 'fa-info-circle',
+        warning: 'fa-exclamation-triangle',
+    };
+    const notif = document.createElement('div');
+    notif.style.cssText = `
+        position:fixed;top:20px;right:20px;z-index:99999;
+        background:#1e293b;border:1px solid ${colors[type] || '#3b82f6'};
+        color:#e2e8f0;padding:12px 20px;border-radius:8px;
+        font-size:13px;display:flex;align-items:center;gap:10px;
+        box-shadow:0 4px 12px rgba(0,0,0,0.4);
+        animation:slideIn 0.3s ease;max-width:400px;
+    `;
+    notif.innerHTML = `<i class="fas ${icons[type] || 'fa-info-circle'}" style="color:${colors[type] || '#3b82f6'}"></i><span>${message}</span>`;
+    document.body.appendChild(notif);
+    setTimeout(() => {
+        notif.style.opacity = '0';
+        notif.style.transition = 'opacity 0.3s';
+        setTimeout(() => notif.remove(), 300);
+    }, 4000);
+}
+
 function showRegisterFingerprint() {
     showModal('Cadastrar Impressão Digital', `
         <div class="form-group"><label>CitizenID</label><input type="text" id="fpCitizenId" placeholder="CitizenID do cidadão"></div>
@@ -878,11 +1067,23 @@ function showRegisterFingerprint() {
 async function doRegisterFingerprint() {
     const citizenid = document.getElementById('fpCitizenId').value;
     const name = document.getElementById('fpCitizenName').value;
-    if (!citizenid) return;
+    if (!citizenid) {
+        showNotification('CitizenID é obrigatório', 'error');
+        return;
+    }
 
     const result = await fetchNUI('registerFingerprint', { citizenid, name });
     if (result && result.success) {
         closeModal();
+        const msg = result.reused ? 'Digital já cadastrada (reutilizada)' : `Digital cadastrada: ${result.code || ''}`;
+        if (result.retroMatches > 0) {
+            showNotification(`${msg} | ${result.retroMatches} correspondência(s) retroativa(s) encontrada(s)!`, 'success');
+        } else {
+            showNotification(msg, 'success');
+        }
+        await loadFingerprints();
+    } else {
+        showNotification(result?.error || 'Erro ao cadastrar digital', 'error');
     }
 }
 
@@ -906,18 +1107,149 @@ async function doRegisterDNA() {
     const citizenid = document.getElementById('dnaCitizenId').value;
     const name = document.getElementById('dnaCitizenName').value;
     const bloodType = document.getElementById('dnaBloodType').value;
-    if (!citizenid) return;
+    if (!citizenid) {
+        showNotification('CitizenID é obrigatório', 'error');
+        return;
+    }
 
     const result = await fetchNUI('registerDNA', { citizenid, name, bloodType });
     if (result && result.success) {
         closeModal();
+        const msg = result.reused ? 'Perfil de DNA já cadastrado (reutilizado)' : `Perfil de DNA cadastrado: ${result.code || ''}`;
+        if (result.retroMatches > 0) {
+            showNotification(`${msg} | ${result.retroMatches} correspondência(s) retroativa(s) encontrada(s)!`, 'success');
+        } else {
+            showNotification(msg, 'success');
+        }
+        await loadDNA();
+    } else {
+        showNotification(result?.error || 'Erro ao cadastrar perfil de DNA', 'error');
     }
 }
 
 function showCreateAutopsy() {
-    fetchNUI('close');
+    showModal('Nova Necropsia', `
+        <div class="form-group"><label>Nome da Vítima</label><input type="text" id="autopsyVictimName" placeholder="Nome ou Desconhecido"></div>
+        <div class="form-group"><label>CitizenID da Vítima (se identificada)</label><input type="text" id="autopsyVictimCid" placeholder="CitizenID"></div>
+        <div class="form-group"><label>Status da Identificação</label>
+            <select id="autopsyVictimStatus">
+                <option value="nao_identificado">Não Identificado</option>
+                <option value="identificado">Identificado</option>
+                <option value="parcialmente_identificado">Parcialmente Identificado</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Causa da Morte</label>
+            <select id="autopsyCauseOfDeath">
+                <option value="indeterminado">Indeterminado</option>
+                <option value="arma_de_fogo">Arma de Fogo</option>
+                <option value="arma_branca">Arma Branca</option>
+                <option value="trauma_contundente">Trauma Contundente</option>
+                <option value="asfixia">Asfixia</option>
+                <option value="queimadura">Queimadura</option>
+                <option value="overdose">Overdose</option>
+                <option value="envenenamento">Envenenamento</option>
+                <option value="afogamento">Afogamento</option>
+                <option value="multiplos_ferimentos">Múltiplos Ferimentos</option>
+                <option value="causa_natural">Causa Natural</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Maneira da Morte</label>
+            <select id="autopsyMannerOfDeath">
+                <option value="indeterminado">Indeterminado</option>
+                <option value="homicidio">Homicídio</option>
+                <option value="suicidio">Suicídio</option>
+                <option value="acidente">Acidente</option>
+                <option value="natural">Natural</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Temperatura Corporal (°C)</label><input type="number" id="autopsyBodyTemp" placeholder="Ex: 32.5" step="0.1"></div>
+        <div class="form-group"><label>Rigor Mortis</label>
+            <select id="autopsyRigor">
+                <option value="">Não avaliado</option>
+                <option value="ausente">Ausente</option>
+                <option value="inicial">Inicial</option>
+                <option value="completo">Completo</option>
+                <option value="resolvendo">Resolvendo</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Nº de Ferimentos</label><input type="number" id="autopsyWoundsCount" value="0" min="0"></div>
+        <div class="form-group"><label>Descrição dos Ferimentos</label><textarea id="autopsyWoundsDesc" rows="2" placeholder="Descreva os ferimentos..."></textarea></div>
+        <div class="form-group"><label>Descrição do Trauma</label><textarea id="autopsyTraumaDesc" rows="2" placeholder="Descreva o trauma..."></textarea></div>
+        <div class="form-group"><label>ID da Cena (opcional)</label><input type="number" id="autopsySceneId" placeholder="ID da cena de crime"></div>
+        <div class="form-group"><label>ID do Caso MDT (opcional)</label><input type="number" id="autopsyCaseId" placeholder="Número do caso"></div>
+    `, `<button class="btn-primary" onclick="doCreateAutopsy()"><i class="fas fa-plus"></i> Criar Necropsia</button>`);
+}
+
+async function doCreateAutopsy() {
+    const data = {
+        victim_name: getEl('autopsyVictimName')?.value || 'Desconhecido',
+        victim_citizenid: getEl('autopsyVictimCid')?.value || null,
+        victim_status: getEl('autopsyVictimStatus')?.value || 'nao_identificado',
+        cause_of_death: getEl('autopsyCauseOfDeath')?.value || 'indeterminado',
+        manner_of_death: getEl('autopsyMannerOfDeath')?.value || 'indeterminado',
+        body_temperature: parseFloat(getEl('autopsyBodyTemp')?.value) || null,
+        rigor_mortis: getEl('autopsyRigor')?.value || null,
+        wounds_count: parseInt(getEl('autopsyWoundsCount')?.value) || 0,
+        wounds_description: getEl('autopsyWoundsDesc')?.value || '',
+        trauma_description: getEl('autopsyTraumaDesc')?.value || '',
+        scene_id: getEl('autopsySceneId')?.value || null,
+        case_id: getEl('autopsyCaseId')?.value || null,
+    };
+    const result = await fetchNUI('createAutopsy', data);
+    if (result && result.success) {
+        closeModal();
+        showNotification('Necropsia criada com sucesso', 'success');
+        await loadAutopsies();
+    } else {
+        showNotification(result?.error || 'Erro ao criar necropsia', 'error');
+    }
 }
 
 function showCreateReport() {
-    fetchNUI('close');
+    showModal('Novo Laudo Técnico', `
+        <div class="form-group"><label>Tipo de Laudo</label>
+            <select id="reportType">
+                <option value="laudo_pericial">Laudo Pericial</option>
+                <option value="laudo_balistico">Laudo Balístico</option>
+                <option value="laudo_toxicologico">Laudo Toxicológico</option>
+                <option value="laudo_dna">Laudo DNA</option>
+                <option value="laudo_digital">Laudo Digital</option>
+                <option value="laudo_necropsia">Laudo Necropsia</option>
+                <option value="laudo_drogas">Laudo Drogas</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Título</label><input type="text" id="reportTitle" placeholder="Título do laudo"></div>
+        <div class="form-group"><label>Resumo</label><textarea id="reportSummary" rows="2" placeholder="Resumo executivo..."></textarea></div>
+        <div class="form-group"><label>Corpo do Laudo</label><textarea id="reportBody" rows="5" placeholder="Detalhamento técnico..."></textarea></div>
+        <div class="form-group"><label>Conclusão</label><textarea id="reportConclusion" rows="3" placeholder="Conclusão técnica..."></textarea></div>
+        <div class="form-group"><label>ID da Cena (opcional)</label><input type="number" id="reportSceneId" placeholder="ID da cena"></div>
+        <div class="form-group"><label>ID do Caso MDT (opcional)</label><input type="number" id="reportCaseId" placeholder="Número do caso"></div>
+        <div class="form-group"><label>ID do Relatório MDT (opcional)</label><input type="number" id="reportMdtId" placeholder="ID do relatório no MDT"></div>
+    `, `<button class="btn-primary" onclick="doCreateReport()"><i class="fas fa-plus"></i> Criar Laudo</button>`);
+}
+
+async function doCreateReport() {
+    const title = getEl('reportTitle')?.value;
+    if (!title) {
+        showNotification('Título do laudo é obrigatório', 'error');
+        return;
+    }
+    const data = {
+        type: getEl('reportType')?.value || 'laudo_pericial',
+        title: title,
+        summary: getEl('reportSummary')?.value || '',
+        body: getEl('reportBody')?.value || '',
+        conclusion: getEl('reportConclusion')?.value || '',
+        scene_id: getEl('reportSceneId')?.value || null,
+        case_id: getEl('reportCaseId')?.value || null,
+        mdt_report_id: getEl('reportMdtId')?.value || null,
+    };
+    const result = await fetchNUI('createReport', data);
+    if (result && result.success) {
+        closeModal();
+        showNotification('Laudo criado: ' + (result.reportNumber || ''), 'success');
+        await loadReports();
+    } else {
+        showNotification(result?.error || 'Erro ao criar laudo', 'error');
+    }
 }
