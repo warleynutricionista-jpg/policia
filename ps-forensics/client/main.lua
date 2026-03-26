@@ -14,7 +14,7 @@ local function hasAccess()
     local playerData = QBX and QBX.Functions.GetPlayerData() or nil
     if not playerData then return false end
     local job = playerData.job and playerData.job.name or ''
-    return ForensicUtils.IsPoliceJob(job) or ForensicUtils.IsMedicalJob(job)
+    return ForensicUtils.IsAuthorizedForensicsJob(job)
 end
 
 local function getPlayerJob()

@@ -91,6 +91,11 @@ function ForensicUtils.IsMedicalJob(jobName)
     return false
 end
 
+function ForensicUtils.IsAuthorizedForensicsJob(jobName)
+    if not jobName then return false end
+    return ForensicUtils.IsPoliceJob(jobName) or ForensicUtils.IsMedicalJob(jobName)
+end
+
 -- Obter role do jogador baseado em job e grade
 function ForensicUtils.GetPlayerRole(jobName, grade)
     grade = tonumber(grade) or 0
@@ -100,31 +105,18 @@ function ForensicUtils.GetPlayerRole(jobName, grade)
         return 'legista', Config.Roles.legista
     end
 
-    -- Investigador (policia civil)
+    -- Polícia Civil (acesso especializado)
     if jobName == 'policiacivil' then
-        if grade >= 2 then
-            return 'delegado', Config.Roles.delegado
-        end
-        return 'investigador', Config.Roles.investigador
+        return 'policiacivil_especializado', Config.Roles.policiacivil_especializado
     end
 
-    -- Comando (grade alta)
-    if grade >= 7 then
-        return 'comando', Config.Roles.comando
+    -- Polícia operacional (acesso limitado de campo)
+    if jobName == 'police' or jobName == 'ftpolicia' then
+        return 'policial_operacional', Config.Roles.policial_operacional
     end
 
-    -- Delegado (grade 5-6)
-    if grade >= 5 then
-        return 'delegado', Config.Roles.delegado
-    end
-
-    -- Perito (grade 2-4)
-    if grade >= 2 then
-        return 'perito', Config.Roles.perito
-    end
-
-    -- Policial operacional
-    return 'policial', Config.Roles.policial
+    -- Fallback para demais jobs policiais cadastrados
+    return 'policial_operacional', Config.Roles.policial_operacional
 end
 
 -- Verificar permissão específica

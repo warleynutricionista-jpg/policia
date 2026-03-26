@@ -42,10 +42,7 @@ function CheckForensicAuth(src)
     local data = GetPlayerData(src)
     if not data then return false end
 
-    local isPolice = ForensicUtils.IsPoliceJob(data.job)
-    local isMedical = ForensicUtils.IsMedicalJob(data.job)
-
-    if not isPolice and not isMedical then
+    if not ForensicUtils.IsAuthorizedForensicsJob(data.job) then
         lib.notify(src, {
             title = L('ui.system_name'),
             description = L('ui.access_denied_authorized_only'),
