@@ -50,6 +50,36 @@ ForensicShared.Roles = {
     },
 }
 
+ForensicShared.PermissionMatrix = {
+    levels = {
+        operacional = 1,
+        investigacao = 2,
+        administracao = 3,
+    },
+    byJob = {
+        policiacivil = 'investigacao',
+        police = 'operacional',
+        ftpolicia = 'operacional',
+        lspd = 'operacional',
+        bcso = 'operacional',
+        sahp = 'operacional',
+        fib = 'investigacao',
+        gov = 'investigacao',
+        ambulance = 'investigacao',
+    },
+    permissions = {
+        canCreateScene = 1,
+        canCollectEvidence = 1,
+        canRunBasicTests = 1,
+        canModifyCustody = 1,
+        canRunLabTests = 2,
+        canEmitReport = 2,
+        canPerformAutopsy = 2,
+        canFinalizeReport = 2,
+        canAdminForensics = 3,
+    },
+}
+
 ForensicShared.Enums = {
     SceneStatus = { 'aberta', 'isolada', 'em_processamento', 'finalizada', 'reaberta' },
     EvidenceStatus = { 'coletada', 'lacrada', 'em_analise', 'analisada', 'armazenada', 'descartada', 'devolvida', 'em_julgamento' },
