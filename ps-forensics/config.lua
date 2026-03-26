@@ -137,6 +137,7 @@ Config.PanelTabs = {
     { id = 'autopsy',      label = 'Legista',       icon = 'fa-solid fa-skull',            minLevel = 2, jobs = { 'ambulance', 'policiacivil' } },
     { id = 'reports',      label = 'Laudos',        icon = 'fa-solid fa-file-medical',     minLevel = 2, jobs = nil },
     { id = 'crossref',     label = 'Cruzamento',    icon = 'fa-solid fa-diagram-project',  minLevel = 2, jobs = nil },
+    { id = 'configuracoes', label = 'Configurações', icon = 'fa-solid fa-gear',             minLevel = 3, jobs = nil },
 }
 
 -- ============================================================

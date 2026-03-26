@@ -89,19 +89,24 @@ function OpenForensicsUI(tab)
     local permLevelName = Config.PermissionMatrix.byJob[jobName] or 'operacional'
     local permLevel = Config.PermissionMatrix.levels[permLevelName] or 1
 
-    -- Calcular abas disponíveis com base em nível e cargo
-    local availableTabs = {}
-    for _, tabDef in ipairs(Config.PanelTabs) do
-        local hasLevel = permLevel >= tabDef.minLevel
-        local hasJob = true
-        if tabDef.jobs then
-            hasJob = false
-            for _, j in ipairs(tabDef.jobs) do
-                if j == jobName then hasJob = true; break end
+    -- Buscar abas efetivas do servidor (mescla config + overrides do banco)
+    local effectiveResult = lib.callback.await(resourceName .. ':server:getPlayerEffectiveTabs', false)
+    local availableTabs = (effectiveResult and effectiveResult.tabs) or {}
+
+    -- Fallback: calcular localmente se servidor não responder
+    if #availableTabs == 0 then
+        for _, tabDef in ipairs(Config.PanelTabs) do
+            local hasLevel = permLevel >= tabDef.minLevel
+            local hasJob = true
+            if tabDef.jobs then
+                hasJob = false
+                for _, j in ipairs(tabDef.jobs) do
+                    if j == jobName then hasJob = true; break end
+                end
             end
-        end
-        if hasLevel and hasJob then
-            availableTabs[#availableTabs + 1] = tabDef.id
+            if hasLevel and hasJob then
+                availableTabs[#availableTabs + 1] = tabDef.id
+            end
         end
     end
 

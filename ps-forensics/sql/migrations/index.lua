@@ -5,4 +5,5 @@ return {
     '2026-03-25_forensics_intelligence_module.sql',
     '2026-03-25_forensics_intelligence_v2.sql',
     '2026-03-26_forensics_governance_and_audit_hardening.sql',
+    '2026-03-26_forensics_settings_panel.sql',
 }
