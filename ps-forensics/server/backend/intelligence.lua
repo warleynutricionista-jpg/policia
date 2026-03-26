@@ -429,6 +429,7 @@ end
 
 function ForensicEnsureCitizenForensicProfiles(citizenid, actorCitizenId, reason)
     if not citizenid or citizenid == '' then return { createdFingerprint = false, createdDNA = false } end
+    EnsureInvestigativeSubject(citizenid, reason or 'Registro investigativo', 'prison', nil, actorCitizenId or 'system')
 
     local createdFingerprint = false
     local createdDNA = false

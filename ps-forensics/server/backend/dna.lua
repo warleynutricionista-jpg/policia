@@ -70,24 +70,61 @@ lib.callback.register(resourceName .. ':server:registerDNAProfile', function(sou
     if not CheckForensicAuth(src) then return { success = false, error = L('dna.errors.not_authorized') } end
 
     if not citizenid then return { success = false, error = L('dna.errors.citizenid_required') } end
+    citizenid = tostring(citizenid)
 
-    local existing = MySQL.scalar.await('SELECT COUNT(*) FROM forensic_dna_profiles WHERE citizenid = ?', { citizenid })
-    if existing and existing > 0 then
-        return { success = false, error = L('dna.errors.profile_exists') }
+    if not IsCitizenInInvestigativeBase(citizenid) then
+        return { success = false, error = 'Cidadão fora da base investigativa criminal.' }
+    end
+
+    local existing = MySQL.single.await('SELECT id, dna_hash, dna_code FROM forensic_dna_profiles WHERE citizenid = ?', { citizenid })
+    if existing then
+        if not existing.dna_code or existing.dna_code == '' then
+            local generatedCode = ('DNA-%08d'):format(tonumber(existing.id) or 0)
+            MySQL.update.await('UPDATE forensic_dna_profiles SET dna_code = ? WHERE id = ?', { generatedCode, existing.id })
+            existing.dna_code = generatedCode
+        end
+        return { success = true, hash = existing.dna_hash, code = existing.dna_code, reused = true }
     end
 
     local hash = ForensicUtils.GenerateDNAHash(citizenid)
     local playerData = GetPlayerData(src)
     local resolvedName = citizenName or getCitizenNameFromMDT(citizenid) or L('labels.unknown')
 
-    MySQL.insert.await([[
-        INSERT INTO forensic_dna_profiles (citizenid, citizen_name, dna_hash, blood_type, registered_by)
-        VALUES (?, ?, ?, ?, ?)
-    ]], { citizenid, resolvedName, hash, bloodType or L('labels.unknown'), playerData and playerData.citizenid or '' })
+    local actorCitizenId = playerData and playerData.citizenid or 'system'
+    local insertedId = MySQL.insert.await([[
+        INSERT INTO forensic_dna_profiles (citizenid, citizen_name, dna_hash, blood_type, registered_by, created_by)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ]], { citizenid, resolvedName, hash, bloodType or L('labels.unknown'), actorCitizenId, actorCitizenId })
+
+    local dnaCode = insertedId and ('DNA-%08d'):format(insertedId) or nil
+    if insertedId and dnaCode then
+        MySQL.update.await('UPDATE forensic_dna_profiles SET dna_code = ? WHERE id = ?', { dnaCode, insertedId })
+    end
+
+    local retroMatches = MySQL.query.await([[
+        SELECT id FROM forensic_dna_samples
+        WHERE dna_hash = ?
+          AND (matched_citizenid IS NULL OR matched_citizenid = '')
+    ]], { hash }) or {}
+
+    for _, row in ipairs(retroMatches) do
+        MySQL.update.await([[
+            UPDATE forensic_dna_samples
+            SET match_status = 'compativel',
+                matched_citizenid = ?,
+                matched_name = ?,
+                match_confidence = 94,
+                analyzed_by = ?,
+                analyzed_at = NOW()
+            WHERE id = ?
+        ]], { citizenid, resolvedName, actorCitizenId, row.id })
+    end
+
+    EnsureInvestigativeSubject(citizenid, 'Perfil de DNA forense cadastrado', 'forensic_dna_profile', tostring(insertedId or ''), actorCitizenId)
 
     ForensicAuditLog(src, 'dna_profile_registered', 'dna_profile', nil, { citizenid = citizenid })
 
-    return { success = true, hash = hash }
+    return { success = true, hash = hash, code = dnaCode, retroMatches = #retroMatches }
 end)
 
 -- ============================================================
@@ -374,11 +411,13 @@ end)
 lib.callback.register(resourceName .. ':server:searchDNAByCitizen', function(source, citizenid)
     local src = source
     if not CheckForensicAuth(src) then return {} end
+    if not IsCitizenInInvestigativeBase(citizenid) then return {} end
 
     return MySQL.query.await([[
-        SELECT ds.*, fe.evidence_number
+        SELECT ds.*, fe.evidence_number, dp.dna_code
         FROM forensic_dna_samples ds
         LEFT JOIN forensic_evidence fe ON ds.evidence_id = fe.id
+        LEFT JOIN forensic_dna_profiles dp ON dp.citizenid = ds.matched_citizenid
         WHERE ds.matched_citizenid = ?
         ORDER BY ds.created_at DESC
     ]], { citizenid }) or {}

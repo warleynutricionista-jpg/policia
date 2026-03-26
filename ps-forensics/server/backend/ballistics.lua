@@ -33,6 +33,38 @@ local function normalizeSerial(serial)
     return s
 end
 
+local function getBallisticSignature(serial, model, caliber)
+    local seed = ('%s|%s|%s'):format(serial or 'SEM_SERIAL', model or 'MODELO_ND', caliber or 'CAL_ND')
+    local sum = 0
+    for i = 1, #seed do
+        sum = (sum + (string.byte(seed, i) * (i + 13))) % 2147483647
+    end
+    return ('BAL-%010d'):format(sum)
+end
+
+local function generateIllegalSerial()
+    local base = os.date('%y%m%d')
+    local rand = math.random(100000, 999999)
+    return normalizeSerial(('ILG-%s-%s'):format(base, rand))
+end
+
+local function ensureWeaponRegistry(serial, model, caliber, origin, ownerCitizenId, actorCitizenId)
+    if not serial or serial == '' then return nil end
+    local signature = getBallisticSignature(serial, model, caliber)
+    MySQL.insert.await([[
+        INSERT INTO forensic_weapon_registry
+        (serial, weapon_model, caliber, origin_type, current_holder_citizenid, ballistic_signature, status, created_by)
+        VALUES (?, ?, ?, ?, ?, ?, 'active', ?)
+        ON DUPLICATE KEY UPDATE
+            weapon_model = COALESCE(VALUES(weapon_model), weapon_model),
+            caliber = COALESCE(VALUES(caliber), caliber),
+            current_holder_citizenid = COALESCE(VALUES(current_holder_citizenid), current_holder_citizenid),
+            ballistic_signature = COALESCE(VALUES(ballistic_signature), ballistic_signature),
+            updated_at = CURRENT_TIMESTAMP
+    ]], { serial, model, caliber, origin or 'ilegal', ownerCitizenId, signature, actorCitizenId or 'system' })
+    return signature
+end
+
 local function hasRequiredItem(src, itemName)
     if not itemName then return true end
     if GetResourceState('ox_inventory') ~= 'started' then return true end
@@ -100,8 +132,9 @@ lib.callback.register(resourceName .. ':server:registerBallistic', function(sour
     local caseId = data.case_id and tonumber(data.case_id) or nil
     local reportId = data.report_id and tonumber(data.report_id) or nil
 
-    if itemType == 'arma' and not weaponSerial and weaponScratched ~= 1 then
-        return { success = false, error = L('ballistics.errors.weapon_serial_required') }
+    if itemType == 'arma' and not weaponSerial then
+        weaponSerial = generateIllegalSerial()
+        weaponScratched = 1
     end
 
     local requiredItem = Config.Items.ballistic_kit
@@ -143,12 +176,18 @@ lib.callback.register(resourceName .. ':server:registerBallistic', function(sour
     end
 
     local weapon = nil
+    local ownerCitizenId = nil
     if weaponSerial then
         weapon = MySQL.single.await('SELECT serial, owner, type FROM mdt_weapons WHERE serial = ?', { weaponSerial })
         if weapon and not weaponModel then
             weaponModel = weapon.type
         end
+        if weapon and weapon.owner and weapon.owner ~= '' then
+            ownerCitizenId = weapon.owner
+        end
     end
+    local originType = weapon and 'mdt_legal' or 'ilegal'
+    local ballisticSignature = ensureWeaponRegistry(weaponSerial, weaponModel, caliber, originType, ownerCitizenId, playerData.citizenid)
 
     local ballisticId = MySQL.insert.await([[
         INSERT INTO forensic_ballistics
@@ -223,6 +262,7 @@ lib.callback.register(resourceName .. ':server:registerBallistic', function(sour
         id = ballisticId,
         itemType = itemType,
         weaponSerial = weaponSerial,
+        ballisticSignature = ballisticSignature,
     }
 end)
 

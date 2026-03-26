@@ -6,6 +6,42 @@ let currentTab = 'scenes';
 let playerRole = 'policial';
 let playerPermissions = {};
 let playerName = '';
+let availableTabs = [];
+
+function getEl(id) {
+    return document.getElementById(id);
+}
+
+function safeClassList(id) {
+    const el = getEl(id);
+    if (!el) {
+        console.warn(`[ps-forensics] Elemento não encontrado: #${id}`);
+        return null;
+    }
+    return el.classList;
+}
+
+function resolveTab(tab) {
+    const preferred = tab || currentTab || 'scenes';
+    if (getEl('tab-' + preferred)) return preferred;
+
+    const firstAvailableExisting = (availableTabs || []).find((t) => !!getEl('tab-' + t));
+    if (firstAvailableExisting) return firstAvailableExisting;
+
+    const fallbackBtn = document.querySelector('.nav-btn[data-tab]');
+    if (fallbackBtn?.dataset?.tab && getEl('tab-' + fallbackBtn.dataset.tab)) {
+        return fallbackBtn.dataset.tab;
+    }
+
+    return 'scenes';
+}
+
+function asArrayResponse(response) {
+    if (Array.isArray(response)) return response;
+    if (response && Array.isArray(response.data)) return response.data;
+    if (response && response.success && response.data && Array.isArray(response.data.items)) return response.data.items;
+    return [];
+}
 
 // ============================================================
 // NUI MESSAGE HANDLER
@@ -14,13 +50,16 @@ window.addEventListener('message', function(event) {
     const data = event.data;
 
     if (data.action === 'open') {
-        document.getElementById('forensics-app').classList.remove('hidden');
+        safeClassList('forensics-app')?.remove('hidden');
         playerRole = data.role || 'policial';
         playerPermissions = data.permissions || {};
         playerName = data.playerName || 'Oficial';
+        availableTabs = Array.isArray(data.availableTabs) ? data.availableTabs : [];
 
-        document.getElementById('playerInfo').textContent = `${playerName} | ${data.playerJob || ''} | Grade ${data.playerGrade || 0}`;
-        document.getElementById('roleBadge').textContent = playerRole.toUpperCase();
+        const playerInfo = getEl('playerInfo');
+        if (playerInfo) playerInfo.textContent = `${playerName} | ${data.playerJob || ''} | Grade ${data.playerGrade || 0}`;
+        const roleBadge = getEl('roleBadge');
+        if (roleBadge) roleBadge.textContent = playerRole.toUpperCase();
 
         // Verificar permissões de legista
         if (!playerPermissions.canPerformAutopsy) {
@@ -48,11 +87,11 @@ window.addEventListener('message', function(event) {
             }
         });
 
-        switchTab(data.tab || 'scenes');
+        switchTab(resolveTab(data.tab));
     }
 
     if (data.action === 'close') {
-        document.getElementById('forensics-app').classList.add('hidden');
+        safeClassList('forensics-app')?.add('hidden');
     }
 });
 
@@ -77,7 +116,7 @@ async function fetchNUI(event, data = {}) {
 // CLOSE UI
 // ============================================================
 function closeUI() {
-    document.getElementById('forensics-app').classList.add('hidden');
+    safeClassList('forensics-app')?.add('hidden');
     fetchNUI('close');
 }
 
@@ -91,17 +130,24 @@ document.addEventListener('keydown', function(e) {
 // TAB SWITCHING
 // ============================================================
 function switchTab(tab) {
-    currentTab = tab;
+    const resolvedTab = resolveTab(tab);
+    currentTab = resolvedTab;
 
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
 
-    document.getElementById('tab-' + tab).classList.add('active');
-    const navBtn = document.querySelector(`.nav-btn[data-tab="${tab}"]`);
+    const tabEl = getEl('tab-' + resolvedTab);
+    if (!tabEl) {
+        console.error(`[ps-forensics] Aba inválida recebida: "${tab}" (resolvida: "${resolvedTab}")`);
+        return;
+    }
+
+    tabEl.classList.add('active');
+    const navBtn = document.querySelector(`.nav-btn[data-tab="${resolvedTab}"]`);
     if (navBtn) navBtn.classList.add('active');
 
     // Load data for tab
-    loadTabData(tab);
+    loadTabData(resolvedTab);
 }
 
 async function loadTabData(tab) {
@@ -283,7 +329,7 @@ function filterEvidence() { loadEvidence(); }
 async function loadFingerprints() {
     const citizenid = document.getElementById('fpSearch')?.value || '';
     const list = document.getElementById('fingerprintsList');
-    const rows = citizenid ? await fetchNUI('searchFingerprintsByCitizen', { citizenid }) : [];
+    const rows = citizenid ? asArrayResponse(await fetchNUI('searchFingerprintsByCitizen', { citizenid })) : [];
     if (!rows || rows.length === 0) {
         list.innerHTML = '<div class="empty-state"><i class="fas fa-hand-dots"></i><p>Nenhuma digital encontrada</p></div>';
         return;
@@ -306,7 +352,7 @@ async function loadFingerprints() {
 async function loadDNA() {
     const citizenid = document.getElementById('dnaSearch')?.value || '';
     const list = document.getElementById('dnaList');
-    const rows = citizenid ? await fetchNUI('searchDNAByCitizen', { citizenid }) : [];
+    const rows = citizenid ? asArrayResponse(await fetchNUI('searchDNAByCitizen', { citizenid })) : [];
     if (!rows || rows.length === 0) {
         list.innerHTML = '<div class="empty-state"><i class="fas fa-dna"></i><p>Nenhuma análise de DNA encontrada</p></div>';
         return;
@@ -329,7 +375,7 @@ async function loadDNA() {
 async function loadBallistics() {
     const serial = document.getElementById('ballisticSearch')?.value || '';
     const list = document.getElementById('ballisticsList');
-    const rows = serial ? await fetchNUI('getWeaponBallisticHistory', { serial }) : [];
+    const rows = serial ? asArrayResponse(await fetchNUI('getWeaponBallisticHistory', { serial })) : [];
     if (!rows || rows.length === 0) {
         list.innerHTML = '<div class="empty-state"><i class="fas fa-crosshairs"></i><p>Nenhum histórico balístico encontrado</p></div>';
         return;

@@ -155,11 +155,13 @@ CREATE TABLE IF NOT EXISTS `forensic_fingerprint_profiles` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `citizenid` varchar(50) NOT NULL,
   `citizen_name` varchar(100) DEFAULT NULL,
+  `fingerprint_code` varchar(20) DEFAULT NULL,
   `fingerprint_hash` varchar(64) NOT NULL,
   `registered_by` varchar(50) DEFAULT NULL,
   `registered_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `citizenid` (`citizenid`),
+  UNIQUE KEY `fingerprint_code` (`fingerprint_code`),
   UNIQUE KEY `fingerprint_hash` (`fingerprint_hash`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -200,13 +202,50 @@ CREATE TABLE IF NOT EXISTS `forensic_dna_profiles` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `citizenid` varchar(50) NOT NULL,
   `citizen_name` varchar(100) DEFAULT NULL,
+  `dna_code` varchar(20) DEFAULT NULL,
   `dna_hash` varchar(64) NOT NULL,
   `blood_type` varchar(10) DEFAULT NULL,
   `registered_by` varchar(50) DEFAULT NULL,
   `registered_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `citizenid` (`citizenid`),
+  UNIQUE KEY `dna_code` (`dna_code`),
   UNIQUE KEY `dna_hash` (`dna_hash`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Base investigativa (limitador de buscas genéticas/digitais)
+CREATE TABLE IF NOT EXISTS `forensic_investigative_subjects` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `citizenid` varchar(50) NOT NULL,
+  `reason` varchar(255) DEFAULT NULL,
+  `source_type` varchar(50) DEFAULT NULL,
+  `source_id` varchar(64) DEFAULT NULL,
+  `status` enum('active','inactive') NOT NULL DEFAULT 'active',
+  `added_by` varchar(50) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_forensic_investigative_citizen` (`citizenid`),
+  KEY `idx_forensic_investigative_status` (`status`,`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Registro unificado de arma para rastreabilidade e assinatura balística
+CREATE TABLE IF NOT EXISTS `forensic_weapon_registry` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `serial` varchar(50) NOT NULL,
+  `weapon_model` varchar(80) DEFAULT NULL,
+  `caliber` varchar(30) DEFAULT NULL,
+  `origin_type` enum('mdt_legal','ilegal','apreendida','policial_carga') NOT NULL DEFAULT 'ilegal',
+  `current_holder_citizenid` varchar(50) DEFAULT NULL,
+  `ballistic_signature` varchar(32) NOT NULL,
+  `status` enum('active','returned','lost','seized','destroyed') NOT NULL DEFAULT 'active',
+  `created_by` varchar(50) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_forensic_weapon_serial` (`serial`),
+  KEY `idx_forensic_weapon_holder` (`current_holder_citizenid`,`status`),
+  KEY `idx_forensic_weapon_signature` (`ballistic_signature`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Amostras de DNA coletadas

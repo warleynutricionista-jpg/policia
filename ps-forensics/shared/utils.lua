@@ -140,7 +140,7 @@ end
 --   Nível 3 (admin): legista (ambulance com grade >= minGrade)
 --   Nível 2 (especializado): policiacivil → acesso completo a lab/laudos/necropsia
 --   Nível 1 (operacional): todos os demais jobs policiais (police, ftpolicia, lspd, bcso, sahp, fib, gov, etc.)
-function ForensicUtils.GetPlayerRole(jobName, grade)
+function ForensicUtils.GetPlayerRole(jobName, grade, gradeName)
     grade = tonumber(grade) or 0
     local normalizedJob = normalizeJobName(jobName)
     local normalizedGrade = normalizeGradeName(gradeName)

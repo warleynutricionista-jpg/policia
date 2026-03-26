@@ -106,12 +106,12 @@ function OpenForensicsUI(tab)
     end
 
     -- Validar aba solicitada; usar primeira disponível se negada
-    local openTab = tab or availableTabs[1] or 'dashboard'
+    local openTab = tab or availableTabs[1] or 'scenes'
     local tabAllowed = false
     for _, t in ipairs(availableTabs) do
         if t == openTab then tabAllowed = true; break end
     end
-    if not tabAllowed then openTab = availableTabs[1] or 'dashboard' end
+    if not tabAllowed then openTab = availableTabs[1] or 'scenes' end
 
     SetNuiFocus(true, true)
     isForensicsOpen = true
