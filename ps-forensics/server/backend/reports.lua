@@ -160,6 +160,9 @@ lib.callback.register(resourceName .. ':server:updateForensicReport', function(s
     reportId = tonumber(reportId)
     if not reportId then return { success = false } end
 
+    local playerData = GetPlayerData(src)
+    if not playerData then return { success = false, error = L('scene.errors.player_data_unavailable') } end
+
     local updates = {}
     local values = {}
 
