@@ -106,7 +106,9 @@ end
 
 function ForensicUtils.IsAuthorizedForensicsJob(jobName)
     if not jobName then return false end
-    return ForensicUtils.IsPoliceJob(jobName) or ForensicUtils.IsMedicalJob(jobName)
+    return ForensicUtils.IsPoliceJob(jobName)
+        or ForensicUtils.IsForensicJob(jobName)
+        or ForensicUtils.IsMedicalJob(jobName)
 end
 
 function ForensicUtils.GetAccessLevel(jobName, grade, isAdmin)
@@ -134,7 +136,11 @@ function ForensicUtils.GetAccessLevel(jobName, grade, isAdmin)
 end
 
 -- Obter role do jogador baseado em job e grade
-function ForensicUtils.GetPlayerRole(jobName, grade, gradeName)
+-- Hierarquia de 3 níveis:
+--   Nível 3 (admin): legista (ambulance com grade >= minGrade)
+--   Nível 2 (especializado): policiacivil → acesso completo a lab/laudos/necropsia
+--   Nível 1 (operacional): todos os demais jobs policiais (police, ftpolicia, lspd, bcso, sahp, fib, gov, etc.)
+function ForensicUtils.GetPlayerRole(jobName, grade)
     grade = tonumber(grade) or 0
     local normalizedJob = normalizeJobName(jobName)
     local normalizedGrade = normalizeGradeName(gradeName)
@@ -144,18 +150,18 @@ function ForensicUtils.GetPlayerRole(jobName, grade, gradeName)
         return 'legista', Config.Roles.legista
     end
 
-    -- Polícia Civil (acesso especializado)
-    if normalizedJob == 'policiacivil' then
+    -- Polícia Civil (acesso especializado - Nível 2)
+    if jobName == 'policiacivil' then
         return 'policiacivil_especializado', Config.Roles.policiacivil_especializado
     end
 
-    -- Polícia operacional (acesso limitado de campo)
-    if normalizedJob == 'police' or normalizedJob == 'ftpolicia' then
+    -- Todos os demais jobs policiais cadastrados → operacional (Nível 1)
+    if ForensicUtils.IsPoliceJob(jobName) or ForensicUtils.IsForensicJob(jobName) then
         return 'policial_operacional', Config.Roles.policial_operacional
     end
 
-    -- Fallback para demais jobs policiais cadastrados
-    return 'policial_operacional', Config.Roles.policial_operacional
+    -- Job não reconhecido — sem acesso
+    return nil, nil
 end
 
 -- Verificar permissão específica

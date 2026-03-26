@@ -8,34 +8,66 @@ local activeScenes = {}
 local sceneBlips = {}
 
 -- ============================================================
+-- FRAMEWORK INIT (lazy com fallback qb-core)
+-- ============================================================
+local QBX = nil
+
+local function ensureCore()
+    if QBX then return QBX end
+
+    -- Tentar QBox (qbx_core)
+    local ok, core = pcall(function()
+        return exports['qbx_core']:GetCoreObject()
+    end)
+    if ok and core then
+        QBX = core
+        return QBX
+    end
+
+    -- Fallback: QBCore legado
+    local ok2, core2 = pcall(function()
+        return exports['qb-core']:GetCoreObject()
+    end)
+    if ok2 and core2 then
+        QBX = core2
+        return QBX
+    end
+
+    return nil
+end
+
+-- Inicialização eagerly em thread (para ter pronto o mais rápido possível)
+CreateThread(function()
+    ensureCore()
+end)
+
+-- ============================================================
 -- VERIFICAR SE JOGADOR TEM ACESSO
 -- ============================================================
+local function getPlayerData()
+    local core = ensureCore()
+    if not core then return nil end
+    local ok, pd = pcall(function()
+        return core.Functions.GetPlayerData()
+    end)
+    if ok and pd then return pd end
+    return nil
+end
+
 local function hasAccess()
-    local playerData = QBX and QBX.Functions.GetPlayerData() or nil
+    local playerData = getPlayerData()
     if not playerData then return false end
     local job = playerData.job and playerData.job.name or ''
     return ForensicUtils.IsAuthorizedForensicsJob(job)
 end
 
 local function getPlayerJob()
-    local playerData = QBX and QBX.Functions.GetPlayerData() or nil
-    if not playerData then return '', 0, '' end
-    return playerData.job.name, playerData.job.grade.level, playerData.job.grade.name or ''
+    local playerData = getPlayerData()
+    if not playerData then return '', 0 end
+    local job = playerData.job or {}
+    local grade = job.grade or {}
+    return job.name or '', tonumber(grade.level) or 0
 end
-
--- ============================================================
--- FRAMEWORK INIT
--- ============================================================
-QBX = nil
-
-CreateThread(function()
-    local ok, core = pcall(function()
-        return exports['qbx_core']:GetCoreObject()
-    end)
-    if ok and core then
-        QBX = core
-    end
-end)
 
 -- ============================================================
 -- ABRIR INTERFACE FORENSE (NUI)
