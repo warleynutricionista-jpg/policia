@@ -42,11 +42,52 @@ local function getExpiryDate(value)
     return nil
 end
 
+-- Padrões normalizados que identificam documentos do tipo mandado judicial
+local WARRANT_TYPE_PATTERNS = {
+    'mandado',
+    'mandado judicial',
+    'mandado de prisao',
+    'mandado de busca',
+    'mandado de busca e apreensao',
+    'mandado de apreensao',
+    'mandado de conducao',
+    'mandado de internacao',
+    'warrant',
+    'search warrant',
+    'arrest warrant',
+}
+
+local function normalizeForComparison(value)
+    if not value or value == '' then return '' end
+    local s = tostring(value):lower()
+    s = s:gsub('^%s+', ''):gsub('%s+$', '')
+    -- Remover acentos comuns do português
+    s = s:gsub('[áàâã]', 'a')
+    s = s:gsub('[éèê]', 'e')
+    s = s:gsub('[íìî]', 'i')
+    s = s:gsub('[óòôõ]', 'o')
+    s = s:gsub('[úùû]', 'u')
+    s = s:gsub('[ç]', 'c')
+    return s
+end
+
+local function isWarrantType(reportType)
+    if not reportType or reportType == '' then return false end
+    local normalized = normalizeForComparison(reportType)
+    for _, pattern in ipairs(WARRANT_TYPE_PATTERNS) do
+        if normalized == pattern or normalized:find(pattern, 1, true) then
+            return true
+        end
+    end
+    return false
+end
+
 ps.registerCallback(resourceName .. ':server:getActiveWarrants', function(source)
     local src = source
     if not CheckAuth(src) then return {} end
     if not CheckPermission(src, 'warrants_view') then return {} end
 
+    -- 1) Mandados explícitos da tabela mdt_reports_warrants (sistema original)
     local rows = MySQL.query.await([[
         SELECT
             w.reportid,
@@ -64,11 +105,15 @@ ps.registerCallback(resourceName .. ':server:getActiveWarrants', function(source
     ]])
 
     local results = {}
+    local seenKeys = {}
+
     for _, row in ipairs(rows or {}) do
         local name = ((row.firstname or '') .. ' ' .. (row.lastname or '')):gsub('^%s+', ''):gsub('%s+$', '')
         if name == '' then
             name = ps.getPlayerNameByIdentifier(row.citizenid) or 'Desconhecido'
         end
+        local key = tostring(row.reportid) .. ':' .. tostring(row.citizenid)
+        seenKeys[key] = true
         results[#results + 1] = {
             reportid = row.reportid,
             citizenid = row.citizenid,
@@ -78,6 +123,45 @@ ps.registerCallback(resourceName .. ':server:getActiveWarrants', function(source
             infractions = tonumber(row.infractions) or 0,
             expirydate = row.expirydate,
         }
+    end
+
+    -- 2) Relatórios do tipo mandado judicial (mdt_reports com type contendo "mandado")
+    local reportRows = MySQL.query.await([[
+        SELECT
+            r.id AS reportid,
+            r.type AS report_type,
+            r.title,
+            r.datecreated,
+            ri.citizenid
+        FROM mdt_reports r
+        LEFT JOIN mdt_reports_involved ri ON ri.reportid = r.id
+        WHERE r.report_status NOT IN ('archived')
+        ORDER BY r.datecreated DESC
+    ]]) or {}
+
+    for _, row in ipairs(reportRows) do
+        if isWarrantType(row.report_type) then
+            local citizenid = row.citizenid or ''
+            local key = tostring(row.reportid) .. ':' .. citizenid
+            if not seenKeys[key] then
+                seenKeys[key] = true
+                local name = 'Desconhecido'
+                if citizenid ~= '' then
+                    name = ps.getPlayerNameByIdentifier(citizenid) or 'Desconhecido'
+                end
+                results[#results + 1] = {
+                    reportid = row.reportid,
+                    citizenid = citizenid,
+                    name = name,
+                    felonies = 0,
+                    misdemeanors = 0,
+                    infractions = 0,
+                    expirydate = nil,
+                    reportTitle = row.title,
+                    reportType = row.report_type,
+                }
+            end
+        end
     end
 
     return results

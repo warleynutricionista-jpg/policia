@@ -4,34 +4,62 @@
 
 local resourceName = GetCurrentResourceName()
 
--- Cache de QBX core
+-- Cache de QBX core com inicialização lazy (evita race condition)
 local QBX = nil
 
-CreateThread(function()
+local function ensureCore()
+    if QBX then return QBX end
+
+    -- Tentar QBox (qbx_core)
     local ok, core = pcall(function()
         return exports['qbx_core']:GetCoreObject()
     end)
     if ok and core then
         QBX = core
+        return QBX
     end
+
+    -- Fallback: QBCore legado
+    local ok2, core2 = pcall(function()
+        return exports['qb-core']:GetCoreObject()
+    end)
+    if ok2 and core2 then
+        QBX = core2
+        return QBX
+    end
+
+    return nil
+end
+
+-- Inicialização eagerly em thread (para ter pronto o mais rápido possível)
+CreateThread(function()
+    ensureCore()
 end)
 
 -- Obter dados do jogador
 function GetPlayerData(src)
     if not src then return nil end
 
-    if QBX then
-        local player = QBX.Functions.GetPlayer(src)
-        if player then
-            return {
-                citizenid = player.PlayerData.citizenid,
-                name = player.PlayerData.charinfo.firstname .. ' ' .. player.PlayerData.charinfo.lastname,
-                job = player.PlayerData.job.name,
-                grade = player.PlayerData.job.grade.level,
-                jobLabel = player.PlayerData.job.label,
-                gradeLabel = player.PlayerData.job.grade.name,
-            }
-        end
+    local core = ensureCore()
+    if not core then
+        print(('[%s] AVISO: Framework core não disponível ao verificar jogador %s'):format(resourceName, tostring(src)))
+        return nil
+    end
+
+    local ok, player = pcall(function()
+        return core.Functions.GetPlayer(src)
+    end)
+
+    if ok and player and player.PlayerData then
+        local pd = player.PlayerData
+        return {
+            citizenid = pd.citizenid,
+            name = (pd.charinfo and pd.charinfo.firstname or '') .. ' ' .. (pd.charinfo and pd.charinfo.lastname or ''),
+            job = pd.job and pd.job.name or '',
+            grade = pd.job and pd.job.grade and pd.job.grade.level or 0,
+            jobLabel = pd.job and pd.job.label or '',
+            gradeLabel = pd.job and pd.job.grade and pd.job.grade.name or '',
+        }
     end
 
     return nil

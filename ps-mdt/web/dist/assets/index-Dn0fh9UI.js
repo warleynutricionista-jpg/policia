@@ -35575,7 +35575,7 @@ function wI(n, e) {
           je = ye.lat - ve.lat;
         return Math.sqrt(xe * xe + je * je);
       },
-      transformation: new al.Transformation(0.10602, 127.61, -0.10229, 150.93),
+      transformation: new al.Transformation(0.11426, 111.80, -0.08982, 147.06),
       infinite: !1,
     });
   }

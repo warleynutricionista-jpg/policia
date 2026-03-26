@@ -37,11 +37,27 @@ local function getVehicleTableName()
         return vehicleTableCache
     end
 
-    if hasTable('player_vehicles') then
-        vehicleTableCache = 'player_vehicles'
+    -- Tentar detectar a tabela de veículos disponível
+    local candidates = { 'player_vehicles', 'owned_vehicles', 'vehicles' }
+    for _, tableName in ipairs(candidates) do
+        local ok, exists = pcall(hasTable, tableName)
+        if ok and exists then
+            vehicleTableCache = tableName
+            return vehicleTableCache
+        end
     end
 
-    return vehicleTableCache
+    -- Fallback: assumir player_vehicles se a verificação falhar (tabela pode existir mas schema check falhou)
+    local ok, result = pcall(function()
+        return MySQL.scalar.await('SELECT 1 FROM player_vehicles LIMIT 1')
+    end)
+    if ok then
+        vehicleTableCache = 'player_vehicles'
+        return vehicleTableCache
+    end
+
+    print(('[%s][vehicles] AVISO: Nenhuma tabela de veículos encontrada no banco de dados'):format(resourceName))
+    return nil
 end
 
 local function buildVehicleOwnerExpr(tableName, alias)
@@ -295,7 +311,7 @@ local function matchesVehicleQuery(vehicle, normalizedQuery)
 end
 
 local function getVehicleSelectSql()
-    local tbl = 'player_vehicles'
+    local tbl = getVehicleTableName() or 'player_vehicles'
     local hasVehicleName = hasColumn(tbl, 'vehicle_name')
     local hasFakeplate = hasColumn(tbl, 'fakeplate')
     local hasLicense = hasColumn(tbl, 'license')
@@ -354,10 +370,10 @@ local function getVehicleSelectSql()
                     'null'
                 )
             ) AS owner_name
-        FROM player_vehicles pv
+        FROM %s pv
         LEFT JOIN players p
             ON p.citizenid = pv.citizenid
-    ]]):format(
+    ]]):format(tbl,
         hasLicense and 'pv.license,' or '',
         hasVehicleName and "NULLIF(TRIM(pv.vehicle_name), '') AS vehicle_name," or "NULL AS vehicle_name,",
         hasFakeplate and "NULLIF(TRIM(pv.fakeplate), '') AS fakeplate," or "NULL AS fakeplate,",
@@ -383,7 +399,7 @@ local function buildVehicleSearchWhere(search)
         return '', {}
     end
 
-    local tbl = 'player_vehicles'
+    local tbl = getVehicleTableName() or 'player_vehicles'
     local hasFakeplate = hasColumn(tbl, 'fakeplate')
     local hasVehicleName = hasColumn(tbl, 'vehicle_name')
     local hasGarage = hasColumn(tbl, 'garage')
@@ -440,6 +456,9 @@ local function buildVehicleSearchWhere(search)
         conditions[#conditions + 1] = "COALESCE(pv.garage, '') LIKE ?"
         params[#params + 1] = like
     end
+    -- Buscar também pelo nome do proprietário (via JOIN com players)
+    conditions[#conditions + 1] = "CONCAT_WS(' ', JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')), JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname'))) LIKE ?"
+    params[#params + 1] = like
 
     return ('WHERE (%s)'):format(table.concat(conditions, ' OR ')), params
 end
@@ -530,7 +549,8 @@ local function queryVehiclesPage(search, page, limit)
     local offset = (safePage - 1) * safeLimit
     local whereSql, whereParams = buildVehicleSearchWhere(search)
 
-    local countSql = ('SELECT COUNT(*) AS total FROM player_vehicles pv %s'):format(whereSql)
+    local vehTable = getVehicleTableName() or 'player_vehicles'
+    local countSql = ('SELECT COUNT(*) AS total FROM %s pv LEFT JOIN players p ON p.citizenid = pv.citizenid %s'):format(vehTable, whereSql)
     local countRow = MySQL.single.await(countSql, whereParams) or { total = 0 }
     local total = tonumber(countRow.total) or 0
 
@@ -576,8 +596,9 @@ function GetMdtVehicleDirectory(forceRefresh)
     end
 
     return Cache.getOrSet(VEHICLE_DIRECTORY_CACHE_KEY, VEHICLE_DIRECTORY_TTL, function()
-        EnsureMdtSchema()
-        if not hasTable('player_vehicles') then
+        pcall(EnsureMdtSchema)
+        local vehTable = getVehicleTableName()
+        if not vehTable then
             return { vehicles = {}, bolos = {} }
         end
         local vehList = MySQL.query.await(([[%s ORDER BY pv.plate ASC]]):format(getVehicleSelectSql())) or {}
@@ -611,17 +632,37 @@ ps.registerCallback(resourceName .. ':server:GetVehicles', function(source, payl
     local startTime = os.clock()
     local src = source
     if not CheckAuth(src) then return { vehicles = {}, bolos = {}, page = 1, limit = 25, total = 0, hasMore = false } end
-    EnsureMdtSchema()
+
+    local schemaOk = pcall(EnsureMdtSchema)
+    if not schemaOk then
+        print(('[%s][vehicles] AVISO: Schema check falhou, tentando carregar veículos mesmo assim'):format(resourceName))
+    end
+
+    local vehTable = getVehicleTableName()
+    if not vehTable then
+        print(('[%s][vehicles] ERRO: Tabela de veículos não encontrada no banco'):format(resourceName))
+        return { vehicles = {}, bolos = {}, page = 1, limit = 25, total = 0, hasMore = false }
+    end
 
     payload = payload or {}
     local page = payload.page or payload.currentPage or 1
     local limit = payload.limit or (Config.Pagination and Config.Pagination.Vehicles) or 25
-    local pageResult = queryVehiclesPage(nil, page, limit)
-    local bolos = fetchVehicleBolos()
+
+    local ok, pageResult = pcall(queryVehiclesPage, nil, page, limit)
+    if not ok then
+        print(('[%s][vehicles] ERRO ao consultar veículos: %s'):format(resourceName, tostring(pageResult)))
+        return { vehicles = {}, bolos = {}, page = page, limit = limit, total = 0, hasMore = false }
+    end
+
+    local bolos = {}
+    local okBolos, boloResult = pcall(fetchVehicleBolos)
+    if okBolos then
+        bolos = boloResult
+    end
 
     local endTime = os.clock()
     local elapsedTime = (endTime - startTime) * 1000
-    ps.debug(string.format("getVehicles callback executed in %.2f ms (page %s, limit %s)", elapsedTime, tostring(pageResult.page), tostring(pageResult.limit)))
+    ps.debug(string.format("getVehicles callback executed in %.2f ms (page %s, limit %s, total %s)", elapsedTime, tostring(pageResult.page), tostring(pageResult.limit), tostring(pageResult.total)))
 
     return {
         vehicles = pageResult.vehicles or {},
@@ -636,7 +677,7 @@ end)
 ps.registerCallback(resourceName .. ':server:SearchVehicles', function(source, payload)
     local src = source
     if not CheckAuth(src) then return { vehicles = {}, bolos = {}, page = 1, limit = 25, total = 0, hasMore = false } end
-    EnsureMdtSchema()
+    pcall(EnsureMdtSchema)
 
     if type(payload) ~= 'table' then
         payload = { query = payload }
@@ -647,7 +688,11 @@ ps.registerCallback(resourceName .. ':server:SearchVehicles', function(source, p
         return { vehicles = {}, bolos = {}, page = 1, limit = payload.limit or 25, total = 0, hasMore = false }
     end
 
-    local pageResult = queryVehiclesPage(trimmedQuery, payload.page or 1, payload.limit)
+    local ok, pageResult = pcall(queryVehiclesPage, trimmedQuery, payload.page or 1, payload.limit)
+    if not ok then
+        print(('[%s][vehicles] ERRO ao buscar veículos: %s'):format(resourceName, tostring(pageResult)))
+        return { vehicles = {}, bolos = {}, page = 1, limit = payload.limit or 25, total = 0, hasMore = false }
+    end
 
     return {
         vehicles = pageResult.vehicles or {},
