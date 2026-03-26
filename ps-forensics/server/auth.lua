@@ -85,29 +85,15 @@ end
 function CheckForensicPermission(src, permission)
     local data = GetPlayerData(src)
     if not data then return false end
-    data.isAdmin = isAdminGroup(src)
-    return ForensicUtils.HasPermission(data.job, data.grade, permission, data.isAdmin)
+
+    return ForensicUtils.HasPermission(data.job, data.grade, permission, data.gradeLabel)
 end
 
 -- Obter role do jogador
 function GetPlayerRole(src)
     local data = GetPlayerData(src)
     if not data then return nil, nil end
-    data.isAdmin = isAdminGroup(src)
-    if data.isAdmin then
-        return 'administracao', {
-            canCreateScene = true,
-            canCollectEvidence = true,
-            canRunBasicTests = true,
-            canRunLabTests = true,
-            canEmitReport = true,
-            canPerformAutopsy = true,
-            canModifyCustody = true,
-            canFinalizeReport = true,
-            canAdminForensics = true,
-        }
-    end
-    return ForensicUtils.GetPlayerRole(data.job, data.grade)
+    return ForensicUtils.GetPlayerRole(data.job, data.grade, data.gradeLabel)
 end
 
 -- Log de auditoria forense
