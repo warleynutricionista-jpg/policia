@@ -1,0 +1,208 @@
+<!-- html/index.html -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+  <title>Painel de Oficiais Ativos</title>
+
+  <meta name="theme-color" content="#0f1226" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    referrerpolicy="no-referrer"
+  />
+  <link rel="stylesheet" href="style.css" />
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
+    defer
+  ></script>
+  <script src="app.js" defer></script>
+</head>
+
+<body>
+  <!-- Painel de Configurações -->
+  <div id="officers-container" class="card glass">
+    <div class="officers-header draggable" id="panel-draggable-header" aria-grabbed="false">
+      <div class="header-main">
+        <div class="header-title">
+          <i class="fa-solid fa-shield-halved"></i>
+          <h1>
+            <span id="panel-category-name">Principal</span>
+            <span class="chip">
+              <i class="fa-solid fa-wave-square"></i>
+              <span id="panel-category-channel">1B</span>
+            </span>
+            <span id="panel-officer-count" class="muted"></span>
+          </h1>
+        </div>
+      </div>
+      <button class="icon-btn close-btn" id="close-panel" aria-label="Fechar painel" title="Fechar">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="officers-content">
+      <div class="officers-list" id="officers-panel-list" role="list" aria-live="polite">
+        <!-- Populado dinamicamente -->
+      </div>
+    </div>
+
+    <div class="officers-settings">
+      <h2><i class="fa-solid fa-user-gear"></i> Configurações do Oficial</h2>
+
+      <div id="main-settings-content" class="settings-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="callsign"><i class="fa-solid fa-id-badge"></i> Prefixo (Callsign)</label>
+            <input type="text" id="callsign" placeholder="NO CALLSIGN" autocomplete="off" />
+          </div>
+
+          <div class="form-group">
+            <label for="badge">
+              <i class="fa-solid fa-medal"></i> Patente
+              <span class="badge-auto">(definida automaticamente)</span>
+            </label>
+            <input type="text" id="badge" disabled />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group stretch">
+            <label for="custom-image"><i class="fa-solid fa-image"></i> URL da Foto (opcional)</label>
+            <div class="input-with-hint">
+              <input type="text" id="custom-image" placeholder="Cole o link direto da imagem" />
+              <span class="hint">PNG/JPG público</span>
+            </div>
+            <div class="image-preview">
+              <img id="image-preview" src="img/default_avatar.png" alt="Pré-visualização do avatar" />
+            </div>
+          </div>
+
+          <div class="form-group actions">
+            <button id="save-settings" class="btn primary">
+              <i class="fa-solid fa-floppy-disk"></i> Salvar
+            </button>
+
+            <button id="toggle-officers-list" class="btn ghost" aria-pressed="false">
+              <i class="fa-solid fa-rectangle-list"></i>
+              <span class="toggle-text-on">Ocultar Lista</span>
+              <span class="toggle-text-off">Mostrar Lista</span>
+            </button>
+
+            <button id="show-commissioner-panel" class="btn warning commissioner-toggle-btn" style="display:none">
+              <i class="fa-solid fa-sitemap"></i> Painel do Comissário
+            </button>
+          </div>
+        </div>
+
+        <div class="radio-categories">
+          <h3><i class="fa-solid fa-tower-broadcast"></i> Categorias de Rádio</h3>
+          <div class="radio-categories-buttons pill-group" role="group" aria-label="Categorias">
+            <button class="radio-category-btn pill active" data-category="main" data-channel="1B">
+              <i class="fa-solid fa-house"></i> Principal (1B)
+            </button>
+            <button class="radio-category-btn pill" data-category="store" data-channel="2B">
+              <i class="fa-solid fa-store"></i> Loja (2B)
+            </button>
+            <button class="radio-category-btn pill" data-category="fleeca" data-channel="3B">
+              <i class="fa-solid fa-vault"></i> Fleeca (3B)
+            </button>
+            <button class="radio-category-btn pill" data-category="pacific" data-channel="4B">
+              <i class="fa-solid fa-landmark-dome"></i> Pacific (4B)
+            </button>
+            <button class="radio-category-btn pill" data-category="jewelry" data-channel="5B">
+              <i class="fa-regular fa-gem"></i> Joalheria (5B)
+            </button>
+            <button class="radio-category-btn pill" data-category="pursuit" data-channel="6B">
+              <i class="fa-solid fa-car-burst"></i> Perseguição (6B)
+            </button>
+            <button class="radio-category-btn pill" data-category="traffic" data-channel="7B">
+              <i class="fa-solid fa-traffic-light"></i> Trânsito (7B)
+            </button>
+            <button class="radio-category-btn pill" data-category="investigation" data-channel="8B">
+              <i class="fa-solid fa-user-secret"></i> Investigação (8B)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Painel do Comissário (oculto por padrão) -->
+      <div id="commissioner-panel" class="commissioner-panel" hidden>
+        <div class="panel-header-aux">
+          <h3><i class="fa-solid fa-swatchbook"></i> Painel do Comissário</h3>
+          <p class="muted">Configure intervalos de <b>callsign</b> por cor para categorizar equipes.</p>
+        </div>
+
+        <div id="colors-container" class="colors-container">
+          <!-- Linhas de configuração adicionadas via JS -->
+        </div>
+
+        <div class="commissioner-buttons">
+          <button id="add-color-config" class="btn soft">
+            <i class="fa-solid fa-plus"></i> Adicionar Intervalo
+          </button>
+          <button id="save-colors" class="btn success">
+            <i class="fa-solid fa-floppy-disk"></i> Salvar Cores
+          </button>
+        </div>
+
+        <button id="back-to-settings" class="btn ghost back-button">
+          <i class="fa-solid fa-arrow-left"></i> Voltar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lista Compacta (sempre disponível) -->
+  <div id="officers-list-container" class="card glass side" aria-live="polite">
+    <div class="list-header draggable" id="list-draggable-header" aria-grabbed="false">
+      <div class="header-title">
+        <i class="fa-solid fa-list-check"></i>
+        <h1>
+          <span id="list-category-name">Principal</span>
+          <span class="chip">
+            <i class="fa-solid fa-wave-square"></i>
+            <span id="list-category-channel">1B</span>
+          </span>
+          <span id="list-officer-count" class="muted"></span>
+        </h1>
+      </div>
+
+      <div class="list-buttons">
+        <button class="icon-btn" id="minimize-list" aria-label="Recolher lista" title="Recolher">
+          <i class="fa-solid fa-minus"></i>
+        </button>
+        <button class="icon-btn danger" id="close-list" aria-label="Fechar lista" title="Fechar">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="list-content">
+      <div id="subcategories-list" class="subcategories-list">
+        <!-- Subcategorias via JS -->
+      </div>
+
+      <div class="compact-officers-list" id="compact-officers-list" role="list">
+        <!-- Populado dinamicamente -->
+      </div>
+    </div>
+
+    <div class="resize-handle" id="resize-handle" title="Redimensionar">
+      <i class="fa-solid fa-up-down-left-right"></i>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="tooltip" role="status" aria-live="polite"></div>
+</body>
+</html>

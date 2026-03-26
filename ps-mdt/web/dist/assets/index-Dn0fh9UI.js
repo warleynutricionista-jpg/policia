@@ -2577,6 +2577,7 @@ const P1 = [
     "Relatório de Investigação",
     "Relatório de Prisão",
     "Relatório de Evidências",
+    "Mandado Judicial",
   ],
   N1 = [
     "Relatório Médico",
@@ -2686,6 +2687,7 @@ const Qo = {
     "Relatório de Investigação",
     "Relatório de Prisão",
     "Relatório de Evidências",
+    "Mandado Judicial",
   ],
   q1 = ["Primary", "Secondary", "Witness", "Complainant"],
   j1 = {
@@ -2980,7 +2982,7 @@ const wi = {
     Cameras: "Cameras",
     Bodycams: "Bodycams",
     Management: "Settings",
-    Settings: "Preferences",
+    Settings: "Settings",
   },
   Hs = {
     INVALID_ID_FORMAT:
@@ -35573,7 +35575,7 @@ function wI(n, e) {
           je = ye.lat - ve.lat;
         return Math.sqrt(xe * xe + je * je);
       },
-      transformation: new al.Transformation(0.02072, 117.3, -0.0205, 172.8),
+      transformation: new al.Transformation(0.10602, 127.61, -0.10229, 150.93),
       infinite: !1,
     });
   }
@@ -35606,7 +35608,7 @@ function wI(n, e) {
     })),
       ti.control.zoom({ position: "topright" }).addTo(s));
     const ve = B(s);
-    (s.setView([-300, -1500], 4),
+    (s.setView([-218, 98], 4),
       s.setMaxBounds(ve),
       s.attributionControl.setPrefix(!1),
       U(s, ve),
