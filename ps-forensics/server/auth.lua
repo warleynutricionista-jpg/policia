@@ -139,3 +139,74 @@ function ForensicAuditLog(src, action, entityType, entityId, details)
         ))
     end
 end
+
+local function trimToString(value)
+    if value == nil then return nil end
+    local v = tostring(value):gsub('^%s*(.-)%s*$', '%1')
+    if v == '' then return nil end
+    return v
+end
+
+function EnsureInvestigativeSubject(citizenid, reason, sourceType, sourceId, actorCitizenId)
+    citizenid = trimToString(citizenid)
+    if not citizenid then return false end
+
+    MySQL.insert.await([[
+        INSERT INTO forensic_investigative_subjects
+        (citizenid, reason, source_type, source_id, status, added_by)
+        VALUES (?, ?, ?, ?, 'active', ?)
+        ON DUPLICATE KEY UPDATE
+            status = 'active',
+            reason = VALUES(reason),
+            source_type = VALUES(source_type),
+            source_id = VALUES(source_id),
+            updated_at = CURRENT_TIMESTAMP,
+            added_by = COALESCE(VALUES(added_by), added_by)
+    ]], {
+        citizenid,
+        trimToString(reason) or 'Entrada automática na base investigativa',
+        trimToString(sourceType) or 'manual',
+        trimToString(sourceId),
+        trimToString(actorCitizenId) or 'system',
+    })
+
+    return true
+end
+
+function IsCitizenInInvestigativeBase(citizenid)
+    citizenid = trimToString(citizenid)
+    if not citizenid then return false end
+
+    local enrolled = tonumber(MySQL.scalar.await(
+        "SELECT COUNT(*) FROM forensic_investigative_subjects WHERE citizenid = ? AND status = 'active'",
+        { citizenid }
+    )) or 0
+    if enrolled > 0 then return true end
+
+    local hasArrest = tonumber(MySQL.scalar.await('SELECT COUNT(*) FROM mdt_arrests WHERE citizenid = ?', { citizenid })) or 0
+    if hasArrest > 0 then
+        EnsureInvestigativeSubject(citizenid, 'Elegível por histórico de prisão', 'mdt_arrest', nil, 'system')
+        return true
+    end
+
+    local hasWarrant = tonumber(MySQL.scalar.await(
+        'SELECT COUNT(*) FROM mdt_reports_warrants WHERE citizenid = ? AND expirydate >= NOW()',
+        { citizenid }
+    )) or 0
+    if hasWarrant > 0 then
+        EnsureInvestigativeSubject(citizenid, 'Elegível por mandado ativo', 'mdt_warrant', nil, 'system')
+        return true
+    end
+
+    local hasForensicLink = tonumber(MySQL.scalar.await([[
+        SELECT COUNT(*) FROM forensic_evidence
+        WHERE linked_citizenid = ?
+    ]], { citizenid })) or 0
+
+    if hasForensicLink > 0 then
+        EnsureInvestigativeSubject(citizenid, 'Elegível por vínculo forense prévio', 'forensic_evidence', nil, 'system')
+        return true
+    end
+
+    return false
+end

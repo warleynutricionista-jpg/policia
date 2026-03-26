@@ -58,25 +58,62 @@ lib.callback.register(resourceName .. ':server:registerFingerprint', function(so
     if not CheckForensicAuth(src) then return { success = false, error = L('fingerprints.errors.not_authorized') } end
 
     if not citizenid then return { success = false, error = L('fingerprints.errors.citizenid_required') } end
+    citizenid = tostring(citizenid)
+
+    if not IsCitizenInInvestigativeBase(citizenid) then
+        return { success = false, error = 'Cidadão fora da base investigativa criminal.' }
+    end
 
     -- Verificar se já existe
-    local existing = MySQL.scalar.await('SELECT COUNT(*) FROM forensic_fingerprint_profiles WHERE citizenid = ?', { citizenid })
-    if existing and existing > 0 then
-        return { success = false, error = L('fingerprints.errors.profile_exists') }
+    local existing = MySQL.single.await('SELECT id, fingerprint_hash, fingerprint_code FROM forensic_fingerprint_profiles WHERE citizenid = ?', { citizenid })
+    if existing then
+        if not existing.fingerprint_code or existing.fingerprint_code == '' then
+            local generatedCode = ('DIG-%08d'):format(tonumber(existing.id) or 0)
+            MySQL.update.await('UPDATE forensic_fingerprint_profiles SET fingerprint_code = ? WHERE id = ?', { generatedCode, existing.id })
+            existing.fingerprint_code = generatedCode
+        end
+        return { success = true, hash = existing.fingerprint_hash, code = existing.fingerprint_code, reused = true }
     end
 
     local hash = ForensicUtils.GenerateFingerprintHash(citizenid)
     local playerData = GetPlayerData(src)
     local resolvedName = citizenName or getCitizenNameFromMDT(citizenid) or L('labels.unknown')
+    local actorCitizenId = playerData and playerData.citizenid or 'system'
 
-    MySQL.insert.await([[
-        INSERT INTO forensic_fingerprint_profiles (citizenid, citizen_name, fingerprint_hash, registered_by)
-        VALUES (?, ?, ?, ?)
-    ]], { citizenid, resolvedName, hash, playerData and playerData.citizenid or '' })
+    local insertedId = MySQL.insert.await([[
+        INSERT INTO forensic_fingerprint_profiles (citizenid, citizen_name, fingerprint_hash, registered_by, created_by)
+        VALUES (?, ?, ?, ?, ?)
+    ]], { citizenid, resolvedName, hash, actorCitizenId, actorCitizenId })
+
+    local profileCode = insertedId and ('DIG-%08d'):format(insertedId) or nil
+    if insertedId and profileCode then
+        MySQL.update.await('UPDATE forensic_fingerprint_profiles SET fingerprint_code = ? WHERE id = ?', { profileCode, insertedId })
+    end
+
+    local retroMatches = MySQL.query.await([[
+        SELECT id FROM forensic_fingerprints_collected
+        WHERE fingerprint_hash = ?
+          AND (matched_citizenid IS NULL OR matched_citizenid = '')
+    ]], { hash }) or {}
+
+    for _, row in ipairs(retroMatches) do
+        MySQL.update.await([[
+            UPDATE forensic_fingerprints_collected
+            SET match_status = 'positiva',
+                matched_citizenid = ?,
+                matched_name = ?,
+                match_confidence = 92,
+                analyzed_by = ?,
+                analyzed_at = NOW()
+            WHERE id = ?
+        ]], { citizenid, resolvedName, actorCitizenId, row.id })
+    end
+
+    EnsureInvestigativeSubject(citizenid, 'Perfil digital forense cadastrado', 'forensic_fingerprint_profile', tostring(insertedId or ''), actorCitizenId)
 
     ForensicAuditLog(src, 'fingerprint_registered', 'fingerprint_profile', nil, { citizenid = citizenid })
 
-    return { success = true, hash = hash }
+    return { success = true, hash = hash, code = profileCode, retroMatches = #retroMatches }
 end)
 
 -- ============================================================
@@ -333,11 +370,13 @@ end)
 lib.callback.register(resourceName .. ':server:searchFingerprintsByCitizen', function(source, citizenid)
     local src = source
     if not CheckForensicAuth(src) then return {} end
+    if not IsCitizenInInvestigativeBase(citizenid) then return {} end
 
     return MySQL.query.await([[
-        SELECT fc.*, fe.evidence_number, fe.scene_id
+        SELECT fc.*, fe.evidence_number, fe.scene_id, fp.fingerprint_code
         FROM forensic_fingerprints_collected fc
         LEFT JOIN forensic_evidence fe ON fc.evidence_id = fe.id
+        LEFT JOIN forensic_fingerprint_profiles fp ON fp.citizenid = fc.matched_citizenid
         WHERE fc.matched_citizenid = ?
         ORDER BY fc.created_at DESC
     ]], { citizenid }) or {}
