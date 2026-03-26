@@ -24,6 +24,8 @@ Config.ForensicJobs = ForensicShared.Jobs.Forensic
 Config.MedicalJobs = ForensicShared.Jobs.Medical
 Config.Roles = ForensicShared.Roles
 Config.Enums = ForensicShared.Enums
+Config.PermissionMatrix = ForensicShared.PermissionMatrix
+Config.AdminGroups = { 'admin', 'god', 'staff', 'mod' }
 
 -- ============================================================
 -- TEMPOS DE PROCESSAMENTO DOS TESTES (em segundos no jogo)
