@@ -20,6 +20,7 @@ end
 
 local Core = getCoreObject()
 local resourceName = tostring(GetCurrentResourceName())
+local ps = RequirePs('server/backend/vehicles.lua')
 local VEHICLE_DIRECTORY_CACHE_KEY = 'vehicles:directory'
 local VEHICLE_DIRECTORY_TTL = 15
 local vehicleTableCache = nil

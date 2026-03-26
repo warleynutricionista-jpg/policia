@@ -1066,8 +1066,18 @@ ps.registerCallback(resourceName..':server:saveReport', function(source, reportD
         end
     end
 
+    -- For "Mandado Judicial" reports, auto-create warrants for all suspects
+    if reportId and reportType == 'Mandado Judicial' and reportData.involved and #reportData.involved > 0 then
+        for _, involved in ipairs(reportData.involved) do
+            if involved.citizenid and (involved.type == 'suspect' or involved.type == 'Primary') then
+                warrantCitizenIds[involved.citizenid] = true
+            end
+        end
+    end
+
     if reportId and next(warrantCitizenIds) ~= nil then
-        local expiryDate = os.date('%Y-%m-%d %H:%M:%S', os.time() + (7 * 24 * 60 * 60))
+        local defaultDays = (Config and Config.Warrants and Config.Warrants.DefaultExpiryDays) or 7
+        local expiryDate = os.date('%Y-%m-%d %H:%M:%S', os.time() + (defaultDays * 24 * 60 * 60))
         local warrantQueries = {}
         for citizenid, _ in pairs(warrantCitizenIds) do
             table.insert(warrantQueries, {

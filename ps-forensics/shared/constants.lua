@@ -13,17 +13,31 @@ ForensicShared.Jobs = {
 }
 
 ForensicShared.Roles = {
+    -- Qualquer policial (grade 0+): cena, coleta, testes básicos, custódia
     policial_operacional = {
         minGrade = 0,
         canCreateScene = true,
         canCollectEvidence = true,
-        canRunBasicTests = false,
+        canRunBasicTests = true,
         canRunLabTests = false,
         canEmitReport = false,
         canPerformAutopsy = false,
         canModifyCustody = true,
         canFinalizeReport = false,
     },
+    -- Policial sênior (grade 3+): + testes laboratoriais e laudos
+    policial_avancado = {
+        minGrade = 3,
+        canCreateScene = true,
+        canCollectEvidence = true,
+        canRunBasicTests = true,
+        canRunLabTests = true,
+        canEmitReport = true,
+        canPerformAutopsy = false,
+        canModifyCustody = true,
+        canFinalizeReport = false,
+    },
+    -- Polícia Civil (qualquer grade): acesso total / administração
     policiacivil_especializado = {
         minGrade = 0,
         jobs = { 'policiacivil' },
@@ -36,6 +50,7 @@ ForensicShared.Roles = {
         canModifyCustody = true,
         canFinalizeReport = true,
     },
+    -- Legista / ambulância (grade 2+): acesso total
     legista = {
         minGrade = 2,
         jobs = { 'ambulance' },

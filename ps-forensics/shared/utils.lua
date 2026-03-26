@@ -110,12 +110,12 @@ function ForensicUtils.GetPlayerRole(jobName, grade)
         return 'policiacivil_especializado', Config.Roles.policiacivil_especializado
     end
 
-    -- Polícia operacional (acesso limitado de campo)
-    if jobName == 'police' or jobName == 'ftpolicia' then
-        return 'policial_operacional', Config.Roles.policial_operacional
+    -- Polícia avançada (grade 3+): testes laboratoriais e laudos
+    if ForensicUtils.IsPoliceJob(jobName) and grade >= 3 then
+        return 'policial_avancado', Config.Roles.policial_avancado
     end
 
-    -- Fallback para demais jobs policiais cadastrados
+    -- Polícia operacional (acesso básico de campo)
     return 'policial_operacional', Config.Roles.policial_operacional
 end
 
