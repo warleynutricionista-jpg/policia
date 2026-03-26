@@ -35474,9 +35474,25 @@ function wI(n, e) {
     m = ti.layerGroup(),
     _ = ti.layerGroup(),
     g = ti.layerGroup();
-  const w = 4.5;
+  const w = {
+    worldMinX: -4500,
+    worldMaxX: 4500,
+    worldMinY: -4000,
+    worldMaxY: 8000,
+    imageSize: 1024,
+    zoomRef: 2,
+  };
   function k(X) {
-    return [X.y / w, X.x / w];
+    const ve = Number(X == null ? void 0 : X.x),
+      ye = Number(X == null ? void 0 : X.y);
+    if (!Number.isFinite(ve) || !Number.isFinite(ye)) return null;
+    const xe = Math.min(w.worldMaxX, Math.max(w.worldMinX, ve)),
+      je = Math.min(w.worldMaxY, Math.max(w.worldMinY, ye)),
+      Pe = ((xe - w.worldMinX) / (w.worldMaxX - w.worldMinX)) * w.imageSize,
+      ke =
+        w.imageSize -
+        ((je - w.worldMinY) / (w.worldMaxY - w.worldMinY)) * w.imageSize;
+    return s ? s.unproject([Pe, ke], w.zoomRef) : [ke / 4.5, Pe / 4.5];
   }
   function T(X) {
     return X === "vehicle"
@@ -35488,6 +35504,7 @@ function wI(n, e) {
   function A(X, ve, ye) {
     const xe = T(X),
       je = k(ve);
+    if (!je) return null;
     return o(h) === "badge"
       ? ti
           .marker(je, {
@@ -35532,21 +35549,24 @@ function wI(n, e) {
             const xe = I(ye.coords);
             if (!xe) continue;
             const je = `${ye.callsign ? ye.callsign + " " : ""}${ye.name}`;
-            A("officer", xe, je).addTo(m);
+            const Pe = A("officer", xe, je);
+            Pe && Pe.addTo(m);
           }
         if (o(c))
           for (const ye of ve.vehicles || []) {
             const xe = I(ye.coords);
             if (!xe) continue;
             const je = `Veículo ${ye.plate || ""}`.trim();
-            A("vehicle", xe, je).addTo(_);
+            const Pe = A("vehicle", xe, je);
+            Pe && Pe.addTo(_);
           }
         if (o(u))
           for (const ye of ve.bodycams || []) {
             const xe = I(ye.coords);
             if (!xe) continue;
             const je = `Bodycam ${ye.callsign ? ye.callsign + " " : ""}${ye.name}`;
-            A("bodycam", xe, je).addTo(g);
+            const Pe = A("bodycam", xe, je);
+            Pe && Pe.addTo(g);
           }
       } catch {
         un.error("Failed to refresh tracking");
@@ -35559,23 +35579,7 @@ function wI(n, e) {
       o(u) ? s.hasLayer(g) || g.addTo(s) : s.hasLayer(g) && s.removeLayer(g));
   }
   function R() {
-    const X = 0.6931471805599453;
-    return ti.extend({}, al.CRS.Simple, {
-      projection: al.Projection.LonLat,
-      scale(ve) {
-        return Math.pow(2, ve);
-      },
-      zoom(ve) {
-        return Math.log(ve) / X;
-      },
-      distance(ve, ye) {
-        var xe = ye.lng - ve.lng,
-          je = ye.lat - ve.lat;
-        return Math.sqrt(xe * xe + je * je);
-      },
-      transformation: new al.Transformation(0.02072, 117.3, -0.0205, 172.8),
-      infinite: !1,
-    });
+    return al.CRS.Simple;
   }
   function B(X) {
     const ve = X.unproject([0, 1024], 2),
@@ -35600,13 +35604,13 @@ function wI(n, e) {
       maxZoom: 10,
       zoom: 5,
       preferCanvas: !0,
-      center: [0, -1024],
+      center: [0, 0],
       maxBoundsViscosity: 1,
       zoomControl: !1,
     })),
       ti.control.zoom({ position: "topright" }).addTo(s));
     const ve = B(s);
-    (s.setView([-300, -1500], 4),
+    (s.setView(ve.getCenter(), 4),
       s.setMaxBounds(ve),
       s.attributionControl.setPrefix(!1),
       U(s, ve),
@@ -38100,19 +38104,24 @@ function wP(n, e) {
       o(g) !== "all" &&
         (o(g) === "active"
           ? (G = G.filter(
-              (Z) => (Z.status === "valid" || !Z.status) && Z.core_state === 0,
+              (Z) =>
+                ((Z.mdtVehicleStatus ?? Z.status) === "valid" ||
+                  !(Z.mdtVehicleStatus ?? Z.status)) &&
+                Z.core_state === 0,
             ))
           : o(g) === "garaged"
             ? (G = G.filter((Z) => Z.core_state === 1))
             : o(g) === "impounded"
               ? (G = G.filter(
-                  (Z) => Z.core_state === 2 || Z.status === "impounded",
+                  (Z) =>
+                    Z.core_state === 2 ||
+                    (Z.mdtVehicleStatus ?? Z.status) === "impounded",
                 ))
               : o(g) === "stolen" &&
                 (G = G.filter((Z) => {
                   var K;
                   return (
-                    Z.status === "stolen" ||
+                    (Z.mdtVehicleStatus ?? Z.status) === "stolen" ||
                     ((K = Z.flags) == null ? void 0 : K.includes("Roubado"))
                   );
                 })));
@@ -38120,9 +38129,22 @@ function wP(n, e) {
       return (
         q &&
           (G = G.filter(
-            ({ label: Z, plate: K, owner: re, class: j, type: Q }) =>
-              [Z, K, re, j, Q].some(($) =>
-                String($ ?? "").toLowerCase().includes(q),
+            ({
+              label: Z,
+              displayName: K,
+              vehicleName: re,
+              vehicle: j,
+              plate: Q,
+              fakeplate: $,
+              owner: te,
+              ownerName: ee,
+              citizenid: oe,
+              class: ue,
+              type: M,
+              garage: J,
+            }) =>
+              [Z, K, re, j, Q, $, te, ee, oe, ue, M, J].some((se) =>
+                String(se ?? "").toLowerCase().includes(q),
               ),
           )),
         G
@@ -38265,9 +38287,9 @@ function wP(n, e) {
                 (C(J, o(r).label),
                   C(W, o(r).plate),
                   Re(je, 1, `pill ${Pe ?? ""}`, "svelte-5bg8a5"),
-                  C(Je, o(r).status || "Válido"));
+                  C(Je, o(r).mdtVehicleStatus || o(r).status || "Válido"));
               },
-              [() => P(o(r).status || "valid")],
+              [() => P(o(r).mdtVehicleStatus || o(r).status || "valid")],
             ),
               x(ee, oe));
           };
@@ -38680,7 +38702,7 @@ function wP(n, e) {
                             (Ve, ae) => {
                               (C(pt, o(Ge).label),
                                 C(ut, o(Ge).plate),
-                                C(pe, o(Ge).owner),
+                                C(pe, o(Ge).ownerName || o(Ge).owner || "Desconhecido"),
                                 C(ce, o(Ge).class),
                                 (be = Re(
                                   de,
@@ -38697,11 +38719,14 @@ function wP(n, e) {
                                   `status-pill ${ae ?? ""}`,
                                   "svelte-5bg8a5",
                                 ),
-                                C(Ne, o(Ge).status || "Válido"));
+                                C(
+                                  Ne,
+                                  o(Ge).mdtVehicleStatus || o(Ge).status || "Válido",
+                                ));
                             },
                             [
                               () => ({ "accent-red": (o(Ge).points ?? 0) > 0 }),
-                              () => P(o(Ge).status || "valid"),
+                              () => P(o(Ge).mdtVehicleStatus || o(Ge).status || "valid"),
                             ],
                           ),
                           x(Oe, vt));
