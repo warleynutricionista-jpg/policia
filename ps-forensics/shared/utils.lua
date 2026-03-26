@@ -4,6 +4,16 @@
 
 ForensicUtils = {}
 
+local function normalizeJobName(jobName)
+    if not jobName then return '' end
+    return tostring(jobName):lower():gsub('[%s_-]+', '')
+end
+
+local function normalizeGradeName(gradeName)
+    if not gradeName then return '' end
+    return tostring(gradeName):lower()
+end
+
 -- Gerar número de cena: CENA-2026-00001
 function ForensicUtils.GenerateSceneNumber(id)
     return ('CENA-%s-%05d'):format(os.date('%Y'), id)
@@ -67,8 +77,9 @@ end
 -- Verificar se jogador é policial
 function ForensicUtils.IsPoliceJob(jobName)
     if not jobName then return false end
+    local normalizedJob = normalizeJobName(jobName)
     for _, job in ipairs(Config.PoliceJobs or {}) do
-        if job == jobName then return true end
+        if normalizeJobName(job) == normalizedJob then return true end
     end
     return false
 end
@@ -76,8 +87,9 @@ end
 -- Verificar se jogador é forense
 function ForensicUtils.IsForensicJob(jobName)
     if not jobName then return false end
+    local normalizedJob = normalizeJobName(jobName)
     for _, job in ipairs(Config.ForensicJobs or {}) do
-        if job == jobName then return true end
+        if normalizeJobName(job) == normalizedJob then return true end
     end
     return false
 end
@@ -85,8 +97,9 @@ end
 -- Verificar se jogador é médico/legista
 function ForensicUtils.IsMedicalJob(jobName)
     if not jobName then return false end
+    local normalizedJob = normalizeJobName(jobName)
     for _, job in ipairs(Config.MedicalJobs or {}) do
-        if job == jobName then return true end
+        if normalizeJobName(job) == normalizedJob then return true end
     end
     return false
 end
@@ -98,6 +111,30 @@ function ForensicUtils.IsAuthorizedForensicsJob(jobName)
         or ForensicUtils.IsMedicalJob(jobName)
 end
 
+function ForensicUtils.GetAccessLevel(jobName, grade, isAdmin)
+    if isAdmin then
+        return (Config.PermissionMatrix and Config.PermissionMatrix.levels and Config.PermissionMatrix.levels.administracao) or 3
+    end
+
+    local matrix = Config.PermissionMatrix or {}
+    local levels = matrix.levels or {}
+    local mapping = matrix.byJob or {}
+    local mapped = mapping[jobName]
+    if mapped and levels[mapped] then
+        return levels[mapped]
+    end
+
+    if jobName == 'policiacivil' then
+        return levels.investigacao or 2
+    end
+
+    if ForensicUtils.IsAuthorizedForensicsJob(jobName) then
+        return levels.operacional or 1
+    end
+
+    return 0
+end
+
 -- Obter role do jogador baseado em job e grade
 -- Hierarquia de 3 níveis:
 --   Nível 3 (admin): legista (ambulance com grade >= minGrade)
@@ -105,9 +142,11 @@ end
 --   Nível 1 (operacional): todos os demais jobs policiais (police, ftpolicia, lspd, bcso, sahp, fib, gov, etc.)
 function ForensicUtils.GetPlayerRole(jobName, grade)
     grade = tonumber(grade) or 0
+    local normalizedJob = normalizeJobName(jobName)
+    local normalizedGrade = normalizeGradeName(gradeName)
 
-    -- Legista (médico com grade adequada)
-    if ForensicUtils.IsMedicalJob(jobName) then
+    -- Legista por profissão médica ou por cargo explícito
+    if ForensicUtils.IsMedicalJob(jobName) or normalizedGrade:find('legista', 1, true) then
         return 'legista', Config.Roles.legista
     end
 
@@ -126,8 +165,8 @@ function ForensicUtils.GetPlayerRole(jobName, grade)
 end
 
 -- Verificar permissão específica
-function ForensicUtils.HasPermission(jobName, grade, permission)
-    local _, roleConfig = ForensicUtils.GetPlayerRole(jobName, grade)
+function ForensicUtils.HasPermission(jobName, grade, permission, gradeName)
+    local _, roleConfig = ForensicUtils.GetPlayerRole(jobName, grade, gradeName)
     if not roleConfig then return false end
     return roleConfig[permission] == true
 end

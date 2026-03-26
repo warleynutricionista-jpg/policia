@@ -22,7 +22,7 @@ local Core = getCoreObject()
 local resourceName = tostring(GetCurrentResourceName())
 local VEHICLE_DIRECTORY_CACHE_KEY = 'vehicles:directory'
 local VEHICLE_DIRECTORY_TTL = 15
-local vehicleTableCache = nil
+local vehicleSourceCache = nil
 
 local function hasTable(tableName)
     return type(MdtTableExists) == 'function' and MdtTableExists(tableName) or false
@@ -32,10 +32,31 @@ local function hasColumn(tableName, columnName)
     return type(MdtColumnExists) == 'function' and MdtColumnExists(tableName, columnName) or false
 end
 
-local function getVehicleTableName()
-    if vehicleTableCache then
-        return vehicleTableCache
+local function resolveVehicleSource()
+    if vehicleSourceCache then
+        return vehicleSourceCache
     end
+
+    local sources = {
+        {
+            table = 'player_vehicles',
+            alias = 'pv',
+            id = 'pv.id',
+            owner = "COALESCE(NULLIF(TRIM(pv.citizenid), ''), NULLIF(TRIM(pv.owner), ''))",
+            model = "COALESCE(NULLIF(TRIM(pv.vehicle), ''), 'unknown')",
+            plate = 'pv.plate',
+            joinPlayers = true,
+        },
+        {
+            table = 'owned_vehicles',
+            alias = 'pv',
+            id = 'NULL AS id',
+            owner = "COALESCE(NULLIF(TRIM(pv.owner), ''), NULLIF(TRIM(pv.citizenid), ''))",
+            model = "COALESCE(NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(pv.vehicle, '$.model'))), ''), NULLIF(TRIM(pv.vehicle_name), ''), 'unknown')",
+            plate = "COALESCE(NULLIF(TRIM(pv.plate), ''), NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(pv.vehicle, '$.plate'))), ''))",
+            joinPlayers = true,
+        }
+    }
 
     -- Tentar detectar a tabela de veículos disponível
     local candidates = { 'player_vehicles', 'owned_vehicles', 'vehicles' }
@@ -331,14 +352,14 @@ local function getVehicleSelectSql()
 
     return ([[
         SELECT
-            pv.id,
+            %s AS id,
             %s
-            pv.citizenid,
-            COALESCE(NULLIF(TRIM(pv.vehicle), ''), 'unknown') AS vehicle,
+            %s AS citizenid,
+            %s AS vehicle,
             %s
-            pv.hash,
-            pv.mods,
-            pv.plate,
+            %s AS hash,
+            %s AS mods,
+            %s AS plate,
             %s
             %s
             %s
@@ -376,6 +397,9 @@ local function getVehicleSelectSql()
     ]]):format(tbl,
         hasLicense and 'pv.license,' or '',
         hasVehicleName and "NULLIF(TRIM(pv.vehicle_name), '') AS vehicle_name," or "NULL AS vehicle_name,",
+        hasColumn(tbl, 'hash') and (alias .. '.hash') or 'NULL',
+        hasColumn(tbl, 'mods') and (alias .. '.mods') or 'NULL',
+        source.plate,
         hasFakeplate and "NULLIF(TRIM(pv.fakeplate), '') AS fakeplate," or "NULL AS fakeplate,",
         hasGarage and 'pv.garage,' or "NULL AS garage,",
         hasFuel and 'pv.fuel,' or "NULL AS fuel,",
@@ -389,11 +413,13 @@ local function getVehicleSelectSql()
         hasMdtStatus and [[COALESCE(NULLIF(TRIM(pv.mdt_vehicle_status), ''), 'valid') AS mdt_status,]] or "'valid' AS mdt_status,",
         hasMdtStolen and 'COALESCE(pv.mdt_vehicle_stolen, 0) AS stolen,' or "0 AS stolen,",
         hasMdtBolo and 'COALESCE(pv.mdt_vehicle_boloactive, 0) AS boloactive,' or "0 AS boloactive,",
-        hasMdtImage and "NULLIF(TRIM(pv.mdt_vehicle_image), '') AS image," or "NULL AS image,"
+        hasMdtImage and "NULLIF(TRIM(pv.mdt_vehicle_image), '') AS image," or "NULL AS image,",
+        tbl,
+        source.owner
     )
 end
 
-local function buildVehicleSearchWhere(search)
+local function buildVehicleSearchWhere(source, search)
     local trimmed = normalizeSearchTerm(search)
     if trimmed == '' then
         return '', {}
@@ -409,26 +435,26 @@ local function buildVehicleSearchWhere(search)
     local isLikelyPlate = compact ~= '' and compact:match('^[A-Z0-9]+$') ~= nil
     if isLikelyPlate then
         local conditions = {
-            "UPPER(REPLACE(pv.plate, ' ', '')) = ?",
-            "UPPER(REPLACE(pv.plate, ' ', '')) LIKE ?",
+            ("UPPER(REPLACE(%s, ' ', '')) = ?"):format(source.plate),
+            ("UPPER(REPLACE(%s, ' ', '')) LIKE ?"):format(source.plate),
         }
         local compactLike = ('%%%s%%'):format(compact)
         local params = { compact, compactLike }
 
         if hasFakeplate then
-            conditions[#conditions + 1] = "UPPER(REPLACE(COALESCE(pv.fakeplate, ''), ' ', '')) LIKE ?"
+            conditions[#conditions + 1] = ("UPPER(REPLACE(COALESCE(%s.fakeplate, ''), ' ', '')) LIKE ?"):format(alias)
             params[#params + 1] = compactLike
         end
-        conditions[#conditions + 1] = "COALESCE(pv.citizenid, '') LIKE ?"
+        conditions[#conditions + 1] = ("COALESCE(%s, '') LIKE ?"):format(source.owner)
         params[#params + 1] = like
-        conditions[#conditions + 1] = "COALESCE(pv.vehicle, '') LIKE ?"
+        conditions[#conditions + 1] = ("COALESCE(%s, '') LIKE ?"):format(source.model)
         params[#params + 1] = like
         if hasVehicleName then
-            conditions[#conditions + 1] = "COALESCE(pv.vehicle_name, '') LIKE ?"
+            conditions[#conditions + 1] = ("COALESCE(%s.vehicle_name, '') LIKE ?"):format(alias)
             params[#params + 1] = like
         end
         if hasGarage then
-            conditions[#conditions + 1] = "COALESCE(pv.garage, '') LIKE ?"
+            conditions[#conditions + 1] = ("COALESCE(%s.garage, '') LIKE ?"):format(alias)
             params[#params + 1] = like
         end
 
@@ -436,24 +462,24 @@ local function buildVehicleSearchWhere(search)
     end
 
     local conditions = {
-        "COALESCE(pv.plate, '') LIKE ?",
+        ("COALESCE(%s, '') LIKE ?"):format(source.plate),
     }
     local params = { like }
 
     if hasFakeplate then
-        conditions[#conditions + 1] = "COALESCE(pv.fakeplate, '') LIKE ?"
+        conditions[#conditions + 1] = ("COALESCE(%s.fakeplate, '') LIKE ?"):format(alias)
         params[#params + 1] = like
     end
-    conditions[#conditions + 1] = "COALESCE(pv.citizenid, '') LIKE ?"
+    conditions[#conditions + 1] = ("COALESCE(%s, '') LIKE ?"):format(source.owner)
     params[#params + 1] = like
-    conditions[#conditions + 1] = "COALESCE(pv.vehicle, '') LIKE ?"
+    conditions[#conditions + 1] = ("COALESCE(%s, '') LIKE ?"):format(source.model)
     params[#params + 1] = like
     if hasVehicleName then
-        conditions[#conditions + 1] = "COALESCE(pv.vehicle_name, '') LIKE ?"
+        conditions[#conditions + 1] = ("COALESCE(%s.vehicle_name, '') LIKE ?"):format(alias)
         params[#params + 1] = like
     end
     if hasGarage then
-        conditions[#conditions + 1] = "COALESCE(pv.garage, '') LIKE ?"
+        conditions[#conditions + 1] = ("COALESCE(%s.garage, '') LIKE ?"):format(alias)
         params[#params + 1] = like
     end
     -- Buscar também pelo nome do proprietário (via JOIN com players)
@@ -543,18 +569,23 @@ local function fetchVehicleBolos()
 end
 
 local function queryVehiclesPage(search, page, limit)
+    local source = resolveVehicleSource()
+    if not source then
+        return { vehicles = {}, page = 1, limit = 25, total = 0, hasMore = false }
+    end
     local safeLimit = math.max(1, tonumber(limit) or (Config.Pagination and Config.Pagination.Vehicles) or 25)
     safeLimit = math.min(safeLimit, 5000)
     local safePage = math.max(1, tonumber(page) or 1)
     local offset = (safePage - 1) * safeLimit
-    local whereSql, whereParams = buildVehicleSearchWhere(search)
+    local whereSql, whereParams = buildVehicleSearchWhere(source, search)
 
     local vehTable = getVehicleTableName() or 'player_vehicles'
     local countSql = ('SELECT COUNT(*) AS total FROM %s pv LEFT JOIN players p ON p.citizenid = pv.citizenid %s'):format(vehTable, whereSql)
     local countRow = MySQL.single.await(countSql, whereParams) or { total = 0 }
     local total = tonumber(countRow.total) or 0
 
-    local listSql = ([[%s %s ORDER BY pv.id DESC LIMIT ? OFFSET ?]]):format(getVehicleSelectSql(), whereSql)
+    local orderBy = hasColumn(source.table, 'id') and 'pv.id DESC' or 'pv.plate ASC'
+    local listSql = ([[%s %s ORDER BY %s LIMIT ? OFFSET ?]]):format(getVehicleSelectSql(source), whereSql, orderBy)
     local listParams = {}
     for i = 1, #whereParams do
         listParams[#listParams + 1] = whereParams[i]
@@ -592,7 +623,7 @@ end
 function GetMdtVehicleDirectory(forceRefresh)
     if forceRefresh then
         Cache.invalidate(VEHICLE_DIRECTORY_CACHE_KEY)
-        vehicleTableCache = nil
+        vehicleSourceCache = nil
     end
 
     return Cache.getOrSet(VEHICLE_DIRECTORY_CACHE_KEY, VEHICLE_DIRECTORY_TTL, function()
@@ -601,7 +632,7 @@ function GetMdtVehicleDirectory(forceRefresh)
         if not vehTable then
             return { vehicles = {}, bolos = {} }
         end
-        local vehList = MySQL.query.await(([[%s ORDER BY pv.plate ASC]]):format(getVehicleSelectSql())) or {}
+        local vehList = MySQL.query.await(([[%s ORDER BY pv.plate ASC]]):format(getVehicleSelectSql(source))) or {}
         local normalizedPlates = {}
         local seen = {}
         for _, row in ipairs(vehList) do
@@ -714,10 +745,11 @@ ps.registerCallback(resourceName .. ':server:UpdateVehicle', function(source, pa
     if not plate or plate == '' then
         return { success = false, message = 'Faltando placa' }
     end
-    local vehicleTable = getVehicleTableName()
-    if not vehicleTable then
+    local source = resolveVehicleSource()
+    if not source then
         return { success = false, message = 'Tabela de veículos não encontrada' }
     end
+    local vehicleTable = source.table
 
     local ownerExpr = buildVehicleOwnerExpr(vehicleTable, nil)
     local ownerRow = MySQL.single.await(('SELECT %s AS citizenid FROM %s WHERE UPPER(REPLACE(plate, \' \', \'\')) = ? LIMIT 1'):format(ownerExpr, vehicleTable), { plate })
@@ -795,10 +827,11 @@ ps.registerCallback(resourceName .. ':server:GetVehicle', function(source, plate
     if not plate or plate == '' then
         return { success = false, message = 'Faltando placa' }
     end
-    local vehicleTable = getVehicleTableName()
-    if not vehicleTable then
+    local source = resolveVehicleSource()
+    if not source then
         return { success = false, message = 'Tabela de veículos não encontrada' }
     end
+    local vehicleTable = source.table
 
     local informationExpr = hasColumn(vehicleTable, 'mdt_vehicle_information') and 'pv.mdt_vehicle_information' or 'NULL'
     local pointsExpr = hasColumn(vehicleTable, 'mdt_vehicle_points') and 'pv.mdt_vehicle_points' or '0'

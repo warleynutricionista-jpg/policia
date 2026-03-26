@@ -82,8 +82,8 @@ function OpenForensicsUI(tab)
         return
     end
 
-    local jobName, grade = getPlayerJob()
-    local roleName, roleConfig = ForensicUtils.GetPlayerRole(jobName, grade)
+    local jobName, grade, gradeName = getPlayerJob()
+    local roleName, roleConfig = ForensicUtils.GetPlayerRole(jobName, grade, gradeName)
 
     SetNuiFocus(true, true)
     isForensicsOpen = true

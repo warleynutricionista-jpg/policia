@@ -65,12 +65,37 @@ function GetPlayerData(src)
     return nil
 end
 
+local function isAdminGroup(src)
+    if not src then return false end
+
+    for _, group in ipairs(Config.AdminGroups or {}) do
+        local ok = false
+        if QBX and QBX.Functions and QBX.Functions.HasPermission then
+            local hasGroup = QBX.Functions.HasPermission(src, group)
+            if hasGroup then
+                ok = true
+            end
+        end
+
+        if (not ok) and IsPlayerAceAllowed and IsPlayerAceAllowed(src, ('group.%s'):format(group)) then
+            ok = true
+        end
+
+        if ok then
+            return true
+        end
+    end
+
+    return false
+end
+
 -- Verificar se tem acesso ao sistema forense
 function CheckForensicAuth(src)
     local data = GetPlayerData(src)
     if not data then return false end
+    data.isAdmin = isAdminGroup(src)
 
-    if not ForensicUtils.IsAuthorizedForensicsJob(data.job) then
+    if not data.isAdmin and not ForensicUtils.IsAuthorizedForensicsJob(data.job) then
         lib.notify(src, {
             title = L('ui.system_name'),
             description = L('ui.access_denied_authorized_only'),
@@ -88,14 +113,14 @@ function CheckForensicPermission(src, permission)
     local data = GetPlayerData(src)
     if not data then return false end
 
-    return ForensicUtils.HasPermission(data.job, data.grade, permission)
+    return ForensicUtils.HasPermission(data.job, data.grade, permission, data.gradeLabel)
 end
 
 -- Obter role do jogador
 function GetPlayerRole(src)
     local data = GetPlayerData(src)
     if not data then return nil, nil end
-    return ForensicUtils.GetPlayerRole(data.job, data.grade)
+    return ForensicUtils.GetPlayerRole(data.job, data.grade, data.gradeLabel)
 end
 
 -- Log de auditoria forense
