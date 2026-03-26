@@ -371,6 +371,17 @@ RegisterNUICallback('openEvidenceStash', function(data, cb)
         return
     end
 
+    -- Close MDT NUI focus so inventory can take over
+    SetNuiFocus(false, false)
+    SendNUIMessage({ action = 'setVisible', data = { visible = false } })
+
     TriggerServerEvent(resourceName .. ':server:openEvidenceStash', data.stashId)
     cb({ success = true })
+end)
+
+-- Event to close MDT temporarily for stash interaction
+RegisterNetEvent(resourceName .. ':client:closeForStash')
+AddEventHandler(resourceName .. ':client:closeForStash', function()
+    SetNuiFocus(false, false)
+    SendNUIMessage({ action = 'setVisible', data = { visible = false } })
 end)

@@ -506,8 +506,22 @@ RegisterNetEvent(resourceName .. ':server:openEvidenceStash', function(stashId)
 
     if not stashId or stashId == '' then return end
 
-    exports['qb-inventory']:OpenInventory(src, stashId, {
-        maxweight = 4000000,
-        slots = 500,
-    })
+    -- First close the MDT NUI so the inventory can be interacted with
+    TriggerClientEvent(resourceName .. ':client:closeForStash', src)
+
+    -- Register the stash if not already registered (ox_inventory requires this)
+    local stashLabel = 'Depósito de Evidências: ' .. tostring(stashId)
+
+    if exports['ox_inventory'] then
+        -- Qbox / ox_inventory
+        exports['ox_inventory']:RegisterStash(stashId, stashLabel, 500, 4000000)
+        Wait(100) -- Small delay to ensure stash is registered
+        exports['ox_inventory']:forceOpenInventory(src, 'stash', stashId)
+    elseif exports['qb-inventory'] then
+        -- Legacy QBCore fallback
+        exports['qb-inventory']:OpenInventory(src, stashId, {
+            maxweight = 4000000,
+            slots = 500,
+        })
+    end
 end)

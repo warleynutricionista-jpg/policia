@@ -220,12 +220,31 @@ RegisterNUICallback('triggerSuspectMugshot', function(data, cb)
         cb({ success = false, message = 'Faltando ID do cidadão' })
         return
     end
+    -- Respond immediately to avoid NUI timeout (which closes the MDT)
+    cb({ success = true, message = 'Iniciando captura de foto...' })
+    -- Then run the async mugshot capture in a separate thread
     CreateThread(function()
         local ok, imageUrl = pcall(CaptureMugshot, data.citizenid)
         if ok and imageUrl then
-            cb({ success = true, message = 'Foto de ficha capturada', imageUrl = imageUrl })
+            -- Notify the frontend with the captured image URL via NUI message
+            SendNUIMessage({
+                action = 'mugshotCaptured',
+                data = {
+                    success = true,
+                    citizenid = data.citizenid,
+                    imageUrl = imageUrl,
+                    message = 'Foto de ficha capturada',
+                }
+            })
         else
-            cb({ success = false, message = 'Falha ao capturar a foto de ficha' })
+            SendNUIMessage({
+                action = 'mugshotCaptured',
+                data = {
+                    success = false,
+                    citizenid = data.citizenid,
+                    message = 'Falha ao capturar a foto de ficha',
+                }
+            })
         end
     end)
 end)
