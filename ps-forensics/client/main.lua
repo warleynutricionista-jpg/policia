@@ -53,16 +53,51 @@ function OpenForensicsUI(tab)
     local jobName, grade, gradeName = getPlayerJob()
     local roleName, roleConfig = ForensicUtils.GetPlayerRole(jobName, grade, gradeName)
 
+    -- Determinar nível de permissão do jogador
+    local permLevelName = Config.PermissionMatrix.byJob[jobName] or 'operacional'
+    local permLevel = Config.PermissionMatrix.levels[permLevelName] or 1
+
+    -- Calcular abas disponíveis com base em nível e cargo
+    local availableTabs = {}
+    for _, tabDef in ipairs(Config.PanelTabs) do
+        local hasLevel = permLevel >= tabDef.minLevel
+        local hasJob = true
+        if tabDef.jobs then
+            hasJob = false
+            for _, j in ipairs(tabDef.jobs) do
+                if j == jobName then hasJob = true; break end
+            end
+        end
+        if hasLevel and hasJob then
+            availableTabs[#availableTabs + 1] = tabDef.id
+        end
+    end
+
+    -- Validar aba solicitada; usar primeira disponível se negada
+    local openTab = tab or availableTabs[1] or 'dashboard'
+    local tabAllowed = false
+    for _, t in ipairs(availableTabs) do
+        if t == openTab then tabAllowed = true; break end
+    end
+    if not tabAllowed then openTab = availableTabs[1] or 'dashboard' end
+
     SetNuiFocus(true, true)
     isForensicsOpen = true
 
+    local playerData = QBX and QBX.Functions.GetPlayerData() or {}
+    local charinfo = playerData.charinfo or {}
+    local playerName = (charinfo.firstname and charinfo.lastname)
+        and (charinfo.firstname .. ' ' .. charinfo.lastname)
+        or L('ui.officer_fallback_name')
+
     SendNUIMessage({
-        action = 'open',
-        tab = tab or 'scenes',
-        role = roleName,
+        action      = 'open',
+        tab         = openTab,
+        role        = roleName,
         permissions = roleConfig,
-        playerName = QBX and QBX.Functions.GetPlayerData().charinfo.firstname .. ' ' .. QBX.Functions.GetPlayerData().charinfo.lastname or L('ui.officer_fallback_name'),
-        playerJob = jobName,
+        availableTabs = availableTabs,
+        playerName  = playerName,
+        playerJob   = jobName,
         playerGrade = grade,
     })
 end
@@ -73,32 +108,7 @@ function CloseForensicsUI()
     SendNUIMessage({ action = 'close' })
 end
 
--- ============================================================
--- COMANDOS
--- ============================================================
-RegisterCommand(Config.Commands.OpenForensics, function()
-    OpenForensicsUI()
-end, false)
-
-RegisterCommand(Config.Commands.CreateScene, function()
-    if not hasAccess() then return end
-    OpenCreateSceneMenu()
-end, false)
-
-RegisterCommand(Config.Commands.CollectEvidence, function()
-    if not hasAccess() then return end
-    OpenCollectEvidenceMenu()
-end, false)
-
-RegisterCommand(Config.Commands.RunTest, function()
-    if not hasAccess() then return end
-    OpenRunTestMenu()
-end, false)
-
--- ============================================================
--- KEYBIND
--- ============================================================
-RegisterKeyMapping(Config.Commands.OpenForensics, L('commands.open_forensics'), 'keyboard', 'F10')
+-- Comandos e keybinds registrados em client/backend/commands.lua
 
 -- ============================================================
 -- NUI CALLBACKS

@@ -114,12 +114,29 @@ Config.Locations = {
 -- COMANDOS
 -- ============================================================
 Config.Commands = {
-    OpenForensics = 'forensics',
-    CreateScene = 'criarCena',
-    CollectEvidence = 'coletarEvidencia',
-    RunTest = 'testeForense',
-    OpenLab = 'laboratorio',
-    OpenMorgue = 'iml',
+    Open = {
+        enabled = true,
+        command = 'pericia',
+    },
+}
+
+-- ============================================================
+-- ABAS DO PAINEL (acesso por nível de permissão e cargo)
+-- minLevel: 1 = operacional, 2 = investigacao, 3 = administracao
+-- jobs: nil = todos os cargos com acesso forense, ou lista específica
+-- ============================================================
+Config.PanelTabs = {
+    { id = 'dashboard',    label = 'Dashboard',    icon = 'fa-solid fa-chart-line',       minLevel = 1, jobs = nil },
+    { id = 'scenes',       label = 'Cenas',         icon = 'fa-solid fa-location-dot',     minLevel = 1, jobs = nil },
+    { id = 'evidence',     label = 'Evidências',    icon = 'fa-solid fa-box-archive',      minLevel = 1, jobs = nil },
+    { id = 'lab',          label = 'Laboratório',   icon = 'fa-solid fa-flask',            minLevel = 2, jobs = nil },
+    { id = 'fingerprints', label = 'Digitais',      icon = 'fa-solid fa-fingerprint',      minLevel = 2, jobs = nil },
+    { id = 'dna',          label = 'DNA',           icon = 'fa-solid fa-dna',              minLevel = 2, jobs = nil },
+    { id = 'ballistics',   label = 'Balística',     icon = 'fa-solid fa-gun',              minLevel = 2, jobs = nil },
+    { id = 'drugs',        label = 'Drogas',        icon = 'fa-solid fa-pills',            minLevel = 2, jobs = nil },
+    { id = 'autopsy',      label = 'Legista',       icon = 'fa-solid fa-skull',            minLevel = 2, jobs = { 'ambulance', 'policiacivil' } },
+    { id = 'reports',      label = 'Laudos',        icon = 'fa-solid fa-file-medical',     minLevel = 2, jobs = nil },
+    { id = 'crossref',     label = 'Cruzamento',    icon = 'fa-solid fa-diagram-project',  minLevel = 2, jobs = nil },
 }
 
 -- ============================================================
