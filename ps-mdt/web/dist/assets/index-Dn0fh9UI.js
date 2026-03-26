@@ -35476,20 +35476,36 @@ function wI(n, e) {
     m = ti.layerGroup(),
     _ = ti.layerGroup(),
     g = ti.layerGroup();
-  const w = 4.5;
-  function k(X) {
-    return [X.y / w, X.x / w];
-  }
+  const w = {
+    world: { minX: -4e3, maxX: 8e3, minY: -4e3, maxY: 8e3 },
+    image: { width: 1024, height: 1024 },
+  };
+  const k = (() => {
+    try {
+      return window.localStorage.getItem("ps-mdt:map-debug") === "1";
+    } catch {
+      return !1;
+    }
+  })();
   function T(X) {
+    if (!X) return null;
+    const ve = Math.max(w.world.minX, Math.min(w.world.maxX, Number(X.x) || 0)),
+      ye = Math.max(w.world.minY, Math.min(w.world.maxY, Number(X.y) || 0)),
+      xe = ((ve - w.world.minX) / (w.world.maxX - w.world.minX)) * w.image.width,
+      je = ((w.world.maxY - ye) / (w.world.maxY - w.world.minY)) * w.image.height;
+    return [je, xe];
+  }
+  function A(X) {
     return X === "vehicle"
       ? { color: "#f97316", fill: "#fb923c", label: "V" }
       : X === "bodycam"
         ? { color: "#a855f7", fill: "#c084fc", label: "B" }
         : { color: "#38bdf8", fill: "#0ea5e9", label: "O" };
   }
-  function A(X, ve, ye) {
-    const xe = T(X),
-      je = k(ve);
+  function I(X, ve, ye) {
+    const xe = A(X),
+      je = T(ve);
+    if (!je) return null;
     return o(h) === "badge"
       ? ti
           .marker(je, {
@@ -35511,7 +35527,7 @@ function wI(n, e) {
           })
           .bindTooltip(ye, { direction: "top", offset: [0, -6] });
   }
-  function I(X) {
+  function P(X) {
     return X
       ? Array.isArray(X) && X.length >= 2
         ? { x: Number(X[0]), y: Number(X[1]) }
@@ -35520,7 +35536,7 @@ function wI(n, e) {
           : null
       : null;
   }
-  async function P() {
+  async function O() {
     if (!(!s || _p()))
       try {
         const X = await Te(
@@ -35531,36 +35547,48 @@ function wI(n, e) {
           ve = X.data ?? X;
         if ((m.clearLayers(), _.clearLayers(), g.clearLayers(), o(l)))
           for (const ye of ve.officers || []) {
-            const xe = I(ye.coords);
+            const xe = P(ye.coords);
             if (!xe) continue;
             const je = `${ye.callsign ? ye.callsign + " " : ""}${ye.name}`;
-            A("officer", xe, je).addTo(m);
+            const me = I("officer", xe, je);
+            me && me.addTo(m);
           }
         if (o(c))
           for (const ye of ve.vehicles || []) {
-            const xe = I(ye.coords);
+            const xe = P(ye.coords);
             if (!xe) continue;
             const je = `Veículo ${ye.plate || ""}${ye.callsign ? ` · ${ye.callsign}` : ""}${ye.officerName ? ` · ${ye.officerName}` : ""}`.trim();
-            A("vehicle", xe, je).addTo(_);
+            const me = I("vehicle", xe, je);
+            me && me.addTo(_);
           }
         if (o(u))
           for (const ye of ve.bodycams || []) {
-            const xe = I(ye.coords);
+            const xe = P(ye.coords);
             if (!xe) continue;
             const je = `Bodycam ${ye.callsign ? ye.callsign + " " : ""}${ye.name}`;
-            A("bodycam", xe, je).addTo(g);
+            const me = I("bodycam", xe, je);
+            me && me.addTo(g);
           }
+        if (k && ve.officers && ve.officers[0]) {
+          const ye = ve.officers[0].coords,
+            xe = T(ye);
+          console.info("[ps-mdt/map-debug]", {
+            capturedCoords: ye,
+            convertedLatLng: xe,
+            markerStyle: o(h),
+          });
+        }
       } catch {
         un.error("Failed to refresh tracking");
       }
   }
-  function O() {
+  function R() {
     s &&
       (o(l) ? s.hasLayer(m) || m.addTo(s) : s.hasLayer(m) && s.removeLayer(m),
       o(c) ? s.hasLayer(_) || _.addTo(s) : s.hasLayer(_) && s.removeLayer(_),
       o(u) ? s.hasLayer(g) || g.addTo(s) : s.hasLayer(g) && s.removeLayer(g));
   }
-  function R() {
+  function B() {
     const X = 0.6931471805599453;
     return ti.extend({}, al.CRS.Simple, {
       projection: al.Projection.LonLat,
@@ -35579,59 +35607,59 @@ function wI(n, e) {
       infinite: !1,
     });
   }
-  function B(X) {
+  function U(X) {
     const ve = X.unproject([0, 1024], 2),
       ye = X.unproject([1024, 0], 2);
     return new al.LatLngBounds(ve, ye);
   }
-  function U(X, ve) {
+  function D(X, ve) {
     ti.imageOverlay("./images/map.jpeg", ve).addTo(X);
   }
-  function D(X, ve) {
+  function V(X, ve) {
     X.on("dragend", () => {
       ve.contains(X.getCenter()) || X.panTo(ve.getCenter(), { animate: !1 });
     });
   }
-  function V() {
+  function qI() {
     if (i) return;
     i = !0;
-    const X = R();
+    const X = B();
     ((s = ti.map(t, {
       crs: X,
       minZoom: 3,
       maxZoom: 10,
       zoom: 5,
       preferCanvas: !0,
-      center: [0, -1024],
+      center: [512, 512],
       maxBoundsViscosity: 1,
       zoomControl: !1,
     })),
       ti.control.zoom({ position: "topright" }).addTo(s));
-    const ve = B(s);
-    (s.setView([-218, 98], 4),
+    const ve = U(s);
+    (s.setView([512, 512], 4),
       s.setMaxBounds(ve),
       s.attributionControl.setPrefix(!1),
-      U(s, ve),
       D(s, ve),
+      V(s, ve),
       (m = ti.layerGroup().addTo(s)),
       (_ = ti.layerGroup().addTo(s)),
       (g = ti.layerGroup().addTo(s)),
+      R(),
       O(),
-      P(),
-      (r = setInterval(P, 5e3)));
+      (r = setInterval(O, 1e3)));
   }
   (kn(() => {
-    V();
+    qI();
   }),
     Xr(() => {
       (s && (s.remove(), (s = null), (i = !1)),
         r && (clearInterval(r), (r = null)));
     }),
     Pn(() => {
-      O();
+      R();
     }),
     Pn(() => {
-      (o(h), P());
+      (o(h), O());
     }));
   var G = kI(),
     q = f(G),

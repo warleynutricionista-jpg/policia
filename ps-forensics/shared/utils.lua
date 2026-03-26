@@ -109,6 +109,30 @@ function ForensicUtils.IsAuthorizedForensicsJob(jobName)
     return ForensicUtils.IsPoliceJob(jobName) or ForensicUtils.IsMedicalJob(jobName)
 end
 
+function ForensicUtils.GetAccessLevel(jobName, grade, isAdmin)
+    if isAdmin then
+        return (Config.PermissionMatrix and Config.PermissionMatrix.levels and Config.PermissionMatrix.levels.administracao) or 3
+    end
+
+    local matrix = Config.PermissionMatrix or {}
+    local levels = matrix.levels or {}
+    local mapping = matrix.byJob or {}
+    local mapped = mapping[jobName]
+    if mapped and levels[mapped] then
+        return levels[mapped]
+    end
+
+    if jobName == 'policiacivil' then
+        return levels.investigacao or 2
+    end
+
+    if ForensicUtils.IsAuthorizedForensicsJob(jobName) then
+        return levels.operacional or 1
+    end
+
+    return 0
+end
+
 -- Obter role do jogador baseado em job e grade
 function ForensicUtils.GetPlayerRole(jobName, grade, gradeName)
     grade = tonumber(grade) or 0
