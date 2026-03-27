@@ -92,7 +92,9 @@ function safeClassList(id) {
 }
 
 function resolveTab(tab) {
-    const preferred = tab || currentTab || 'scenes';
+    // Map legacy tab names to new merged tabs
+    const tabAliases = { lab: 'analises', autopsy: 'analises' };
+    const preferred = tabAliases[tab] || tab || tabAliases[currentTab] || currentTab || 'scenes';
     if (getEl('tab-' + preferred)) return preferred;
 
     const firstAvailableExisting = (availableTabs || []).find((t) => !!getEl('tab-' + t));
@@ -139,6 +141,7 @@ window.addEventListener('message', function(event) {
 
         // Restringir abas por permissão
         const tabRules = {
+            analises: !!playerPermissions.canRunBasicTests || !!playerPermissions.canPerformAutopsy,
             lab: !!playerPermissions.canRunBasicTests,
             fingerprints: !!playerPermissions.canCollectEvidence,
             dna: !!playerPermissions.canCollectEvidence,
@@ -225,6 +228,7 @@ async function loadTabData(tab) {
         case 'dashboard':    await loadDashboard(); break;
         case 'scenes':       await loadScenes(); break;
         case 'evidence':     await loadEvidence(); break;
+        case 'analises':     await loadAnalises(); break;
         case 'lab':          await loadLabTests(); break;
         case 'fingerprints': await loadFingerprints(); break;
         case 'dna':          await loadDNA(); break;
@@ -1890,9 +1894,138 @@ async function doCreateReport() {
     const result = await fetchNUI('createReport', data);
     if (result && result.success) {
         closeModal();
+        cancelReportWizard();
         showNotification('Laudo criado automaticamente: ' + (result.reportNumber || ''), 'success');
         await loadReports();
     } else {
         showNotification(result?.error || 'Erro ao criar laudo', 'error');
     }
+}
+
+// ============================================================
+// ANÁLISES TAB (Lab + Autopsy merged)
+// ============================================================
+let currentAnalysisSubTab = 'lab';
+
+async function loadAnalises() {
+    if (currentAnalysisSubTab === 'lab') {
+        await loadLabTests();
+    } else {
+        await loadAutopsies();
+    }
+}
+
+function switchAnalysisSubTab(subTab) {
+    currentAnalysisSubTab = subTab;
+
+    // Update pill active state
+    document.getElementById('subPillLab')?.classList.toggle('active', subTab === 'lab');
+    document.getElementById('subPillAutopsy')?.classList.toggle('active', subTab === 'autopsy');
+
+    // Show/hide action groups
+    document.getElementById('labActions')?.classList.toggle('hidden', subTab !== 'lab');
+    document.getElementById('autopsyActions')?.classList.toggle('hidden', subTab !== 'autopsy');
+
+    // Show/hide content areas
+    document.getElementById('labContent')?.classList.toggle('hidden', subTab !== 'lab');
+    document.getElementById('autopsyContent')?.classList.toggle('hidden', subTab !== 'autopsy');
+
+    // Load data for the selected sub-tab
+    if (subTab === 'lab') {
+        loadLabTests();
+    } else {
+        loadAutopsies();
+    }
+}
+
+// ============================================================
+// REPORT WIZARD
+// ============================================================
+let currentWizardStep = 1;
+
+function showReportWizard() {
+    currentWizardStep = 1;
+    getEl('reportsListSection')?.classList.add('hidden');
+    getEl('reportWizard')?.classList.remove('hidden');
+    updateWizardUI();
+
+    // Initialize autofill for the static wizard fields
+    initCitizenAutofill('reportFpCitizen', 'reportFpName', 'reportFpLookupHint');
+    initCitizenAutofill('reportDnaCitizen', 'reportDnaName', 'reportDnaLookupHint');
+    initWeaponSerialAutofill('reportBallisticSerial', 'reportBallisticSerialHint');
+}
+
+function cancelReportWizard() {
+    getEl('reportWizard')?.classList.add('hidden');
+    getEl('reportsListSection')?.classList.remove('hidden');
+    resetWizardForm();
+}
+
+function resetWizardForm() {
+    const ids = [
+        'reportType', 'reportSceneId', 'reportCaseId', 'reportMdtId',
+        'reportTitle', 'reportSummary', 'reportBody', 'reportConclusion',
+        'reportEvidenceCategory', 'reportEvidenceType', 'reportEvidenceDescription',
+        'reportEvidenceCitizen', 'reportEvidenceWeaponSerial', 'reportEvidenceVehicle',
+        'reportEvidenceStore', 'reportFpCitizen', 'reportFpName',
+        'reportDnaCitizen', 'reportDnaName', 'reportDnaBloodType',
+        'reportBallisticType', 'reportBallisticSerial', 'reportBallisticModel',
+        'reportBallisticCaliber', 'reportBallisticNotes',
+    ];
+    ids.forEach(id => {
+        const el = getEl(id);
+        if (!el) return;
+        if (el.type === 'checkbox') el.checked = false;
+        else if (el.tagName === 'SELECT') el.selectedIndex = 0;
+        else el.value = '';
+    });
+    // Hide all nested sections
+    ['reportEvidenceFields', 'reportFingerprintFields', 'reportDNAFields', 'reportBallisticFields'].forEach(id => {
+        getEl(id)?.classList.add('hidden');
+    });
+    // Reset checkboxes
+    ['reportEnableEvidence', 'reportEnableFingerprint', 'reportEnableDNA', 'reportEnableBallistic'].forEach(id => {
+        const el = getEl(id);
+        if (el) el.checked = false;
+    });
+}
+
+function wizardNext() {
+    if (currentWizardStep === 2) {
+        // Validate title before advancing
+        const title = getEl('reportTitle')?.value?.trim();
+        if (!title) {
+            showNotification('Título do laudo é obrigatório', 'error');
+            return;
+        }
+    }
+    if (currentWizardStep < 3) {
+        currentWizardStep++;
+        updateWizardUI();
+    }
+}
+
+function wizardBack() {
+    if (currentWizardStep > 1) {
+        currentWizardStep--;
+        updateWizardUI();
+    }
+}
+
+function updateWizardUI() {
+    // Show/hide pages
+    for (let i = 1; i <= 3; i++) {
+        const page = getEl('wizardPage' + i);
+        if (page) page.classList.toggle('hidden', i !== currentWizardStep);
+        const step = getEl('wstep' + i);
+        if (step) {
+            step.classList.toggle('active', i === currentWizardStep);
+            step.classList.toggle('done', i < currentWizardStep);
+        }
+    }
+
+    // Update footer buttons
+    getEl('btnWizardBack')?.classList.toggle('hidden', currentWizardStep === 1);
+    getEl('btnWizardNext')?.classList.toggle('hidden', currentWizardStep === 3);
+    getEl('btnWizardSubmit')?.classList.toggle('hidden', currentWizardStep !== 3);
 }

@@ -22,7 +22,7 @@
             </div>
         </div>
 
-        <!-- Navigation -->
+        <!-- Navigation: 4 tabs -->
         <div class="forensics-nav">
             <button class="nav-btn active" data-tab="scenes" onclick="switchTab('scenes')">
                 <i class="fas fa-map-marked-alt"></i> Cenas
@@ -30,11 +30,8 @@
             <button class="nav-btn" data-tab="evidence" onclick="switchTab('evidence')">
                 <i class="fas fa-fingerprint"></i> Evidências
             </button>
-            <button class="nav-btn" data-tab="lab" onclick="switchTab('lab')">
-                <i class="fas fa-flask"></i> Laboratório
-            </button>
-            <button class="nav-btn" data-tab="autopsy" onclick="switchTab('autopsy')">
-                <i class="fas fa-skull-crossbones"></i> Legista
+            <button class="nav-btn" data-tab="analises" onclick="switchTab('analises')">
+                <i class="fas fa-flask"></i> Análises
             </button>
             <button class="nav-btn" data-tab="reports" onclick="switchTab('reports')">
                 <i class="fas fa-file-medical"></i> Laudos
@@ -44,7 +41,7 @@
         <!-- Content Area -->
         <div class="forensics-content">
 
-            <!-- DASHBOARD -->
+            <!-- DASHBOARD (hidden, accessible via data.tab) -->
             <div id="tab-dashboard" class="tab-content">
                 <div class="tab-header">
                     <h2><i class="fas fa-chart-line"></i> Dashboard Forense</h2>
@@ -112,80 +109,416 @@
                             <option value="devolvida">Devolvida</option>
                             <option value="em_julgamento">Em Julgamento</option>
                         </select>
-                        <button class="btn-secondary" onclick="showRegisterFingerprint()"><i class="fas fa-hand-dots"></i> Cadastro Digital</button>
-                        <button class="btn-secondary" onclick="showRegisterDNA()"><i class="fas fa-dna"></i> Cadastro DNA</button>
+                        <button class="btn-secondary" onclick="showRegisterFingerprint()"><i class="fas fa-hand-dots"></i> Cad. Digital</button>
+                        <button class="btn-secondary" onclick="showRegisterDNA()"><i class="fas fa-dna"></i> Cad. DNA</button>
                     </div>
                 </div>
                 <div id="evidenceList" class="items-grid"></div>
                 <div id="evidenceDetail" class="detail-panel hidden"></div>
             </div>
 
-            <!-- LABORATÓRIO -->
-            <div id="tab-lab" class="tab-content">
+            <!-- ANÁLISES (Lab + Legista merged) -->
+            <div id="tab-analises" class="tab-content">
                 <div class="tab-header">
-                    <h2><i class="fas fa-flask"></i> Laboratório Forense</h2>
-                    <div class="tab-actions">
-                        <select id="labStatusFilter" class="filter-select" onchange="filterLabTests()">
-                            <option value="">Todos</option>
-                            <option value="solicitado">Solicitados</option>
-                            <option value="em_andamento">Em Andamento</option>
-                            <option value="concluido">Concluídos</option>
-                            <option value="cancelado">Cancelados</option>
-                        </select>
-                        <button class="btn-secondary" onclick="showQuickBallisticRegister()"><i class="fas fa-crosshairs"></i> Registrar Balística</button>
-                        <button class="btn-secondary" onclick="showRegisterDrugAnalysis()"><i class="fas fa-pills"></i> Nova Análise de Drogas</button>
+                    <h2><i class="fas fa-flask"></i> Análises Forenses</h2>
+                    <div class="tab-actions analysis-actions">
+                        <!-- Sub-tab pills -->
+                        <div class="sub-tab-pills">
+                            <button class="sub-pill active" id="subPillLab" onclick="switchAnalysisSubTab('lab')">
+                                <i class="fas fa-flask"></i> Laboratório
+                            </button>
+                            <button class="sub-pill" id="subPillAutopsy" onclick="switchAnalysisSubTab('autopsy')">
+                                <i class="fas fa-skull-crossbones"></i> Necropsias
+                            </button>
+                        </div>
+                        <!-- Lab actions (shown by default) -->
+                        <div id="labActions" class="action-group">
+                            <select id="labStatusFilter" class="filter-select" onchange="filterLabTests()">
+                                <option value="">Todos</option>
+                                <option value="solicitado">Solicitados</option>
+                                <option value="em_andamento">Em Andamento</option>
+                                <option value="concluido">Concluídos</option>
+                                <option value="cancelado">Cancelados</option>
+                            </select>
+                            <button class="btn-secondary" onclick="showQuickBallisticRegister()"><i class="fas fa-crosshairs"></i> Balística</button>
+                            <button class="btn-secondary" onclick="showRegisterDrugAnalysis()"><i class="fas fa-pills"></i> Drogas</button>
+                        </div>
+                        <!-- Autopsy actions (hidden by default) -->
+                        <div id="autopsyActions" class="action-group hidden">
+                            <select id="autopsyStatusFilter" class="filter-select" onchange="filterAutopsies()">
+                                <option value="">Todos os Status</option>
+                                <option value="em_andamento">Em Andamento</option>
+                                <option value="concluido">Concluído</option>
+                            </select>
+                            <button class="btn-primary" onclick="showCreateAutopsy()" id="btnNewAutopsy"><i class="fas fa-plus"></i> Nova Necropsia</button>
+                        </div>
                     </div>
                 </div>
-                <div id="labTestsList" class="items-grid"></div>
-                <div id="labTestDetail" class="detail-panel hidden"></div>
-            </div>
 
-            <!-- LEGISTA -->
-            <div id="tab-autopsy" class="tab-content">
-                <div class="tab-header">
-                    <h2><i class="fas fa-skull-crossbones"></i> Instituto Médico Legal</h2>
-                    <div class="tab-actions">
-                        <select id="autopsyStatusFilter" class="filter-select" onchange="filterAutopsies()">
-                            <option value="">Todos os Status</option>
-                            <option value="em_andamento">Em Andamento</option>
-                            <option value="concluido">Concluído</option>
-                        </select>
-                        <button class="btn-primary" onclick="showCreateAutopsy()" id="btnNewAutopsy"><i class="fas fa-plus"></i> Nova Necropsia</button>
-                    </div>
+                <!-- Lab content (shown by default) -->
+                <div id="labContent">
+                    <div id="labTestsList" class="items-grid"></div>
+                    <div id="labTestDetail" class="detail-panel hidden"></div>
                 </div>
-                <div id="autopsyList" class="items-grid"></div>
-                <div id="autopsyDetail" class="detail-panel hidden"></div>
+
+                <!-- Autopsy content (hidden by default) -->
+                <div id="autopsyContent" class="hidden">
+                    <div id="autopsyList" class="items-grid"></div>
+                    <div id="autopsyDetail" class="detail-panel hidden"></div>
+                </div>
             </div>
 
-            <!-- LAUDOS -->
+            <!-- LAUDOS (redesigned with inline wizard) -->
             <div id="tab-reports" class="tab-content">
-                <div class="tab-header">
-                    <h2><i class="fas fa-file-medical"></i> Laudos Técnicos</h2>
-                    <div class="tab-actions">
-                        <select id="reportTypeFilter" class="filter-select" onchange="filterReports()">
-                            <option value="">Todos os Tipos</option>
-                            <option value="laudo_pericial">Laudo Pericial</option>
-                            <option value="laudo_balistico">Laudo Balístico</option>
-                            <option value="laudo_toxicologico">Laudo Toxicológico</option>
-                            <option value="laudo_dna">Laudo DNA</option>
-                            <option value="laudo_digital">Laudo Digital</option>
-                            <option value="laudo_necropsia">Laudo Necropsia</option>
-                            <option value="laudo_drogas">Laudo Drogas</option>
-                        </select>
-                        <select id="reportStatusFilter" class="filter-select" onchange="filterReports()">
-                            <option value="">Todos os Status</option>
-                            <option value="rascunho">Rascunho</option>
-                            <option value="em_revisao">Em Revisão</option>
-                            <option value="finalizado">Finalizado</option>
-                            <option value="anexado_mdt">Anexado ao MDT</option>
-                        </select>
-                        <button class="btn-primary" onclick="showCreateReport()"><i class="fas fa-plus"></i> Novo Laudo</button>
+
+                <!-- Reports List Section -->
+                <div id="reportsListSection">
+                    <div class="tab-header">
+                        <h2><i class="fas fa-file-medical"></i> Laudos Técnicos</h2>
+                        <div class="tab-actions">
+                            <select id="reportTypeFilter" class="filter-select" onchange="filterReports()">
+                                <option value="">Todos os Tipos</option>
+                                <option value="laudo_pericial">Laudo Pericial</option>
+                                <option value="laudo_balistico">Laudo Balístico</option>
+                                <option value="laudo_toxicologico">Laudo Toxicológico</option>
+                                <option value="laudo_dna">Laudo DNA</option>
+                                <option value="laudo_digital">Laudo Digital</option>
+                                <option value="laudo_necropsia">Laudo Necropsia</option>
+                                <option value="laudo_drogas">Laudo Drogas</option>
+                            </select>
+                            <select id="reportStatusFilter" class="filter-select" onchange="filterReports()">
+                                <option value="">Todos os Status</option>
+                                <option value="rascunho">Rascunho</option>
+                                <option value="em_revisao">Em Revisão</option>
+                                <option value="finalizado">Finalizado</option>
+                                <option value="anexado_mdt">Anexado ao MDT</option>
+                            </select>
+                            <button class="btn-primary" onclick="showReportWizard()"><i class="fas fa-plus"></i> Novo Laudo</button>
+                        </div>
                     </div>
+                    <div id="reportsList" class="items-grid"></div>
+                    <div id="reportDetail" class="detail-panel hidden"></div>
                 </div>
-                <div id="reportsList" class="items-grid"></div>
-                <div id="reportDetail" class="detail-panel hidden"></div>
-            </div>
-        </div>
+
+                <!-- Report Wizard (inline, replaces list view) -->
+                <div id="reportWizard" class="report-wizard hidden">
+
+                    <!-- Wizard Header -->
+                    <div class="wizard-header">
+                        <div class="wizard-title"><i class="fas fa-wand-magic-sparkles"></i> Criar Novo Laudo</div>
+                        <button class="btn-close" onclick="cancelReportWizard()"><i class="fas fa-times"></i></button>
+                    </div>
+
+                    <!-- Step Progress -->
+                    <div class="wizard-progress">
+                        <div class="wizard-step active" id="wstep1">
+                            <div class="step-circle">1</div>
+                            <span class="step-label">Identificação</span>
+                        </div>
+                        <div class="wizard-connector"></div>
+                        <div class="wizard-step" id="wstep2">
+                            <div class="step-circle">2</div>
+                            <span class="step-label">Conteúdo</span>
+                        </div>
+                        <div class="wizard-connector"></div>
+                        <div class="wizard-step" id="wstep3">
+                            <div class="step-circle">3</div>
+                            <span class="step-label">Coletas</span>
+                        </div>
+                    </div>
+
+                    <!-- Wizard Body -->
+                    <div class="wizard-body">
+
+                        <!-- Page 1: Identification -->
+                        <div id="wizardPage1" class="wizard-page">
+                            <div class="wizard-page-header">
+                                <i class="fas fa-id-badge"></i>
+                                <div>
+                                    <h3>Identificação do Laudo</h3>
+                                    <p>Selecione o tipo e vincule ao caso ou cena correspondente</p>
+                                </div>
+                            </div>
+                            <div class="wizard-form">
+                                <div class="wf-field-full">
+                                    <label>Tipo de Laudo</label>
+                                    <select id="reportType" class="wf-select">
+                                        <option value="laudo_pericial">📋 Laudo Pericial</option>
+                                        <option value="laudo_balistico">🔫 Laudo Balístico</option>
+                                        <option value="laudo_toxicologico">🧪 Laudo Toxicológico</option>
+                                        <option value="laudo_dna">🧬 Laudo DNA</option>
+                                        <option value="laudo_digital">💻 Laudo Digital</option>
+                                        <option value="laudo_necropsia">💀 Laudo Necropsia</option>
+                                        <option value="laudo_drogas">💊 Laudo Drogas</option>
+                                    </select>
+                                </div>
+                                <div class="wf-row-3">
+                                    <div class="wf-field">
+                                        <label><i class="fas fa-map-marked-alt"></i> ID da Cena</label>
+                                        <input type="number" id="reportSceneId" placeholder="ID da cena (opcional)">
+                                    </div>
+                                    <div class="wf-field">
+                                        <label><i class="fas fa-briefcase"></i> ID do Caso MDT</label>
+                                        <input type="number" id="reportCaseId" placeholder="Nº do caso (opcional)">
+                                    </div>
+                                    <div class="wf-field">
+                                        <label><i class="fas fa-link"></i> ID do Relatório MDT</label>
+                                        <input type="number" id="reportMdtId" placeholder="ID do relatório (opcional)">
+                                    </div>
+                                </div>
+                                <div class="wf-info-box">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span>Os campos de ID são opcionais mas ajudam a vincular o laudo ao caso no sistema MDT.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Page 2: Content -->
+                        <div id="wizardPage2" class="wizard-page hidden">
+                            <div class="wizard-page-header">
+                                <i class="fas fa-pen-to-square"></i>
+                                <div>
+                                    <h3>Conteúdo do Laudo</h3>
+                                    <p>Preencha o título e o texto técnico do laudo</p>
+                                </div>
+                            </div>
+                            <div class="wizard-form">
+                                <div class="wf-field-full">
+                                    <label>Título <span class="wf-required">*</span></label>
+                                    <input type="text" id="reportTitle" placeholder="Ex: Laudo Pericial — Homicídio Rua Principal 203">
+                                </div>
+                                <div class="wf-field-full">
+                                    <label>Resumo Executivo</label>
+                                    <textarea id="reportSummary" rows="2" placeholder="Resumo breve do laudo (1-2 frases)..."></textarea>
+                                </div>
+                                <div class="wf-field-full">
+                                    <label>Corpo do Laudo</label>
+                                    <textarea id="reportBody" rows="5" placeholder="Descreva os achados técnicos, análises realizadas, evidências examinadas..."></textarea>
+                                </div>
+                                <div class="wf-field-full">
+                                    <label>Conclusão Técnica</label>
+                                    <textarea id="reportConclusion" rows="3" placeholder="Conclua com base nas evidências e análises..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Page 3: Collections -->
+                        <div id="wizardPage3" class="wizard-page hidden">
+                            <div class="wizard-page-header">
+                                <i class="fas fa-vials"></i>
+                                <div>
+                                    <h3>Coletas Integradas</h3>
+                                    <p>Ative as seções que deseja registrar junto com o laudo (opcional)</p>
+                                </div>
+                            </div>
+                            <div class="wizard-form">
+
+                                <!-- Evidence Collection -->
+                                <div class="collection-card">
+                                    <label class="collection-toggle">
+                                        <input type="checkbox" id="reportEnableEvidence" onchange="toggleReportSection('reportEvidenceFields', this.checked)">
+                                        <div class="collection-icon"><i class="fas fa-box"></i></div>
+                                        <div class="collection-label">
+                                            <strong>Evidência Física</strong>
+                                            <span>Registrar item coletado na cena</span>
+                                        </div>
+                                    </label>
+                                    <div id="reportEvidenceFields" class="nested-section hidden">
+                                        <div class="wf-row">
+                                            <div class="wf-field">
+                                                <label>Categoria</label>
+                                                <select id="reportEvidenceCategory">
+                                                    <option value="balistica">Balística</option>
+                                                    <option value="biologica">Biológica</option>
+                                                    <option value="digital_impressao">Impressões</option>
+                                                    <option value="quimica">Química</option>
+                                                    <option value="documental">Documental</option>
+                                                    <option value="eletronica">Eletrônica</option>
+                                                    <option value="vestimenta">Vestimenta</option>
+                                                    <option value="veiculo">Veículo</option>
+                                                    <option value="objeto_cortante">Objeto Cortante</option>
+                                                    <option value="objeto_contundente">Objeto Contundente</option>
+                                                    <option value="outros">Outros</option>
+                                                </select>
+                                            </div>
+                                            <div class="wf-field">
+                                                <label>Tipo</label>
+                                                <select id="reportEvidenceType">
+                                                    <option value="impressao_digital">Impressão Digital</option>
+                                                    <option value="sangue">Sangue</option>
+                                                    <option value="saliva">Saliva</option>
+                                                    <option value="capsula">Cápsula</option>
+                                                    <option value="projetil">Projétil</option>
+                                                    <option value="arma_fogo">Arma de Fogo</option>
+                                                    <option value="residuo_polvora">Resíduo de Pólvora</option>
+                                                    <option value="documento">Documento</option>
+                                                    <option value="celular">Celular</option>
+                                                    <option value="objeto_contundente">Objeto Contundente</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="wf-field-full">
+                                            <label>Descrição da Coleta</label>
+                                            <textarea id="reportEvidenceDescription" rows="2" placeholder="Detalhes da evidência coletada"></textarea>
+                                        </div>
+                                        <div class="wf-row-3">
+                                            <div class="wf-field">
+                                                <label>CitizenID vinculado</label>
+                                                <input type="text" id="reportEvidenceCitizen" placeholder="CitizenID">
+                                            </div>
+                                            <div class="wf-field">
+                                                <label>Serial da arma</label>
+                                                <input type="text" id="reportEvidenceWeaponSerial" placeholder="Serial (opcional)">
+                                            </div>
+                                            <div class="wf-field">
+                                                <label>Placa do veículo</label>
+                                                <input type="text" id="reportEvidenceVehicle" placeholder="ABC1234">
+                                            </div>
+                                        </div>
+                                        <div class="wf-row">
+                                            <div class="wf-field">
+                                                <label>Enviar ao armário de evidências</label>
+                                                <select id="reportEvidenceStore">
+                                                    <option value="nao">Não</option>
+                                                    <option value="sim">Sim — armazenar</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Fingerprint Collection -->
+                                <div class="collection-card">
+                                    <label class="collection-toggle">
+                                        <input type="checkbox" id="reportEnableFingerprint" onchange="toggleReportSection('reportFingerprintFields', this.checked)">
+                                        <div class="collection-icon"><i class="fas fa-hand-dots"></i></div>
+                                        <div class="collection-label">
+                                            <strong>Impressão Digital</strong>
+                                            <span>Cadastrar perfil biométrico do cidadão</span>
+                                        </div>
+                                    </label>
+                                    <div id="reportFingerprintFields" class="nested-section hidden">
+                                        <div class="wf-row">
+                                            <div class="wf-field">
+                                                <label>CitizenID</label>
+                                                <input type="text" id="reportFpCitizen" placeholder="CitizenID">
+                                            </div>
+                                            <div class="wf-field">
+                                                <label>Nome</label>
+                                                <input type="text" id="reportFpName" placeholder="Nome completo">
+                                            </div>
+                                        </div>
+                                        <div id="reportFpLookupHint" class="lookup-hint">Auto-preenchimento por CitizenID ou nome.</div>
+                                    </div>
+                                </div>
+
+                                <!-- DNA Collection -->
+                                <div class="collection-card">
+                                    <label class="collection-toggle">
+                                        <input type="checkbox" id="reportEnableDNA" onchange="toggleReportSection('reportDNAFields', this.checked)">
+                                        <div class="collection-icon"><i class="fas fa-dna"></i></div>
+                                        <div class="collection-label">
+                                            <strong>Perfil de DNA</strong>
+                                            <span>Cadastrar amostra genética do cidadão</span>
+                                        </div>
+                                    </label>
+                                    <div id="reportDNAFields" class="nested-section hidden">
+                                        <div class="wf-row">
+                                            <div class="wf-field">
+                                                <label>CitizenID</label>
+                                                <input type="text" id="reportDnaCitizen" placeholder="CitizenID">
+                                            </div>
+                                            <div class="wf-field">
+                                                <label>Nome</label>
+                                                <input type="text" id="reportDnaName" placeholder="Nome completo">
+                                            </div>
+                                        </div>
+                                        <div id="reportDnaLookupHint" class="lookup-hint">Auto-preenchimento por CitizenID ou nome.</div>
+                                        <div class="wf-field">
+                                            <label>Tipo Sanguíneo</label>
+                                            <select id="reportDnaBloodType">
+                                                <option value="Desconhecido">Desconhecido</option>
+                                                <option value="A+">A+</option><option value="A-">A-</option>
+                                                <option value="B+">B+</option><option value="B-">B-</option>
+                                                <option value="AB+">AB+</option><option value="AB-">AB-</option>
+                                                <option value="O+">O+</option><option value="O-">O-</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Ballistic Collection -->
+                                <div class="collection-card">
+                                    <label class="collection-toggle">
+                                        <input type="checkbox" id="reportEnableBallistic" onchange="toggleReportSection('reportBallisticFields', this.checked)">
+                                        <div class="collection-icon"><i class="fas fa-crosshairs"></i></div>
+                                        <div class="collection-label">
+                                            <strong>Item Balístico / Arma</strong>
+                                            <span>Registrar cápsula, projétil ou arma apreendida</span>
+                                        </div>
+                                    </label>
+                                    <div id="reportBallisticFields" class="nested-section hidden">
+                                        <div class="wf-row">
+                                            <div class="wf-field">
+                                                <label>Tipo</label>
+                                                <select id="reportBallisticType">
+                                                    <option value="arma">Arma Apreendida</option>
+                                                    <option value="capsula">Cápsula</option>
+                                                    <option value="projetil">Projétil</option>
+                                                    <option value="municao">Munição</option>
+                                                </select>
+                                            </div>
+                                            <div class="wf-field">
+                                                <label>Serial da arma</label>
+                                                <input type="text" id="reportBallisticSerial" placeholder="Serial (opcional)">
+                                            </div>
+                                        </div>
+                                        <div id="reportBallisticSerialHint" class="lookup-hint">Busca automática pelo serial informado.</div>
+                                        <div class="wf-row">
+                                            <div class="wf-field">
+                                                <label>Modelo</label>
+                                                <input type="text" id="reportBallisticModel" placeholder="Modelo da arma">
+                                            </div>
+                                            <div class="wf-field">
+                                                <label>Calibre</label>
+                                                <input type="text" id="reportBallisticCaliber" placeholder="Ex: 9mm">
+                                            </div>
+                                        </div>
+                                        <div class="wf-field-full">
+                                            <label>Observações</label>
+                                            <textarea id="reportBallisticNotes" rows="2" placeholder="Detalhes do item balístico"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div><!-- /wizard-body -->
+
+                    <!-- Wizard Footer Navigation -->
+                    <div class="wizard-footer">
+                        <button class="btn-secondary" onclick="cancelReportWizard()">
+                            <i class="fas fa-arrow-left"></i> Voltar à lista
+                        </button>
+                        <div class="wizard-nav-right">
+                            <button id="btnWizardBack" class="btn-secondary hidden" onclick="wizardBack()">
+                                <i class="fas fa-chevron-left"></i> Anterior
+                            </button>
+                            <button id="btnWizardNext" class="btn-primary" onclick="wizardNext()">
+                                Próximo <i class="fas fa-chevron-right"></i>
+                            </button>
+                            <button id="btnWizardSubmit" class="btn-primary hidden" onclick="doCreateReport()">
+                                <i class="fas fa-plus"></i> Criar Laudo
+                            </button>
+                        </div>
+                    </div>
+
+                </div><!-- /reportWizard -->
+
+            </div><!-- /tab-reports -->
+
+        </div><!-- /forensics-content -->
 
         <!-- Modal -->
         <div id="modal-overlay" class="modal-overlay hidden" onclick="closeModal()">
