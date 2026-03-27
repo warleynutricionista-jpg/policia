@@ -239,6 +239,11 @@ Config.WorldEvidence = {
         fragmento_veiculo = 500,
     },
 
+    -- Intervalo de polling para detectar queda de munição (cápsula)
+    -- Menor = mais responsivo, porém mais uso de CPU no client.
+    -- Recomendado para servidores médios: 180~250ms
+    CasingPollIntervalMs = 200,
+
     -- Distância mínima entre duas evidências do mesmo tipo (evitar duplicatas)
     MinDistanceBetweenSameType = 2.0,
 
