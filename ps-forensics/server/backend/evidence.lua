@@ -98,6 +98,126 @@ local function generateUniqueSealNumber()
     return ForensicUtils.GenerateSealNumber() .. tostring(math.random(10, 99))
 end
 
+local function normalizeLookupValue(value)
+    if value == nil then return nil end
+    local str = tostring(value):gsub('^%s*(.-)%s*$', '%1')
+    if str == '' then return nil end
+    return str
+end
+
+local function queryCitizenProfileByIdentifier(identifier)
+    local needle = normalizeLookupValue(identifier)
+    if not needle then return nil end
+
+    if GetResourceState('ps-mdt') == 'started' then
+        local ok, mdtResult = pcall(function()
+            return lib.callback.await('ps-mdt:server:lookupCitizenIdentity', false, { query = needle })
+        end)
+        if ok and mdtResult and mdtResult.citizenid then
+            return mdtResult
+        end
+    end
+
+    local exact = MySQL.single.await([[
+        SELECT mp.citizenid,
+               mp.fullname AS profile_name,
+               JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')) AS firstname,
+               JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname')) AS lastname,
+               JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.phone')) AS phone,
+               JSON_UNQUOTE(JSON_EXTRACT(p.job, '$.label')) AS job_label
+        FROM mdt_profiles mp
+        LEFT JOIN players p ON p.citizenid = mp.citizenid
+        WHERE mp.citizenid = ?
+        LIMIT 1
+    ]], { needle })
+
+    if not exact then
+        local like = '%' .. needle:lower() .. '%'
+        exact = MySQL.single.await([[
+            SELECT mp.citizenid,
+                   mp.fullname AS profile_name,
+                   JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')) AS firstname,
+                   JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname')) AS lastname,
+                   JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.phone')) AS phone,
+                   JSON_UNQUOTE(JSON_EXTRACT(p.job, '$.label')) AS job_label
+            FROM mdt_profiles mp
+            LEFT JOIN players p ON p.citizenid = mp.citizenid
+            WHERE LOWER(mp.fullname) LIKE ?
+               OR LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname'))) LIKE ?
+               OR LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname'))) LIKE ?
+               OR LOWER(CONCAT(
+                    COALESCE(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')), ''),
+                    ' ',
+                    COALESCE(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname')), '')
+               )) LIKE ?
+            ORDER BY mp.id DESC
+            LIMIT 1
+        ]], { like, like, like, like })
+    end
+
+    if not exact then return nil end
+
+    local fullName = exact.profile_name
+    if (not fullName or fullName == '') and (exact.firstname or exact.lastname) then
+        fullName = ('%s %s'):format(exact.firstname or '', exact.lastname or ''):gsub('^%s*(.-)%s*$', '%1')
+    end
+
+    return {
+        citizenid = exact.citizenid,
+        name = fullName or L('labels.unknown'),
+        firstname = exact.firstname or nil,
+        lastname = exact.lastname or nil,
+        phone = exact.phone or nil,
+        job = exact.job_label or nil,
+    }
+end
+
+local function queryWeaponRegistryBySerial(serial)
+    local normalizedSerial = normalizeLookupValue(serial)
+    if not normalizedSerial then return nil end
+
+    if GetResourceState('ps-mdt') == 'started' then
+        local ok, mdtResult = pcall(function()
+            return lib.callback.await('ps-mdt:server:lookupWeaponRegistry', false, { serial = normalizedSerial })
+        end)
+        if ok and mdtResult and mdtResult.serial then
+            return mdtResult
+        end
+    end
+
+    local weapon = MySQL.single.await([[
+        SELECT w.id, w.serial, w.weaponModel, w.weaponClass, w.owner,
+               mp.fullname AS owner_name
+        FROM mdt_weapons w
+        LEFT JOIN mdt_profiles mp ON mp.citizenid = w.owner
+        WHERE w.serial = ?
+        LIMIT 1
+    ]], { normalizedSerial })
+
+    if not weapon then
+        weapon = MySQL.single.await([[
+            SELECT w.id, w.serial, w.weaponModel, w.weaponClass, w.owner,
+                   mp.fullname AS owner_name
+            FROM mdt_weapons w
+            LEFT JOIN mdt_profiles mp ON mp.citizenid = w.owner
+            WHERE LOWER(w.serial) LIKE ?
+            ORDER BY w.id DESC
+            LIMIT 1
+        ]], { '%' .. normalizedSerial:lower() .. '%' })
+    end
+
+    if not weapon then return nil end
+
+    return {
+        id = weapon.id,
+        serial = weapon.serial,
+        weapon_model = weapon.weaponModel,
+        weapon_class = weapon.weaponClass,
+        owner_citizenid = weapon.owner,
+        owner_name = weapon.owner_name or nil,
+    }
+end
+
 local validEvidenceStatuses = {}
 for _, status in ipairs((Config.Enums and Config.Enums.EvidenceStatus) or {
     'coletada', 'lacrada', 'em_analise', 'analisada', 'armazenada', 'descartada', 'devolvida', 'em_julgamento'
@@ -125,6 +245,20 @@ local actionByStatus = {
     devolvida = 'devolvida',
     em_julgamento = 'encaminhada_julgamento',
 }
+
+lib.callback.register(resourceName .. ':server:lookupCitizenProfile', function(source, identifier)
+    local src = source
+    if not CheckForensicAuth(src) then return nil end
+    if not CheckForensicPermission(src, 'canCollectEvidence') then return nil end
+    return queryCitizenProfileByIdentifier(identifier)
+end)
+
+lib.callback.register(resourceName .. ':server:lookupWeaponRegistry', function(source, serial)
+    local src = source
+    if not CheckForensicAuth(src) then return nil end
+    if not CheckForensicPermission(src, 'canCollectEvidence') then return nil end
+    return queryWeaponRegistryBySerial(serial)
+end)
 
 local function recordCustody(evidenceId, action, fromCitizenId, fromName, toCitizenId, toName, location, notes)
     local previousHash = MySQL.scalar.await(
@@ -180,6 +314,8 @@ lib.callback.register(resourceName .. ':server:collectEvidence', function(source
     local sceneId = data.scene_id and tonumber(data.scene_id) or nil
     local caseId = data.case_id and tonumber(data.case_id) or nil
     local reportId = data.report_id and tonumber(data.report_id) or nil
+    local incidentId = data.incident_id and tonumber(data.incident_id) or nil
+    local mdtEvidenceId = data.mdt_evidence_id and tonumber(data.mdt_evidence_id) or nil
     local evidenceType = normalizeEvidenceType(data.type)
     local evidenceEntry = evidenceTypeMap[evidenceType]
     local evidenceCategory = data.category or (evidenceEntry and evidenceEntry.category) or 'outros'
@@ -252,15 +388,17 @@ lib.callback.register(resourceName .. ':server:collectEvidence', function(source
 
     local evidenceId = MySQL.insert.await([[
         INSERT INTO forensic_evidence
-        (evidence_number, scene_id, case_id, report_id, category, type, subtype,
+        (evidence_number, scene_id, case_id, report_id, incident_id, mdt_evidence_id, category, type, subtype,
          description, collection_location, collection_x, collection_y, collection_z,
          collected_by, collected_by_name, collection_method, seal_number, status,
          photo_url, linked_citizenid, linked_vehicle_plate, linked_weapon_serial, priority)
-        VALUES ('', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'coletada', ?, ?, ?, ?, ?)
+        VALUES ('', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'coletada', ?, ?, ?, ?, ?)
     ]], {
         sceneId,
         caseId,
         reportId,
+        incidentId,
+        mdtEvidenceId,
         evidenceCategory,
         evidenceType,
         subtype,

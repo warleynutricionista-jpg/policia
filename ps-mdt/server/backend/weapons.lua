@@ -329,6 +329,51 @@ ps.registerCallback(resourceName .. ':server:getWeapon', function(source, serial
     }
 end)
 
+ps.registerCallback(resourceName .. ':server:lookupWeaponRegistry', function(source, payload)
+    local src = source
+    if not CheckAuth(src) then return nil end
+
+    local serial = payload
+    if type(payload) == 'table' then
+        serial = payload.serial or payload.query
+    end
+    serial = tostring(serial or ''):gsub('^%s*(.-)%s*$', '%1')
+    if serial == '' then return nil end
+
+    local weapon = MySQL.single.await([[
+        SELECT w.id, w.serial, w.owner, w.weaponModel, w.weaponClass, w.scratched,
+               mp.fullname AS owner_name
+        FROM mdt_weapons w
+        LEFT JOIN mdt_profiles mp ON mp.citizenid = w.owner
+        WHERE w.serial = ?
+        LIMIT 1
+    ]], { serial })
+
+    if not weapon then
+        weapon = MySQL.single.await([[
+            SELECT w.id, w.serial, w.owner, w.weaponModel, w.weaponClass, w.scratched,
+                   mp.fullname AS owner_name
+            FROM mdt_weapons w
+            LEFT JOIN mdt_profiles mp ON mp.citizenid = w.owner
+            WHERE LOWER(w.serial) LIKE ?
+            ORDER BY w.id DESC
+            LIMIT 1
+        ]], { '%' .. serial:lower() .. '%' })
+    end
+
+    if not weapon then return nil end
+
+    return {
+        id = weapon.id,
+        serial = weapon.serial,
+        owner_citizenid = weapon.owner,
+        owner_name = weapon.owner_name or nil,
+        weapon_model = weapon.weaponModel or nil,
+        weapon_class = weapon.weaponClass or nil,
+        scratched = tonumber(weapon.scratched) == 1,
+    }
+end)
+
 -- Save/Edit Weapon Info (from NUI)
 ps.registerCallback(resourceName .. ':server:saveWeaponInfo', function(source, payload)
     local src = source
