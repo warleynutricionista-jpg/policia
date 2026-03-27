@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <rect width="80" height="80" rx="10" fill="#0a0e17" stroke="#ef4444" stroke-width="2"/>
+  <path d="M40 15 C40 15 22 35 22 47 C22 57 30 65 40 65 C50 65 58 57 58 47 C58 35 40 15 40 15Z" fill="#ef4444" opacity="0.85"/>
+  <path d="M33 55 C33 55 27 50 27 44" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.5"/>
+  <text x="40" y="76" font-family="monospace" font-size="6" fill="#ef4444" text-anchor="middle">SANGUE</text>
+</svg>

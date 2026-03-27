@@ -94,7 +94,27 @@ exports('useForensicItem', function(data, slot)
     if itemName == 'forensic_tablet' or config.openUi then
         OpenForensicsUI('scenes')
     elseif itemName == 'forensic_flashlight' then
-        SetFlashLightKeepOnWhileMoving(true)
+        -- Alternar entre ligado/desligado
+        local wasActive = type(IsForensicFlashlightActive) == 'function' and IsForensicFlashlightActive()
+        local newState  = not wasActive
+
+        SetFlashLightKeepOnWhileMoving(newState)
+
+        -- Ativar/desativar o modo de descoberta visual de evidências
+        if type(ToggleForensicFlashlight) == 'function' then
+            ToggleForensicFlashlight(newState)
+        end
+
+        -- Notificação de estado
+        lib.notify({
+            title       = L('ui.system_name'),
+            description = newState
+                and 'Lanterna forense ativada — vestígios próximos serão destacados'
+                or  'Lanterna forense desativada',
+            type     = newState and 'inform' or 'warning',
+            duration = 3000,
+        })
+        return -- Evitar duplicar a notificação genérica abaixo
     elseif itemName == 'evidence_marker' then
         placeEvidenceMarker()
     end

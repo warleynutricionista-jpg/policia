@@ -8,6 +8,76 @@ let playerPermissions = {};
 let playerName = '';
 let availableTabs = [];
 
+// ============================================================
+// IMAGENS DE EVIDÊNCIA
+// Mapeamento tipo → arquivo SVG/PNG em html/images/evidence/
+// Fallback: evidence_generic.svg se a imagem não existir
+// ============================================================
+const EVIDENCE_IMAGE_BASE = 'nui://ps-forensics/html/images/evidence/';
+const EVIDENCE_IMAGE_FALLBACK = EVIDENCE_IMAGE_BASE + 'evidence_generic.svg';
+
+const evidenceTypeImageMap = {
+    sangue:                'blood.svg',
+    capsula:               'shell_casing.svg',
+    projetil:              'bullet.svg',
+    arma_fogo:             'firearm.svg',
+    municao:               'ammo.svg',
+    fragmento_projetil:    'bullet_fragment.svg',
+    saliva:                'saliva.svg',
+    cabelo:                'hair.svg',
+    tecido_biologico:      'biological_tissue.svg',
+    fluido_biologico:      'biological_fluid.svg',
+    impressao_digital:     'fingerprint.svg',
+    pegada:                'footprint.svg',
+    marca_pneu:            'tire_mark.svg',
+    residuo_polvora:       'gunshot_residue.svg',
+    residuo_droga:         'drug_residue.svg',
+    substancia_po:         'powder.svg',
+    substancia_liquida:    'liquid.svg',
+    comprimido:            'pill.svg',
+    seringa:               'syringe.svg',
+    embalagem:             'package.svg',
+    residuo_quimico:       'chemical.svg',
+    documento:             'document.svg',
+    celular:               'phone.svg',
+    dispositivo_eletronico:'electronic.svg',
+    midia_digital:         'digital_media.svg',
+    roupa:                 'clothing.svg',
+    calcado:               'shoe.svg',
+    veiculo_cena:          'vehicle.svg',
+    faca:                  'knife.svg',
+    lamina:                'blade.svg',
+    objeto_perfurante:     'sharp_object.svg',
+    objeto_contundente:    'blunt_object.svg',
+    objeto_queimado:       'burned_object.svg',
+};
+
+const evidenceCategoryImageMap = {
+    balistica:         'shell_casing.svg',
+    biologica:         'blood.svg',
+    digital_impressao: 'fingerprint.svg',
+    quimica:           'gunshot_residue.svg',
+    documental:        'document.svg',
+    eletronica:        'electronic.svg',
+    vestimenta:        'clothing.svg',
+    veiculo:           'vehicle.svg',
+    objeto_cortante:   'knife.svg',
+    objeto_contundente:'blunt_object.svg',
+};
+
+function getEvidenceImageURL(type, category) {
+    const file = evidenceTypeImageMap[type]
+        || evidenceCategoryImageMap[category]
+        || 'evidence_generic.svg';
+    return EVIDENCE_IMAGE_BASE + file;
+}
+
+function evidenceThumb(type, category) {
+    const url = getEvidenceImageURL(type, category);
+    return `<img class="evidence-thumb" src="${url}" alt="${type || 'evidência'}"
+        onerror="this.onerror=null;this.src='${EVIDENCE_IMAGE_FALLBACK}'">`;
+}
+
 function getEl(id) {
     return document.getElementById(id);
 }
@@ -152,16 +222,81 @@ function switchTab(tab) {
 
 async function loadTabData(tab) {
     switch(tab) {
-        case 'scenes': await loadScenes(); break;
-        case 'evidence': await loadEvidence(); break;
-        case 'lab': await loadLabTests(); break;
+        case 'dashboard':    await loadDashboard(); break;
+        case 'scenes':       await loadScenes(); break;
+        case 'evidence':     await loadEvidence(); break;
+        case 'lab':          await loadLabTests(); break;
         case 'fingerprints': await loadFingerprints(); break;
-        case 'dna': await loadDNA(); break;
-        case 'ballistics': await loadBallistics(); break;
-        case 'drugs': await loadDrugs(); break;
-        case 'autopsy': await loadAutopsies(); break;
-        case 'reports': await loadReports(); break;
-        case 'crossref': await loadCrossRefDashboard(); break;
+        case 'dna':          await loadDNA(); break;
+        case 'ballistics':   await loadBallistics(); break;
+        case 'drugs':        await loadDrugs(); break;
+        case 'autopsy':      await loadAutopsies(); break;
+        case 'reports':      await loadReports(); break;
+        case 'crossref':     await loadCrossRefDashboard(); break;
+    }
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+async function loadDashboard() {
+    const statsEl  = getEl('dashboardStats');
+    const recentEl = getEl('dashboardRecent');
+    if (!statsEl) return;
+
+    statsEl.innerHTML = '<div class="dashboard-loading"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>';
+
+    const result = await fetchNUI('getForensicStats', {});
+
+    if (!result) {
+        statsEl.innerHTML = '<div class="empty-state"><i class="fas fa-chart-line"></i><p>Erro ao carregar estatísticas</p></div>';
+        return;
+    }
+
+    const stats = [
+        { icon: 'fa-map-marked-alt',    color: '#3b82f6', label: 'Cenas',               value: result.total_scenes     || 0 },
+        { icon: 'fa-box-archive',        color: '#00b4d8', label: 'Evidências',           value: result.total_evidence   || 0 },
+        { icon: 'fa-flask',              color: '#f59e0b', label: 'Testes Pendentes',     value: result.pending_tests    || 0 },
+        { icon: 'fa-file-medical',       color: '#22c55e', label: 'Laudos',               value: result.total_reports    || 0 },
+        { icon: 'fa-fingerprint',        color: '#8b5cf6', label: 'Perfis Digitais',      value: result.total_fingerprints || 0 },
+        { icon: 'fa-dna',                color: '#ec4899', label: 'Perfis de DNA',        value: result.total_dna        || 0 },
+        { icon: 'fa-gun',                color: '#ef4444', label: 'Registros Balísticos', value: result.total_ballistics || 0 },
+        { icon: 'fa-skull-crossbones',   color: '#6b7280', label: 'Necropsias',           value: result.total_autopsies  || 0 },
+    ];
+
+    statsEl.innerHTML = stats.map(s => `
+        <div class="stat-card" style="--stat-color: ${s.color}">
+            <div class="stat-icon"><i class="fas ${s.icon}" style="color:${s.color}"></i></div>
+            <div class="stat-content">
+                <div class="stat-value" style="color:${s.color}">${s.value}</div>
+                <div class="stat-label">${s.label}</div>
+            </div>
+        </div>
+    `).join('');
+
+    // Seção de alertas de inteligência ou evidências recentes
+    if (recentEl) {
+        const alerts = result.active_alerts || [];
+        const openScenes = result.open_scenes || 0;
+        const pendingTests = result.pending_tests || 0;
+
+        let alertsHTML = '';
+        if (openScenes > 0) {
+            alertsHTML += `<div class="dashboard-alert alert-warning"><i class="fas fa-exclamation-triangle"></i> ${openScenes} cena(s) de crime ainda aberta(s)</div>`;
+        }
+        if (pendingTests > 0) {
+            alertsHTML += `<div class="dashboard-alert alert-info"><i class="fas fa-flask"></i> ${pendingTests} teste(s) laboratorial(is) aguardando processamento</div>`;
+        }
+        if (alerts.length > 0) {
+            alerts.slice(0, 3).forEach(alert => {
+                alertsHTML += `<div class="dashboard-alert alert-danger"><i class="fas fa-exclamation-circle"></i> ${alert.message || 'Alerta de inteligência'}</div>`;
+            });
+        }
+        if (!alertsHTML) {
+            alertsHTML = '<div class="dashboard-alert alert-success"><i class="fas fa-check-circle"></i> Nenhum alerta ativo no momento</div>';
+        }
+
+        recentEl.innerHTML = `<div class="detail-section"><h3><i class="fas fa-bell"></i> Alertas e Pendências</h3>${alertsHTML}</div>`;
     }
 }
 
@@ -342,28 +477,33 @@ async function doCreateScene() {
 // ============================================================
 async function loadEvidence() {
     const category = document.getElementById('evidenceCategoryFilter')?.value || '';
-    const search = document.getElementById('evidenceSearch')?.value || '';
+    const status   = document.getElementById('evidenceStatusFilter')?.value || '';
+    const search   = document.getElementById('evidenceSearch')?.value || '';
 
-    const result = await fetchNUI('getEvidenceList', { category, search });
+    const result = await fetchNUI('getEvidenceList', { category, status, search });
     const container = document.getElementById('evidenceList');
 
-    if (!result || !result.success || !result.data || result.data.items.length === 0) {
+    if (!result || !result.success || !result.data || !result.data.items || result.data.items.length === 0) {
         container.innerHTML = '<div class="empty-state"><i class="fas fa-fingerprint"></i><p>Nenhuma evidência encontrada</p></div>';
         return;
     }
 
     container.innerHTML = result.data.items.map(ev => `
-        <div class="card priority-${ev.priority || 'media'}" onclick="viewEvidence(${ev.id})">
-            <div class="card-header">
-                <span class="card-title">${ev.evidence_number || 'EV-???'}</span>
-                ${getStatusBadge(ev.status)}
-            </div>
-            <div class="card-body">
-                <div class="card-row"><span class="card-label">Tipo</span><span class="card-value">${ev.type || 'N/D'}</span></div>
-                <div class="card-row"><span class="card-label">Categoria</span><span class="card-value">${ev.category || 'N/D'}</span></div>
-                <div class="card-row"><span class="card-label">Lacre</span><span class="card-value">${ev.seal_number || 'N/D'}</span></div>
-                <div class="card-row"><span class="card-label">Coletada por</span><span class="card-value">${ev.collected_by_name || 'N/D'}</span></div>
-                <div class="card-row"><span class="card-label">Data</span><span class="card-value">${formatDate(ev.collection_time)}</span></div>
+        <div class="card card-with-thumb priority-${ev.priority || 'media'}" onclick="viewEvidence(${ev.id})">
+            ${evidenceThumb(ev.type, ev.category)}
+            <div class="card-main">
+                <div class="card-header">
+                    <span class="card-title">${ev.evidence_number || 'EV-???'}</span>
+                    ${getStatusBadge(ev.status)}
+                </div>
+                <div class="card-body">
+                    <div class="card-row"><span class="card-label">Tipo</span><span class="card-value">${ev.type || 'N/D'}</span></div>
+                    <div class="card-row"><span class="card-label">Categoria</span><span class="card-value">${ev.category || 'N/D'}</span></div>
+                    <div class="card-row"><span class="card-label">Lacre</span><span class="card-value" style="font-family:'Share Tech Mono',monospace;color:#00b4d8">${ev.seal_number || 'N/D'}</span></div>
+                    <div class="card-row"><span class="card-label">Coletada por</span><span class="card-value">${ev.collected_by_name || 'N/D'}</span></div>
+                    <div class="card-row"><span class="card-label">Data</span><span class="card-value">${formatDate(ev.collection_time || ev.created_at)}</span></div>
+                    ${ev.collection_source === 'campo' ? '<div class="card-row"><span class="card-label" style="color:#f59e0b"><i class="fas fa-map-marker-alt"></i> Campo</span></div>' : ''}
+                </div>
             </div>
         </div>
     `).join('');
@@ -496,26 +636,132 @@ async function loadBallistics() {
 }
 
 async function loadDrugs() {
-    const list = document.getElementById('drugsList');
-    const result = await fetchNUI('getDrugAnalyses', {});
-    const rows = result?.data || [];
+    const list       = document.getElementById('drugsList');
+    const statusVal  = document.getElementById('drugStatusFilter')?.value || '';
+    const result     = await fetchNUI('getDrugAnalyses', { status: statusVal || undefined });
+
+    // Suportar resposta como array direto ou objeto paginado
+    let rows = [];
+    if (Array.isArray(result?.data)) {
+        rows = result.data;
+    } else if (result?.data?.items && Array.isArray(result.data.items)) {
+        rows = result.data.items;
+    } else if (Array.isArray(result)) {
+        rows = result;
+    }
+
     if (!rows || rows.length === 0) {
         list.innerHTML = '<div class="empty-state"><i class="fas fa-pills"></i><p>Nenhuma análise de substância encontrada</p></div>';
         return;
     }
+
     list.innerHTML = rows.map(d => `
-        <div class="card">
-            <div class="card-header">
-                <span class="card-title">${d.confirmed_substance || d.preliminary_classification || 'Substância não definida'}</span>
-                ${getStatusBadge(d.test_result || 'suspeita')}
-            </div>
-            <div class="card-body">
-                <div class="card-row"><span class="card-label">Categoria</span><span class="card-value">${d.substance_category || 'N/D'}</span></div>
-                <div class="card-row"><span class="card-label">Caso</span><span class="card-value">${d.case_id || 'N/D'}</span></div>
-                <div class="card-row"><span class="card-label">Relatório</span><span class="card-value">${d.report_id || 'N/D'}</span></div>
+        <div class="card card-with-thumb" onclick="viewDrug(${d.id})">
+            ${evidenceThumb('substancia_po', 'quimica')}
+            <div class="card-main">
+                <div class="card-header">
+                    <span class="card-title">${d.confirmed_substance || d.preliminary_classification || 'Substância não definida'}</span>
+                    ${getStatusBadge(d.test_result || 'suspeita')}
+                </div>
+                <div class="card-body">
+                    <div class="card-row"><span class="card-label">Categoria</span><span class="card-value">${d.substance_category || 'N/D'}</span></div>
+                    ${d.purity_percentage ? `<div class="card-row"><span class="card-label">Pureza</span><span class="card-value">${d.purity_percentage}%</span></div>` : ''}
+                    <div class="card-row"><span class="card-label">Caso</span><span class="card-value">${d.case_id || 'N/D'}</span></div>
+                    <div class="card-row"><span class="card-label">Data</span><span class="card-value">${formatDate(d.created_at)}</span></div>
+                </div>
             </div>
         </div>
     `).join('');
+}
+
+function filterDrugs() { loadDrugs(); }
+
+async function viewDrug(drugId) {
+    if (!drugId) return;
+    showModal('Análise de Substância', `
+        <div class="detail-field"><label>Carregando dados...</label>
+        <p style="color:#6b7280">ID: ${drugId}</p></div>
+    `, playerPermissions.canRunLabTests ? `
+        <button class="btn-primary" onclick="confirmDrugDialog(${drugId})">
+            <i class="fas fa-check"></i> Confirmar Substância
+        </button>
+    ` : '');
+}
+
+async function confirmDrugDialog(drugId) {
+    closeModal();
+    showModal('Confirmar Substância', `
+        <div class="form-group"><label>Substância Confirmada</label>
+            <input type="text" id="drugSubstance" placeholder="Nome da substância"></div>
+        <div class="form-group"><label>Pureza (%)</label>
+            <input type="number" id="drugPurity" min="0" max="100" placeholder="Ex: 75"></div>
+        <div class="form-group"><label>Resultado</label>
+            <select id="drugResult">
+                <option value="confirmado">Confirmado Positivo</option>
+                <option value="negativo">Negativo</option>
+                <option value="inconclusivo">Inconclusivo</option>
+            </select>
+        </div>
+    `, `<button class="btn-primary" onclick="doConfirmDrug(${drugId})">Confirmar</button>`);
+}
+
+async function doConfirmDrug(drugId) {
+    const substance = getEl('drugSubstance')?.value || '';
+    const purity    = getEl('drugPurity')?.value || null;
+    const reslt     = getEl('drugResult')?.value || 'confirmado';
+    if (!substance) { showNotification('Substância é obrigatória', 'error'); return; }
+    const result = await fetchNUI('confirmDrug', { id: drugId, substance, purity, result: reslt });
+    if (result?.success) {
+        closeModal();
+        showNotification('Substância confirmada com sucesso', 'success');
+        await loadDrugs();
+    } else {
+        showNotification(result?.error || 'Erro ao confirmar substância', 'error');
+    }
+}
+
+function showRegisterDrugAnalysis() {
+    showModal('Nova Análise de Substância', `
+        <div class="form-group"><label>Classificação Preliminar</label>
+            <input type="text" id="drugPreliminary" placeholder="Ex: Cocaína, Maconha..."></div>
+        <div class="form-group"><label>Categoria</label>
+            <select id="drugCategory">
+                <option value="entorpecentes">Entorpecentes</option>
+                <option value="psicotrópicos">Psicotrópicos</option>
+                <option value="estimulantes">Estimulantes</option>
+                <option value="depressores">Depressores</option>
+                <option value="outros">Outros</option>
+            </select>
+        </div>
+        <div class="form-group"><label>ID da Evidência (opcional)</label>
+            <input type="number" id="drugEvidenceId" placeholder="ID da evidência associada"></div>
+        <div class="form-group"><label>ID do Caso MDT (opcional)</label>
+            <input type="number" id="drugCaseId" placeholder="Número do caso"></div>
+        <div class="form-group"><label>Observações</label>
+            <textarea id="drugNotes" rows="2" placeholder="Observações iniciais..."></textarea></div>
+    `, `<button class="btn-primary" onclick="doRegisterDrugAnalysis()"><i class="fas fa-plus"></i> Registrar</button>`);
+}
+
+async function doRegisterDrugAnalysis() {
+    const data = {
+        preliminary_classification: getEl('drugPreliminary')?.value || '',
+        substance_category: getEl('drugCategory')?.value || 'outros',
+        evidence_id: getEl('drugEvidenceId')?.value || null,
+        case_id: getEl('drugCaseId')?.value || null,
+        notes: getEl('drugNotes')?.value || '',
+    };
+    if (!data.preliminary_classification) {
+        showNotification('Classificação preliminar é obrigatória', 'error');
+        return;
+    }
+    const result = await fetchNUI('registerDrugAnalysis', data);
+    if (result?.success) {
+        closeModal();
+        showNotification('Análise de substância registrada', 'success');
+        await loadDrugs();
+    } else {
+        showNotification(result?.error || 'Erro ao registrar análise', 'error');
+    }
 }
 
 async function viewEvidence(evidenceId) {
@@ -674,11 +920,24 @@ async function doPerformLabTest(testId) {
 // ============================================================
 // AUTOPSIES
 // ============================================================
+function filterAutopsies() { loadAutopsies(); }
+
 async function loadAutopsies() {
-    const result = await fetchNUI('getAutopsies', {});
+    const statusVal = document.getElementById('autopsyStatusFilter')?.value || '';
+    const result    = await fetchNUI('getAutopsies', { status: statusVal || undefined });
     const container = document.getElementById('autopsyList');
 
-    if (!result || !result.success || !result.data || result.data.length === 0) {
+    // Normalizar resposta: aceita array direto ou objeto paginado
+    let autopsies = [];
+    if (Array.isArray(result?.data)) {
+        autopsies = result.data;
+    } else if (result?.data?.items && Array.isArray(result.data.items)) {
+        autopsies = result.data.items;
+    } else if (Array.isArray(result)) {
+        autopsies = result;
+    }
+
+    if (!autopsies || autopsies.length === 0) {
         container.innerHTML = '<div class="empty-state"><i class="fas fa-skull-crossbones"></i><p>Nenhuma necropsia encontrada</p></div>';
         return;
     }
@@ -691,7 +950,7 @@ async function loadAutopsies() {
         indeterminado: 'Indeterminado', causa_natural: 'Causa Natural',
     };
 
-    container.innerHTML = result.data.map(autopsy => `
+    container.innerHTML = autopsies.map(autopsy => `
         <div class="card" onclick="viewAutopsy(${autopsy.id})">
             <div class="card-header">
                 <span class="card-title">${autopsy.victim_name || 'Desconhecido'}</span>
@@ -780,17 +1039,30 @@ async function completeAutopsy(autopsyId) {
 // ============================================================
 // REPORTS (LAUDOS)
 // ============================================================
+function filterReports() { loadReports(); }
+
 async function loadReports() {
-    const type = document.getElementById('reportTypeFilter')?.value || '';
-    const result = await fetchNUI('getReports', { type });
+    const type   = document.getElementById('reportTypeFilter')?.value || '';
+    const status = document.getElementById('reportStatusFilter')?.value || '';
+    const result = await fetchNUI('getReports', { type: type || undefined, status: status || undefined });
     const container = document.getElementById('reportsList');
 
-    if (!result || !result.success || !result.data || result.data.length === 0) {
+    // Normalizar resposta
+    let reports = [];
+    if (Array.isArray(result?.data)) {
+        reports = result.data;
+    } else if (result?.data?.items && Array.isArray(result.data.items)) {
+        reports = result.data.items;
+    } else if (Array.isArray(result)) {
+        reports = result;
+    }
+
+    if (!reports || reports.length === 0) {
         container.innerHTML = '<div class="empty-state"><i class="fas fa-file-medical"></i><p>Nenhum laudo encontrado</p></div>';
         return;
     }
 
-    container.innerHTML = result.data.map(report => `
+    container.innerHTML = reports.map(report => `
         <div class="card" onclick="viewReport(${report.id})">
             <div class="card-header">
                 <span class="card-title">${report.report_number || 'LAUDO'}</span>
@@ -805,8 +1077,6 @@ async function loadReports() {
         </div>
     `).join('');
 }
-
-function filterReports() { loadReports(); }
 
 async function viewReport(reportId) {
     const report = await fetchNUI('getReport', { id: reportId });
