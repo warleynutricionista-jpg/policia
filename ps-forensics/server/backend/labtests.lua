@@ -346,6 +346,27 @@ lib.callback.register(resourceName .. ':server:performLabTest', function(source,
         resultLevel = resultLevel,
     })
 
+    local matchHash = test.target_citizenid
+    if test.test_type == 'coleta_dna' then
+        local dnaRow = MySQL.single.await('SELECT dna_hash FROM forensic_dna_profiles WHERE citizenid = ? LIMIT 1', { test.target_citizenid })
+        if dnaRow and dnaRow.dna_hash then
+            matchHash = dnaRow.dna_hash
+        end
+    elseif test.test_type == 'coleta_digital' then
+        local fpRow = MySQL.single.await('SELECT fingerprint_hash FROM forensic_fingerprint_profiles WHERE citizenid = ? LIMIT 1', { test.target_citizenid })
+        if fpRow and fpRow.fingerprint_hash then
+            matchHash = fpRow.fingerprint_hash
+        end
+    end
+
+    TriggerEvent('ps-forensics:server:LabTestComplete', test.evidence_id, {
+        type = (test.test_type == 'coleta_dna' and 'dna') or (test.test_type == 'coleta_digital' and 'fingerprint') or (test.test_type or 'unknown'),
+        hash = matchHash,
+        level = resultLevel,
+        details = resultDetails,
+        testId = testId,
+    })
+
     return {
         success = true,
         resultLevel = resultLevel,
