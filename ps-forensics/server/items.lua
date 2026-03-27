@@ -1,4 +1,5 @@
 local resourceName = GetCurrentResourceName()
+local itemUseCooldown = {}
 
 local function getActionConfig(action)
     local defaults = ForensicItemActions and ForensicItemActions[action] or nil
@@ -111,4 +112,67 @@ RegisterNetEvent(resourceName .. ':server:itemUsed', function(itemName, slot)
         item = itemName,
         slot = slot,
     })
+end)
+
+lib.callback.register(resourceName .. ':server:executeItemUse', function(source, payload)
+    local src = source
+    if not CheckForensicAuth(src) then
+        return { success = false, error = L('scene.errors.not_authorized') }
+    end
+    if type(payload) ~= 'table' then
+        return { success = false, error = 'Payload inválido' }
+    end
+
+    local now = GetGameTimer()
+    if itemUseCooldown[src] and (now - itemUseCooldown[src]) < 700 then
+        return { success = false, error = 'Aguarde um instante para reutilizar item forense.' }
+    end
+    itemUseCooldown[src] = now
+
+    local itemName = tostring(payload.itemName or '')
+    local usageCfg = ForensicItemUsageMap and ForensicItemUsageMap[itemName] or nil
+    if not usageCfg then
+        return { success = false, error = 'Item sem ação forense configurada.' }
+    end
+
+    local action = payload.action or usageCfg.action
+    local validation = ValidateAndConsumeForensicAction(src, action)
+    if not validation.success then
+        return { success = false, error = validation.error }
+    end
+
+    local evId = payload.evidenceId and tostring(payload.evidenceId) or nil
+    local evData = evId and type(GetWorldEvidenceById) == 'function' and GetWorldEvidenceById(evId) or nil
+    if usageCfg.requiresTarget and not evData then
+        return { success = false, error = 'Nenhuma evidência válida próxima.' }
+    end
+    if usageCfg.allowedTypes and evData and not usageCfg.allowedTypes[evData.type] then
+        return { success = false, error = ('%s não é compatível com este vestígio.'):format(itemName) }
+    end
+
+    local markerCreated = false
+    if usageCfg.effect == 'reveal' and evId and type(UpdateWorldEvidenceById) == 'function' then
+        UpdateWorldEvidenceById(evId, { revealed = true, revealedBy = src, revealedAt = os.time() })
+    elseif usageCfg.effect == 'place_marker' and type(SpawnManualWorldEvidence) == 'function' then
+        local playerPed = GetPlayerPed(src)
+        local pcoords = GetEntityCoords(playerPed)
+        SpawnManualWorldEvidence(src, {
+            type = 'marcador_cena',
+            category = 'outros',
+            coords = { x = pcoords.x, y = pcoords.y, z = pcoords.z - 1.0 },
+            location = '',
+            source_type = 'manual_marker',
+            revealed = true,
+        })
+        markerCreated = true
+    end
+
+    ForensicAuditLog(src, 'forensic_item_action_executed', 'item', 0, {
+        item = itemName,
+        action = action,
+        effect = usageCfg.effect or 'none',
+        evidence = evId,
+    })
+
+    return { success = true, markerCreated = markerCreated, usedItems = validation.usedItems }
 end)

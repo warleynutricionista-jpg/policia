@@ -163,6 +163,7 @@ Config.Items = {
     forensic_flashlight   = 'forensic_flashlight',
     ballistic_kit         = 'ballistic_kit',
     forensic_tablet       = 'forensic_tablet',
+    mdtcitation           = 'mdtcitation',
 }
 
 Config.ItemActions = Config.ItemActions or {}
