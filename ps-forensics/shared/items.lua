@@ -58,3 +58,37 @@ ForensicItemActions = {
     },
 }
 
+ForensicItemUsageMap = {
+    forensic_kit = { action = 'open_forensic_toolkit', serverValidate = true },
+    disposable_gloves = { action = 'scene_dark_search', serverValidate = false },
+    evidence_bag = { action = 'collect_evidence', serverValidate = true, requiresTarget = true },
+    evidence_seal = { action = 'seal_evidence', serverValidate = true, requiresTarget = true },
+    dna_swab = { action = 'collect_biological', serverValidate = true, requiresTarget = true, allowedTypes = { sangue = true } },
+    fingerprint_kit = { action = 'collect_fingerprint_sequence', serverValidate = true, requiresTarget = true, allowedTypes = { impressao_digital = true } },
+    fingerprint_powder = { action = 'collect_fingerprint_sequence', serverValidate = true, requiresTarget = true, allowedTypes = { impressao_digital = true, pegada = true }, effect = 'reveal' },
+    fingerprint_tape = { action = 'collect_fingerprint_sequence', serverValidate = true, requiresTarget = true, allowedTypes = { impressao_digital = true }, effect = 'collect' },
+    blood_reagent = { action = 'run_blood_test', serverValidate = true, requiresTarget = true, allowedTypes = { sangue = true }, effect = 'reveal' },
+    gsr_kit = { action = 'run_gsr_test', serverValidate = true, requiresTarget = true, allowedTypes = { residuo_polvora = true }, effect = 'analyze' },
+    drug_test_kit = { action = 'run_drug_test', serverValidate = true, requiresTarget = true, allowedTypes = { residuo_droga = true, substancia_po = true }, effect = 'analyze' },
+    forensic_tweezers = { action = 'collect_ballistic', serverValidate = true, requiresTarget = true, allowedTypes = { capsula = true, projetil = true, fragmento_veiculo = true }, effect = 'collect' },
+    forensic_camera = { action = 'capture_evidence_photo', serverValidate = true, requiresTarget = false, effect = 'photo' },
+    evidence_marker = { action = 'place_evidence_marker', serverValidate = true, requiresTarget = false, effect = 'place_marker' },
+    evidence_tag = { action = 'tag_evidence', serverValidate = true, requiresTarget = true, effect = 'tag' },
+    medical_exam_case = { action = 'autopsy_exam', serverValidate = true, requiresTarget = false },
+    body_bag = { action = 'autopsy_exam', serverValidate = true, requiresTarget = false },
+    forensic_flashlight = { action = 'scene_dark_search', serverValidate = true, requiresTarget = false, effect = 'flashlight' },
+    ballistic_kit = { action = 'collect_ballistic', serverValidate = true, requiresTarget = true, allowedTypes = { capsula = true, projetil = true, buraco_de_bala = true }, effect = 'analyze' },
+    forensic_tablet = { action = 'open_tablet', serverValidate = true, requiresTarget = false, effect = 'ui' },
+    mdtcitation = { action = 'issue_citation', serverValidate = false, requiresTarget = false, effect = 'mdt' },
+}
+
+ForensicEvidenceVisualMap = {
+    sangue = { dict = 'blooddrops', texture = 'blooddrops', fallbackMarker = 27, requiresReveal = true },
+    capsula = { dict = 'casings', texture = 'casings', fallbackMarker = 2 },
+    projetil = { dict = 'casings', texture = 'casings', fallbackMarker = 2 },
+    buraco_de_bala = { dict = 'bullethole', texture = 'bullethole', fallbackMarker = 1 },
+    fragmento_veiculo = { dict = 'bullethole', texture = 'bullethole', fallbackMarker = 1 },
+    impressao_digital = { dict = 'fingerprints', texture = 'fingerprints', fallbackMarker = 28, requiresReveal = true },
+    pegada = { dict = 'footprint', texture = 'footprint', fallbackMarker = 28, requiresReveal = true },
+    marcador_cena = { dict = 'interact', texture = 'interact', fallbackMarker = 6 },
+}

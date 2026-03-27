@@ -15,6 +15,7 @@ local resourceName = GetCurrentResourceName()
 -- { [id] = { id, type, category, coords, spawnedAt, expiresAt, ... } }
 local worldEvidence  = {}
 local evidenceSeq    = 0
+local sourceRateLimit = {}
 
 local function getExpirationTime()
     return (Config.WorldEvidence and Config.WorldEvidence.ExpirationTime) or 3600
@@ -107,6 +108,7 @@ local function spawnWorldEvidence(src, data)
         vehicle_color_r      = tonumber(data.vehicle_color_r) or nil,  -- cor da lataria atingida
         vehicle_color_g      = tonumber(data.vehicle_color_g) or nil,
         vehicle_color_b      = tonumber(data.vehicle_color_b) or nil,
+        revealed             = data.revealed == true,
     }
 
     worldEvidence[evId] = evData
@@ -124,6 +126,23 @@ local function spawnWorldEvidence(src, data)
     return evData
 end
 
+function GetWorldEvidenceById(evId)
+    return worldEvidence[evId]
+end
+
+function UpdateWorldEvidenceById(evId, patch)
+    if not worldEvidence[evId] or type(patch) ~= 'table' then return false end
+    for k, v in pairs(patch) do
+        worldEvidence[evId][k] = v
+    end
+    TriggerClientEvent(resourceName .. ':world:evidenceUpdated', -1, evId, patch)
+    return true
+end
+
+function SpawnManualWorldEvidence(src, data)
+    return spawnWorldEvidence(src, data)
+end
+
 -- ============================================================
 -- EVENT: Jogador dispara spawn de vestígio
 -- Acionado por game events no client (dano, entrada veículo, etc.)
@@ -131,6 +150,11 @@ end
 RegisterNetEvent(resourceName .. ':world:spawnEvidence', function(data)
     local src = source
     if not src or src <= 0 then return end
+    local now = GetGameTimer()
+    if sourceRateLimit[src] and (now - sourceRateLimit[src]) < 150 then
+        return
+    end
+    sourceRateLimit[src] = now
 
     -- Validar que é um jogador legítimo (não precisa ser policial para gerar)
     local playerData = GetPlayerData(src)

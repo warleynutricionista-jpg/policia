@@ -21,6 +21,7 @@ local ItemActions = {
     forensic_flashlight = { prop = 'prop_cs_polaroid', duration = 1000, notifyKey = 'items.use.forensic_flashlight' },
     ballistic_kit = { prop = 'prop_idol_case_01', duration = 2600, notifyKey = 'items.use.ballistic_kit' },
     forensic_tablet = { prop = 'prop_cs_tablet', duration = 1500, notifyKey = 'items.use.forensic_tablet', openUi = true },
+    mdtcitation = { prop = 'prop_notepad_01', duration = 1200, notifyKey = 'items.use.evidence_tag' },
 }
 
 local spawnedMarker = nil
@@ -87,17 +88,10 @@ exports('useForensicItem', function(data, slot)
         return
     end
 
-    local preAction = ({
-        forensic_tablet = 'open_tablet',
-        forensic_kit = 'open_forensic_toolkit',
-        evidence_marker = 'place_evidence_marker',
-        forensic_camera = 'capture_evidence_photo',
-        evidence_tag = 'tag_evidence',
-        evidence_seal = 'seal_evidence',
-        forensic_flashlight = 'scene_dark_search',
-    })[itemName]
+    local usageCfg = ForensicItemUsageMap and ForensicItemUsageMap[itemName] or nil
+    local preAction = usageCfg and usageCfg.action or nil
 
-    if preAction then
+    if preAction and usageCfg and usageCfg.serverValidate then
         local check = lib.callback.await(resourceName .. ':server:validateActionItems', false, preAction)
         if not check or not check.success then
             lib.notify({
@@ -111,6 +105,28 @@ exports('useForensicItem', function(data, slot)
 
     if not playItemAnimation(config) then
         return
+    end
+
+    local nearbyEvidence = type(GetClosestWorldEvidence) == 'function' and GetClosestWorldEvidence(3.5, itemName) or nil
+    local itemExecution = nil
+
+    if usageCfg and usageCfg.serverValidate then
+        itemExecution = lib.callback.await(resourceName .. ':server:executeItemUse', false, {
+            itemName = itemName,
+            action = preAction,
+            slot = slot,
+            evidenceId = nearbyEvidence and nearbyEvidence.id or nil,
+            coords = GetEntityCoords(PlayerPedId()),
+        })
+
+        if not itemExecution or not itemExecution.success then
+            lib.notify({
+                title = L('ui.system_name'),
+                description = itemExecution and itemExecution.error or 'Ação forense inválida.',
+                type = 'error',
+            })
+            return
+        end
     end
 
     if itemName == 'forensic_tablet' or config.openUi then
@@ -137,7 +153,7 @@ exports('useForensicItem', function(data, slot)
             duration = 3000,
         })
         return -- Evitar duplicar a notificação genérica abaixo
-    elseif itemName == 'evidence_marker' then
+    elseif itemName == 'evidence_marker' and (not itemExecution or not itemExecution.markerCreated) then
         placeEvidenceMarker()
     end
 
