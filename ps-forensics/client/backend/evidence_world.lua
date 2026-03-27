@@ -395,7 +395,8 @@ CreateThread(function()
     Wait(5000) -- aguardar estabilização do framework
 
     while true do
-        Wait(150) -- 150ms de polling (leve)
+        local pollInterval = (Config.WorldEvidence and Config.WorldEvidence.CasingPollIntervalMs) or 200
+        Wait(pollInterval)
 
         if not Config.WorldEvidence or not Config.WorldEvidence.Enabled then
             Wait(5000)
@@ -415,7 +416,10 @@ CreateThread(function()
             goto continue
         end
 
-        local ammo = GetAmmoInClip(ped, weapon)
+        local hasClip, ammo = GetAmmoInClip(ped, weapon)
+        if not hasClip then
+            ammo = GetAmmoInPedWeapon(ped, weapon)
+        end
 
         -- Detectar disparo: ammo diminuiu (não recarga, que aumenta)
         if lastAmmoCount ~= -1 and ammo < lastAmmoCount then
