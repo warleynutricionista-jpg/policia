@@ -6,7 +6,7 @@ game 'gta5'
 name 'ps-forensics'
 author 'Sistema Policial RP'
 description 'Sistema Forense Completo - Perícia Criminal, Medicina Legal, Laboratório Forense'
-version '1.0.0'
+version '1.1.0'
 
 ui_page 'html/index.html'
 
@@ -24,6 +24,8 @@ shared_scripts {
     'config.lua',
     'shared/locale.lua',
     'shared/utils.lua',
+    -- Mapeamento de imagens (acessível em client e server)
+    'data/evidence_images.lua',
 }
 
 client_scripts {
@@ -42,6 +44,10 @@ files {
     'html/index.html',
     'html/css/*.css',
     'html/js/*.js',
+    -- Imagens de evidências (suporte a PNG, SVG e WebP)
+    'html/images/evidence/*.png',
+    'html/images/evidence/*.svg',
+    'html/images/evidence/*.webp',
     'data/*.lua',
     'locales/*.lua',
     'sql/*.sql',

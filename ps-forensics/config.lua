@@ -188,3 +188,60 @@ Config.Notifications = {
     position = 'top-right',
     duration = 5000,
 }
+
+-- ============================================================
+-- EVIDÊNCIAS DE MUNDO (auto-spawn por eventos de jogo)
+-- Inspirado nos padrões do script evidences (noobsystems) e renzu_evidence
+-- ============================================================
+Config.WorldEvidence = {
+    -- Habilitar/desabilitar o sistema de spawn automático
+    Enabled = true,
+
+    -- Tempo de expiração das evidências de campo (segundos)
+    -- Evidências não coletadas somem após esse tempo
+    ExpirationTime = 3600, -- 1 hora
+
+    -- Chance de spawn por tipo (0-100%)
+    -- Baseado no modelo de probabilidade do renzu_evidence
+    Chances = {
+        sangue            = 65,  -- Alto: sangue é frequente em confrontos
+        impressao_digital = 60,  -- Médio-alto: depende de luvas
+        capsula           = 45,  -- Médio: nem todo projétil gera cápsula visível
+        residuo_polvora   = 35,  -- Mais raro, requer análise específica
+    },
+
+    -- Detectar luvas antes de gerar impressão digital
+    -- Se true, jogador com luvas não deixa digitais em veículos
+    GloveDetection = true,
+
+    -- Componente de luvas no ped (componente 5 = mãos)
+    -- Drawable 0 = sem luvas (mãos nuas = deixa digital)
+    GloveComponent = 5,
+    BareHandsDrawable = 0,
+
+    -- Dano mínimo recebido para gerar evidência de sangue
+    MinBloodDamage = 10.0,
+
+    -- Alcance da lanterna forense para destacar evidências próximas (metros)
+    FlashlightRange = 15.0,
+
+    -- Cooldown entre spawns do mesmo tipo por jogador (milissegundos)
+    Cooldowns = {
+        sangue            = 4000,
+        impressao_digital = 2500,
+        capsula           = 500,
+        residuo_polvora   = 8000,
+    },
+
+    -- Distância mínima entre duas evidências do mesmo tipo (evitar duplicatas)
+    MinDistanceBetweenSameType = 2.0,
+
+    -- Cor dos marcadores de descoberta por categoria (usado com lanterna)
+    DiscoveryMarkerColors = {
+        biologica          = { r = 255, g = 30,  b = 30,  a = 200 },
+        balistica          = { r = 255, g = 165, b = 0,   a = 200 },
+        digital_impressao  = { r = 0,   g = 150, b = 255, a = 200 },
+        quimica            = { r = 100, g = 255, b = 80,  a = 200 },
+        outros             = { r = 180, g = 180, b = 255, a = 160 },
+    },
+}

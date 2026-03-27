@@ -24,6 +24,9 @@
 
         <!-- Navigation -->
         <div class="forensics-nav">
+            <button class="nav-btn" data-tab="dashboard" onclick="switchTab('dashboard')">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </button>
             <button class="nav-btn active" data-tab="scenes" onclick="switchTab('scenes')">
                 <i class="fas fa-map-marked-alt"></i> Cenas
             </button>
@@ -58,8 +61,25 @@
 
         <!-- Content Area -->
         <div class="forensics-content">
+
+            <!-- DASHBOARD -->
+            <div id="tab-dashboard" class="tab-content">
+                <div class="tab-header">
+                    <h2><i class="fas fa-chart-line"></i> Dashboard Forense</h2>
+                    <div class="tab-actions">
+                        <button class="btn-secondary" onclick="loadDashboard()"><i class="fas fa-sync-alt"></i> Atualizar</button>
+                    </div>
+                </div>
+                <div id="dashboardStats" class="dashboard-grid">
+                    <div class="dashboard-loading">
+                        <i class="fas fa-spinner fa-spin"></i> Carregando estatísticas...
+                    </div>
+                </div>
+                <div id="dashboardRecent" class="dashboard-recent"></div>
+            </div>
+
             <!-- CENAS DE CRIME -->
-            <div id="tab-scenes" class="tab-content active">
+            <div id="tab-scenes" class="tab-content">
                 <div class="tab-header">
                     <h2><i class="fas fa-map-marked-alt"></i> Cenas de Crime</h2>
                     <div class="tab-actions">
@@ -70,6 +90,7 @@
                             <option value="isolada">Isolada</option>
                             <option value="em_processamento">Em Processamento</option>
                             <option value="finalizada">Finalizada</option>
+                            <option value="reaberta">Reaberta</option>
                         </select>
                         <button class="btn-primary" onclick="showCreateScene()"><i class="fas fa-plus"></i> Nova Cena</button>
                     </div>
@@ -83,7 +104,7 @@
                 <div class="tab-header">
                     <h2><i class="fas fa-fingerprint"></i> Evidências Forenses</h2>
                     <div class="tab-actions">
-                        <input type="text" id="evidenceSearch" placeholder="Buscar evidência..." class="search-input" onkeyup="searchEvidence()">
+                        <input type="text" id="evidenceSearch" placeholder="Buscar por nº, tipo, lacre..." class="search-input" onkeyup="searchEvidence()">
                         <select id="evidenceCategoryFilter" class="filter-select" onchange="filterEvidence()">
                             <option value="">Todas Categorias</option>
                             <option value="balistica">Balística</option>
@@ -97,6 +118,17 @@
                             <option value="objeto_cortante">Obj. Cortante</option>
                             <option value="objeto_contundente">Obj. Contundente</option>
                             <option value="outros">Outros</option>
+                        </select>
+                        <select id="evidenceStatusFilter" class="filter-select" onchange="filterEvidence()">
+                            <option value="">Todos os Status</option>
+                            <option value="coletada">Coletada</option>
+                            <option value="lacrada">Lacrada</option>
+                            <option value="em_analise">Em Análise</option>
+                            <option value="analisada">Analisada</option>
+                            <option value="armazenada">Armazenada</option>
+                            <option value="descartada">Descartada</option>
+                            <option value="devolvida">Devolvida</option>
+                            <option value="em_julgamento">Em Julgamento</option>
                         </select>
                     </div>
                 </div>
@@ -114,6 +146,7 @@
                             <option value="solicitado">Solicitados</option>
                             <option value="em_andamento">Em Andamento</option>
                             <option value="concluido">Concluídos</option>
+                            <option value="cancelado">Cancelados</option>
                         </select>
                     </div>
                 </div>
@@ -126,7 +159,7 @@
                 <div class="tab-header">
                     <h2><i class="fas fa-hand-dots"></i> Impressões Digitais</h2>
                     <div class="tab-actions">
-                        <input type="text" id="fpSearch" placeholder="Buscar por cidadão..." class="search-input" onkeyup="loadFingerprints()">
+                        <input type="text" id="fpSearch" placeholder="Buscar por CitizenID ou nome..." class="search-input" oninput="loadFingerprints()">
                         <button class="btn-primary" onclick="showRegisterFingerprint()"><i class="fas fa-plus"></i> Cadastrar Digital</button>
                     </div>
                 </div>
@@ -138,7 +171,7 @@
                 <div class="tab-header">
                     <h2><i class="fas fa-dna"></i> Análise de DNA</h2>
                     <div class="tab-actions">
-                        <input type="text" id="dnaSearch" placeholder="Buscar por cidadão..." class="search-input" onkeyup="loadDNA()">
+                        <input type="text" id="dnaSearch" placeholder="Buscar por CitizenID ou nome..." class="search-input" oninput="loadDNA()">
                         <button class="btn-primary" onclick="showRegisterDNA()"><i class="fas fa-plus"></i> Cadastrar Perfil</button>
                     </div>
                 </div>
@@ -150,7 +183,7 @@
                 <div class="tab-header">
                     <h2><i class="fas fa-crosshairs"></i> Balística</h2>
                     <div class="tab-actions">
-                        <input type="text" id="ballisticSearch" placeholder="Buscar por serial..." class="search-input" onkeyup="loadBallistics()">
+                        <input type="text" id="ballisticSearch" placeholder="Buscar por serial da arma..." class="search-input" oninput="loadBallistics()">
                     </div>
                 </div>
                 <div id="ballisticsList" class="items-grid"></div>
@@ -160,8 +193,20 @@
             <div id="tab-drugs" class="tab-content">
                 <div class="tab-header">
                     <h2><i class="fas fa-pills"></i> Análise de Drogas</h2>
+                    <div class="tab-actions">
+                        <select id="drugStatusFilter" class="filter-select" onchange="filterDrugs()">
+                            <option value="">Todos os Resultados</option>
+                            <option value="suspeita">Suspeita</option>
+                            <option value="presumido">Presumido Positivo</option>
+                            <option value="confirmado">Confirmado</option>
+                            <option value="negativo">Negativo</option>
+                            <option value="inconclusivo">Inconclusivo</option>
+                        </select>
+                        <button class="btn-primary" onclick="showRegisterDrugAnalysis()"><i class="fas fa-plus"></i> Nova Análise</button>
+                    </div>
                 </div>
                 <div id="drugsList" class="items-grid"></div>
+                <div id="drugDetail" class="detail-panel hidden"></div>
             </div>
 
             <!-- LEGISTA -->
@@ -169,6 +214,11 @@
                 <div class="tab-header">
                     <h2><i class="fas fa-skull-crossbones"></i> Instituto Médico Legal</h2>
                     <div class="tab-actions">
+                        <select id="autopsyStatusFilter" class="filter-select" onchange="filterAutopsies()">
+                            <option value="">Todos os Status</option>
+                            <option value="em_andamento">Em Andamento</option>
+                            <option value="concluido">Concluído</option>
+                        </select>
                         <button class="btn-primary" onclick="showCreateAutopsy()" id="btnNewAutopsy"><i class="fas fa-plus"></i> Nova Necropsia</button>
                     </div>
                 </div>
@@ -190,6 +240,13 @@
                             <option value="laudo_digital">Laudo Digital</option>
                             <option value="laudo_necropsia">Laudo Necropsia</option>
                             <option value="laudo_drogas">Laudo Drogas</option>
+                        </select>
+                        <select id="reportStatusFilter" class="filter-select" onchange="filterReports()">
+                            <option value="">Todos os Status</option>
+                            <option value="rascunho">Rascunho</option>
+                            <option value="em_revisao">Em Revisão</option>
+                            <option value="finalizado">Finalizado</option>
+                            <option value="anexado_mdt">Anexado ao MDT</option>
                         </select>
                         <button class="btn-primary" onclick="showCreateReport()"><i class="fas fa-plus"></i> Novo Laudo</button>
                     </div>
