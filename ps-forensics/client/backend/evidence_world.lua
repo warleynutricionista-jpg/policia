@@ -43,6 +43,36 @@ local function canCollect()
 end
 
 -- ============================================================
+-- HELPER: ARMA BLACKLISTADA
+-- Inspirado em lsn-evidence: WhitelistedWeapons
+-- Armas da lista não geram evidências balísticas
+-- ============================================================
+local function isWeaponBlacklisted(weapon)
+    local blacklist = Config.WorldEvidence and Config.WorldEvidence.BlacklistedWeapons or {}
+    for _, w in ipairs(blacklist) do
+        if w == weapon then return true end
+    end
+    return false
+end
+
+-- ============================================================
+-- HELPER: PÉ DESCALÇO
+-- Inspirado em lsn-evidence: IsWearingWhitelistedShoes
+-- Componente 6 = sapatos. Drawables de pé descalço não geram pegada.
+-- ============================================================
+local function isPlayerBarefoot(ped)
+    local shoeDrawable = GetPedDrawableVariation(ped, 6)
+    local model        = GetEntityModel(ped)
+    local bareList     = (model == GetHashKey('mp_m_freemode_01'))
+        and (Config.WorldEvidence and Config.WorldEvidence.BarehandsMaleShoes  or { 33, 34 })
+        or  (Config.WorldEvidence and Config.WorldEvidence.BarefootFemaleShoes or { 34, 35 })
+    for _, s in ipairs(bareList) do
+        if s == shoeDrawable then return true end
+    end
+    return false
+end
+
+-- ============================================================
 -- HELPER: LUVAS
 -- Verifica se o ped local usa luvas verificando o componente 5
 -- Componente 5 drawable 0 = mãos nuas = deixa digital
@@ -286,6 +316,7 @@ AddEventHandler('CEventNetworkEntityDamage', function(victim, attacker, weaponHa
     if not Config.WorldEvidence or not Config.WorldEvidence.Enabled then return end
     if victim ~= PlayerPedId() then return end
     if IsPedDead(PlayerPedId()) then return end
+    if IsPedSwimming(PlayerPedId()) then return end
 
     -- Cooldown global para sangue
     local now = GetGameTimer()
@@ -372,14 +403,14 @@ CreateThread(function()
         end
 
         local ped = PlayerPedId()
-        if IsPedDead(ped) then
+        if IsPedDead(ped) or IsPedSwimming(ped) then
             lastAmmoCount = -1
             goto continue
         end
 
         local _, weapon = GetCurrentPedWeapon(ped, true)
 
-        if weapon == 0 or weapon == GetHashKey('WEAPON_UNARMED') then
+        if weapon == 0 or isWeaponBlacklisted(weapon) then
             lastAmmoCount = -1
             goto continue
         end
@@ -412,6 +443,128 @@ CreateThread(function()
 
         ::continue::
     end
+end)
+
+-- ============================================================
+-- GAME EVENT: DISPARO (CEventGunShot)
+-- Inspirado em lsn-evidence: CEventGunShot + lib.raycast.cam + SendBulletHole
+--
+-- Usa raycast da câmera para detectar onde a bala impactou:
+--   • Superfície sólida → buraco_de_bala (categoria balistica)
+--   • Veículo          → fragmento_veiculo com cor RGB do veículo
+-- Ambos armazenam shooter_coords + shooter_heading para reconstrução
+-- da trajetória na lanterna forense (ShowShootersLine).
+-- ============================================================
+local lastGunShotTime = 0
+
+AddEventHandler('CEventGunShot', function(witnesses, ped)
+    if not Config.WorldEvidence or not Config.WorldEvidence.Enabled then return end
+    if not Config.WorldEvidence.AllowBulletHoles then return end
+    if ped ~= PlayerPedId() then return end
+    if IsPedSwimming(ped) then return end
+    if IsPedDead(ped) then return end
+
+    local weapon = GetSelectedPedWeapon(ped)
+    if isWeaponBlacklisted(weapon) then return end
+
+    local now      = GetGameTimer()
+    local cooldown = (Config.WorldEvidence.Cooldowns and Config.WorldEvidence.Cooldowns.buraco_de_bala) or 300
+    if (now - lastGunShotTime) < cooldown then return end
+
+    lastGunShotTime = now
+
+    local pedCoords   = GetEntityCoords(ped)
+    local heading     = GetEntityHeading(ped)
+    local shooterData = { x = pedCoords.x, y = pedCoords.y, z = pedCoords.z }
+
+    -- Raycast da câmera para detectar impacto (igual ao lsn-evidence)
+    local hit, entityHit, endCoords = lib.raycast.cam(511, 4, 1000)
+    if not hit or not endCoords then return end
+
+    local impactCoords = { x = endCoords.x, y = endCoords.y, z = endCoords.z }
+    local entityType   = DoesEntityExist(entityHit) and GetEntityType(entityHit) or 0
+
+    if entityType == 2 then
+        -- Veículo atingido → fragmento com cor da lataria
+        if not rollChance('fragmento_veiculo') then return end
+        if not checkAndSetCooldown('fragmento_veiculo') then return end
+
+        local r, g, b = GetVehicleColor(entityHit)
+        local plate   = GetVehicleNumberPlateText(entityHit) or ''
+
+        TriggerServerEvent(resourceName .. ':world:spawnEvidence', {
+            type                 = 'fragmento_veiculo',
+            category             = 'balistica',
+            coords               = impactCoords,
+            location             = getStreetName(endCoords),
+            weapon_hash          = weapon,
+            shooter_coords       = shooterData,
+            shooter_heading      = heading,
+            vehicle_color_r      = r,
+            vehicle_color_g      = g,
+            vehicle_color_b      = b,
+            linked_vehicle_plate = plate ~= '' and plate or nil,
+            source_type          = 'gun_shot',
+        })
+    else
+        -- Superfície sólida → buraco de bala
+        if not rollChance('buraco_de_bala') then return end
+
+        TriggerServerEvent(resourceName .. ':world:spawnEvidence', {
+            type            = 'buraco_de_bala',
+            category        = 'balistica',
+            coords          = impactCoords,
+            location        = getStreetName(endCoords),
+            weapon_hash     = weapon,
+            shooter_coords  = shooterData,
+            shooter_heading = heading,
+            source_type     = 'gun_shot',
+        })
+    end
+end)
+
+-- ============================================================
+-- GAME EVENT: PASSOS (CEventFootStepHeard)
+-- Inspirado em lsn-evidence: CEventFootStepHeard + IsWearingWhitelistedShoes
+--
+-- Gera evidência 'pegada' quando o jogador está correndo.
+-- Armazena shoe_model (drawable do componente 6) para comparação
+-- posterior com suspeito identificado.
+-- Ignorado se jogador estiver descalço (barefoot drawables).
+-- ============================================================
+local lastFootstepTime = 0
+
+AddEventHandler('CEventFootStepHeard', function(witnesses, ped)
+    if not Config.WorldEvidence or not Config.WorldEvidence.Enabled then return end
+    if not Config.WorldEvidence.AllowFootprints then return end
+    if ped ~= PlayerPedId() then return end
+    if IsPedSwimming(ped) or IsPedDead(ped) then return end
+
+    -- Apenas quando correndo (velocidade mínima configurável)
+    local minSpeed = Config.WorldEvidence.FootprintMinSpeed or 6.5
+    if GetEntitySpeed(ped) <= minSpeed then return end
+
+    -- Pé descalço não deixa pegada de sapato
+    if isPlayerBarefoot(ped) then return end
+
+    local now      = GetGameTimer()
+    local cooldown = (Config.WorldEvidence.Cooldowns and Config.WorldEvidence.Cooldowns.pegada) or 2500
+    if (now - lastFootstepTime) < cooldown then return end
+    if not rollChance('pegada') then return end
+
+    lastFootstepTime = now
+
+    local coords    = GetEntityCoords(ped)
+    local shoeModel = GetPedDrawableVariation(ped, 6)
+
+    TriggerServerEvent(resourceName .. ':world:spawnEvidence', {
+        type        = 'pegada',
+        category    = 'digital_impressao',
+        coords      = { x = coords.x, y = coords.y, z = coords.z },
+        location    = getStreetName(coords),
+        shoe_model  = shoeModel,
+        source_type = 'footstep',
+    })
 end)
 
 -- ============================================================
@@ -482,6 +635,32 @@ CreateThread(function()
                             AddTextComponentString(evData.type or 'VESTÍGIO')
                             DrawText(0.0, 0.0)
                             ClearDrawOrigin()
+                        end
+
+                        -- Linha de trajetória do atirador (ShowShootersLine)
+                        -- Inspirado em lsn-evidence: exibe linha vermelha do shooter ao ponto de impacto
+                        -- Disponível para buraco_de_bala e fragmento_veiculo que armazenam shooter_coords
+                        if Config.WorldEvidence.ShowShootersLine
+                            and evData.shooter_coords
+                            and (evData.type == 'buraco_de_bala' or evData.type == 'fragmento_veiculo')
+                        then
+                            local sc = evData.shooter_coords
+                            local lc = Config.WorldEvidence.ShootersLineColor or { r = 255, g = 50, b = 50, a = 200 }
+                            DrawLine(
+                                sc.x, sc.y, sc.z,
+                                evData.coords.x, evData.coords.y, evData.coords.z,
+                                lc.r, lc.g, lc.b, lc.a
+                            )
+                            -- Marcador na posição do atirador
+                            DrawMarker(
+                                1,
+                                sc.x, sc.y, sc.z,
+                                0.0, 0.0, 0.0,
+                                0.0, 0.0, 0.0,
+                                0.3, 0.3, 0.3,
+                                lc.r, lc.g, lc.b, math.min(lc.a, 150),
+                                false, true, 2, nil, nil, false
+                            )
                         end
                     end
                 end

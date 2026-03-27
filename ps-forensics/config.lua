@@ -208,6 +208,9 @@ Config.WorldEvidence = {
         impressao_digital = 60,  -- Médio-alto: depende de luvas
         capsula           = 45,  -- Médio: nem todo projétil gera cápsula visível
         residuo_polvora   = 35,  -- Mais raro, requer análise específica
+        pegada            = 55,  -- Médio-alto: corrida deixa marca no chão
+        buraco_de_bala    = 70,  -- Alto: impacto de projétil em superfície sólida
+        fragmento_veiculo = 60,  -- Médio-alto: tiro em veículo gera fragmento de tinta/metal
     },
 
     -- Detectar luvas antes de gerar impressão digital
@@ -231,6 +234,9 @@ Config.WorldEvidence = {
         impressao_digital = 2500,
         capsula           = 500,
         residuo_polvora   = 8000,
+        pegada            = 2500,  -- par com footprint delay do lsn-evidence
+        buraco_de_bala    = 300,   -- rápido: um por disparo
+        fragmento_veiculo = 500,
     },
 
     -- Distância mínima entre duas evidências do mesmo tipo (evitar duplicatas)
@@ -243,5 +249,62 @@ Config.WorldEvidence = {
         digital_impressao  = { r = 0,   g = 150, b = 255, a = 200 },
         quimica            = { r = 100, g = 255, b = 80,  a = 200 },
         outros             = { r = 180, g = 180, b = 255, a = 160 },
+    },
+
+    -- ============================================================
+    -- PEGADAS (inspirado em lsn-evidence: CEventFootStepHeard)
+    -- ============================================================
+    -- Habilitar sistema de pegadas automáticas ao correr
+    AllowFootprints = true,
+
+    -- Velocidade mínima do ped para gerar pegada (m/s) — corre ≈ 7, caminha ≈ 1.5
+    FootprintMinSpeed = 6.5,
+
+    -- Drawables de pé descalço por gênero (componente 6 = sapatos)
+    -- Se o jogador usar esses drawables, não gera pegada
+    BarehandsMaleShoes   = { 33, 34 }, -- masculino
+    BarefootFemaleShoes  = { 34, 35 }, -- feminino
+
+    -- ============================================================
+    -- BURACO DE BALA E FRAGMENTO DE VEÍCULO
+    -- (inspirado em lsn-evidence: CEventGunShot + lib.raycast.cam)
+    -- ============================================================
+    -- Habilitar geração de buracos de bala e fragmentos de veículo
+    AllowBulletHoles = true,
+
+    -- ============================================================
+    -- LINHA DE TRAJETÓRIA (inspirado em lsn-evidence: ShowShootersLine)
+    -- Quando a lanterna forense está ativa, exibe uma linha colorida
+    -- ligando a posição do atirador ao buraco de bala / fragmento.
+    -- ============================================================
+    ShowShootersLine = true,
+    ShootersLineColor = { r = 255, g = 50, b = 50, a = 200 },
+
+    -- ============================================================
+    -- ARMAS SEM EVIDÊNCIA BALÍSTICA
+    -- Inspirado em lsn-evidence: WhitelistedWeapons
+    -- Armas da lista não geram cápsula, buraco de bala nem fragmento
+    -- ============================================================
+    BlacklistedWeapons = {
+        `weapon_unarmed`,
+        `weapon_snowball`,
+        `weapon_stungun`,
+        `weapon_petrolcan`,
+        `weapon_hazardcan`,
+        `weapon_fireextinguisher`,
+    },
+
+    -- ============================================================
+    -- CALIBRES DE MUNIÇÃO (inspirado em lsn-evidence: AmmoLabels)
+    -- Mapeamento ammo_type -> nome real do calibre
+    -- Salvo como metadado nas evidências balísticas
+    -- ============================================================
+    AmmoCalibersLabels = {
+        ['AMMO_PISTOL']  = '9x19mm',
+        ['AMMO_SMG']     = '9x19mm',
+        ['AMMO_RIFLE']   = '7.62x39mm',
+        ['AMMO_MG']      = '7.92x57mm',
+        ['AMMO_SHOTGUN'] = '12-gauge',
+        ['AMMO_SNIPER']  = 'Calibre pesado',
     },
 }
