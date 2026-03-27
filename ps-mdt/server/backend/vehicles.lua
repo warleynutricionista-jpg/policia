@@ -32,53 +32,67 @@ local function hasColumn(tableName, columnName)
     return type(MdtColumnExists) == 'function' and MdtColumnExists(tableName, columnName) or false
 end
 
+local VEHICLE_SOURCE_DEFINITIONS = {
+    {
+        table = 'player_vehicles',
+        alias = 'pv',
+        owner = "COALESCE(NULLIF(TRIM(pv.citizenid), ''), NULLIF(TRIM(pv.owner), ''))",
+        model = "COALESCE(NULLIF(TRIM(pv.vehicle), ''), 'unknown')",
+        plate = 'pv.plate',
+    },
+    {
+        table = 'owned_vehicles',
+        alias = 'pv',
+        owner = "COALESCE(NULLIF(TRIM(pv.owner), ''), NULLIF(TRIM(pv.citizenid), ''))",
+        model = "COALESCE(NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(pv.vehicle, '$.model'))), ''), NULLIF(TRIM(pv.vehicle_name), ''), 'unknown')",
+        plate = "COALESCE(NULLIF(TRIM(pv.plate), ''), NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(pv.vehicle, '$.plate'))), ''))",
+    },
+}
+
 local function resolveVehicleSource()
     if vehicleSourceCache then
         return vehicleSourceCache
     end
-
-    local sources = {
-        {
-            table = 'player_vehicles',
-            alias = 'pv',
-            id = 'pv.id',
-            owner = "COALESCE(NULLIF(TRIM(pv.citizenid), ''), NULLIF(TRIM(pv.owner), ''))",
-            model = "COALESCE(NULLIF(TRIM(pv.vehicle), ''), 'unknown')",
-            plate = 'pv.plate',
-            joinPlayers = true,
-        },
-        {
-            table = 'owned_vehicles',
-            alias = 'pv',
-            id = 'NULL AS id',
-            owner = "COALESCE(NULLIF(TRIM(pv.owner), ''), NULLIF(TRIM(pv.citizenid), ''))",
-            model = "COALESCE(NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(pv.vehicle, '$.model'))), ''), NULLIF(TRIM(pv.vehicle_name), ''), 'unknown')",
-            plate = "COALESCE(NULLIF(TRIM(pv.plate), ''), NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(pv.vehicle, '$.plate'))), ''))",
-            joinPlayers = true,
-        }
-    }
 
     -- Tentar detectar a tabela de veículos disponível
     local candidates = { 'player_vehicles', 'owned_vehicles', 'vehicles' }
     for _, tableName in ipairs(candidates) do
         local ok, exists = pcall(hasTable, tableName)
         if ok and exists then
-            vehicleTableCache = tableName
-            return vehicleTableCache
+            for _, def in ipairs(VEHICLE_SOURCE_DEFINITIONS) do
+                if def.table == tableName then
+                    vehicleSourceCache = def
+                    return vehicleSourceCache
+                end
+            end
+            -- Fallback genérico para tabelas desconhecidas
+            vehicleSourceCache = {
+                table = tableName,
+                alias = 'pv',
+                owner = "COALESCE(NULLIF(TRIM(pv.citizenid), ''), NULLIF(TRIM(pv.owner), ''))",
+                model = "COALESCE(NULLIF(TRIM(pv.vehicle), ''), 'unknown')",
+                plate = 'pv.plate',
+            }
+            return vehicleSourceCache
         end
     end
 
-    -- Fallback: assumir player_vehicles se a verificação falhar (tabela pode existir mas schema check falhou)
-    local ok, result = pcall(function()
+    -- Fallback: assumir player_vehicles se a verificação falhar
+    local ok = pcall(function()
         return MySQL.scalar.await('SELECT 1 FROM player_vehicles LIMIT 1')
     end)
     if ok then
-        vehicleTableCache = 'player_vehicles'
-        return vehicleTableCache
+        vehicleSourceCache = VEHICLE_SOURCE_DEFINITIONS[1]
+        return vehicleSourceCache
     end
 
     print(('[%s][vehicles] AVISO: Nenhuma tabela de veículos encontrada no banco de dados'):format(resourceName))
     return nil
+end
+
+local function getVehicleTableName()
+    local src = resolveVehicleSource()
+    return src and src.table or nil
 end
 
 local function buildVehicleOwnerExpr(tableName, alias)
@@ -331,8 +345,10 @@ local function matchesVehicleQuery(vehicle, normalizedQuery)
     return false
 end
 
-local function getVehicleSelectSql()
-    local tbl = getVehicleTableName() or 'player_vehicles'
+local function getVehicleSelectSql(source)
+    source = source or resolveVehicleSource() or VEHICLE_SOURCE_DEFINITIONS[1]
+    local tbl = source.table or 'player_vehicles'
+    local alias = source.alias or 'pv'
     local hasVehicleName = hasColumn(tbl, 'vehicle_name')
     local hasFakeplate = hasColumn(tbl, 'fakeplate')
     local hasLicense = hasColumn(tbl, 'license')
@@ -425,7 +441,9 @@ local function buildVehicleSearchWhere(source, search)
         return '', {}
     end
 
-    local tbl = getVehicleTableName() or 'player_vehicles'
+    source = source or resolveVehicleSource() or VEHICLE_SOURCE_DEFINITIONS[1]
+    local tbl = source.table or 'player_vehicles'
+    local alias = source.alias or 'pv'
     local hasFakeplate = hasColumn(tbl, 'fakeplate')
     local hasVehicleName = hasColumn(tbl, 'vehicle_name')
     local hasGarage = hasColumn(tbl, 'garage')
@@ -579,12 +597,12 @@ local function queryVehiclesPage(search, page, limit)
     local offset = (safePage - 1) * safeLimit
     local whereSql, whereParams = buildVehicleSearchWhere(source, search)
 
-    local vehTable = getVehicleTableName() or 'player_vehicles'
+    local vehTable = source.table or 'player_vehicles'
     local countSql = ('SELECT COUNT(*) AS total FROM %s pv LEFT JOIN players p ON p.citizenid = pv.citizenid %s'):format(vehTable, whereSql)
     local countRow = MySQL.single.await(countSql, whereParams) or { total = 0 }
     local total = tonumber(countRow.total) or 0
 
-    local orderBy = hasColumn(source.table, 'id') and 'pv.id DESC' or 'pv.plate ASC'
+    local orderBy = hasColumn(vehTable, 'id') and 'pv.id DESC' or 'pv.plate ASC'
     local listSql = ([[%s %s ORDER BY %s LIMIT ? OFFSET ?]]):format(getVehicleSelectSql(source), whereSql, orderBy)
     local listParams = {}
     for i = 1, #whereParams do
@@ -628,11 +646,11 @@ function GetMdtVehicleDirectory(forceRefresh)
 
     return Cache.getOrSet(VEHICLE_DIRECTORY_CACHE_KEY, VEHICLE_DIRECTORY_TTL, function()
         pcall(EnsureMdtSchema)
-        local vehTable = getVehicleTableName()
-        if not vehTable then
+        local vehSource = resolveVehicleSource()
+        if not vehSource then
             return { vehicles = {}, bolos = {} }
         end
-        local vehList = MySQL.query.await(([[%s ORDER BY pv.plate ASC]]):format(getVehicleSelectSql(source))) or {}
+        local vehList = MySQL.query.await(([[%s ORDER BY pv.plate ASC]]):format(getVehicleSelectSql(vehSource))) or {}
         local normalizedPlates = {}
         local seen = {}
         for _, row in ipairs(vehList) do
@@ -669,8 +687,7 @@ ps.registerCallback(resourceName .. ':server:GetVehicles', function(source, payl
         print(('[%s][vehicles] AVISO: Schema check falhou, tentando carregar veículos mesmo assim'):format(resourceName))
     end
 
-    local vehTable = getVehicleTableName()
-    if not vehTable then
+    if not resolveVehicleSource() then
         print(('[%s][vehicles] ERRO: Tabela de veículos não encontrada no banco'):format(resourceName))
         return { vehicles = {}, bolos = {}, page = 1, limit = 25, total = 0, hasMore = false }
     end
@@ -738,6 +755,7 @@ end)
 ps.registerCallback(resourceName .. ':server:UpdateVehicle', function(source, payload)
     local src = source
     if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
+    if not CheckPermission(src, 'vehicles_edit_dmv') then return { success = false, message = 'Sem permissão para editar veículos' } end
     EnsureMdtSchema()
 
     payload = payload or {}

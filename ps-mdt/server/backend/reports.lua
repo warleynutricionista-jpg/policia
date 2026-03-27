@@ -2,6 +2,61 @@ local resourceName = tostring(GetCurrentResourceName())
 local OFFICER_DIRECTORY_CACHE_KEY = 'reports:officers:directory'
 local OFFICER_DIRECTORY_TTL = 15
 
+-- Sanitização de HTML para prevenir XSS persistente em conteúdo de relatórios
+local DANGEROUS_BLOCK_TAGS = { 'script', 'iframe', 'object', 'embed', 'form', 'link', 'meta', 'base' }
+local DANGEROUS_INLINE_TAGS = { 'input', 'textarea', 'button' }
+local DANGEROUS_ATTRS = {
+    'onclick', 'onerror', 'onload', 'onmouseover', 'onmouseout',
+    'onmouseenter', 'onmouseleave', 'onfocus', 'onblur', 'onchange',
+    'onsubmit', 'onkeydown', 'onkeyup', 'onkeypress', 'ondblclick',
+}
+
+local function sanitizeHtml(rawHtml)
+    if type(rawHtml) ~= 'string' then
+        return rawHtml
+    end
+
+    local html = rawHtml
+
+    -- Remove tags de bloco perigosas e todo seu conteúdo
+    for _, tag in ipairs(DANGEROUS_BLOCK_TAGS) do
+        html = html:gsub('<' .. tag .. '[^>]*>.-</' .. tag .. '>', '')
+        html = html:gsub('<' .. tag .. '[%s/][^>]*>', '')
+        html = html:gsub('<' .. tag .. '>', '')
+        html = html:gsub('</' .. tag .. '>', '')
+    end
+
+    -- Remove tags inline perigosas (input, textarea, button)
+    for _, tag in ipairs(DANGEROUS_INLINE_TAGS) do
+        html = html:gsub('<' .. tag .. '[^>]*/>', '')
+        html = html:gsub('<' .. tag .. '[^>]*>', '')
+        html = html:gsub('</' .. tag .. '>', '')
+    end
+
+    -- Remove atributos de evento perigosos de qualquer tag
+    for _, attr in ipairs(DANGEROUS_ATTRS) do
+        html = html:gsub('%s' .. attr .. '%s*=%s*"[^"]*"', '')
+        html = html:gsub('%s' .. attr .. "%s*=%s*'[^']*'", '')
+        html = html:gsub('%s' .. attr .. '%s*=[^%s>]*', '')
+    end
+
+    -- Remove protocolo javascript: em href e src
+    html = html:gsub('href%s*=%s*"javascript:[^"]*"', 'href="#"')
+    html = html:gsub("href%s*=%s*'javascript:[^']*'", "href='#'")
+    html = html:gsub('src%s*=%s*"javascript:[^"]*"', 'src=""')
+    html = html:gsub("src%s*=%s*'javascript:[^']*'", "src=''")
+
+    return html
+end
+
+-- Aplica sanitização ao content (string ou objeto)
+local function sanitizeContent(content)
+    if type(content) == 'string' then
+        return sanitizeHtml(content)
+    end
+    return content
+end
+
 local function normalizeSearchTerm(value)
     return tostring(value or ''):match('^%s*(.-)%s*$') or ''
 end
@@ -879,7 +934,7 @@ ps.registerCallback(resourceName..':server:saveReport', function(source, reportD
         return { success = false, error = 'O relatório precisa de um título' }
     end
 
-    local content = reportData.report and reportData.report.content
+    local content = sanitizeContent(reportData.report and reportData.report.content)
     if not content or content == "" then
         ps.notify(src, 'Falha ao salvar o relatório: é necessário conteúdo', 'error')
         ps.warn('Report with missing/empty content from player: ' .. src .. ' Name: ' .. playerName)
@@ -1177,6 +1232,8 @@ ps.registerCallback(resourceName..':server:updateReportContent', function(source
     if not content then
         return { success = false, error = "Missing content" }
     end
+
+    content = sanitizeContent(content)
 
     local reportId = reportid and tonumber(reportid) or nil
     local title = (reportData and reportData.title) or "Rascunho de Relatório"
