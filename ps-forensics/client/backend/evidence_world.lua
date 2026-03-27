@@ -388,15 +388,49 @@ end)
 -- GAME EVENT: CÁPSULA EJETA (disparo detectado por ammo decrease)
 -- Baseado no padrão do evidences/client/evidences/registry/magazine.lua
 -- ============================================================
-local lastAmmoCount  = -1
+local lastAmmoState  = {
+    weapon = 0,
+    clipAmmo = -1,
+    totalAmmo = -1,
+    hasReliableClip = false,
+}
 local lastCasingTime = 0
+
+local function getSafeCasingPollInterval()
+    local configured = Config and Config.WorldEvidence and Config.WorldEvidence.CasingPollIntervalMs
+    local numeric = tonumber(configured)
+    if not numeric then
+        return 200
+    end
+    return math.max(120, math.min(1000, math.floor(numeric)))
+end
+
+local function readWeaponAmmoState(ped, weapon)
+    local hasClip, clipAmmo = GetAmmoInClip(ped, weapon)
+    local totalAmmo = GetAmmoInPedWeapon(ped, weapon)
+
+    local hasReliableClip = hasClip == true and type(clipAmmo) == 'number' and clipAmmo >= 0
+    if not hasReliableClip then
+        clipAmmo = -1
+    end
+
+    if type(totalAmmo) ~= 'number' or totalAmmo < 0 then
+        totalAmmo = 0
+    end
+
+    return {
+        weapon = weapon,
+        clipAmmo = clipAmmo,
+        totalAmmo = totalAmmo,
+        hasReliableClip = hasReliableClip,
+    }
+end
 
 CreateThread(function()
     Wait(5000) -- aguardar estabilização do framework
 
     while true do
-        local pollInterval = (Config.WorldEvidence and Config.WorldEvidence.CasingPollIntervalMs) or 200
-        Wait(pollInterval)
+        Wait(getSafeCasingPollInterval())
 
         if not Config.WorldEvidence or not Config.WorldEvidence.Enabled then
             Wait(5000)
@@ -405,24 +439,35 @@ CreateThread(function()
 
         local ped = PlayerPedId()
         if IsPedDead(ped) or IsPedSwimming(ped) then
-            lastAmmoCount = -1
+            lastAmmoState = { weapon = 0, clipAmmo = -1, totalAmmo = -1, hasReliableClip = false }
             goto continue
         end
 
         local _, weapon = GetCurrentPedWeapon(ped, true)
 
         if weapon == 0 or isWeaponBlacklisted(weapon) then
-            lastAmmoCount = -1
+            lastAmmoState = { weapon = 0, clipAmmo = -1, totalAmmo = -1, hasReliableClip = false }
             goto continue
         end
 
-        local hasClip, ammo = GetAmmoInClip(ped, weapon)
-        if not hasClip then
-            ammo = GetAmmoInPedWeapon(ped, weapon)
+        local ammoState = readWeaponAmmoState(ped, weapon)
+        local switchedWeapon = lastAmmoState.weapon ~= weapon
+        local shotDetected = false
+
+        if not switchedWeapon and lastAmmoState.totalAmmo >= 0 then
+            if ammoState.hasReliableClip and lastAmmoState.hasReliableClip then
+                shotDetected = ammoState.clipAmmo < lastAmmoState.clipAmmo
+            else
+                shotDetected = ammoState.totalAmmo < lastAmmoState.totalAmmo
+            end
+
+            -- Fallback defensivo: alguns contextos retornam clip sem variação confiável.
+            if not shotDetected and ammoState.totalAmmo < lastAmmoState.totalAmmo then
+                shotDetected = true
+            end
         end
 
-        -- Detectar disparo: ammo diminuiu (não recarga, que aumenta)
-        if lastAmmoCount ~= -1 and ammo < lastAmmoCount then
+        if shotDetected then
             local now = GetGameTimer()
             local cooldown = (Config.WorldEvidence.Cooldowns and Config.WorldEvidence.Cooldowns.capsula) or 500
 
@@ -443,7 +488,7 @@ CreateThread(function()
             end
         end
 
-        lastAmmoCount = ammo
+        lastAmmoState = ammoState
 
         ::continue::
     end

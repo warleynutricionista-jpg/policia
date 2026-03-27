@@ -147,6 +147,75 @@ local function canSignReports(src)
     return CheckPermission(src, 'reports_sign')
 end
 
+local function validateReportArchiveGovernance(reportId)
+    local flowCfg = Config.OperationalFlow or {}
+    if not flowCfg.RequireEvidenceCaseReportLinkBeforeArchive then
+        return true, nil, nil
+    end
+
+    local linkedEvidence = MySQL.query.await([[
+        SELECT id, type, case_id
+        FROM mdt_evidence_items
+        WHERE report_id = ?
+    ]], { reportId }) or {}
+
+    if #linkedEvidence == 0 then
+        return false, 'Arquivamento bloqueado: relatório sem evidências vinculadas.', { reason = 'missing_evidence' }
+    end
+
+    local criticalTypes = type(flowCfg.CriticalEvidenceTypes) == 'table' and flowCfg.CriticalEvidenceTypes or {}
+    local requireDual = flowCfg.RequireDualValidationForCriticalEvidence == true
+    local requiredReviewers = math.max(1, tonumber(flowCfg.MinReviewersForCriticalEvidence) or 2)
+    local minCustody = math.max(1, tonumber(flowCfg.MinCustodyEntriesForArchive) or 1)
+
+    for _, evidence in ipairs(linkedEvidence) do
+        if not evidence.case_id then
+            return false, ('Arquivamento bloqueado: evidência #%s sem vínculo de caso.'):format(tostring(evidence.id)), {
+                reason = 'missing_case_link',
+                evidenceId = evidence.id,
+            }
+        end
+
+        local custodyCount = tonumber(MySQL.scalar.await(
+            'SELECT COUNT(*) FROM mdt_evidence_custody WHERE evidence_id = ?',
+            { evidence.id }
+        )) or 0
+
+        if custodyCount < minCustody then
+            return false, ('Arquivamento bloqueado: cadeia de custódia insuficiente na evidência #%s.'):format(tostring(evidence.id)), {
+                reason = 'missing_custody_chain',
+                evidenceId = evidence.id,
+                custodyCount = custodyCount,
+                minCustody = minCustody,
+            }
+        end
+
+        local evidenceType = normalizeSearchTerm(evidence.type):lower()
+        if requireDual and criticalTypes[evidenceType] then
+            local reviewers = tonumber(MySQL.scalar.await([[
+                SELECT COUNT(DISTINCT COALESCE(NULLIF(to_citizenid, ''), NULLIF(from_citizenid, '')))
+                FROM mdt_evidence_custody
+                WHERE evidence_id = ?
+            ]], { evidence.id })) or 0
+
+            if reviewers < requiredReviewers then
+                return false, ('Arquivamento bloqueado: evidência crítica #%s sem dupla validação.'):format(tostring(evidence.id)), {
+                    reason = 'missing_dual_validation',
+                    evidenceId = evidence.id,
+                    reviewers = reviewers,
+                    requiredReviewers = requiredReviewers,
+                }
+            end
+        end
+    end
+
+    return true, nil, {
+        evidenceCount = #linkedEvidence,
+        dualValidationRequired = requireDual,
+        minCustody = minCustody,
+    }
+end
+
 local function buildDigitalSignature(identifier, reportId, content)
     local base = ('%s|%s|%s|%s'):format(
         tostring(identifier or 'unknown'),
@@ -1317,6 +1386,11 @@ ps.registerCallback(resourceName .. ':server:archiveReport', function(source, re
     if not reportId then return { success = false, error = 'Relatório inválido' } end
     if not checkReportAccess(src, reportId) then return { success = false, error = 'Sem acesso ao relatório' } end
 
+    local archiveAllowed, archiveError, governanceMeta = validateReportArchiveGovernance(reportId)
+    if not archiveAllowed then
+        return { success = false, error = archiveError or 'Relatório não atende governança mínima para arquivamento' }
+    end
+
     local actor = ps.getIdentifier(src)
     MySQL.update.await([[
         UPDATE mdt_reports
@@ -1325,7 +1399,7 @@ ps.registerCallback(resourceName .. ':server:archiveReport', function(source, re
     ]], { actor, reportId })
 
     if ps.auditLog then
-        ps.auditLog(src, 'report_archived', 'report', reportId, {})
+        ps.auditLog(src, 'report_archived', 'report', reportId, governanceMeta or {})
     end
 
     return { success = true, reportId = reportId }

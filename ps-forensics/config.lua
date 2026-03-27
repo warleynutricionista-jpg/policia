@@ -199,7 +199,7 @@ Config.WorldEvidence = {
 
     -- Tempo de expiração das evidências de campo (segundos)
     -- Evidências não coletadas somem após esse tempo
-    ExpirationTime = 3600, -- 1 hora
+    ExpirationTime = 3000, -- Recomendado: 2400~3600 (50 min padrão)
 
     -- Chance de spawn por tipo (0-100%)
     -- Baseado no modelo de probabilidade do renzu_evidence
@@ -226,23 +226,23 @@ Config.WorldEvidence = {
     MinBloodDamage = 10.0,
 
     -- Alcance da lanterna forense para destacar evidências próximas (metros)
-    FlashlightRange = 15.0,
+    FlashlightRange = 13.5, -- Recomendado: 12~15
 
     -- Cooldown entre spawns do mesmo tipo por jogador (milissegundos)
     Cooldowns = {
         sangue            = 4000,
         impressao_digital = 2500,
-        capsula           = 500,
+        capsula           = 600,   -- Recomendado: 500~700
         residuo_polvora   = 8000,
         pegada            = 2500,  -- par com footprint delay do lsn-evidence
-        buraco_de_bala    = 300,   -- rápido: um por disparo
+        buraco_de_bala    = 350,   -- Recomendado: 300~450
         fragmento_veiculo = 500,
     },
 
     -- Intervalo de polling para detectar queda de munição (cápsula)
     -- Menor = mais responsivo, porém mais uso de CPU no client.
     -- Recomendado para servidores médios: 180~250ms
-    CasingPollIntervalMs = 200,
+    CasingPollIntervalMs = 200, -- Recomendado: 180~250
 
     -- Distância mínima entre duas evidências do mesmo tipo (evitar duplicatas)
     MinDistanceBetweenSameType = 2.0,
