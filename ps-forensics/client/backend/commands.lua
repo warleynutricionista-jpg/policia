@@ -15,4 +15,4 @@ end, false)
 
 TriggerEvent('chat:addSuggestion', '/' .. cmd, 'Abrir o Painel de Perícia Criminal')
 
-RegisterKeyMapping(cmd, 'Abrir Painel de Perícia', 'keyboard', 'F10')
+RegisterKeyMapping(cmd, 'Abrir Painel de Perícia', 'keyboard', 'F12')
