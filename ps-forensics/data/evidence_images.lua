@@ -28,54 +28,54 @@ EvidenceImages.Default = 'evidence_generic.svg'
 -- ============================================================
 EvidenceImages.TypeMap = {
     -- Balística
-    capsula                = 'shell_casing.png',
-    projetil               = 'bullet.png',
-    arma_fogo              = 'firearm.png',
-    municao                = 'ammo.png',
-    fragmento_projetil     = 'bullet_fragment.png',
+    capsula                = 'shell_casing.svg',
+    projetil               = 'bullet.svg',
+    arma_fogo              = 'firearm.svg',
+    municao                = 'ammo.svg',
+    fragmento_projetil     = 'bullet_fragment.svg',
 
     -- Biológica
-    sangue                 = 'blood.png',
-    saliva                 = 'saliva.png',
-    cabelo                 = 'hair.png',
-    suor                   = 'sweat.png',
-    tecido_biologico       = 'biological_tissue.png',
-    fluido_biologico       = 'biological_fluid.png',
+    sangue                 = 'blood.svg',
+    saliva                 = 'saliva.svg',
+    cabelo                 = 'hair.svg',
+    suor                   = 'sweat.svg',
+    tecido_biologico       = 'biological_tissue.svg',
+    fluido_biologico       = 'biological_fluid.svg',
 
     -- Digital / Impressão
     impressao_digital      = 'fingerprint.png',
-    pegada                 = 'footprint.png',
-    marca_pneu             = 'tire_mark.png',
+    pegada                 = 'footprint.svg',
+    marca_pneu             = 'tire_mark.svg',
 
     -- Química
-    residuo_polvora        = 'gunshot_residue.png',
-    residuo_droga          = 'drug_residue.png',
-    substancia_po          = 'powder.png',
-    substancia_liquida     = 'liquid.png',
-    comprimido             = 'pill.png',
-    seringa                = 'syringe.png',
-    embalagem              = 'package.png',
-    residuo_quimico        = 'chemical.png',
+    residuo_polvora        = 'gunshot_residue.svg',
+    residuo_droga          = 'drug_residue.svg',
+    substancia_po          = 'powder.svg',
+    substancia_liquida     = 'liquid.svg',
+    comprimido             = 'pill.svg',
+    seringa                = 'syringe.svg',
+    embalagem              = 'package.svg',
+    residuo_quimico        = 'chemical.svg',
 
     -- Documental / Eletrônico
-    documento              = 'document.png',
-    celular                = 'phone.png',
-    dispositivo_eletronico = 'electronic.png',
-    midia_digital          = 'digital_media.png',
+    documento              = 'document.svg',
+    celular                = 'phone.svg',
+    dispositivo_eletronico = 'electronic.svg',
+    midia_digital          = 'digital_media.svg',
 
     -- Vestimenta
-    roupa                  = 'clothing.png',
-    calcado                = 'shoe.png',
+    roupa                  = 'clothing.svg',
+    calcado                = 'shoe.svg',
 
     -- Veículo
-    veiculo_cena           = 'vehicle.png',
+    veiculo_cena           = 'vehicle.svg',
 
     -- Objetos
-    faca                   = 'knife.png',
-    lamina                 = 'blade.png',
-    objeto_perfurante      = 'sharp_object.png',
-    objeto_contundente     = 'blunt_object.png',
-    objeto_queimado        = 'burned_object.png',
+    faca                   = 'knife.svg',
+    lamina                 = 'blade.svg',
+    objeto_perfurante      = 'sharp_object.svg',
+    objeto_contundente     = 'blunt_object.svg',
+    objeto_queimado        = 'burned_object.svg',
 
     -- Genérico
     outros                 = 'evidence_generic.svg',
@@ -85,16 +85,16 @@ EvidenceImages.TypeMap = {
 -- MAPEAMENTO POR CATEGORIA (fallback de segundo nível)
 -- ============================================================
 EvidenceImages.CategoryMap = {
-    balistica          = 'category_ballistics.png',
-    biologica          = 'blood.png',
+    balistica          = 'category_ballistics.svg',
+    biologica          = 'blood.svg',
     digital_impressao  = 'fingerprint.png',
-    quimica            = 'chemical.png',
-    documental         = 'document.png',
-    eletronica         = 'electronic.png',
-    vestimenta         = 'clothing.png',
-    veiculo            = 'vehicle.png',
-    objeto_cortante    = 'knife.png',
-    objeto_contundente = 'blunt_object.png',
+    quimica            = 'chemical.svg',
+    documental         = 'document.svg',
+    eletronica         = 'electronic.svg',
+    vestimenta         = 'clothing.svg',
+    veiculo            = 'vehicle.svg',
+    objeto_cortante    = 'knife.svg',
+    objeto_contundente = 'blunt_object.svg',
     outros             = 'evidence_generic.svg',
 }
 

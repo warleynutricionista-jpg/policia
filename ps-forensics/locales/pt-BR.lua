@@ -386,6 +386,7 @@ return {
             forensic_flashlight = 'Lanterna forense ativada.',
             ballistic_kit = 'Kit balístico preparado.',
             forensic_tablet = 'Tablet pericial conectado ao sistema.',
+            mdtcitation = 'Bloco de citação pronto para emissão via MDT.',
         },
     },
 
