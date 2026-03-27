@@ -75,6 +75,16 @@ local function spawnWorldEvidence(src, data)
     local now  = os.time()
     local exp  = getExpirationTime()
 
+    -- Validar shooter_coords se presentes
+    local shooterCoords = nil
+    if type(data.shooter_coords) == 'table' then
+        shooterCoords = {
+            x = tonumber(data.shooter_coords.x) or 0,
+            y = tonumber(data.shooter_coords.y) or 0,
+            z = tonumber(data.shooter_coords.z) or 0,
+        }
+    end
+
     local evData = {
         id                   = evId,
         type                 = data.type,
@@ -90,6 +100,13 @@ local function spawnWorldEvidence(src, data)
         spawned_by           = src,
         spawnedAt            = now,
         expiresAt            = now + exp,
+        -- Campos adicionais inspirados no lsn-evidence
+        shooter_coords       = shooterCoords,                          -- posição do atirador (buracos de bala / fragmentos)
+        shooter_heading      = tonumber(data.shooter_heading) or nil,  -- direção do atirador
+        shoe_model           = tonumber(data.shoe_model) or nil,       -- drawable do sapato (pegadas)
+        vehicle_color_r      = tonumber(data.vehicle_color_r) or nil,  -- cor da lataria atingida
+        vehicle_color_g      = tonumber(data.vehicle_color_g) or nil,
+        vehicle_color_b      = tonumber(data.vehicle_color_b) or nil,
     }
 
     worldEvidence[evId] = evData
@@ -235,7 +252,17 @@ lib.callback.register(resourceName .. ':server:collectWorldEvidence', function(s
     ]], {
         evData.category,
         evData.type,
-        ('Vestígio de campo: %s | Origem: %s'):format(evData.type, evData.source_type),
+        (function()
+            local desc = ('Vestígio de campo: %s | Origem: %s'):format(evData.type, evData.source_type)
+            if evData.shoe_model then
+                desc = desc .. (' | Modelo sapato: %d'):format(evData.shoe_model)
+            end
+            if evData.vehicle_color_r then
+                desc = desc .. (' | Cor veículo RGB(%d,%d,%d)'):format(
+                    evData.vehicle_color_r, evData.vehicle_color_g or 0, evData.vehicle_color_b or 0)
+            end
+            return desc
+        end)(),
         evData.location or '',
         coords.x, coords.y, coords.z,
         playerData.citizenid,
