@@ -160,7 +160,7 @@ Config.Uploads = {
 -- Pagination Limits
 Config.Pagination = {
     Citizens = 20, -- Citizens per page
-    CitizenSearch = 20, -- Max citizen search results
+    CitizenSearch = 15, -- Max citizen search results (recommended: 15~20)
     Cases = 20, -- Cases per page
     Vehicles = 25, -- Vehicles per page
     Weapons = 25, -- Weapons per page
@@ -180,9 +180,39 @@ Config.Warrants = {
 
 -- Dashboard Cache TTLs (seconds)
 Config.CacheTTL = {
-    ReportStats = 30,
-    ActiveUnits = 10,
+    ReportStats = 25,
+    ActiveUnits = 8,
     UsageMetrics = 60,
+}
+
+-- Fluxo operacional e governança (base para expansão progressiva)
+Config.OperationalFlow = {
+    -- Mantido em false por padrão para compatibilidade imediata.
+    -- Quando habilitado, impede arquivamento de relatório sem trilha mínima de prova.
+    RequireEvidenceCaseReportLinkBeforeArchive = false,
+
+    -- Cadeia de custódia mínima por item de prova antes do arquivamento.
+    MinCustodyEntriesForArchive = 1,
+
+    -- Provas críticas que podem exigir dupla validação no futuro.
+    CriticalEvidenceTypes = {
+        dna = true,
+        sangue = true,
+        arma = true,
+        arma_fogo = true,
+        capsula = true,
+    },
+
+    -- Mantido em false para não quebrar fluxo atual; preparado para fase 2.
+    RequireDualValidationForCriticalEvidence = false,
+    MinReviewersForCriticalEvidence = 2,
+
+    -- Templates iniciais de laudo para preparação de fase 2.
+    ReportTemplates = {
+        balistica = true,
+        toxicologico = true,
+        necropsia = true,
+    },
 }
 
 -- Tablet Animation
