@@ -17,6 +17,48 @@ local worldEvidence  = {}
 local evidenceSeq    = 0
 local sourceRateLimit = {}
 
+local allowedWorldTypes = {}
+for evidenceType, _ in pairs((Config.WorldEvidence and Config.WorldEvidence.Chances) or {}) do
+    allowedWorldTypes[evidenceType] = true
+end
+allowedWorldTypes.buraco_de_bala = true
+allowedWorldTypes.fragmento_veiculo = true
+
+local function sanitizeWorldCoords(coords)
+    if type(coords) ~= 'table' then return nil end
+
+    local x = tonumber(coords.x)
+    local y = tonumber(coords.y)
+    local z = tonumber(coords.z)
+
+    if not x or not y or not z then return nil end
+    if math.abs(x) > 10000 or math.abs(y) > 10000 or z < -400 or z > 2000 then
+        return nil
+    end
+
+    return { x = x, y = y, z = z }
+end
+
+local function isSpawnPlausibleForSource(src, coords)
+    if not coords then return false end
+
+    local ped = GetPlayerPed(src)
+    if not ped or ped <= 0 then return false end
+
+    local pedCoords = GetEntityCoords(ped)
+    if not pedCoords then return false end
+
+    local dx = pedCoords.x - coords.x
+    local dy = pedCoords.y - coords.y
+    local dz = pedCoords.z - coords.z
+
+    local dist = math.sqrt(dx * dx + dy * dy + dz * dz)
+    local maxDistance = (Config.WorldEvidence and Config.WorldEvidence.MaxSpawnDistanceFromPlayer) or 20.0
+
+    return dist <= maxDistance
+end
+
+
 local function getExpirationTime()
     return (Config.WorldEvidence and Config.WorldEvidence.ExpirationTime) or 3600
 end
@@ -60,12 +102,22 @@ end
 -- CRIAR VESTÍGIO
 -- ============================================================
 local function spawnWorldEvidence(src, data)
-    if not data or not data.type then return nil end
+    if type(data) ~= 'table' or type(data.type) ~= 'string' then return nil end
 
     -- Verificar se world evidence está habilitado
     if not Config.WorldEvidence or not Config.WorldEvidence.Enabled then
         return nil
     end
+
+    if not allowedWorldTypes[data.type] then
+        if Config.Debug then
+            print(('[%s] WorldEvidence: tipo bloqueado no spawn: %s'):format(resourceName, tostring(data.type)))
+        end
+        return nil
+    end
+
+    data.coords = sanitizeWorldCoords(data.coords)
+    if not data.coords then return nil end
 
     -- Verificar duplicata próxima
     if hasDuplicateNearby(data.type, data.coords) then
@@ -150,26 +202,44 @@ end
 RegisterNetEvent(resourceName .. ':world:spawnEvidence', function(data)
     local src = source
     if not src or src <= 0 then return end
+
     local now = GetGameTimer()
-    if sourceRateLimit[src] and (now - sourceRateLimit[src]) < 150 then
+    local cooldownMs = (Config.WorldEvidence and Config.WorldEvidence.ServerSpawnRateLimitMs) or 250
+    if sourceRateLimit[src] and (now - sourceRateLimit[src]) < cooldownMs then
+        if Config.Debug then
+            print(('[%s] WorldEvidence: rate-limit acionado para source %s'):format(resourceName, tostring(src)))
+        end
         return
     end
     sourceRateLimit[src] = now
 
-    -- Validar que é um jogador legítimo (não precisa ser policial para gerar)
     local playerData = GetPlayerData(src)
     if not playerData then return end
 
-    -- Validação básica dos dados recebidos
-    if type(data) ~= 'table' then return end
-    if not data.type or type(data.type) ~= 'string' then return end
-
-    -- Sanitizar coordenadas
-    if data.coords then
-        data.coords.x = tonumber(data.coords.x) or 0
-        data.coords.y = tonumber(data.coords.y) or 0
-        data.coords.z = tonumber(data.coords.z) or 0
+    if type(data) ~= 'table' or type(data.type) ~= 'string' then
+        return
     end
+
+    if not allowedWorldTypes[data.type] then
+        print(('[%s] WorldEvidence: tentativa bloqueada de tipo inválido "%s" por %s'):format(resourceName, tostring(data.type), tostring(src)))
+        return
+    end
+
+    data.coords = sanitizeWorldCoords(data.coords)
+    if not data.coords then
+        if Config.Debug then
+            print(('[%s] WorldEvidence: coords inválidas recebidas de %s'):format(resourceName, tostring(src)))
+        end
+        return
+    end
+
+    if not isSpawnPlausibleForSource(src, data.coords) then
+        print(('[%s] WorldEvidence: spawn rejeitado por distância inválida (src=%s, type=%s)'):format(resourceName, tostring(src), tostring(data.type)))
+        return
+    end
+
+    data.category = tostring(data.category or 'outros'):sub(1, 40)
+    data.location = tostring(data.location or ''):sub(1, 200)
 
     spawnWorldEvidence(src, data)
 end)

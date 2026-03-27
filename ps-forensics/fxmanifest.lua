@@ -31,6 +31,7 @@ shared_scripts {
 
 client_scripts {
     'client/items.lua',
+    'client/access.lua',
     'client/main.lua',
     'client/backend/*.lua',
 }

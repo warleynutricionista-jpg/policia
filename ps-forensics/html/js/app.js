@@ -2,11 +2,19 @@
 // PS-FORENSICS - Frontend JavaScript
 // ============================================================
 
-let currentTab = 'scenes';
+let currentTab = 'dashboard';
 let playerRole = 'policial';
 let playerPermissions = {};
 let playerName = '';
 let availableTabs = [];
+
+const UI = window.ForensicsUI || {
+    escapeHTML: (v) => String(v ?? ''),
+    setHTML: (el, html) => { if (el) el.innerHTML = html; },
+    renderLoadingCards: () => '<div class="dashboard-loading"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>',
+    renderEmpty: (icon, text) => `<div class="empty-state"><i class="fas ${icon}"></i><p>${text}</p></div>`,
+};
+
 
 // ============================================================
 // IMAGENS DE EVIDÊNCIA
@@ -248,12 +256,12 @@ async function loadDashboard() {
     const recentEl = getEl('dashboardRecent');
     if (!statsEl) return;
 
-    statsEl.innerHTML = '<div class="dashboard-loading"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>';
+    UI.setHTML(statsEl, UI.renderLoadingCards(4));
 
     const result = await fetchNUI('getForensicStats', {});
 
     if (!result) {
-        statsEl.innerHTML = '<div class="empty-state"><i class="fas fa-chart-line"></i><p>Erro ao carregar estatísticas</p></div>';
+        UI.setHTML(statsEl, UI.renderEmpty('fa-chart-line', 'Erro ao carregar estatísticas'));
         return;
     }
 
@@ -1291,8 +1299,8 @@ function renderCrossRefList(refs) {
 // ============================================================
 function showModal(title, bodyHTML, footerHTML) {
     document.getElementById('modalTitle').textContent = title;
-    document.getElementById('modalBody').innerHTML = bodyHTML;
-    document.getElementById('modalFooter').innerHTML = footerHTML || '';
+    UI.setHTML(document.getElementById('modalBody'), bodyHTML);
+    UI.setHTML(document.getElementById('modalFooter'), footerHTML || '');
     document.getElementById('modal-overlay').classList.remove('hidden');
 }
 
@@ -1322,7 +1330,7 @@ function showNotification(message, type) {
         box-shadow:0 4px 12px rgba(0,0,0,0.4);
         animation:slideIn 0.3s ease;max-width:400px;
     `;
-    notif.innerHTML = `<i class="fas ${icons[type] || 'fa-info-circle'}" style="color:${colors[type] || '#3b82f6'}"></i><span>${message}</span>`;
+    UI.setHTML(notif, `<i class="fas ${icons[type] || 'fa-info-circle'}" style="color:${colors[type] || '#3b82f6'}"></i><span>${UI.escapeHTML(message)}</span>`);
     document.body.appendChild(notif);
     setTimeout(() => {
         notif.style.opacity = '0';
@@ -2028,4 +2036,66 @@ function updateWizardUI() {
     getEl('btnWizardBack')?.classList.toggle('hidden', currentWizardStep === 1);
     getEl('btnWizardNext')?.classList.toggle('hidden', currentWizardStep === 3);
     getEl('btnWizardSubmit')?.classList.toggle('hidden', currentWizardStep !== 3);
+}
+
+
+// ============================================================
+// FOTOS DE CENA
+// ============================================================
+function showAddScenePhoto(sceneId) {
+    openModal('Adicionar foto da cena', `
+        <div class="form-group">
+            <label>URL da foto</label>
+            <input id="scenePhotoUrl" class="search-input" placeholder="https://...">
+        </div>
+        <div class="form-group">
+            <label>Legenda</label>
+            <input id="scenePhotoLabel" class="search-input" placeholder="Descrição opcional">
+        </div>
+    `, `
+        <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button class="btn-primary" onclick="submitScenePhoto(${sceneId})">Salvar Foto</button>
+    `);
+}
+
+async function submitScenePhoto(sceneId) {
+    const url = document.getElementById('scenePhotoUrl')?.value?.trim();
+    const label = document.getElementById('scenePhotoLabel')?.value?.trim();
+
+    if (!url) {
+        showNotification('Informe a URL da foto.', 'error');
+        return;
+    }
+
+    const result = await fetchNUI('addScenePhoto', {
+        sceneId,
+        photo: { url, label }
+    });
+
+    if (result?.success) {
+        showNotification('Foto de cena registrada com sucesso.', 'success');
+        closeModal();
+        viewScene(sceneId);
+        return;
+    }
+
+    showNotification(result?.error || 'Falha ao registrar foto da cena.', 'error');
+}
+
+function appendWizardLog(status, message) {
+    const container = getEl('wizardOpsLog');
+    if (!container) return;
+
+    const now = new Date();
+    const hhmmss = now.toLocaleTimeString('pt-BR', { hour12: false });
+    const badge = status === 'success'
+        ? '<span class="wizard-log-badge success">OK</span>'
+        : status === 'warn'
+            ? '<span class="wizard-log-badge warn">PARCIAL</span>'
+            : '<span class="wizard-log-badge error">FALHA</span>';
+
+    const row = document.createElement('div');
+    row.className = 'wizard-log-row';
+    row.innerHTML = `<span class="wizard-log-time">${UI.escapeHTML(hhmmss)}</span>${badge}<span>${UI.escapeHTML(message)}</span>`;
+    container.prepend(row);
 }
