@@ -24,9 +24,6 @@
 
         <!-- Navigation -->
         <div class="forensics-nav">
-            <button class="nav-btn" data-tab="dashboard" onclick="switchTab('dashboard')">
-                <i class="fas fa-chart-line"></i> Dashboard
-            </button>
             <button class="nav-btn active" data-tab="scenes" onclick="switchTab('scenes')">
                 <i class="fas fa-map-marked-alt"></i> Cenas
             </button>
@@ -36,26 +33,11 @@
             <button class="nav-btn" data-tab="lab" onclick="switchTab('lab')">
                 <i class="fas fa-flask"></i> Laboratório
             </button>
-            <button class="nav-btn" data-tab="fingerprints" onclick="switchTab('fingerprints')">
-                <i class="fas fa-hand-dots"></i> Digitais
-            </button>
-            <button class="nav-btn" data-tab="dna" onclick="switchTab('dna')">
-                <i class="fas fa-dna"></i> DNA
-            </button>
-            <button class="nav-btn" data-tab="ballistics" onclick="switchTab('ballistics')">
-                <i class="fas fa-crosshairs"></i> Balística
-            </button>
-            <button class="nav-btn" data-tab="drugs" onclick="switchTab('drugs')">
-                <i class="fas fa-pills"></i> Drogas
-            </button>
             <button class="nav-btn" data-tab="autopsy" onclick="switchTab('autopsy')">
                 <i class="fas fa-skull-crossbones"></i> Legista
             </button>
             <button class="nav-btn" data-tab="reports" onclick="switchTab('reports')">
                 <i class="fas fa-file-medical"></i> Laudos
-            </button>
-            <button class="nav-btn" data-tab="crossref" onclick="switchTab('crossref')">
-                <i class="fas fa-project-diagram"></i> Cruzamento
             </button>
         </div>
 
@@ -130,6 +112,8 @@
                             <option value="devolvida">Devolvida</option>
                             <option value="em_julgamento">Em Julgamento</option>
                         </select>
+                        <button class="btn-secondary" onclick="showRegisterFingerprint()"><i class="fas fa-hand-dots"></i> Cadastro Digital</button>
+                        <button class="btn-secondary" onclick="showRegisterDNA()"><i class="fas fa-dna"></i> Cadastro DNA</button>
                     </div>
                 </div>
                 <div id="evidenceList" class="items-grid"></div>
@@ -148,66 +132,12 @@
                             <option value="concluido">Concluídos</option>
                             <option value="cancelado">Cancelados</option>
                         </select>
+                        <button class="btn-secondary" onclick="showQuickBallisticRegister()"><i class="fas fa-crosshairs"></i> Registrar Balística</button>
+                        <button class="btn-secondary" onclick="showRegisterDrugAnalysis()"><i class="fas fa-pills"></i> Nova Análise de Drogas</button>
                     </div>
                 </div>
                 <div id="labTestsList" class="items-grid"></div>
                 <div id="labTestDetail" class="detail-panel hidden"></div>
-            </div>
-
-            <!-- DIGITAIS -->
-            <div id="tab-fingerprints" class="tab-content">
-                <div class="tab-header">
-                    <h2><i class="fas fa-hand-dots"></i> Impressões Digitais</h2>
-                    <div class="tab-actions">
-                        <input type="text" id="fpSearch" placeholder="Buscar por CitizenID ou nome..." class="search-input" oninput="loadFingerprints()">
-                        <button class="btn-primary" onclick="showRegisterFingerprint()"><i class="fas fa-plus"></i> Cadastrar Digital</button>
-                    </div>
-                </div>
-                <div id="fingerprintsList" class="items-grid"></div>
-            </div>
-
-            <!-- DNA -->
-            <div id="tab-dna" class="tab-content">
-                <div class="tab-header">
-                    <h2><i class="fas fa-dna"></i> Análise de DNA</h2>
-                    <div class="tab-actions">
-                        <input type="text" id="dnaSearch" placeholder="Buscar por CitizenID ou nome..." class="search-input" oninput="loadDNA()">
-                        <button class="btn-primary" onclick="showRegisterDNA()"><i class="fas fa-plus"></i> Cadastrar Perfil</button>
-                    </div>
-                </div>
-                <div id="dnaList" class="items-grid"></div>
-            </div>
-
-            <!-- BALÍSTICA -->
-            <div id="tab-ballistics" class="tab-content">
-                <div class="tab-header">
-                    <h2><i class="fas fa-crosshairs"></i> Balística</h2>
-                    <div class="tab-actions">
-                        <input type="text" id="ballisticSearch" placeholder="Buscar por serial da arma..." class="search-input" oninput="loadBallistics()">
-                    </div>
-                </div>
-                <div id="ballisticLookupHint" class="lookup-hint">Busca imediata com consulta ao registro legal.</div>
-                <div id="ballisticsList" class="items-grid"></div>
-            </div>
-
-            <!-- DROGAS -->
-            <div id="tab-drugs" class="tab-content">
-                <div class="tab-header">
-                    <h2><i class="fas fa-pills"></i> Análise de Drogas</h2>
-                    <div class="tab-actions">
-                        <select id="drugStatusFilter" class="filter-select" onchange="filterDrugs()">
-                            <option value="">Todos os Resultados</option>
-                            <option value="suspeita">Suspeita</option>
-                            <option value="presumido">Presumido Positivo</option>
-                            <option value="confirmado">Confirmado</option>
-                            <option value="negativo">Negativo</option>
-                            <option value="inconclusivo">Inconclusivo</option>
-                        </select>
-                        <button class="btn-primary" onclick="showRegisterDrugAnalysis()"><i class="fas fa-plus"></i> Nova Análise</button>
-                    </div>
-                </div>
-                <div id="drugsList" class="items-grid"></div>
-                <div id="drugDetail" class="detail-panel hidden"></div>
             </div>
 
             <!-- LEGISTA -->
@@ -254,37 +184,6 @@
                 </div>
                 <div id="reportsList" class="items-grid"></div>
                 <div id="reportDetail" class="detail-panel hidden"></div>
-            </div>
-
-            <!-- CRUZAMENTO DE DADOS -->
-            <div id="tab-crossref" class="tab-content">
-                <div class="tab-header">
-                    <h2><i class="fas fa-project-diagram"></i> Cruzamento de Dados</h2>
-                </div>
-                <div class="crossref-search-panel">
-                    <div class="search-group">
-                        <label>Buscar por Cidadão (CitizenID)</label>
-                        <div class="search-row">
-                            <input type="text" id="crossrefCitizenId" placeholder="CitizenID..." class="search-input">
-                            <button class="btn-primary" onclick="searchCrossRefCitizen()"><i class="fas fa-search"></i></button>
-                        </div>
-                    </div>
-                    <div class="search-group">
-                        <label>Buscar por Arma (Serial)</label>
-                        <div class="search-row">
-                            <input type="text" id="crossrefWeaponSerial" placeholder="Serial da arma..." class="search-input">
-                            <button class="btn-primary" onclick="searchCrossRefWeapon()"><i class="fas fa-search"></i></button>
-                        </div>
-                    </div>
-                    <div class="search-group">
-                        <label>Buscar por Veículo (Placa)</label>
-                        <div class="search-row">
-                            <input type="text" id="crossrefVehiclePlate" placeholder="Placa..." class="search-input">
-                            <button class="btn-primary" onclick="searchCrossRefVehicle()"><i class="fas fa-search"></i></button>
-                        </div>
-                    </div>
-                </div>
-                <div id="crossrefResults" class="items-grid"></div>
             </div>
         </div>
 

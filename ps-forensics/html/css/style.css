@@ -900,3 +900,77 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+/* ============================================================
+   REPORT BUILDER (CRIAR/EDITAR LAUDO)
+   ============================================================ */
+.report-builder {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.report-builder-intro {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px;
+    border: 1px solid rgba(0, 180, 216, 0.3);
+    background: rgba(0, 180, 216, 0.08);
+    border-radius: 8px;
+}
+
+.report-builder-intro i {
+    margin-top: 2px;
+    color: #22d3ee;
+}
+
+.report-builder-intro p {
+    color: #dbeafe;
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+.report-section-card {
+    border: 1px solid #1e293b;
+    background: rgba(15, 23, 42, 0.7);
+    border-radius: 10px;
+    padding: 14px;
+}
+
+.report-section-card h4 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    margin-bottom: 10px;
+    color: #bfdbfe;
+}
+
+.report-toggle {
+    margin: 8px 0 6px;
+    padding: 8px 10px;
+    border: 1px dashed rgba(148, 163, 184, 0.35);
+    border-radius: 8px;
+}
+
+.report-toggle label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #d1d5db;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.report-toggle input[type="checkbox"] {
+    accent-color: #00b4d8;
+}
+
+.nested-section {
+    margin: 6px 0 10px;
+    padding: 10px;
+    border-left: 2px solid rgba(0, 180, 216, 0.55);
+    background: rgba(30, 41, 59, 0.5);
+    border-radius: 0 8px 8px 0;
+}

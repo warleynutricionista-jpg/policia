@@ -1529,6 +1529,47 @@ function showCreateAutopsy() {
     initCitizenAutofill('autopsyVictimCid', 'autopsyVictimName', 'autopsyVictimLookupHint');
 }
 
+function showQuickBallisticRegister() {
+    showModal('Registro Balístico Rápido', `
+        <div class="form-group"><label>Tipo de Item</label>
+            <select id="quickBallisticType">
+                <option value="capsula">Cápsula</option>
+                <option value="projetil">Projétil</option>
+                <option value="arma">Arma Apreendida</option>
+                <option value="municao">Munição</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Serial da Arma (quando houver)</label><input type="text" id="quickBallisticSerial" placeholder="Serial da arma"></div>
+        <div id="quickBallisticHint" class="lookup-hint">Busca automática no registro legal.</div>
+        <div class="form-row">
+            <div class="form-group"><label>Modelo</label><input type="text" id="quickBallisticModel" placeholder="Modelo"></div>
+            <div class="form-group"><label>Calibre</label><input type="text" id="quickBallisticCaliber" placeholder="Ex: 9mm"></div>
+        </div>
+        <div class="form-group"><label>ID da Cena (opcional)</label><input type="number" id="quickBallisticSceneId" placeholder="ID da cena"></div>
+        <div class="form-group"><label>Observações</label><textarea id="quickBallisticNotes" rows="2" placeholder="Detalhes da coleta..."></textarea></div>
+    `, `<button class="btn-primary" onclick="doQuickBallisticRegister()"><i class="fas fa-plus"></i> Registrar</button>`);
+    initWeaponSerialAutofill('quickBallisticSerial', 'quickBallisticHint');
+}
+
+async function doQuickBallisticRegister() {
+    const payload = {
+        item_type: getEl('quickBallisticType')?.value || 'capsula',
+        weapon_serial: getEl('quickBallisticSerial')?.value?.trim() || null,
+        weapon_model: getEl('quickBallisticModel')?.value?.trim() || null,
+        caliber: getEl('quickBallisticCaliber')?.value?.trim() || null,
+        scene_id: getEl('quickBallisticSceneId')?.value || null,
+        notes: getEl('quickBallisticNotes')?.value || '',
+    };
+    const result = await fetchNUI('registerBallistic', payload);
+    if (result?.success) {
+        closeModal();
+        showNotification(`Registro balístico criado #${result.id}`, 'success');
+        await loadLabTests();
+    } else {
+        showNotification(result?.error || 'Erro ao registrar balística', 'error');
+    }
+}
+
 window.addEventListener('load', function() {
     initWeaponSerialAutofill('ballisticSearch', 'ballisticLookupHint');
 });
@@ -1559,26 +1600,165 @@ async function doCreateAutopsy() {
 }
 
 function showCreateReport() {
-    showModal('Novo Laudo Técnico', `
-        <div class="form-group"><label>Tipo de Laudo</label>
-            <select id="reportType">
-                <option value="laudo_pericial">Laudo Pericial</option>
-                <option value="laudo_balistico">Laudo Balístico</option>
-                <option value="laudo_toxicologico">Laudo Toxicológico</option>
-                <option value="laudo_dna">Laudo DNA</option>
-                <option value="laudo_digital">Laudo Digital</option>
-                <option value="laudo_necropsia">Laudo Necropsia</option>
-                <option value="laudo_drogas">Laudo Drogas</option>
-            </select>
+    showModal('Criar / Editar Laudo Técnico', `
+        <div class="report-builder">
+            <div class="report-builder-intro">
+                <i class="fas fa-wand-magic-sparkles"></i>
+                <p>Centralize todas as coletas neste fluxo. Números de laudo, evidência, perfis digitais e DNA são gerados automaticamente pelo sistema.</p>
+            </div>
+
+            <div class="report-section-card">
+                <h4><i class="fas fa-file-medical"></i> Dados principais</h4>
+                <div class="form-row">
+                    <div class="form-group"><label>Tipo de Laudo</label>
+                        <select id="reportType">
+                            <option value="laudo_pericial">Laudo Pericial</option>
+                            <option value="laudo_balistico">Laudo Balístico</option>
+                            <option value="laudo_toxicologico">Laudo Toxicológico</option>
+                            <option value="laudo_dna">Laudo DNA</option>
+                            <option value="laudo_digital">Laudo Digital</option>
+                            <option value="laudo_necropsia">Laudo Necropsia</option>
+                            <option value="laudo_drogas">Laudo Drogas</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>ID da Cena (opcional)</label><input type="number" id="reportSceneId" placeholder="ID da cena"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>ID do Caso MDT (opcional)</label><input type="number" id="reportCaseId" placeholder="Número do caso"></div>
+                    <div class="form-group"><label>ID do Relatório MDT (opcional)</label><input type="number" id="reportMdtId" placeholder="ID do relatório MDT"></div>
+                </div>
+                <div class="form-group"><label>Título</label><input type="text" id="reportTitle" placeholder="Título do laudo"></div>
+                <div class="form-group"><label>Resumo</label><textarea id="reportSummary" rows="2" placeholder="Resumo executivo..."></textarea></div>
+                <div class="form-group"><label>Corpo do Laudo</label><textarea id="reportBody" rows="4" placeholder="Detalhamento técnico..."></textarea></div>
+                <div class="form-group"><label>Conclusão</label><textarea id="reportConclusion" rows="3" placeholder="Conclusão técnica..."></textarea></div>
+            </div>
+
+            <div class="report-section-card">
+                <h4><i class="fas fa-vials"></i> Coletas integradas (opcional)</h4>
+
+                <div class="report-toggle">
+                    <label><input type="checkbox" id="reportEnableEvidence" onchange="toggleReportSection('reportEvidenceFields', this.checked)"> Coletar evidência física</label>
+                </div>
+                <div id="reportEvidenceFields" class="nested-section hidden">
+                    <div class="form-row">
+                        <div class="form-group"><label>Categoria</label>
+                            <select id="reportEvidenceCategory">
+                                <option value="balistica">Balística</option>
+                                <option value="biologica">Biológica</option>
+                                <option value="digital_impressao">Impressões</option>
+                                <option value="quimica">Química</option>
+                                <option value="documental">Documental</option>
+                                <option value="eletronica">Eletrônica</option>
+                                <option value="vestimenta">Vestimenta</option>
+                                <option value="veiculo">Veículo</option>
+                                <option value="objeto_cortante">Objeto Cortante</option>
+                                <option value="objeto_contundente">Objeto Contundente</option>
+                                <option value="outros">Outros</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Tipo</label>
+                            <select id="reportEvidenceType">
+                                <option value="impressao_digital">Impressão Digital</option>
+                                <option value="sangue">Sangue</option>
+                                <option value="saliva">Saliva</option>
+                                <option value="capsula">Cápsula</option>
+                                <option value="projetil">Projétil</option>
+                                <option value="arma_fogo">Arma de Fogo</option>
+                                <option value="residuo_polvora">Resíduo de Pólvora</option>
+                                <option value="documento">Documento</option>
+                                <option value="celular">Celular</option>
+                                <option value="objeto_contundente">Objeto Contundente</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group"><label>Descrição da Coleta</label><textarea id="reportEvidenceDescription" rows="2" placeholder="Detalhes da evidência"></textarea></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>CitizenID vinculado (opcional)</label><input type="text" id="reportEvidenceCitizen" placeholder="CitizenID"></div>
+                        <div class="form-group"><label>Serial da arma (opcional)</label><input type="text" id="reportEvidenceWeaponSerial" placeholder="Serial"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Placa vinculada (opcional)</label><input type="text" id="reportEvidenceVehicle" placeholder="ABC1234"></div>
+                        <div class="form-group"><label>Enviar para armário de evidências</label>
+                            <select id="reportEvidenceStore">
+                                <option value="nao">Não</option>
+                                <option value="sim">Sim, armazenar após coleta</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="report-toggle">
+                    <label><input type="checkbox" id="reportEnableFingerprint" onchange="toggleReportSection('reportFingerprintFields', this.checked)"> Cadastrar impressão digital do cidadão</label>
+                </div>
+                <div id="reportFingerprintFields" class="nested-section hidden">
+                    <div class="form-row">
+                        <div class="form-group"><label>CitizenID</label><input type="text" id="reportFpCitizen" placeholder="CitizenID"></div>
+                        <div class="form-group"><label>Nome</label><input type="text" id="reportFpName" placeholder="Nome completo"></div>
+                    </div>
+                    <div id="reportFpLookupHint" class="lookup-hint">Auto-preenchimento por CitizenID ou nome.</div>
+                </div>
+
+                <div class="report-toggle">
+                    <label><input type="checkbox" id="reportEnableDNA" onchange="toggleReportSection('reportDNAFields', this.checked)"> Cadastrar perfil de DNA</label>
+                </div>
+                <div id="reportDNAFields" class="nested-section hidden">
+                    <div class="form-row">
+                        <div class="form-group"><label>CitizenID</label><input type="text" id="reportDnaCitizen" placeholder="CitizenID"></div>
+                        <div class="form-group"><label>Nome</label><input type="text" id="reportDnaName" placeholder="Nome completo"></div>
+                    </div>
+                    <div id="reportDnaLookupHint" class="lookup-hint">Auto-preenchimento por CitizenID ou nome.</div>
+                    <div class="form-group"><label>Tipo Sanguíneo</label>
+                        <select id="reportDnaBloodType">
+                            <option value="Desconhecido">Desconhecido</option>
+                            <option value="A+">A+</option><option value="A-">A-</option>
+                            <option value="B+">B+</option><option value="B-">B-</option>
+                            <option value="AB+">AB+</option><option value="AB-">AB-</option>
+                            <option value="O+">O+</option><option value="O-">O-</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="report-toggle">
+                    <label><input type="checkbox" id="reportEnableBallistic" onchange="toggleReportSection('reportBallisticFields', this.checked)"> Registrar item balístico / arma</label>
+                </div>
+                <div id="reportBallisticFields" class="nested-section hidden">
+                    <div class="form-row">
+                        <div class="form-group"><label>Tipo</label>
+                            <select id="reportBallisticType">
+                                <option value="arma">Arma Apreendida</option>
+                                <option value="capsula">Cápsula</option>
+                                <option value="projetil">Projétil</option>
+                                <option value="municao">Munição</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Serial da arma</label><input type="text" id="reportBallisticSerial" placeholder="Serial (opcional para arma raspada)"></div>
+                    </div>
+                    <div id="reportBallisticSerialHint" class="lookup-hint">Busca automática pelo serial informado.</div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Modelo</label><input type="text" id="reportBallisticModel" placeholder="Modelo da arma"></div>
+                        <div class="form-group"><label>Calibre</label><input type="text" id="reportBallisticCaliber" placeholder="Ex: 9mm"></div>
+                    </div>
+                    <div class="form-group"><label>Observações</label><textarea id="reportBallisticNotes" rows="2" placeholder="Detalhes do item balístico"></textarea></div>
+                </div>
+            </div>
         </div>
-        <div class="form-group"><label>Título</label><input type="text" id="reportTitle" placeholder="Título do laudo"></div>
-        <div class="form-group"><label>Resumo</label><textarea id="reportSummary" rows="2" placeholder="Resumo executivo..."></textarea></div>
-        <div class="form-group"><label>Corpo do Laudo</label><textarea id="reportBody" rows="5" placeholder="Detalhamento técnico..."></textarea></div>
-        <div class="form-group"><label>Conclusão</label><textarea id="reportConclusion" rows="3" placeholder="Conclusão técnica..."></textarea></div>
-        <div class="form-group"><label>ID da Cena (opcional)</label><input type="number" id="reportSceneId" placeholder="ID da cena"></div>
-        <div class="form-group"><label>ID do Caso MDT (opcional)</label><input type="number" id="reportCaseId" placeholder="Número do caso"></div>
-        <div class="form-group"><label>ID do Relatório MDT (opcional)</label><input type="number" id="reportMdtId" placeholder="ID do relatório no MDT"></div>
-    `, `<button class="btn-primary" onclick="doCreateReport()"><i class="fas fa-plus"></i> Criar Laudo</button>`);
+    `, `<button class="btn-primary" onclick="doCreateReport()"><i class="fas fa-plus"></i> Criar Laudo + Coletas</button>`);
+    initCitizenAutofill('reportFpCitizen', 'reportFpName', 'reportFpLookupHint');
+    initCitizenAutofill('reportDnaCitizen', 'reportDnaName', 'reportDnaLookupHint');
+    initWeaponSerialAutofill('reportBallisticSerial', 'reportBallisticSerialHint');
+}
+
+function toggleReportSection(sectionId, visible) {
+    const section = getEl(sectionId);
+    if (!section) return;
+    section.classList.toggle('hidden', !visible);
+}
+
+function appendUnique(target, values) {
+    values.forEach((value) => {
+        if (!value) return;
+        if (!target.includes(value)) target.push(value);
+    });
 }
 
 async function doCreateReport() {
@@ -1587,20 +1767,130 @@ async function doCreateReport() {
         showNotification('Título do laudo é obrigatório', 'error');
         return;
     }
+
+    const reportContext = {
+        scene_id: getEl('reportSceneId')?.value || null,
+        case_id: getEl('reportCaseId')?.value || null,
+        report_id: null,
+    };
+
+    const evidenceIds = [];
+    const linkedCitizenIds = [];
+    const linkedWeaponSerials = [];
+    const linkedVehiclePlates = [];
+    const operationNotes = [];
+
+    if (getEl('reportEnableEvidence')?.checked) {
+        const evidencePayload = {
+            category: getEl('reportEvidenceCategory')?.value || 'outros',
+            type: getEl('reportEvidenceType')?.value || 'impressao_digital',
+            description: getEl('reportEvidenceDescription')?.value || 'Evidência registrada na criação do laudo.',
+            scene_id: reportContext.scene_id,
+            case_id: reportContext.case_id,
+            linked_citizenid: getEl('reportEvidenceCitizen')?.value?.trim() || null,
+            linked_weapon_serial: getEl('reportEvidenceWeaponSerial')?.value?.trim() || null,
+            linked_vehicle_plate: getEl('reportEvidenceVehicle')?.value?.trim() || null,
+            collection_method: 'Fluxo integrado de laudo',
+        };
+
+        const evidenceResult = await fetchNUI('collectEvidence', evidencePayload);
+        if (!evidenceResult?.success) {
+            showNotification(evidenceResult?.error || 'Falha ao coletar evidência integrada', 'error');
+            return;
+        }
+
+        evidenceIds.push(evidenceResult.evidenceId);
+        appendUnique(linkedCitizenIds, [evidencePayload.linked_citizenid]);
+        appendUnique(linkedWeaponSerials, [evidencePayload.linked_weapon_serial]);
+        appendUnique(linkedVehiclePlates, [evidencePayload.linked_vehicle_plate]);
+        operationNotes.push(`Evidência ${evidenceResult.evidenceNumber} criada automaticamente.`);
+
+        if (getEl('reportEvidenceStore')?.value === 'sim') {
+            await fetchNUI('updateEvidence', {
+                id: evidenceResult.evidenceId,
+                status: 'armazenada',
+                storage_location: 'Armário de evidências',
+                notes: 'Movida para armazenamento automaticamente na criação do laudo.',
+            });
+            operationNotes.push(`Evidência ${evidenceResult.evidenceNumber} enviada ao armário de evidências.`);
+        }
+    }
+
+    if (getEl('reportEnableFingerprint')?.checked) {
+        const fpCitizen = getEl('reportFpCitizen')?.value?.trim();
+        if (!fpCitizen) {
+            showNotification('CitizenID é obrigatório para cadastro de impressão digital.', 'error');
+            return;
+        }
+        const fpResult = await fetchNUI('registerFingerprint', {
+            citizenid: fpCitizen,
+            name: getEl('reportFpName')?.value?.trim() || '',
+        });
+        if (!fpResult?.success) {
+            showNotification(fpResult?.error || 'Falha ao cadastrar impressão digital', 'error');
+            return;
+        }
+        appendUnique(linkedCitizenIds, [fpCitizen]);
+        operationNotes.push(`Perfil digital ${fpResult.code || ''} cadastrado automaticamente.`);
+    }
+
+    if (getEl('reportEnableDNA')?.checked) {
+        const dnaCitizen = getEl('reportDnaCitizen')?.value?.trim();
+        if (!dnaCitizen) {
+            showNotification('CitizenID é obrigatório para cadastro de DNA.', 'error');
+            return;
+        }
+        const dnaResult = await fetchNUI('registerDNA', {
+            citizenid: dnaCitizen,
+            name: getEl('reportDnaName')?.value?.trim() || '',
+            bloodType: getEl('reportDnaBloodType')?.value || 'Desconhecido',
+        });
+        if (!dnaResult?.success) {
+            showNotification(dnaResult?.error || 'Falha ao cadastrar DNA', 'error');
+            return;
+        }
+        appendUnique(linkedCitizenIds, [dnaCitizen]);
+        operationNotes.push(`Perfil de DNA ${dnaResult.code || ''} cadastrado automaticamente.`);
+    }
+
+    if (getEl('reportEnableBallistic')?.checked) {
+        const ballisticSerial = getEl('reportBallisticSerial')?.value?.trim() || null;
+        const ballisticPayload = {
+            item_type: getEl('reportBallisticType')?.value || 'arma',
+            scene_id: reportContext.scene_id,
+            case_id: reportContext.case_id,
+            weapon_serial: ballisticSerial,
+            weapon_model: getEl('reportBallisticModel')?.value?.trim() || null,
+            caliber: getEl('reportBallisticCaliber')?.value?.trim() || null,
+            notes: getEl('reportBallisticNotes')?.value || 'Registro balístico via criação de laudo.',
+        };
+        const ballisticResult = await fetchNUI('registerBallistic', ballisticPayload);
+        if (!ballisticResult?.success) {
+            showNotification(ballisticResult?.error || 'Falha ao registrar item balístico', 'error');
+            return;
+        }
+        appendUnique(linkedWeaponSerials, [ballisticResult.weaponSerial || ballisticSerial]);
+        operationNotes.push(`Registro balístico #${ballisticResult.id} criado automaticamente.`);
+    }
+
     const data = {
         type: getEl('reportType')?.value || 'laudo_pericial',
         title: title,
         summary: getEl('reportSummary')?.value || '',
-        body: getEl('reportBody')?.value || '',
+        body: [getEl('reportBody')?.value || '', operationNotes.length > 0 ? '\n\n---\nColetas automáticas:\n- ' + operationNotes.join('\n- ') : ''].join(''),
         conclusion: getEl('reportConclusion')?.value || '',
-        scene_id: getEl('reportSceneId')?.value || null,
-        case_id: getEl('reportCaseId')?.value || null,
+        scene_id: reportContext.scene_id,
+        case_id: reportContext.case_id,
         mdt_report_id: getEl('reportMdtId')?.value || null,
+        evidence_ids: evidenceIds,
+        linked_citizenids: linkedCitizenIds,
+        linked_weapon_serials: linkedWeaponSerials,
+        linked_vehicle_plates: linkedVehiclePlates,
     };
     const result = await fetchNUI('createReport', data);
     if (result && result.success) {
         closeModal();
-        showNotification('Laudo criado: ' + (result.reportNumber || ''), 'success');
+        showNotification('Laudo criado automaticamente: ' + (result.reportNumber || ''), 'success');
         await loadReports();
     } else {
         showNotification(result?.error || 'Erro ao criar laudo', 'error');
