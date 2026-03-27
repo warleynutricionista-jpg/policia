@@ -497,6 +497,18 @@ lib.callback.register(resourceName .. ':server:collectEvidence', function(source
         requiredItem = requiredItem,
     })
 
+    TriggerEvent('ps-forensics:server:onEvidenceCollect', {
+        caseId = caseId,
+        reportId = reportId,
+        type = evidenceType,
+        notes = description,
+        location = locationName,
+        identifier = sealNumber,
+        holderCitizenId = playerData.citizenid,
+        createdBy = playerData.citizenid,
+        mdtEvidenceId = mdtEvidenceId,
+    })
+
     return {
         success = true,
         evidenceId = evidenceId,
