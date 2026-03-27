@@ -87,3 +87,16 @@ function Cache.invalidatePrefix(prefix)
         end
     end
 end
+
+-- Garbage collector: remove entradas expiradas proativamente a cada 60 segundos
+CreateThread(function()
+    while true do
+        Wait(60000)
+        local now = os.time()
+        for key, entry in pairs(Cache.store) do
+            if entry.expiresAt and entry.expiresAt < now then
+                Cache.store[key] = nil
+            end
+        end
+    end
+end)

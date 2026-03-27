@@ -48,7 +48,7 @@ RegisterNUICallback('getArmaProprietárioshipHistory', function(data, cb)
     handleGetWeaponHistory(data, cb)
 end)
 
-RegisterNUICallback('getArma', function(data, cb)
+local function handleGetWeapon(data, cb)
     if not MDTOpen then
         cb({ success = false, message = 'O MDT não está aberto' })
         return
@@ -62,25 +62,9 @@ RegisterNUICallback('getArma', function(data, cb)
 
     local result = ps.callback(resourceName .. ':server:getWeapon', serial)
     cb(result or { success = false, message = 'Arma não encontrada' })
-end)
+end
 
--- Save/Edit Weapon Info
-RegisterNUICallback('saveWeaponInfo', function(data, cb)
-    if not MDTOpen then
-        cb({ success = false, message = 'O MDT não está aberto' })
-        return
-    end
-
-    if type(data) ~= 'table' or not data.serial then
-        cb({ success = false, message = 'Faltando número de série' })
-        return
-    end
-
-    local result = ps.callback(resourceName .. ':server:saveWeaponInfo', data)
-    cb(result or { success = false, message = 'Falha ao salvar as informações da arma' })
-end)
-
-RegisterNUICallback('updateArma', function(data, cb)
+local function handleSaveWeaponInfo(data, cb)
     if not MDTOpen then
         cb({ success = false, message = 'O MDT não está aberto' })
         return
@@ -92,13 +76,13 @@ RegisterNUICallback('updateArma', function(data, cb)
         return
     end
 
-    local payload = data or {}
+    local payload = type(data) == 'table' and data or {}
     payload.serial = payload.serial or serial
     local result = ps.callback(resourceName .. ':server:saveWeaponInfo', payload)
     cb(result or { success = false, message = 'Falha ao salvar as informações da arma' })
-end)
+end
 
-RegisterNUICallback('searchArmas', function(data, cb)
+local function handleSearchWeapons(data, cb)
     if not MDTOpen then
         cb({ weapons = {}, bolos = {} })
         return
@@ -125,7 +109,13 @@ RegisterNUICallback('searchArmas', function(data, cb)
     weaponSearchState.lastAt = now
     weaponSearchState.lastResult = result or { weapons = {}, bolos = {}, page = data and data.page or 1, limit = data and data.limit or 25, total = 0, hasMore = false }
     cb(weaponSearchState.lastResult)
-end)
+end
+
+-- Save/Edit Weapon Info
+RegisterNUICallback('saveWeaponInfo', handleSaveWeaponInfo)
+RegisterNUICallback('updateArma', handleSaveWeaponInfo)
+RegisterNUICallback('getArma', handleGetWeapon)
+RegisterNUICallback('searchArmas', handleSearchWeapons)
 
 -- Delete Weapon Record
 RegisterNUICallback('deleteWeapon', function(data, cb)

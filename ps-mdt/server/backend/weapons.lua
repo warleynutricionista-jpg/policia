@@ -378,6 +378,7 @@ end)
 ps.registerCallback(resourceName .. ':server:saveWeaponInfo', function(source, payload)
     local src = source
     if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
+    if not CheckPermission(src, 'weapons_search') then return { success = false, message = 'Sem permissão para editar armas' } end
 
     payload = payload or {}
     local serial = payload.serial
@@ -427,6 +428,7 @@ end)
 ps.registerCallback(resourceName .. ':server:deleteWeapon', function(source, payload)
     local src = source
     if not CheckAuth(src) then return { success = false, message = 'Não autorizado' } end
+    if not CheckPermission(src, 'weapons_search') then return { success = false, message = 'Sem permissão para excluir armas' } end
 
     payload = payload or {}
     local id = tonumber(payload.id)

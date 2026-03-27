@@ -279,6 +279,7 @@ end)
 ps.registerCallback(resourceName .. ':server:updateCase', function(source, caseId, payload)
     local src = source
     if not CheckAuth(src) then return { success = false, error = 'Não autorizado' } end
+    if not CheckPermission(src, 'cases_edit') then return { success = false, error = 'Sem permissão para editar casos' } end
 
     caseId = tonumber(caseId)
     if not caseId then
@@ -338,6 +339,7 @@ end)
 ps.registerCallback(resourceName .. ':server:deleteCase', function(source, caseId)
     local src = source
     if not CheckAuth(src) then return { success = false, error = 'Não autorizado' } end
+    if not CheckPermission(src, 'cases_delete') then return { success = false, error = 'Sem permissão para excluir casos' } end
 
     caseId = tonumber(caseId)
     if not caseId then
@@ -363,6 +365,7 @@ end)
 ps.registerCallback(resourceName .. ':server:assignCaseOfficer', function(source, caseId, officerCitizenId, role)
     local src = source
     if not CheckAuth(src) then return { success = false, error = 'Não autorizado' } end
+    if not CheckPermission(src, 'cases_edit') then return { success = false, error = 'Sem permissão para editar casos' } end
 
     caseId = tonumber(caseId)
     if not caseId or not officerCitizenId then
@@ -393,6 +396,7 @@ end)
 ps.registerCallback(resourceName .. ':server:removeCaseOfficer', function(source, caseId, officerCitizenId)
     local src = source
     if not CheckAuth(src) then return { success = false, error = 'Não autorizado' } end
+    if not CheckPermission(src, 'cases_edit') then return { success = false, error = 'Sem permissão para editar casos' } end
 
     caseId = tonumber(caseId)
     if not caseId or not officerCitizenId then
@@ -419,6 +423,7 @@ end)
 ps.registerCallback(resourceName .. ':server:addCaseAttachment', function(source, caseId, attachment)
     local src = source
     if not CheckAuth(src) then return { success = false, error = 'Não autorizado' } end
+    if not CheckPermission(src, 'evidence_upload') then return { success = false, error = 'Sem permissão para enviar anexos' } end
 
     caseId = tonumber(caseId)
     if not caseId or not attachment or not attachment.url then
@@ -450,6 +455,7 @@ end)
 ps.registerCallback(resourceName .. ':server:addCaseAttachmentUpload', function(source, caseId, attachment)
     local src = source
     if not CheckAuth(src) then return { success = false, error = 'Não autorizado' } end
+    if not CheckPermission(src, 'evidence_upload') then return { success = false, error = 'Sem permissão para enviar anexos' } end
 
     caseId = tonumber(caseId)
     if not caseId or not attachment or not attachment.data or not attachment.filename then
@@ -513,6 +519,7 @@ end)
 ps.registerCallback(resourceName .. ':server:removeCaseAttachment', function(source, attachmentId)
     local src = source
     if not CheckAuth(src) then return { success = false, error = 'Não autorizado' } end
+    if not CheckPermission(src, 'cases_edit') then return { success = false, error = 'Sem permissão para editar casos' } end
 
     attachmentId = tonumber(attachmentId)
     if not attachmentId then
@@ -545,6 +552,7 @@ end)
 ps.registerCallback(resourceName .. ':server:addEvidenceItem', function(source, caseId, evidence)
     local src = source
     if not CheckAuth(src) then return { success = false, error = 'Não autorizado' } end
+    if not CheckPermission(src, 'evidence_create') then return { success = false, error = 'Sem permissão para criar evidências' } end
 
     if type(caseId) == 'table' and evidence == nil then
         local payload = caseId
@@ -627,6 +635,7 @@ end)
 ps.registerCallback(resourceName .. ':server:updateEvidenceItem', function(source, evidenceId, evidence)
     local src = source
     if not CheckAuth(src) then return { success = false, error = 'Não autorizado' } end
+    if not CheckPermission(src, 'evidence_create') then return { success = false, error = 'Sem permissão para editar evidências' } end
 
     evidenceId = tonumber(evidenceId)
     if not evidenceId or not evidence then
@@ -694,6 +703,7 @@ end)
 ps.registerCallback(resourceName .. ':server:transferEvidenceItem', function(source, evidenceId, toCitizenId, notes)
     local src = source
     if not CheckAuth(src) then return { success = false, error = 'Não autorizado' } end
+    if not CheckPermission(src, 'evidence_transfer') then return { success = false, error = 'Sem permissão para transferir evidências' } end
 
     evidenceId = tonumber(evidenceId)
     if not evidenceId or not toCitizenId then
@@ -721,6 +731,7 @@ end)
 ps.registerCallback(resourceName .. ':server:deleteEvidenceItem', function(source, evidenceId)
     local src = source
     if not CheckAuth(src) then return { success = false, error = 'Não autorizado' } end
+    if not CheckPermission(src, 'cases_delete') then return { success = false, error = 'Sem permissão para excluir evidências' } end
 
     evidenceId = tonumber(evidenceId)
     if not evidenceId then

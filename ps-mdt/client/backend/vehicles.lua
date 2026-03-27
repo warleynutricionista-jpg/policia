@@ -86,9 +86,9 @@ RegisterNUICallback('updateVeículo', function(data, cb)
     handleUpdateVehicle(data, cb)
 end)
 
-RegisterNUICallback('searchVeículos', function(data, cb)
+local function handleSearchVehicles(data, cb)
     if not MDTOpen then
-        cb({ vehicles = {}, bolos = {} })
+        cb({ vehicles = {}, bolos = {}, page = 1, limit = data and data.limit or 25, total = 0, hasMore = false })
         return
     end
 
@@ -113,29 +113,12 @@ RegisterNUICallback('searchVeículos', function(data, cb)
     vehicleSearchState.lastAt = now
     vehicleSearchState.lastResult = result or { vehicles = {}, bolos = {}, page = data and data.page or 1, limit = data and data.limit or 25, total = 0, hasMore = false }
     cb(vehicleSearchState.lastResult)
-end)
+end
 
-RegisterNUICallback('searchVehicles', function(data, cb)
-    if not MDTOpen then
-        cb({ vehicles = {}, bolos = {}, page = 1, limit = data and data.limit or 25, total = 0, hasMore = false })
-        return
-    end
+RegisterNUICallback('searchVehicles', handleSearchVehicles)
+RegisterNUICallback('searchVeículos', handleSearchVehicles)
 
-    local query = data and data.query or ''
-    if query == '' then
-        cb({ vehicles = {}, bolos = {}, page = 1, limit = data and data.limit or 25, total = 0, hasMore = false })
-        return
-    end
-
-    local result = ps.callback(resourceName .. ':server:SearchVehicles', {
-        query = query,
-        page = data and data.page or 1,
-        limit = data and data.limit or nil
-    })
-    cb(result or { vehicles = {}, bolos = {}, page = data and data.page or 1, limit = data and data.limit or 25, total = 0, hasMore = false })
-end)
-
-RegisterNUICallback('getReportsByPlate', function(data, cb)
+local function handleGetReportsByPlate(data, cb)
     if not MDTOpen then
         cb({ success = false, reports = {} })
         return
@@ -148,19 +131,7 @@ RegisterNUICallback('getReportsByPlate', function(data, cb)
 
     local result = ps.callback(resourceName .. ':server:getReportsByPlate', data.plate)
     cb({ success = true, reports = result or {} })
-end)
+end
 
-RegisterNUICallback('getReportsByPlaca', function(data, cb)
-    if not MDTOpen then
-        cb({ success = false, reports = {} })
-        return
-    end
-
-    if type(data) ~= 'table' or not data.plate then
-        cb({ success = false, reports = {} })
-        return
-    end
-
-    local result = ps.callback(resourceName .. ':server:getReportsByPlate', data.plate)
-    cb({ success = true, reports = result or {} })
-end)
+RegisterNUICallback('getReportsByPlate', handleGetReportsByPlate)
+RegisterNUICallback('getReportsByPlaca', handleGetReportsByPlate)

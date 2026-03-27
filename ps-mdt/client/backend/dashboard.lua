@@ -140,25 +140,18 @@ end)
 
 
 -- ACTIVE WARRANTS -----------------------------------------
-RegisterNUICallback('getActiveWarrants', function(_, cb)
+local function handleGetActiveWarrants(_, cb)
     if not MDTOpen then
         cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
     local activeWarrants = ps.callback(resourceName .. ':server:getActiveWarrants')
-
     -- ps.debug('[getActiveWarrants] Triggered NUI callback on client',activeWarrants)
     cb(activeWarrants)
-end)
+end
 
-RegisterNUICallback('getAtivoWarrants', function(_, cb)
-    if not MDTOpen then
-        cb({ success = false, message = 'O MDT não está aberto' })
-        return
-    end
-    local activeWarrants = ps.callback(resourceName .. ':server:getActiveWarrants')
-    cb(activeWarrants)
-end)
+RegisterNUICallback('getActiveWarrants', handleGetActiveWarrants)
+RegisterNUICallback('getAtivoWarrants', handleGetActiveWarrants)
 
 -- View Warrant
 RegisterNUICallback('viewWarrant', function(data, cb)
@@ -217,23 +210,17 @@ end)
 
 -- ACTIVE BOLOS ---------------------------------------
 
-RegisterNUICallback('getActiveBolos', function(_, cb)
+local function handleGetActiveBolos(_, cb)
     if not MDTOpen then
         cb({ success = false, message = 'O MDT não está aberto' })
         return
     end
     local activeBolos = ps.callback(resourceName .. ':server:getActiveBolos')
     cb(activeBolos)
-end)
+end
 
-RegisterNUICallback('getAtivoBolos', function(_, cb)
-    if not MDTOpen then
-        cb({ success = false, message = 'O MDT não está aberto' })
-        return
-    end
-    local activeBolos = ps.callback(resourceName .. ':server:getActiveBolos')
-    cb(activeBolos)
-end)
+RegisterNUICallback('getActiveBolos', handleGetActiveBolos)
+RegisterNUICallback('getAtivoBolos', handleGetActiveBolos)
 
 -- View Report
 RegisterNUICallback('viewReport', function(data, cb)
@@ -244,7 +231,7 @@ end)
 
 -- ACTIVE UNITS ---------------------------------------
 
-RegisterNUICallback('getActiveUnits', function(_, cb)
+local function handleGetActiveUnits(_, cb)
     if not MDTOpen then
         cb({ success = false, message = 'O MDT não está aberto' })
         return
@@ -252,16 +239,10 @@ RegisterNUICallback('getActiveUnits', function(_, cb)
     local activeUnits = ps.callback(resourceName .. ':server:getActiveUnits')
     -- ps.debug('[getActiveUnits] Active Units Data:', activeUnits)
     cb(activeUnits)
-end)
+end
 
-RegisterNUICallback('getAtivoUnits', function(_, cb)
-    if not MDTOpen then
-        cb({ success = false, message = 'O MDT não está aberto' })
-        return
-    end
-    local activeUnits = ps.callback(resourceName .. ':server:getActiveUnits')
-    cb(activeUnits)
-end)
+RegisterNUICallback('getActiveUnits', handleGetActiveUnits)
+RegisterNUICallback('getAtivoUnits', handleGetActiveUnits)
 
 
 -- DISPATCH -------------------------------------------
