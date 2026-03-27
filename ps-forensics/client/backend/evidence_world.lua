@@ -315,7 +315,7 @@ local lastBloodTime = 0
 AddEventHandler('CEventNetworkEntityDamage', function(victim, attacker, weaponHash, isFatal)
     if not Config.WorldEvidence or not Config.WorldEvidence.Enabled then return end
     if victim ~= PlayerPedId() then return end
-    if IsPedDead(PlayerPedId()) then return end
+    if IsEntityDead(PlayerPedId()) then return end
     if IsPedSwimming(PlayerPedId()) then return end
 
     -- Cooldown global para sangue
@@ -438,7 +438,7 @@ CreateThread(function()
         end
 
         local ped = PlayerPedId()
-        if IsPedDead(ped) or IsPedSwimming(ped) then
+        if IsEntityDead(ped) or IsPedSwimming(ped) then
             lastAmmoState = { weapon = 0, clipAmmo = -1, totalAmmo = -1, hasReliableClip = false }
             goto continue
         end
@@ -511,7 +511,7 @@ AddEventHandler('CEventGunShot', function(witnesses, ped)
     if not Config.WorldEvidence.AllowBulletHoles then return end
     if ped ~= PlayerPedId() then return end
     if IsPedSwimming(ped) then return end
-    if IsPedDead(ped) then return end
+    if IsEntityDead(ped) then return end
 
     local weapon = GetSelectedPedWeapon(ped)
     if isWeaponBlacklisted(weapon) then return end
