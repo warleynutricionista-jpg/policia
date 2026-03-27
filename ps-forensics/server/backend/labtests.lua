@@ -25,6 +25,18 @@ local REQUIRED_ITEM_BY_TEST = {
     teste_sangue_presuntivo = Config.Items.blood_reagent,
 }
 
+local ACTION_BY_TEST = {
+    residuo_polvora_maos = 'run_gsr_test',
+    residuo_polvora_roupa = 'run_gsr_test',
+    residuo_polvora_arma = 'run_gsr_test',
+    residuo_polvora_veiculo = 'run_gsr_test',
+    teste_droga_presuntivo = 'run_drug_test',
+    analise_substancia = 'run_drug_test',
+    teste_sangue_presuntivo = 'run_blood_test',
+    coleta_digital = 'collect_fingerprint_sequence',
+    coleta_dna = 'collect_biological',
+}
+
 local VALID_RESULT_LEVELS = {
     pendente = true,
     presumido = true,
@@ -134,9 +146,11 @@ lib.callback.register(resourceName .. ':server:requestLabTest', function(source,
         return { success = false, error = linksError }
     end
 
-    local requiredItem = REQUIRED_ITEM_BY_TEST[data.test_type]
-    if not hasRequiredItem(src, requiredItem) then
-        return { success = false, error = L('lab.errors.missing_required_item', requiredItem) }
+    local actionName = ACTION_BY_TEST[data.test_type]
+    local validation = ValidateAndConsumeForensicAction(src, actionName or 'open_forensic_toolkit')
+    if not validation.success then
+        local requiredItem = REQUIRED_ITEM_BY_TEST[data.test_type] or 'kit'
+        return { success = false, error = validation.error or L('lab.errors.missing_required_item', requiredItem) }
     end
 
     local processingSeconds = Config.TestProcessingTimes[data.test_type] or 0
@@ -201,9 +215,11 @@ lib.callback.register(resourceName .. ':server:performLabTest', function(source,
         return { success = false, error = L('lab.errors.already_completed') }
     end
 
-    local requiredItem = REQUIRED_ITEM_BY_TEST[test.test_type]
-    if not hasRequiredItem(src, requiredItem) then
-        return { success = false, error = L('lab.errors.missing_required_item', requiredItem) }
+    local actionName = ACTION_BY_TEST[test.test_type]
+    local validation = ValidateAndConsumeForensicAction(src, actionName or 'open_forensic_toolkit')
+    if not validation.success then
+        local requiredItem = REQUIRED_ITEM_BY_TEST[test.test_type] or 'kit'
+        return { success = false, error = validation.error or L('lab.errors.missing_required_item', requiredItem) }
     end
 
     local processingSeconds = tonumber(test.processing_time_seconds)

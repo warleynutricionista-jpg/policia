@@ -82,6 +82,16 @@ function OpenForensicsUI(tab)
         return
     end
 
+    local itemCheck = lib.callback.await(resourceName .. ':server:validateActionItems', false, 'open_tablet')
+    if not itemCheck or not itemCheck.success then
+        lib.notify({
+            title = L('ui.system_name'),
+            description = itemCheck and itemCheck.error or 'Tablet forense obrigatório para abrir o painel.',
+            type = 'error',
+        })
+        return
+    end
+
     local jobName, grade, gradeName = getPlayerJob()
     local roleName, roleConfig = ForensicUtils.GetPlayerRole(jobName, grade, gradeName)
 

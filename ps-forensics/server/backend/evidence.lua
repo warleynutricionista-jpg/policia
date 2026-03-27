@@ -336,9 +336,18 @@ lib.callback.register(resourceName .. ':server:collectEvidence', function(source
         return { success = false, error = L('evidence.errors.invalid_photo_url') }
     end
 
-    local requiredItem = requiredItemByType[evidenceType] or Config.Items.forensic_kit
-    if not hasRequiredItem(src, requiredItem) then
-        return { success = false, error = L('evidence.errors.missing_required_item', requiredItem) }
+    local actionName = 'collect_evidence'
+    if evidenceType == 'sangue' or evidenceType == 'tecido_biologico' or evidenceType == 'fluido_biologico' then
+        actionName = 'collect_biological'
+    elseif evidenceType == 'impressao_digital' then
+        actionName = 'collect_fingerprint_sequence'
+    elseif evidenceType == 'capsula' or evidenceType == 'projetil' or evidenceType == 'arma_fogo' then
+        actionName = 'collect_ballistic'
+    end
+
+    local itemValidation = ValidateAndConsumeForensicAction(src, actionName)
+    if not itemValidation.success then
+        return { success = false, error = itemValidation.error or L('evidence.errors.missing_required_item', 'item') }
     end
 
     if sceneId then
@@ -407,7 +416,7 @@ lib.callback.register(resourceName .. ':server:collectEvidence', function(source
         data.x or 0.0, data.y or 0.0, data.z or 0.0,
         playerData.citizenid,
         playerData.name,
-        data.collection_method or 'Manual',
+        (data.collection_method or 'Manual') .. (' | Itens: %s'):format(json.encode(itemValidation.usedItems or {})),
         sealNumber,
         photoUrl,
         data.linked_citizenid or nil,
@@ -494,7 +503,8 @@ lib.callback.register(resourceName .. ':server:collectEvidence', function(source
         sceneId = sceneId,
         caseId = caseId,
         reportId = reportId,
-        requiredItem = requiredItem,
+        actionName = actionName,
+        usedItems = itemValidation.usedItems,
     })
 
     TriggerEvent('ps-forensics:server:onEvidenceCollect', {

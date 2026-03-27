@@ -187,9 +187,13 @@ lib.callback.register(resourceName .. ':server:collectDNASample', function(sourc
         end
     end
 
-    local requiredItem = requiredItemBySource[sourceType] or Config.Items.dna_swab
-    if not hasRequiredItem(src, requiredItem) then
-        return { success = false, error = L('dna.errors.missing_required_item', requiredItem) }
+    local actionName = 'collect_biological'
+    if sourceType == 'arma' or sourceType == 'veiculo' then
+        actionName = 'collect_ballistic'
+    end
+    local itemValidation = ValidateAndConsumeForensicAction(src, actionName)
+    if not itemValidation.success then
+        return { success = false, error = itemValidation.error }
     end
 
     local sampleHash = nil
@@ -219,7 +223,8 @@ lib.callback.register(resourceName .. ':server:collectDNASample', function(sourc
     ForensicAuditLog(src, 'dna_sample_collected', 'dna', sampleId, {
         source_type = sourceType,
         linkedCitizenId = linkedCitizenId,
-        requiredItem = requiredItem,
+        actionName = actionName,
+        usedItems = itemValidation.usedItems,
     })
 
     return { success = true, id = sampleId }

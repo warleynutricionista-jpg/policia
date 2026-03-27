@@ -123,7 +123,14 @@ local function giveCitationItem(src, citizenId, fine, reportId)
         date = date,
         incidentId = '#' .. (reportId or 'N/A'),
         officer = OfficerFullName,
+        issuedBy = ps.getIdentifier(src) or src,
     }
+
+    local citationValidation = ValidateCitationIssueItem(src)
+    if not citationValidation.success then
+        ps.notify(src, citationValidation.error or 'Você não possui item de citação.', 'error')
+        return false
+    end
 
     -- Try ox_inventory first (QBox default), then fallback to qb-inventory
     local success = false
@@ -146,6 +153,22 @@ local function giveCitationItem(src, citizenId, fine, reportId)
 
     if success then
         ps.notify(src, PlayerName .. ' (' .. citizenId .. ') recebeu uma citação!', 'success')
+        if reportId then
+            pcall(function()
+                MySQL.update.await(
+                    "UPDATE mdt_reports SET charges = JSON_SET(COALESCE(NULLIF(charges, ''), '{}'), '$.citation_issued_at', ?, '$.citation_issued_by', ?, '$.citation_item', ?) WHERE id = ?",
+                    { os.date('%Y-%m-%d %H:%M:%S'), tostring(ps.getIdentifier(src) or src), citationValidation.itemName, tonumber(reportId) }
+                )
+            end)
+        end
+        if ps.auditLog then
+            ps.auditLog(src, 'citation_issued', 'citizen', citizenId, {
+                reportId = reportId,
+                fine = fine,
+                item = citationValidation.itemName,
+                consumed = citationValidation.consumed,
+            })
+        end
     end
 
     return success

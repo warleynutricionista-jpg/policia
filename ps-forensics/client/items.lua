@@ -87,6 +87,28 @@ exports('useForensicItem', function(data, slot)
         return
     end
 
+    local preAction = ({
+        forensic_tablet = 'open_tablet',
+        forensic_kit = 'open_forensic_toolkit',
+        evidence_marker = 'place_evidence_marker',
+        forensic_camera = 'capture_evidence_photo',
+        evidence_tag = 'tag_evidence',
+        evidence_seal = 'seal_evidence',
+        forensic_flashlight = 'scene_dark_search',
+    })[itemName]
+
+    if preAction then
+        local check = lib.callback.await(resourceName .. ':server:validateActionItems', false, preAction)
+        if not check or not check.success then
+            lib.notify({
+                title = L('ui.system_name'),
+                description = check and check.error or 'Item obrigatório não encontrado.',
+                type = 'error',
+            })
+            return
+        end
+    end
+
     if not playItemAnimation(config) then
         return
     end

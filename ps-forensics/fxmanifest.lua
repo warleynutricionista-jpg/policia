@@ -24,11 +24,13 @@ shared_scripts {
     'config.lua',
     'shared/locale.lua',
     'shared/utils.lua',
+    'shared/items.lua',
     -- Mapeamento de imagens (acessível em client e server)
     'data/evidence_images.lua',
 }
 
 client_scripts {
+    'client/items.lua',
     'client/main.lua',
     'client/backend/*.lua',
 }
@@ -37,6 +39,7 @@ server_scripts {
     '@oxmysql/lib/MySQL.lua',
     'server/schema.lua',
     'server/auth.lua',
+    'server/items.lua',
     'server/backend/*.lua',
 }
 

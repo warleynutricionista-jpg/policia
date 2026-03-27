@@ -28,6 +28,7 @@ client_scripts {
 server_scripts {
   '@oxmysql/lib/MySQL.lua',
   'server/schema.lua',
+  'server/items.lua',
   'server/*.lua',
   'server/backend/*.lua'
 }
