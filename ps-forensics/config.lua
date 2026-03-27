@@ -282,6 +282,14 @@ Config.WorldEvidence = {
         fragmento_veiculo = 500,
     },
 
+
+    -- Distância máxima entre jogador e coordenada enviada no spawn.
+    -- Protege contra injeção client-side de evidências em pontos remotos.
+    MaxSpawnDistanceFromPlayer = 20.0,
+
+    -- Limite mínimo (ms) entre solicitações de spawn por jogador no servidor.
+    ServerSpawnRateLimitMs = 250,
+
     -- Intervalo de polling para detectar queda de munição (cápsula)
     -- Menor = mais responsivo, porém mais uso de CPU no client.
     -- Recomendado para servidores médios: 180~250ms
@@ -355,4 +363,11 @@ Config.WorldEvidence = {
         ['AMMO_SHOTGUN'] = '12-gauge',
         ['AMMO_SNIPER']  = 'Calibre pesado',
     },
+}
+
+
+-- Política de retenção de evidências persistentes (não-world)
+Config.PersistencePolicy = {
+    forensicEvidenceRetentionDays = 180,
+    cleanupEnabled = false, -- por padrão não remove material forense automaticamente
 }

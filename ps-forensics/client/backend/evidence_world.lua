@@ -28,22 +28,43 @@ local evidenceZones      = {}    -- id -> ox_target zone handle
 local flashlightActive   = false -- lanterna forense ligada?
 local isWorldEvidenceReady = false
 local loadedTextureDicts = {}
+local failedTextureDicts = {}
 
 -- Cooldowns por tipo (evitar spam de eventos)
 local lastSpawnByType = {}
 
 local function ensureTextureDict(dict)
     if not dict or dict == '' then return false end
+
+    local now = GetGameTimer()
     if loadedTextureDicts[dict] then
         return true
     end
-    RequestStreamedTextureDict(dict, false)
-    local timeout = GetGameTimer() + 1500
-    while not HasStreamedTextureDictLoaded(dict) and GetGameTimer() < timeout do
-        Wait(0)
+
+    local failedAt = failedTextureDicts[dict]
+    if failedAt and (now - failedAt) < 30000 then
+        return false
     end
-    loadedTextureDicts[dict] = HasStreamedTextureDictLoaded(dict)
-    return loadedTextureDicts[dict]
+
+    RequestStreamedTextureDict(dict, false)
+
+    local timeout = now + 1000
+    while not HasStreamedTextureDictLoaded(dict) and GetGameTimer() < timeout do
+        Wait(10)
+    end
+
+    if HasStreamedTextureDictLoaded(dict) then
+        loadedTextureDicts[dict] = true
+        failedTextureDicts[dict] = nil
+        return true
+    end
+
+    failedTextureDicts[dict] = now
+    if Config.Debug then
+        print(('[%s] WorldEvidence: texture dict "%s" falhou (timeout). Aplicando fallback visual.'):format(resourceName, dict))
+    end
+
+    return false
 end
 
 local function getEvidenceVisual(typeName)
@@ -57,8 +78,9 @@ end
 -- São globais dentro do mesmo resource
 
 local function canCollect()
-    -- Qualquer policial com acesso forense pode coletar
-    return type(hasAccess) == 'function' and hasAccess()
+    return (ForensicsAccess and ForensicsAccess.hasAccess and ForensicsAccess.hasAccess())
+        or (type(hasAccess) == 'function' and hasAccess())
+        or false
 end
 
 -- ============================================================
@@ -549,25 +571,30 @@ end)
 
 CreateThread(function()
     while true do
-        Wait(0)
         local pedCoords = GetEntityCoords(PlayerPedId())
-        local hasNearby = false
+        local nearestDistance = math.huge
+        local renderCount = 0
 
         for _, evData in pairs(worldEvidenceCache) do
             if evData.coords then
                 local dist = #(pedCoords - vec3(evData.coords.x, evData.coords.y, evData.coords.z))
+                if dist < nearestDistance then
+                    nearestDistance = dist
+                end
+
                 if dist <= 25.0 then
-                    hasNearby = true
                     local visualCfg = getEvidenceVisual(evData.type)
                     local canDraw = (not visualCfg or not visualCfg.requiresReveal or evData.revealed == true or flashlightActive)
 
                     if canDraw then
+                        renderCount = renderCount + 1
                         local markerType = visualCfg and visualCfg.fallbackMarker or 27
                         DrawMarker(markerType, evData.coords.x, evData.coords.y, evData.coords.z + 0.02,
                             0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                             0.18, 0.18, 0.18, 255, 255, 255, 100, false, true, 2, nil, nil, false)
 
-                        if visualCfg and ensureTextureDict(visualCfg.dict) then
+                        local dictLoaded = visualCfg and visualCfg.dict and ensureTextureDict(visualCfg.dict)
+                        if dictLoaded then
                             SetDrawOrigin(evData.coords.x, evData.coords.y, evData.coords.z + 0.05, 0)
                             DrawSprite(visualCfg.dict, visualCfg.texture or visualCfg.dict, 0.0, 0.0, 0.025, 0.045, 0.0, 255, 255, 255, 225)
                             ClearDrawOrigin()
@@ -577,8 +604,14 @@ CreateThread(function()
             end
         end
 
-        if not hasNearby then
-            Wait(300)
+        if renderCount > 0 and nearestDistance <= 7.0 then
+            Wait(0)
+        elseif renderCount > 0 then
+            Wait(35)
+        elseif nearestDistance <= 60.0 then
+            Wait(180)
+        else
+            Wait(600)
         end
     end
 end)

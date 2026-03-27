@@ -117,10 +117,18 @@ RegisterNetEvent('ps-forensics:server:LabTestComplete', function(evidenceId, res
 end)
 
 local function cleanupOldScenes()
-    local affectedRows = MySQL.update.await('DELETE FROM forensic_evidence WHERE created_at < NOW() - INTERVAL 48 HOUR') or 0
+    local policy = Config.PersistencePolicy or {}
+    if policy.cleanupEnabled ~= true then
+        return
+    end
+
+    local days = tonumber(policy.forensicEvidenceRetentionDays) or 180
+    local affectedRows = MySQL.update.await(
+        ([[DELETE FROM forensic_evidence WHERE created_at < NOW() - INTERVAL %d DAY AND status IN ('descartada', 'devolvida')]]):format(days)
+    ) or 0
 
     if affectedRows > 0 then
-        print(('^3[Police-Bridge] Limpeza de %d evidências antigas concluída.^7'):format(affectedRows))
+        print(('^3[Police-Bridge] Limpeza conservadora concluiu %d registros descartáveis (%d dias).^7'):format(affectedRows, days))
     end
 end
 
