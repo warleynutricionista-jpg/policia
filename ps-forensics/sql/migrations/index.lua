@@ -8,4 +8,5 @@ return {
     '2026-03-26_forensics_investigative_base_and_weapon_registry.sql',
     '2026-03-26_forensics_deduplication_and_integrity.sql',
     '2026-03-27_forensics_world_evidence.sql',
+    '2026-03-27_forensics_aggressive_mdt_bridge.sql',
 }

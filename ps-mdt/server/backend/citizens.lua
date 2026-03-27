@@ -138,6 +138,69 @@ local function buildSearchLike(search)
     return '%' .. escaped:lower() .. '%'
 end
 
+ps.registerCallback(resourceName .. ':server:lookupCitizenIdentity', function(source, payload)
+    local src = source
+    if not CheckAuth(src) then return nil end
+
+    local query = normalizeSearchQuery(type(payload) == 'table' and (payload.query or payload.citizenid or payload.name) or payload)
+    if not query then return nil end
+
+    local citizen = MySQL.single.await([[
+        SELECT mp.citizenid,
+               mp.fullname,
+               JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')) AS firstname,
+               JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname')) AS lastname,
+               JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.phone')) AS phone,
+               JSON_UNQUOTE(JSON_EXTRACT(p.job, '$.label')) AS job_label
+        FROM mdt_profiles mp
+        LEFT JOIN players p
+            ON CONVERT(p.citizenid USING utf8mb4) COLLATE utf8mb4_general_ci = CONVERT(mp.citizenid USING utf8mb4) COLLATE utf8mb4_general_ci
+        WHERE mp.citizenid = ?
+        LIMIT 1
+    ]], { query })
+
+    if not citizen then
+        local like = buildSearchLike(query)
+        citizen = MySQL.single.await([[
+            SELECT mp.citizenid,
+                   mp.fullname,
+                   JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')) AS firstname,
+                   JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname')) AS lastname,
+                   JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.phone')) AS phone,
+                   JSON_UNQUOTE(JSON_EXTRACT(p.job, '$.label')) AS job_label
+            FROM mdt_profiles mp
+            LEFT JOIN players p
+                ON CONVERT(p.citizenid USING utf8mb4) COLLATE utf8mb4_general_ci = CONVERT(mp.citizenid USING utf8mb4) COLLATE utf8mb4_general_ci
+            WHERE LOWER(mp.fullname) LIKE ? ESCAPE '\\'
+               OR LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname'))) LIKE ? ESCAPE '\\'
+               OR LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname'))) LIKE ? ESCAPE '\\'
+               OR LOWER(CONCAT(
+                    COALESCE(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.firstname')), ''),
+                    ' ',
+                    COALESCE(JSON_UNQUOTE(JSON_EXTRACT(p.charinfo, '$.lastname')), '')
+               )) LIKE ? ESCAPE '\\'
+            ORDER BY mp.id DESC
+            LIMIT 1
+        ]], { like, like, like, like })
+    end
+
+    if not citizen then return nil end
+
+    local resolvedName = citizen.fullname
+    if (not resolvedName or resolvedName == '') and (citizen.firstname or citizen.lastname) then
+        resolvedName = ('%s %s'):format(citizen.firstname or '', citizen.lastname or ''):gsub('^%s*(.-)%s*$', '%1')
+    end
+
+    return {
+        citizenid = citizen.citizenid,
+        name = resolvedName or 'Desconhecido',
+        firstname = citizen.firstname or nil,
+        lastname = citizen.lastname or nil,
+        phone = citizen.phone or nil,
+        job = citizen.job_label or nil,
+    }
+end)
+
 -- getCitizens - pulls citizens from database with pagination support
 ps.registerCallback(resourceName .. ':server:getCitizens', function(source, payload)
     local src = source

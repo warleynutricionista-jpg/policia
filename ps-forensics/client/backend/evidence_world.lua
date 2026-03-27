@@ -537,8 +537,9 @@ local lastFootstepTime = 0
 AddEventHandler('CEventFootStepHeard', function(witnesses, ped)
     if not Config.WorldEvidence or not Config.WorldEvidence.Enabled then return end
     if not Config.WorldEvidence.AllowFootprints then return end
+    if not ped or ped == 0 or not DoesEntityExist(ped) then return end
     if ped ~= PlayerPedId() then return end
-    if IsPedSwimming(ped) or IsPedDead(ped) then return end
+    if IsPedSwimming(ped) or IsEntityDead(ped) then return end
 
     -- Apenas quando correndo (velocidade mínima configurável)
     local minSpeed = Config.WorldEvidence.FootprintMinSpeed or 6.5

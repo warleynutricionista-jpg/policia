@@ -320,6 +320,16 @@ RegisterNUICallback('searchDNAByCitizen', function(data, cb)
     cb(result or {})
 end)
 
+RegisterNUICallback('lookupCitizenProfile', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:lookupCitizenProfile', false, data.query or data.citizenid or data.name)
+    cb(result or {})
+end)
+
+RegisterNUICallback('lookupWeaponRegistry', function(data, cb)
+    local result = lib.callback.await(resourceName .. ':server:lookupWeaponRegistry', false, data.serial)
+    cb(result or {})
+end)
+
 -- Balística
 RegisterNUICallback('registerBallistic', function(data, cb)
     local result = lib.callback.await(resourceName .. ':server:registerBallistic', false, data)

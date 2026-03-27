@@ -1327,11 +1327,86 @@ function showNotification(message, type) {
     }, 4000);
 }
 
+function debounce(fn, delay = 300) {
+    let timer = null;
+    return (...args) => {
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), delay);
+    };
+}
+
+function updateLookupHint(el, text, isError = false) {
+    if (!el) return;
+    el.textContent = text || '';
+    el.style.color = isError ? '#fca5a5' : '#93c5fd';
+}
+
+function initCitizenAutofill(citizenInputId, nameInputId, hintId) {
+    const citizenInput = getEl(citizenInputId);
+    const nameInput = getEl(nameInputId);
+    const hint = getEl(hintId);
+    if (!citizenInput || !nameInput || !hint) return;
+
+    const doLookup = debounce(async () => {
+        const query = citizenInput.value?.trim();
+        if (!query || query.length < 2) {
+            updateLookupHint(hint, 'Digite pelo menos 2 caracteres para busca automática.');
+            return;
+        }
+
+        updateLookupHint(hint, 'Buscando cidadão no MDT...');
+        const result = await fetchNUI('lookupCitizenProfile', { query });
+        if (!result || !result.citizenid) {
+            updateLookupHint(hint, 'Nenhum cidadão encontrado para este identificador.', true);
+            return;
+        }
+
+        citizenInput.value = result.citizenid;
+        if (!nameInput.value || nameInput.value.trim() === '') {
+            nameInput.value = result.name || '';
+        }
+        const phone = result.phone ? ` | Tel: ${result.phone}` : '';
+        updateLookupHint(hint, `Auto-fill: ${result.name || result.citizenid}${phone}`);
+    }, 280);
+
+    citizenInput.addEventListener('input', doLookup);
+}
+
+function initWeaponSerialAutofill(serialInputId, hintId) {
+    const serialInput = getEl(serialInputId);
+    const hint = getEl(hintId);
+    if (!serialInput || !hint) return;
+
+    const doLookup = debounce(async () => {
+        const serial = serialInput.value?.trim();
+        if (!serial || serial.length < 3) {
+            updateLookupHint(hint, 'Digite pelo menos 3 caracteres do serial.');
+            return;
+        }
+
+        updateLookupHint(hint, 'Consultando registro de arma...');
+        const result = await fetchNUI('lookupWeaponRegistry', { serial });
+        if (!result || !result.serial) {
+            updateLookupHint(hint, 'Serial não encontrado no registro legal.', true);
+            return;
+        }
+
+        serialInput.value = result.serial;
+        const owner = result.owner_name || result.owner_citizenid || 'Sem proprietário';
+        const model = result.weapon_model || 'Modelo não informado';
+        updateLookupHint(hint, `Auto-fill: ${model} | Proprietário: ${owner}`);
+    }, 280);
+
+    serialInput.addEventListener('input', doLookup);
+}
+
 function showRegisterFingerprint() {
     showModal('Cadastrar Impressão Digital', `
         <div class="form-group"><label>CitizenID</label><input type="text" id="fpCitizenId" placeholder="CitizenID do cidadão"></div>
         <div class="form-group"><label>Nome do Cidadão</label><input type="text" id="fpCitizenName" placeholder="Nome completo"></div>
+        <div id="fpCitizenLookupHint" class="lookup-hint">Digite CitizenID ou nome para auto-preenchimento.</div>
     `, `<button class="btn-primary" onclick="doRegisterFingerprint()">Cadastrar</button>`);
+    initCitizenAutofill('fpCitizenId', 'fpCitizenName', 'fpCitizenLookupHint');
 }
 
 async function doRegisterFingerprint() {
@@ -1361,6 +1436,7 @@ function showRegisterDNA() {
     showModal('Cadastrar Perfil Genético', `
         <div class="form-group"><label>CitizenID</label><input type="text" id="dnaCitizenId" placeholder="CitizenID do cidadão"></div>
         <div class="form-group"><label>Nome do Cidadão</label><input type="text" id="dnaCitizenName" placeholder="Nome completo"></div>
+        <div id="dnaCitizenLookupHint" class="lookup-hint">Digite CitizenID ou nome para auto-preenchimento.</div>
         <div class="form-group"><label>Tipo Sanguíneo</label>
             <select id="dnaBloodType">
                 <option value="Desconhecido">Desconhecido</option>
@@ -1371,6 +1447,7 @@ function showRegisterDNA() {
             </select>
         </div>
     `, `<button class="btn-primary" onclick="doRegisterDNA()">Cadastrar</button>`);
+    initCitizenAutofill('dnaCitizenId', 'dnaCitizenName', 'dnaCitizenLookupHint');
 }
 
 async function doRegisterDNA() {
@@ -1401,6 +1478,7 @@ function showCreateAutopsy() {
     showModal('Nova Necropsia', `
         <div class="form-group"><label>Nome da Vítima</label><input type="text" id="autopsyVictimName" placeholder="Nome ou Desconhecido"></div>
         <div class="form-group"><label>CitizenID da Vítima (se identificada)</label><input type="text" id="autopsyVictimCid" placeholder="CitizenID"></div>
+        <div id="autopsyVictimLookupHint" class="lookup-hint">Digite CitizenID ou nome para auto-preenchimento.</div>
         <div class="form-group"><label>Status da Identificação</label>
             <select id="autopsyVictimStatus">
                 <option value="nao_identificado">Não Identificado</option>
@@ -1448,7 +1526,12 @@ function showCreateAutopsy() {
         <div class="form-group"><label>ID da Cena (opcional)</label><input type="number" id="autopsySceneId" placeholder="ID da cena de crime"></div>
         <div class="form-group"><label>ID do Caso MDT (opcional)</label><input type="number" id="autopsyCaseId" placeholder="Número do caso"></div>
     `, `<button class="btn-primary" onclick="doCreateAutopsy()"><i class="fas fa-plus"></i> Criar Necropsia</button>`);
+    initCitizenAutofill('autopsyVictimCid', 'autopsyVictimName', 'autopsyVictimLookupHint');
 }
+
+window.addEventListener('load', function() {
+    initWeaponSerialAutofill('ballisticSearch', 'ballisticLookupHint');
+});
 
 async function doCreateAutopsy() {
     const data = {
