@@ -38,6 +38,7 @@ return {
             forensic_flashlight = 'Forensic flashlight activated.',
             ballistic_kit = 'Ballistic kit prepared.',
             forensic_tablet = 'Forensic tablet connected.',
+            mdtcitation = 'Citation notepad ready to issue via MDT.',
         },
     }
 }

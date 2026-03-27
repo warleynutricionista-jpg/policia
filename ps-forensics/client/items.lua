@@ -21,7 +21,7 @@ local ItemActions = {
     forensic_flashlight = { prop = 'prop_cs_polaroid', duration = 1000, notifyKey = 'items.use.forensic_flashlight' },
     ballistic_kit = { prop = 'prop_idol_case_01', duration = 2600, notifyKey = 'items.use.ballistic_kit' },
     forensic_tablet = { prop = 'prop_cs_tablet', duration = 1500, notifyKey = 'items.use.forensic_tablet', openUi = true },
-    mdtcitation = { prop = 'prop_notepad_01', duration = 1200, notifyKey = 'items.use.evidence_tag' },
+    mdtcitation = { prop = 'prop_notepad_01', duration = 1200, notifyKey = 'items.use.mdtcitation' },
 }
 
 local spawnedMarker = nil
