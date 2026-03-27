@@ -94,6 +94,10 @@ lib.callback.register(resourceName .. ':server:createAutopsy', function(source, 
     local playerData = GetPlayerData(src)
     if not playerData then return { success = false, error = L('scene.errors.player_data_unavailable') } end
     data = data or {}
+    local actionValidation = ValidateAndConsumeForensicAction(src, 'autopsy_exam')
+    if not actionValidation.success then
+        return { success = false, error = actionValidation.error }
+    end
 
     local sceneId = data.scene_id and tonumber(data.scene_id) or nil
     local caseId = data.case_id and tonumber(data.case_id) or nil
@@ -175,6 +179,7 @@ lib.callback.register(resourceName .. ':server:createAutopsy', function(source, 
         caseId = caseId,
         reportId = reportId,
         estimatedTime = estimatedTimeSql,
+        usedItems = actionValidation.usedItems,
     })
 
     return { success = true, id = autopsyId }

@@ -137,9 +137,9 @@ lib.callback.register(resourceName .. ':server:registerBallistic', function(sour
         weaponScratched = 1
     end
 
-    local requiredItem = Config.Items.ballistic_kit
-    if not hasRequiredItem(src, requiredItem) then
-        return { success = false, error = L('ballistics.errors.missing_required_item', requiredItem) }
+    local itemValidation = ValidateAndConsumeForensicAction(src, 'collect_ballistic')
+    if not itemValidation.success then
+        return { success = false, error = itemValidation.error or L('ballistics.errors.missing_required_item', Config.Items.ballistic_kit) }
     end
 
     if evidenceId then
@@ -255,6 +255,7 @@ lib.callback.register(resourceName .. ':server:registerBallistic', function(sour
         weaponSerial = weaponSerial,
         caseId = caseId,
         reportId = reportId,
+        usedItems = itemValidation.usedItems,
     })
 
     return {

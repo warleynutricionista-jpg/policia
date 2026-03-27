@@ -207,26 +207,22 @@ lib.callback.register(resourceName .. ':server:collectWorldEvidence', function(s
         return { success = false, error = L('scene.errors.player_data_unavailable') }
     end
 
-    -- Verificar item requerido para coleta
-    local requiredItemByType = {
-        sangue              = Config.Items and Config.Items.blood_reagent,
-        impressao_digital   = Config.Items and Config.Items.fingerprint_kit,
-        capsula             = Config.Items and Config.Items.forensic_tweezers,
-        projetil            = Config.Items and Config.Items.ballistic_kit,
-        residuo_polvora     = Config.Items and Config.Items.gsr_kit,
-        residuo_droga       = Config.Items and Config.Items.drug_test_kit,
-        substancia_po       = Config.Items and Config.Items.drug_test_kit,
-    }
+    local actionName = 'collect_evidence'
+    if evData.type == 'sangue' then
+        actionName = 'collect_biological'
+    elseif evData.type == 'impressao_digital' then
+        actionName = 'collect_fingerprint_sequence'
+    elseif evData.type == 'capsula' or evData.type == 'projetil' then
+        actionName = 'collect_ballistic'
+    elseif evData.type == 'residuo_polvora' then
+        actionName = 'run_gsr_test'
+    elseif evData.type == 'residuo_droga' or evData.type == 'substancia_po' then
+        actionName = 'run_drug_test'
+    end
 
-    local requiredItem = requiredItemByType[evData.type]
-        or (Config.Items and Config.Items.forensic_kit)
-        or 'forensic_kit'
-
-    if GetResourceState('ox_inventory') == 'started' then
-        local count = exports.ox_inventory:GetItemCount(src, requiredItem) or 0
-        if count <= 0 then
-            return { success = false, error = L('evidence.errors.missing_required_item', requiredItem) }
-        end
+    local itemValidation = ValidateAndConsumeForensicAction(src, actionName)
+    if not itemValidation.success then
+        return { success = false, error = itemValidation.error }
     end
 
     -- Gerar número de lacre único
@@ -304,25 +300,6 @@ lib.callback.register(resourceName .. ':server:collectWorldEvidence', function(s
         sealNum,
     })
 
-    -- Reduzir durabilidade do item de coleta
-    if GetResourceState('ox_inventory') == 'started' then
-        local ok, items = pcall(function()
-            return exports.ox_inventory:GetInventoryItems(src)
-        end)
-        if ok and items then
-            for _, item in pairs(items) do
-                if item.name == requiredItem then
-                    local curDur = tonumber(item.durability) or 100
-                    local newDur = math.max(0, curDur - 10)
-                    pcall(function()
-                        exports.ox_inventory:SetDurability(src, item.slot, newDur)
-                    end)
-                    break
-                end
-            end
-        end
-    end
-
     -- Remover da memória e notificar clientes
     worldEvidence[evId] = nil
     TriggerClientEvent(resourceName .. ':world:evidenceRemoved', -1, evId)
@@ -334,6 +311,8 @@ lib.callback.register(resourceName .. ':server:collectWorldEvidence', function(s
         category        = evData.category,
         sealNumber      = sealNum,
         sourceType      = evData.source_type,
+        actionName      = actionName,
+        usedItems       = itemValidation.usedItems,
     })
 
     return {

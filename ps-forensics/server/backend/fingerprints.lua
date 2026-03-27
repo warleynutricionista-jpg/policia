@@ -142,6 +142,10 @@ lib.callback.register(resourceName .. ':server:collectFingerprint', function(sou
     end
 
     local linkedCitizenId = data.linked_citizenid
+    local itemValidation = ValidateAndConsumeForensicAction(src, 'collect_fingerprint_sequence')
+    if not itemValidation.success then
+        return { success = false, error = itemValidation.error }
+    end
 
     if evidenceId then
         local evidence = MySQL.single.await('SELECT id, scene_id, linked_citizenid FROM forensic_evidence WHERE id = ?', { evidenceId })
@@ -207,6 +211,7 @@ lib.callback.register(resourceName .. ':server:collectFingerprint', function(sou
         sceneId = sceneId,
         evidenceId = evidenceId,
         linkedCitizenId = linkedCitizenId,
+        usedItems = itemValidation.usedItems,
     })
 
     return { success = true, id = fpId }

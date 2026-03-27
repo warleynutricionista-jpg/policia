@@ -165,6 +165,48 @@ Config.Items = {
     forensic_tablet       = 'forensic_tablet',
 }
 
+Config.ItemActions = Config.ItemActions or {}
+Config.ItemConsumption = {
+    collect_evidence = {
+        evidence_bag = true,
+    },
+    collect_biological = {
+        dna_swab = true,
+        evidence_bag = true,
+    },
+    collect_fingerprint_sequence = {
+        fingerprint_powder = true,
+        fingerprint_tape = true,
+        evidence_bag = true,
+    },
+    run_gsr_test = {
+        gsr_kit = true,
+    },
+    run_drug_test = {
+        drug_test_kit = true,
+    },
+    run_blood_test = {
+        blood_reagent = true,
+    },
+    place_evidence_marker = {
+        evidence_marker = true,
+    },
+    tag_evidence = {
+        evidence_tag = true,
+    },
+    seal_evidence = {
+        evidence_seal = true,
+    },
+    autopsy_exam = {
+        body_bag = true,
+        disposable_gloves = true,
+    },
+}
+
+Config.OptionalItemConsumption = {
+    collect_biological = true,
+}
+
 -- ============================================================
 -- BLIP E MARCADOR DA CENA
 -- ============================================================

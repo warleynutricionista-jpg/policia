@@ -94,9 +94,9 @@ lib.callback.register(resourceName .. ':server:registerDrugAnalysis', function(s
         return { success = false, error = L('drugs.errors.invalid_quantity') }
     end
 
-    local requiredItem = Config.Items.drug_test_kit
-    if not hasRequiredItem(src, requiredItem) then
-        return { success = false, error = L('drugs.errors.missing_required_item', requiredItem) }
+    local itemValidation = ValidateAndConsumeForensicAction(src, 'run_drug_test')
+    if not itemValidation.success then
+        return { success = false, error = itemValidation.error or L('drugs.errors.missing_required_item', Config.Items.drug_test_kit) }
     end
 
     local caseId, reportId, okLink = resolveCaseAndReport(sceneId, evidenceId)
@@ -152,6 +152,7 @@ lib.callback.register(resourceName .. ':server:registerDrugAnalysis', function(s
         sceneId = sceneId,
         caseId = caseId,
         reportId = reportId,
+        usedItems = itemValidation.usedItems,
     })
 
     return { success = true, id = drugId, testResult = testResult }

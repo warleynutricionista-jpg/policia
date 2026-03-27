@@ -173,6 +173,13 @@ Config.Fines = {
     CooldownMs = 30000,   -- Anti-spam cooldown between fines (milliseconds)
 }
 
+Config.CitationItem = {
+    Name = 'mdtcitation',
+    RequireToIssue = true,
+    ConsumeOnIssue = true,
+    ConsumeAmount = 1,
+}
+
 -- Warrant Defaults
 Config.Warrants = {
     DefaultExpiryDays = 7, -- Default warrant expiry when no date is provided
