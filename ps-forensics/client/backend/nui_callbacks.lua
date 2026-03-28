@@ -75,6 +75,7 @@ local directCallbacks = {
     { nui = 'getInvestigationDashboard', server = 'getInvestigationDashboard', args = function(data) return { data.citizenid } end },
 
     { nui = 'getForensicDataByCase', server = 'getForensicDataByCase', args = function(data) return { data.caseId } end },
+    { nui = 'getMDTCases', server = 'getMDTCases', args = function(data) return { data } end },
     { nui = 'getForensicDataByReport', server = 'getForensicDataByReport', args = function(data) return { data.reportId } end },
     { nui = 'getForensicDataByCitizen', server = 'getForensicDataByCitizen', args = function(data) return { data.citizenid } end },
     { nui = 'getForensicDataByWeapon', server = 'getForensicDataByWeapon', args = function(data) return { data.serial } end },
