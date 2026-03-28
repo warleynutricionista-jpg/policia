@@ -60,7 +60,11 @@ lib.callback.register(resourceName .. ':server:createScene', function(source, da
     local caseId = data.case_id and tonumber(data.case_id) or nil
     local reportId = data.report_id and tonumber(data.report_id) or nil
 
-    local sceneId = MySQL.insert.await([[
+    print(('[%s] createScene: classification=%s, location=%s, coords=%.1f,%.1f,%.1f, officer=%s'):format(
+        resourceName, tostring(data.classification), tostring(data.location_name),
+        data.x or 0, data.y or 0, data.z or 0, playerData.citizenid))
+
+    local insertOk, sceneId = pcall(MySQL.insert.await, [[
         INSERT INTO forensic_crime_scenes
         (scene_number, classification, status, location_name, location_x, location_y, location_z,
          perimeter_radius, description, weather_conditions, lighting_conditions,
@@ -81,16 +85,24 @@ lib.callback.register(resourceName .. ':server:createScene', function(source, da
         reportId,
     })
 
+    if not insertOk then
+        print(('[%s] ERRO SQL createScene INSERT: %s'):format(resourceName, tostring(sceneId)))
+        return { success = false, error = 'Erro ao salvar cena de crime no banco de dados.' }
+    end
+
     if not sceneId then
+        print(('[%s] ERRO createScene: INSERT retornou nil (sem ID)'):format(resourceName))
         return { success = false, error = L('scene.errors.create_failed') }
     end
 
+    print(('[%s] createScene: Cena criada com ID=%s'):format(resourceName, tostring(sceneId)))
+
     -- Gerar número da cena
     local sceneNumber = ForensicUtils.GenerateSceneNumber(sceneId)
-    MySQL.update.await('UPDATE forensic_crime_scenes SET scene_number = ? WHERE id = ?', { sceneNumber, sceneId })
+    pcall(MySQL.update.await, 'UPDATE forensic_crime_scenes SET scene_number = ? WHERE id = ?', { sceneNumber, sceneId })
 
     -- Adicionar criador como primeiro respondente
-    ensureScenePersonnel(sceneId, playerData, 'primeiro_respondente', L('scene.logs.creator_first_responder'))
+    pcall(ensureScenePersonnel, sceneId, playerData, 'primeiro_respondente', L('scene.logs.creator_first_responder'))
 
     ForensicAuditLog(src, 'scene_created', 'scene', sceneId, {
         sceneNumber = sceneNumber,

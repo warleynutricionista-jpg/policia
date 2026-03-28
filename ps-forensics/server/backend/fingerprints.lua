@@ -76,17 +76,32 @@ lib.callback.register(resourceName .. ':server:registerFingerprint', function(so
     local resolvedName = citizenName or getCitizenNameFromMDT(citizenid) or L('labels.unknown')
     local actorCitizenId = playerData and playerData.citizenid or 'system'
 
-    EnsureInvestigativeSubject(citizenid, 'Inclusão automática para cadastro de digital', 'forensic_fingerprint_profile', nil, actorCitizenId)
+    local ok1, err1 = pcall(EnsureInvestigativeSubject, citizenid, 'Inclusão automática para cadastro de digital', 'forensic_fingerprint_profile', nil, actorCitizenId)
+    if not ok1 then
+        print(('[%s] AVISO: EnsureInvestigativeSubject falhou (fingerprint): %s'):format(resourceName, tostring(err1)))
+    end
 
-    local insertedId = MySQL.insert.await([[
+    print(('[%s] registerFingerprint: Inserindo perfil para citizenid=%s, nome=%s'):format(resourceName, citizenid, resolvedName))
+
+    local insertOk, insertedId = pcall(MySQL.insert.await, [[
         INSERT INTO forensic_fingerprint_profiles (citizenid, citizen_name, fingerprint_hash, registered_by, created_by)
         VALUES (?, ?, ?, ?, ?)
     ]], { citizenid, resolvedName, hash, actorCitizenId, actorCitizenId })
 
-    local profileCode = insertedId and ('DIG-%08d'):format(insertedId) or nil
-    if insertedId and profileCode then
-        MySQL.update.await('UPDATE forensic_fingerprint_profiles SET fingerprint_code = ? WHERE id = ?', { profileCode, insertedId })
+    if not insertOk then
+        print(('[%s] ERRO SQL registerFingerprint INSERT: %s'):format(resourceName, tostring(insertedId)))
+        return { success = false, error = 'Erro ao salvar perfil de impressão digital no banco de dados.' }
     end
+
+    if not insertedId then
+        print(('[%s] ERRO registerFingerprint: INSERT retornou nil (sem ID)'):format(resourceName))
+        return { success = false, error = 'Falha ao criar registro de impressão digital.' }
+    end
+
+    print(('[%s] registerFingerprint: Perfil criado com ID=%s'):format(resourceName, tostring(insertedId)))
+
+    local profileCode = ('DIG-%08d'):format(insertedId)
+    pcall(MySQL.update.await, 'UPDATE forensic_fingerprint_profiles SET fingerprint_code = ? WHERE id = ?', { profileCode, insertedId })
 
     local retroMatches = MySQL.query.await([[
         SELECT id FROM forensic_fingerprints_collected
@@ -95,7 +110,7 @@ lib.callback.register(resourceName .. ':server:registerFingerprint', function(so
     ]], { hash }) or {}
 
     for _, row in ipairs(retroMatches) do
-        MySQL.update.await([[
+        pcall(MySQL.update.await, [[
             UPDATE forensic_fingerprints_collected
             SET match_status = 'positiva',
                 matched_citizenid = ?,
@@ -107,9 +122,9 @@ lib.callback.register(resourceName .. ':server:registerFingerprint', function(so
         ]], { citizenid, resolvedName, actorCitizenId, row.id })
     end
 
-    EnsureInvestigativeSubject(citizenid, 'Perfil digital forense cadastrado', 'forensic_fingerprint_profile', tostring(insertedId or ''), actorCitizenId)
+    pcall(EnsureInvestigativeSubject, citizenid, 'Perfil digital forense cadastrado', 'forensic_fingerprint_profile', tostring(insertedId), actorCitizenId)
 
-    ForensicAuditLog(src, 'fingerprint_registered', 'fingerprint_profile', nil, { citizenid = citizenid })
+    ForensicAuditLog(src, 'fingerprint_registered', 'fingerprint_profile', insertedId, { citizenid = citizenid })
 
     return { success = true, hash = hash, code = profileCode, retroMatches = #retroMatches }
 end)

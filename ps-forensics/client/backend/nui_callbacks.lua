@@ -22,7 +22,12 @@ local function withProgress(progressDef, handler)
         local ok, result = pcall(handler, data or {})
         if not ok then
             print(('[%s] NUI callback erro com progress: %s'):format(resourceName, tostring(result)))
-            return respond(cb, { success = false, error = 'Falha ao processar operação.' })
+            return respond(cb, { success = false, error = 'Falha ao processar operação. Verifique o console.' })
+        end
+
+        if not result then
+            print(('[%s] NUI callback com progress retornou nil do server'):format(resourceName))
+            return respond(cb, { success = false, error = 'Sem resposta do servidor.' })
         end
 
         respond(cb, result)
@@ -99,6 +104,11 @@ for _, def in ipairs(directCallbacks) do
             return respond(cb, { success = false, error = 'Falha interna ao processar callback.' })
         end
 
+        if result == nil then
+            print(('[%s] NUI callback "%s" retornou nil do server'):format(resourceName, def.nui))
+            return respond(cb, { success = false, error = 'Sem resposta do servidor.' })
+        end
+
         respond(cb, result)
     end)
 end
@@ -109,14 +119,32 @@ RegisterNUICallback('close', function(_, cb)
 end)
 
 RegisterNUICallback('createScene', function(data, cb)
-    local payload = data or {}
-    local coords = GetEntityCoords(PlayerPedId())
-    payload.x, payload.y, payload.z = coords.x, coords.y, coords.z
+    local ok, result = pcall(function()
+        local payload = data or {}
+        local coords = GetEntityCoords(PlayerPedId())
+        payload.x, payload.y, payload.z = coords.x, coords.y, coords.z
 
-    local streetHash = GetStreetNameAtCoord(coords.x, coords.y, coords.z)
-    payload.location_name = payload.location_name or GetStreetNameFromHashKey(streetHash) or L('scene.unknown_location')
+        local streetHash = GetStreetNameAtCoord(coords.x, coords.y, coords.z)
+        payload.location_name = payload.location_name or GetStreetNameFromHashKey(streetHash) or L('scene.unknown_location')
 
-    respond(cb, serverCall('createScene', payload))
+        print(('[%s] NUI createScene -> enviando ao server: classification=%s, location=%s'):format(
+            resourceName, tostring(payload.classification), tostring(payload.location_name)))
+
+        return serverCall('createScene', payload)
+    end)
+
+    if not ok then
+        print(('[%s] NUI callback "createScene" falhou: %s'):format(resourceName, tostring(result)))
+        return respond(cb, { success = false, error = 'Falha ao criar cena de crime. Verifique o console do servidor.' })
+    end
+
+    if not result then
+        print(('[%s] NUI callback "createScene" retornou nil do server'):format(resourceName))
+        return respond(cb, { success = false, error = 'Sem resposta do servidor ao criar cena.' })
+    end
+
+    print(('[%s] NUI createScene <- resposta: success=%s'):format(resourceName, tostring(result.success)))
+    respond(cb, result)
 end)
 
 RegisterNUICallback('collectEvidence', withProgress(function()

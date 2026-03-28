@@ -11,4 +11,5 @@ return {
     '2026-03-27_forensics_aggressive_mdt_bridge.sql',
     '2026-03-28_forensics_mdt_perf_guards.sql',
     '2026-03-28_forensics_evidence_deposit_automation.sql',
+    '2026-03-28_forensics_column_safety.sql',
 }

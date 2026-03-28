@@ -87,16 +87,34 @@ lib.callback.register(resourceName .. ':server:registerDNAProfile', function(sou
     local resolvedName = citizenName or getCitizenNameFromMDT(citizenid) or L('labels.unknown')
 
     local actorCitizenId = playerData and playerData.citizenid or 'system'
-    EnsureInvestigativeSubject(citizenid, 'Inclusão automática para cadastro de DNA', 'forensic_dna_profile', nil, actorCitizenId)
-    local insertedId = MySQL.insert.await([[
+
+    local ok1, err1 = pcall(EnsureInvestigativeSubject, citizenid, 'Inclusão automática para cadastro de DNA', 'forensic_dna_profile', nil, actorCitizenId)
+    if not ok1 then
+        print(('[%s] AVISO: EnsureInvestigativeSubject falhou (DNA): %s'):format(resourceName, tostring(err1)))
+    end
+
+    print(('[%s] registerDNAProfile: Inserindo perfil para citizenid=%s, nome=%s, blood=%s'):format(
+        resourceName, citizenid, resolvedName, tostring(bloodType)))
+
+    local insertOk, insertedId = pcall(MySQL.insert.await, [[
         INSERT INTO forensic_dna_profiles (citizenid, citizen_name, dna_hash, blood_type, registered_by, created_by)
         VALUES (?, ?, ?, ?, ?, ?)
     ]], { citizenid, resolvedName, hash, bloodType or L('labels.unknown'), actorCitizenId, actorCitizenId })
 
-    local dnaCode = insertedId and ('DNA-%08d'):format(insertedId) or nil
-    if insertedId and dnaCode then
-        MySQL.update.await('UPDATE forensic_dna_profiles SET dna_code = ? WHERE id = ?', { dnaCode, insertedId })
+    if not insertOk then
+        print(('[%s] ERRO SQL registerDNAProfile INSERT: %s'):format(resourceName, tostring(insertedId)))
+        return { success = false, error = 'Erro ao salvar perfil de DNA no banco de dados.' }
     end
+
+    if not insertedId then
+        print(('[%s] ERRO registerDNAProfile: INSERT retornou nil (sem ID)'):format(resourceName))
+        return { success = false, error = 'Falha ao criar registro de perfil genético.' }
+    end
+
+    print(('[%s] registerDNAProfile: Perfil criado com ID=%s'):format(resourceName, tostring(insertedId)))
+
+    local dnaCode = ('DNA-%08d'):format(insertedId)
+    pcall(MySQL.update.await, 'UPDATE forensic_dna_profiles SET dna_code = ? WHERE id = ?', { dnaCode, insertedId })
 
     local retroMatches = MySQL.query.await([[
         SELECT id FROM forensic_dna_samples
@@ -105,7 +123,7 @@ lib.callback.register(resourceName .. ':server:registerDNAProfile', function(sou
     ]], { hash }) or {}
 
     for _, row in ipairs(retroMatches) do
-        MySQL.update.await([[
+        pcall(MySQL.update.await, [[
             UPDATE forensic_dna_samples
             SET match_status = 'compativel',
                 matched_citizenid = ?,
@@ -117,9 +135,9 @@ lib.callback.register(resourceName .. ':server:registerDNAProfile', function(sou
         ]], { citizenid, resolvedName, actorCitizenId, row.id })
     end
 
-    EnsureInvestigativeSubject(citizenid, 'Perfil de DNA forense cadastrado', 'forensic_dna_profile', tostring(insertedId or ''), actorCitizenId)
+    pcall(EnsureInvestigativeSubject, citizenid, 'Perfil de DNA forense cadastrado', 'forensic_dna_profile', tostring(insertedId), actorCitizenId)
 
-    ForensicAuditLog(src, 'dna_profile_registered', 'dna_profile', nil, { citizenid = citizenid })
+    ForensicAuditLog(src, 'dna_profile_registered', 'dna_profile', insertedId, { citizenid = citizenid })
 
     return { success = true, hash = hash, code = dnaCode, retroMatches = #retroMatches }
 end)
