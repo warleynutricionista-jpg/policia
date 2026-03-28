@@ -229,17 +229,31 @@ window.addEventListener('message', function(event) {
 // ============================================================
 // FETCH NUI
 // ============================================================
-async function fetchNUI(event, data = {}) {
+async function fetchNUI(event, data = {}, timeoutMs = 30000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
     try {
+        console.log(`[ps-forensics] fetchNUI -> ${event}`, JSON.stringify(data).substring(0, 200));
         const resp = await fetch(`https://ps-forensics/${event}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),
+            signal: controller.signal,
         });
-        return await resp.json();
+        const result = await resp.json();
+        console.log(`[ps-forensics] fetchNUI <- ${event}`, result?.success !== undefined ? `success=${result.success}` : 'raw response');
+        return result;
     } catch (e) {
-        console.error('NUI Fetch error:', e);
+        if (e.name === 'AbortError') {
+            console.error(`[ps-forensics] fetchNUI timeout (${timeoutMs}ms): ${event}`);
+            showNotification(`Tempo limite excedido ao processar: ${event}`, 'error');
+            return { success: false, error: 'Tempo limite excedido. Tente novamente.' };
+        }
+        console.error(`[ps-forensics] fetchNUI error (${event}):`, e);
         return null;
+    } finally {
+        clearTimeout(timer);
     }
 }
 

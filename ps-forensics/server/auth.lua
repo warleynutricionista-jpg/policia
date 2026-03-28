@@ -173,6 +173,24 @@ function EnsureInvestigativeSubject(citizenid, reason, sourceType, sourceId, act
     return true
 end
 
+-- Obter dados básicos de outro jogador (para targets forenses)
+lib.callback.register(GetCurrentResourceName() .. ':server:getTargetPlayerInfo', function(source, targetServerId)
+    local src = source
+    if not CheckForensicAuth(src) then return nil end
+
+    targetServerId = tonumber(targetServerId)
+    if not targetServerId then return nil end
+
+    local targetData = GetPlayerData(targetServerId)
+    if not targetData then return nil end
+
+    return {
+        citizenid = targetData.citizenid,
+        name = targetData.name,
+        job = targetData.job,
+    }
+end)
+
 function IsCitizenInInvestigativeBase(citizenid)
     citizenid = trimToString(citizenid)
     if not citizenid then return false end
