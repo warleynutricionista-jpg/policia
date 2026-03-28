@@ -5,6 +5,10 @@ ForensicItemActions = {
     open_forensic_toolkit = {
         required = { 'forensic_kit' },
     },
+    wear_gloves = {
+        required = { 'disposable_gloves' },
+        consume   = { disposable_gloves = 1 },
+    },
     collect_evidence = {
         required = { 'forensic_kit', 'evidence_bag' },
         consume = { evidence_bag = 1 },
@@ -60,7 +64,7 @@ ForensicItemActions = {
 
 ForensicItemUsageMap = {
     forensic_kit = { action = 'open_forensic_toolkit', serverValidate = true },
-    disposable_gloves = { action = 'scene_dark_search', serverValidate = false },
+    disposable_gloves = { action = 'wear_gloves', serverValidate = true },
     evidence_bag = { action = 'collect_evidence', serverValidate = true, requiresTarget = true },
     evidence_seal = { action = 'seal_evidence', serverValidate = true, requiresTarget = true },
     dna_swab = { action = 'collect_biological', serverValidate = true, requiresTarget = true, allowedTypes = { sangue = true } },
