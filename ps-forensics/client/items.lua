@@ -191,6 +191,21 @@ local function captureForensicPhoto()
         ForensicParticles.cameraFlash()
     end
 
+    local function getCaptureTimestamp()
+        if type(os) == 'table' and type(os.time) == 'function' then
+            return os.time()
+        end
+
+        local cloudTime = GetCloudTimeAsInt()
+        if cloudTime and cloudTime > 0 then
+            return cloudTime
+        end
+
+        return nil
+    end
+
+    local capturedAt = getCaptureTimestamp()
+
     if GetResourceState('screenshot-basic') == 'started' then
         exports['screenshot-basic']:requestScreenshot(function()
             TriggerServerEvent(resourceName .. ':server:forensicPhotoCaptured', {
@@ -198,7 +213,7 @@ local function captureForensicPhoto()
                 via = 'screenshot-basic',
                 coords = { x = coords.x, y = coords.y, z = coords.z },
                 heading = heading,
-                capturedAt = os.time(),
+                capturedAt = capturedAt,
             })
         end)
     else
@@ -207,7 +222,7 @@ local function captureForensicPhoto()
             via = 'camera-mode',
             coords = { x = coords.x, y = coords.y, z = coords.z },
             heading = heading,
-            capturedAt = os.time(),
+            capturedAt = capturedAt,
         })
     end
 
@@ -372,7 +387,7 @@ end
 -- ============================================================
 -- EXPORTAÇÃO PRINCIPAL: useForensicItem
 -- ============================================================
-exports('useForensicItem', function(data, slot)
+local function handleForensicItemUse(data, slot)
     local itemName = data and data.name
     if not itemName then return end
 
@@ -708,6 +723,20 @@ exports('useForensicItem', function(data, slot)
     ForensicState.clearEquippedTool()
     notifySuccess(itemName)
     TriggerServerEvent(resourceName .. ':server:itemUsed', itemName, slot)
+end
+
+exports('useForensicItem', function(data, slot)
+    return handleForensicItemUse(data, slot)
+end)
+
+-- Compatibilidade com configurações antigas de itens ox_inventory
+exports('useDisposableGloves', function(data, slot)
+    if not data or not data.name then
+        data = data or {}
+        data.name = 'disposable_gloves'
+    end
+
+    return handleForensicItemUse(data, slot)
 end)
 
 RegisterNetEvent(resourceName .. ':client:forensicCameraMode', function(enable)
