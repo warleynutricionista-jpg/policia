@@ -2547,9 +2547,6 @@ const Ud = [
     { name: "Evidência", icon: "inventory_2" },
     { name: "Procurados", icon: "notification_important" },
     { name: "Mandados", icon: "gavel" },
-    { name: "Veículos", icon: "directions_car" },
-    { name: "Armas", icon: "security" },
-    { name: "Infrações", icon: "balance" },
     { name: "Awards", icon: "emoji_events" },
     { name: "Escala", icon: "group" },
     { name: "Map", icon: "map" },
@@ -2614,7 +2611,7 @@ const Qo = {
     Warrants: "warrants",
     Mandados: "warrants",
     warrants: "warrants",
-    Infrações: "charges",
+    Infrações: "management",
     charges: "charges",
     Awards: "awards",
     Premiações: "awards",
@@ -2665,8 +2662,6 @@ const Qo = {
     dashboard: "Painel",
     citizens: "Cidadãos",
     bolos: "Procurados",
-    vehicles: "Veículos",
-    weapons: "Armas",
     cases: "Casos",
     evidence: "Evidências",
     reports: "Relatórios",
@@ -2942,8 +2937,6 @@ const wi = {
     dashboard: "Painel",
     citizens: "Citizens",
     bolos: "Procurados",
-    vehicles: "Veículos",
-    weapons: "Armas",
     cases: "Cases",
     evidence: "Evidência",
     reports: "Reports",
@@ -35477,7 +35470,7 @@ function wI(n, e) {
     _ = ti.layerGroup(),
     g = ti.layerGroup();
   const w = {
-    world: { minX: -4e3, maxX: 8e3, minY: -4e3, maxY: 8e3 },
+    world: { minX: -5e3, maxX: 5e3, minY: -5e3, maxY: 1e4 },
     image: { width: 1024, height: 1024 },
   };
   const k = (() => {
@@ -35589,28 +35582,10 @@ function wI(n, e) {
       o(u) ? s.hasLayer(g) || g.addTo(s) : s.hasLayer(g) && s.removeLayer(g));
   }
   function B() {
-    const X = 0.6931471805599453;
-    return ti.extend({}, al.CRS.Simple, {
-      projection: al.Projection.LonLat,
-      scale(ve) {
-        return Math.pow(2, ve);
-      },
-      zoom(ve) {
-        return Math.log(ve) / X;
-      },
-      distance(ve, ye) {
-        var xe = ye.lng - ve.lng,
-          je = ye.lat - ve.lat;
-        return Math.sqrt(xe * xe + je * je);
-      },
-      transformation: new al.Transformation(0.11426, 111.80, -0.08982, 147.06),
-      infinite: !1,
-    });
+    return al.CRS.Simple;
   }
-  function U(X) {
-    const ve = X.unproject([0, 1024], 2),
-      ye = X.unproject([1024, 0], 2);
-    return new al.LatLngBounds(ve, ye);
+  function U() {
+    return new al.LatLngBounds([0, 0], [1024, 1024]);
   }
   function D(X, ve) {
     ti.imageOverlay("./images/map.jpeg", ve).addTo(X);
