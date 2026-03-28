@@ -329,6 +329,10 @@ lib.callback.register(resourceName .. ':server:analyzeDNA', function(source, sam
             INSERT INTO forensic_cross_references
             (source_type, source_id, target_type, target_id, relationship, confidence, created_by, notes)
             VALUES ('dna', ?, 'citizenid', ?, 'match_dna', ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+                confidence = VALUES(confidence),
+                notes = VALUES(notes),
+                updated_at = NOW()
         ]], {
             sampleId, matchedCitizenId,
             confidence >= 80 and 'confirmada' or (confidence >= 50 and 'alta' or 'media'),

@@ -293,6 +293,10 @@ lib.callback.register(resourceName .. ':server:analyzeFingerprint', function(sou
             INSERT INTO forensic_cross_references
             (source_type, source_id, target_type, target_id, relationship, confidence, created_by, notes)
             VALUES ('fingerprint', ?, 'citizenid', ?, 'match_digital', ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+                confidence = VALUES(confidence),
+                notes = VALUES(notes),
+                updated_at = NOW()
         ]], {
             fingerprintId, matchedCitizenId,
             matchStatus == 'positiva' and 'confirmada' or 'media',
