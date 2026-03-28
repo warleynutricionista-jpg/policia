@@ -25,6 +25,81 @@ local ItemActions = {
 }
 
 local spawnedMarker = nil
+local equippedTool = {
+    itemName = nil,
+    entity = nil,
+}
+
+local ToolAttach = {
+    forensic_camera = {
+        bone = 57005,
+        pos = vec3(0.12, 0.02, -0.02),
+        rot = vec3(-85.0, 0.0, 5.0),
+    },
+    forensic_flashlight = {
+        bone = 57005,
+        pos = vec3(0.1, 0.02, -0.02),
+        rot = vec3(-90.0, 0.0, 0.0),
+    },
+}
+
+local function setForensicFlashlightState(state)
+    SetFlashLightKeepOnWhileMoving(state)
+
+    if type(ToggleForensicFlashlight) == 'function' then
+        ToggleForensicFlashlight(state)
+    end
+end
+
+local function clearEquippedTool()
+    if equippedTool.entity and DoesEntityExist(equippedTool.entity) then
+        DeleteEntity(equippedTool.entity)
+    end
+
+    if equippedTool.itemName == 'forensic_flashlight' then
+        setForensicFlashlightState(false)
+    end
+
+    equippedTool.entity = nil
+    equippedTool.itemName = nil
+end
+
+local function equipTool(itemName, modelName)
+    clearEquippedTool()
+
+    local attach = ToolAttach[itemName]
+    local modelHash = joaat(modelName)
+
+    if not attach or not IsModelInCdimage(modelHash) then
+        return false
+    end
+
+    lib.requestModel(modelName)
+
+    local ped = PlayerPedId()
+    local entity = CreateObject(modelHash, 0.0, 0.0, 0.0, true, true, false)
+    if not entity or not DoesEntityExist(entity) then
+        return false
+    end
+
+    AttachEntityToEntity(
+        entity,
+        ped,
+        GetPedBoneIndex(ped, attach.bone),
+        attach.pos.x, attach.pos.y, attach.pos.z,
+        attach.rot.x, attach.rot.y, attach.rot.z,
+        true, true, false, true, 1, true
+    )
+
+    equippedTool.itemName = itemName
+    equippedTool.entity = entity
+
+    if itemName == 'forensic_flashlight' then
+        setForensicFlashlightState(true)
+    end
+
+    return true
+end
 
 local function playItemAnimation(config)
     lib.requestAnimDict('mini@repair')
@@ -130,31 +205,50 @@ exports('useForensicItem', function(data, slot)
     end
 
     if itemName == 'forensic_tablet' or config.openUi then
+        clearEquippedTool()
         OpenForensicsUI('scenes')
-    elseif itemName == 'forensic_flashlight' then
-        -- Alternar entre ligado/desligado
-        local wasActive = type(IsForensicFlashlightActive) == 'function' and IsForensicFlashlightActive()
-        local newState  = not wasActive
+    elseif itemName == 'forensic_camera' or itemName == 'forensic_flashlight' then
+        local isSameTool = equippedTool.itemName == itemName and equippedTool.entity and DoesEntityExist(equippedTool.entity)
 
-        SetFlashLightKeepOnWhileMoving(newState)
+        if isSameTool then
+            clearEquippedTool()
 
-        -- Ativar/desativar o modo de descoberta visual de evidências
-        if type(ToggleForensicFlashlight) == 'function' then
-            ToggleForensicFlashlight(newState)
+            lib.notify({
+                title = L('ui.system_name'),
+                description = itemName == 'forensic_camera'
+                    and 'Câmera forense guardada.'
+                    or 'Lanterna forense guardada.',
+                type = 'warning',
+            })
+            return
         end
 
-        -- Notificação de estado
+        local propModel = config.prop
+        if itemName == 'forensic_flashlight' then
+            propModel = 'w_am_digiflashlight'
+        end
+
+        local equipped = equipTool(itemName, propModel)
         lib.notify({
-            title       = L('ui.system_name'),
-            description = newState
-                and 'Lanterna forense ativada — vestígios próximos serão destacados'
-                or  'Lanterna forense desativada',
-            type     = newState and 'inform' or 'warning',
+            title = L('ui.system_name'),
+            description = equipped
+                and (itemName == 'forensic_camera' and 'Câmera forense equipada.' or 'Lanterna forense equipada — vestígios próximos serão destacados.')
+                or 'Não foi possível equipar o item na mão.',
+            type = equipped and 'inform' or 'error',
             duration = 3000,
         })
-        return -- Evitar duplicar a notificação genérica abaixo
+
+        if not equipped then
+            return
+        end
+
+        TriggerServerEvent(resourceName .. ':server:itemUsed', itemName, slot)
+        return
     elseif itemName == 'evidence_marker' and (not itemExecution or not itemExecution.markerCreated) then
+        clearEquippedTool()
         placeEvidenceMarker()
+    else
+        clearEquippedTool()
     end
 
     lib.notify({
@@ -164,4 +258,9 @@ exports('useForensicItem', function(data, slot)
     })
 
     TriggerServerEvent(resourceName .. ':server:itemUsed', itemName, slot)
+end)
+
+AddEventHandler('onResourceStop', function(resource)
+    if resource ~= resourceName then return end
+    clearEquippedTool()
 end)
