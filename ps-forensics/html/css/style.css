@@ -1487,3 +1487,80 @@ body {
 .wizard-log-badge.success { color: #22c55e; }
 .wizard-log-badge.warn { color: #facc15; }
 .wizard-log-badge.error { color: #ef4444; }
+
+/* ============================================================
+   MELHORIAS VISUAIS — card hover glow, botões, scrollbar, animações
+   ============================================================ */
+
+/* Hover glow aprimorado com transição suave cubic-bezier */
+.card {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover {
+    border-color: rgba(0, 180, 216, 0.5);
+    transform: translateY(-2px);
+    box-shadow:
+        0 4px 12px rgba(0, 180, 216, 0.1),
+        0 0 0 1px rgba(0, 180, 216, 0.15);
+}
+
+/* Animação de entrada dos cards no grid */
+.items-grid .card {
+    animation: cardAppear 0.3s ease forwards;
+    opacity: 0;
+}
+
+@keyframes cardAppear {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.items-grid .card:nth-child(1) { animation-delay: 0.02s; }
+.items-grid .card:nth-child(2) { animation-delay: 0.04s; }
+.items-grid .card:nth-child(3) { animation-delay: 0.06s; }
+.items-grid .card:nth-child(4) { animation-delay: 0.08s; }
+.items-grid .card:nth-child(5) { animation-delay: 0.10s; }
+.items-grid .card:nth-child(6) { animation-delay: 0.12s; }
+
+/* Micro-interações nos botões primários */
+.btn-primary {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.1);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.btn-primary:hover::after {
+    opacity: 1;
+}
+
+/* Scrollbar modernizada */
+.forensics-content::-webkit-scrollbar {
+    width: 5px;
+}
+
+.forensics-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.forensics-content::-webkit-scrollbar-thumb {
+    background: rgba(0, 180, 216, 0.3);
+    border-radius: 10px;
+}
+
+.forensics-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 180, 216, 0.5);
+}

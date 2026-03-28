@@ -13,9 +13,10 @@ local resourceName = GetCurrentResourceName()
 
 -- Armazenamento em memória
 -- { [id] = { id, type, category, coords, spawnedAt, expiresAt, ... } }
-local worldEvidence  = {}
-local evidenceSeq    = 0
-local sourceRateLimit = {}
+local worldEvidence          = {}
+local evidenceSeq            = 0
+local sourceRateLimit        = {}
+local sourceRateLimitByType  = {} -- rate limit por tipo por jogador (ex: "12:sangue")
 
 local allowedWorldTypes = {}
 for evidenceType, _ in pairs((Config.WorldEvidence and Config.WorldEvidence.Chances) or {}) do
@@ -199,19 +200,45 @@ end
 -- EVENT: Jogador dispara spawn de vestígio
 -- Acionado por game events no client (dano, entrada veículo, etc.)
 -- ============================================================
+-- Cooldowns por tipo de evidência por jogador (ms)
+local typeCooldownsMs = {
+    sangue              = 3000,
+    capsula             = 400,
+    impressao_digital   = 2000,
+    pegada              = 2000,
+    buraco_de_bala      = 250,
+    fragmento_veiculo   = 400,
+}
+
 RegisterNetEvent(resourceName .. ':world:spawnEvidence', function(data)
     local src = source
     if not src or src <= 0 then return end
 
     local now = GetGameTimer()
     local cooldownMs = (Config.WorldEvidence and Config.WorldEvidence.ServerSpawnRateLimitMs) or 250
+
+    -- Rate limit global por jogador
     if sourceRateLimit[src] and (now - sourceRateLimit[src]) < cooldownMs then
         if Config.Debug then
-            print(('[%s] WorldEvidence: rate-limit acionado para source %s'):format(resourceName, tostring(src)))
+            print(('[%s] WorldEvidence: rate-limit global acionado para source %s'):format(resourceName, tostring(src)))
         end
         return
     end
     sourceRateLimit[src] = now
+
+    -- Rate limit por tipo por jogador (mais restritivo)
+    if type(data) == 'table' and type(data.type) == 'string' then
+        local evType = data.type
+        local key = ('%d:%s'):format(src, evType)
+        local typeCooldown = typeCooldownsMs[evType] or 1000
+        if sourceRateLimitByType[key] and (now - sourceRateLimitByType[key]) < typeCooldown then
+            if Config.Debug then
+                print(('[%s] WorldEvidence: rate-limit por tipo "%s" acionado para source %s'):format(resourceName, evType, tostring(src)))
+            end
+            return
+        end
+        sourceRateLimitByType[key] = now
+    end
 
     local playerData = GetPlayerData(src)
     if not playerData then return end

@@ -10,11 +10,14 @@ let availableTabs = [];
 let cachedMDTCases = [];
 
 const UI = window.ForensicsUI || {
-    escapeHTML: (v) => String(v ?? ''),
+    escapeHTML: (v) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])),
     setHTML: (el, html) => { if (el) el.innerHTML = html; },
     renderLoadingCards: () => '<div class="dashboard-loading"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>',
     renderEmpty: (icon, text) => `<div class="empty-state"><i class="fas ${icon}"></i><p>${text}</p></div>`,
 };
+
+// Alias curto para escapeHTML — usar em todos os templates com dados do servidor
+const h = UI.escapeHTML;
 
 
 // ============================================================
@@ -195,6 +198,7 @@ window.addEventListener('message', function(event) {
 
         // Restringir abas por permissão
         const tabRules = {
+            dashboard: !!playerPermissions.canRunBasicTests || !!playerPermissions.canEmitReport,
             analises: !!playerPermissions.canRunBasicTests || !!playerPermissions.canPerformAutopsy,
             lab: !!playerPermissions.canRunBasicTests,
             fingerprints: !!playerPermissions.canCollectEvidence,
@@ -395,28 +399,31 @@ async function loadScenes() {
     const status = document.getElementById('sceneStatusFilter')?.value || '';
     const search = document.getElementById('sceneSearch')?.value || '';
 
-    const result = await fetchNUI('getScenes', { status, search });
     const container = document.getElementById('scenesList');
+    UI.setHTML(container, UI.renderLoadingCards(6));
+
+    const result = await fetchNUI('getScenes', { status, search });
 
     if (!result || !result.success || !result.data || result.data.items.length === 0) {
-        container.innerHTML = '<div class="empty-state"><i class="fas fa-map-marked-alt"></i><p>Nenhuma cena encontrada</p></div>';
+        UI.setHTML(container, emptyState('fa-map-marked-alt', 'Nenhuma cena encontrada', 'Crie uma nova cena para registrar evidências.', 'Nova Cena', 'showCreateScene()'));
         return;
     }
 
-    container.innerHTML = result.data.items.map(scene => `
+    UI.setHTML(container, result.data.items.map(scene => `
         <div class="card" onclick="viewScene(${scene.id})">
             <div class="card-header">
-                <span class="card-title">${scene.scene_number || 'Cena'}</span>
+                <span class="card-title">${h(scene.scene_number || 'Cena')}</span>
                 ${getStatusBadge(scene.status)}
             </div>
             <div class="card-body">
-                <div class="card-row"><span class="card-label">Classificação</span><span class="card-value">${scene.classification || 'N/D'}</span></div>
-                <div class="card-row"><span class="card-label">Local</span><span class="card-value">${scene.location_name || 'N/D'}</span></div>
-                <div class="card-row"><span class="card-label">Criada por</span><span class="card-value">${scene.created_by_name || 'N/D'}</span></div>
+                <div class="card-row"><span class="card-label">Classificação</span><span class="card-value">${h(scene.classification || 'N/D')}</span></div>
+                <div class="card-row"><span class="card-label">Local</span><span class="card-value">${h(scene.location_name || 'N/D')}</span></div>
+                <div class="card-row"><span class="card-label">Criada por</span><span class="card-value">${h(scene.created_by_name || 'N/D')}</span></div>
                 <div class="card-row"><span class="card-label">Data</span><span class="card-value">${formatDate(scene.created_at)}</span></div>
+                <div class="card-row"><span class="card-label">Evidências</span><span class="card-value">${scene.evidence_count || 0}</span></div>
             </div>
         </div>
-    `).join('');
+    `).join(''));
 }
 
 function searchScenes() { loadScenes(); }
@@ -540,33 +547,35 @@ async function loadEvidence() {
     const status   = document.getElementById('evidenceStatusFilter')?.value || '';
     const search   = document.getElementById('evidenceSearch')?.value || '';
 
-    const result = await fetchNUI('getEvidenceList', { category, status, search });
     const container = document.getElementById('evidenceList');
+    UI.setHTML(container, UI.renderLoadingCards(6));
+
+    const result = await fetchNUI('getEvidenceList', { category, status, search });
 
     if (!result || !result.success || !result.data || !result.data.items || result.data.items.length === 0) {
-        container.innerHTML = '<div class="empty-state"><i class="fas fa-fingerprint"></i><p>Nenhuma evidência encontrada</p></div>';
+        UI.setHTML(container, emptyState('fa-fingerprint', 'Nenhuma evidência encontrada', 'Colete evidências em cenas de crime para que apareçam aqui.'));
         return;
     }
 
-    container.innerHTML = result.data.items.map(ev => `
-        <div class="card card-with-thumb priority-${ev.priority || 'media'}" onclick="viewEvidence(${ev.id})">
+    UI.setHTML(container, result.data.items.map(ev => `
+        <div class="card card-with-thumb priority-${h(ev.priority || 'media')}" onclick="viewEvidence(${ev.id})">
             ${evidenceThumb(ev.type, ev.category)}
             <div class="card-main">
                 <div class="card-header">
-                    <span class="card-title">${ev.evidence_number || 'EV-???'}</span>
+                    <span class="card-title">${h(ev.evidence_number || 'EV-???')}</span>
                     ${getStatusBadge(ev.status)}
                 </div>
                 <div class="card-body">
-                    <div class="card-row"><span class="card-label">Tipo</span><span class="card-value">${ev.type || 'N/D'}</span></div>
-                    <div class="card-row"><span class="card-label">Categoria</span><span class="card-value">${ev.category || 'N/D'}</span></div>
-                    <div class="card-row"><span class="card-label">Lacre</span><span class="card-value" style="font-family:'Share Tech Mono',monospace;color:#00b4d8">${ev.seal_number || 'N/D'}</span></div>
-                    <div class="card-row"><span class="card-label">Coletada por</span><span class="card-value">${ev.collected_by_name || 'N/D'}</span></div>
+                    <div class="card-row"><span class="card-label">Tipo</span><span class="card-value">${h(ev.type || 'N/D')}</span></div>
+                    <div class="card-row"><span class="card-label">Categoria</span><span class="card-value">${h(ev.category || 'N/D')}</span></div>
+                    <div class="card-row"><span class="card-label">Lacre</span><span class="card-value" style="font-family:'Share Tech Mono',monospace;color:#00b4d8">${h(ev.seal_number || 'N/D')}</span></div>
+                    <div class="card-row"><span class="card-label">Coletada por</span><span class="card-value">${h(ev.collected_by_name || 'N/D')}</span></div>
                     <div class="card-row"><span class="card-label">Data</span><span class="card-value">${formatDate(ev.collection_time || ev.created_at)}</span></div>
-                    ${ev.collection_source === 'campo' ? '<div class="card-row"><span class="card-label" style="color:#f59e0b"><i class="fas fa-map-marker-alt"></i> Campo</span></div>' : ''}
+                    ${ev.collection_source === 'campo' ? '<div class="card-row"><span class="card-label" style="color:#f59e0b"><i class="fas fa-map-marker-alt"></i> Coleta de Campo</span></div>' : ''}
                 </div>
             </div>
         </div>
-    `).join('');
+    `).join(''));
 }
 
 function searchEvidence() { loadEvidence(); }
@@ -1358,34 +1367,67 @@ function closeModal() {
     document.getElementById('modal-overlay').classList.add('hidden');
 }
 
+// Empty state com ação opcional
+function emptyState(icon, title, subtitle, actionLabel, actionFn) {
+    return `
+        <div class="empty-state">
+            <i class="fas ${h(icon)}"></i>
+            <p style="font-size:15px;color:#9ca3af;margin-bottom:4px;">${h(title)}</p>
+            ${subtitle ? `<p style="font-size:12px;color:#6b7280;">${h(subtitle)}</p>` : ''}
+            ${actionLabel && actionFn ? `
+                <button class="btn-primary" style="margin-top:12px;" onclick="${h(actionFn)}">
+                    <i class="fas fa-plus"></i> ${h(actionLabel)}
+                </button>
+            ` : ''}
+        </div>`;
+}
+
+// Modal de confirmação antes de ações destrutivas
+function confirmAction(message, onConfirm) {
+    showModal('Confirmar Ação', `
+        <div style="text-align:center;padding:20px;">
+            <i class="fas fa-exclamation-triangle" style="font-size:32px;color:#f59e0b;margin-bottom:16px;display:block;"></i>
+            <p style="font-size:15px;color:#e5e7eb;">${h(message)}</p>
+        </div>
+    `, `
+        <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button class="btn-danger" onclick="closeModal(); (${onConfirm.toString()})()">Confirmar</button>
+    `);
+}
+
 function showNotification(message, type) {
     const colors = {
-        success: '#22c55e',
-        error: '#ef4444',
-        info: '#3b82f6',
-        warning: '#f59e0b',
+        success: { bg: 'rgba(16, 185, 129, 0.15)', border: '#10b981', icon: 'fa-check-circle',          text: '#34d399' },
+        error:   { bg: 'rgba(239, 68, 68, 0.15)',  border: '#ef4444', icon: 'fa-exclamation-circle',    text: '#f87171' },
+        info:    { bg: 'rgba(59, 130, 246, 0.15)',  border: '#3b82f6', icon: 'fa-info-circle',           text: '#60a5fa' },
+        warning: { bg: 'rgba(245, 158, 11, 0.15)',  border: '#f59e0b', icon: 'fa-exclamation-triangle',  text: '#fbbf24' },
     };
-    const icons = {
-        success: 'fa-check-circle',
-        error: 'fa-exclamation-circle',
-        info: 'fa-info-circle',
-        warning: 'fa-exclamation-triangle',
-    };
+    const c = colors[type] || colors.info;
+
     const notif = document.createElement('div');
     notif.style.cssText = `
-        position:fixed;top:20px;right:20px;z-index:99999;
-        background:#1e293b;border:1px solid ${colors[type] || '#3b82f6'};
-        color:#e2e8f0;padding:12px 20px;border-radius:8px;
-        font-size:13px;display:flex;align-items:center;gap:10px;
-        box-shadow:0 4px 12px rgba(0,0,0,0.4);
-        animation:slideIn 0.3s ease;max-width:400px;
+        position: fixed; top: 20px; right: 20px; z-index: 99999;
+        background: ${c.bg}; border: 1px solid ${c.border};
+        color: #e2e8f0; padding: 14px 20px; border-radius: 10px;
+        font-size: 13px; display: flex; align-items: center; gap: 12px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        max-width: 420px; font-family: 'Rajdhani', sans-serif;
     `;
-    UI.setHTML(notif, `<i class="fas ${icons[type] || 'fa-info-circle'}" style="color:${colors[type] || '#3b82f6'}"></i><span>${UI.escapeHTML(message)}</span>`);
+    UI.setHTML(notif, `<i class="fas ${c.icon}" style="color:${c.text};font-size:16px;flex-shrink:0;"></i><span>${UI.escapeHTML(message)}</span>`);
     document.body.appendChild(notif);
+
+    // Slide in via double rAF para garantir que a transição CSS seja aplicada
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            notif.style.transform = 'translateX(0)';
+        });
+    });
+
     setTimeout(() => {
-        notif.style.opacity = '0';
-        notif.style.transition = 'opacity 0.3s';
-        setTimeout(() => notif.remove(), 300);
+        notif.style.transform = 'translateX(120%)';
+        setTimeout(() => notif.remove(), 400);
     }, 4000);
 }
 

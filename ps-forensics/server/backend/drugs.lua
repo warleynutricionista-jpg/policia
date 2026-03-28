@@ -134,6 +134,10 @@ lib.callback.register(resourceName .. ':server:registerDrugAnalysis', function(s
             INSERT INTO forensic_cross_references
             (source_type, source_id, target_type, target_id, relationship, confidence, created_by, notes)
             VALUES ('drug', ?, 'case', ?, 'teste_substancia', 'media', ?, ?)
+            ON DUPLICATE KEY UPDATE
+                confidence = VALUES(confidence),
+                notes = VALUES(notes),
+                updated_at = NOW()
         ]], { drugId, tostring(caseId), playerData.citizenid, ('Análise de substância vinculada ao caso %s'):format(caseId) })
     end
 
@@ -142,6 +146,10 @@ lib.callback.register(resourceName .. ':server:registerDrugAnalysis', function(s
             INSERT INTO forensic_cross_references
             (source_type, source_id, target_type, target_id, relationship, confidence, created_by, notes)
             VALUES ('drug', ?, 'report', ?, 'teste_substancia', 'media', ?, ?)
+            ON DUPLICATE KEY UPDATE
+                confidence = VALUES(confidence),
+                notes = VALUES(notes),
+                updated_at = NOW()
         ]], { drugId, tostring(reportId), playerData.citizenid, ('Análise de substância vinculada ao relatório %s'):format(reportId) })
     end
 

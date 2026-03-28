@@ -122,13 +122,18 @@ local function cleanupOldScenes()
         return
     end
 
-    local days = tonumber(policy.forensicEvidenceRetentionDays) or 180
-    local affectedRows = MySQL.update.await(
-        ([[DELETE FROM forensic_evidence WHERE created_at < NOW() - INTERVAL %d DAY AND status IN ('descartada', 'devolvida')]]):format(days)
-    ) or 0
+    -- Apenas evidências de campo (coleta automática) não vinculadas a cena e sem análise pendente.
+    -- Evidências forenses reais (manuais, com scene_id ou analisadas) NUNCA são removidas aqui.
+    local affectedRows = MySQL.update.await([[
+        DELETE FROM forensic_evidence
+        WHERE collection_source = 'campo'
+          AND status = 'coletada'
+          AND scene_id IS NULL
+          AND created_at < NOW() - INTERVAL 30 DAY
+    ]]) or 0
 
     if affectedRows > 0 then
-        print(('^3[Police-Bridge] Limpeza conservadora concluiu %d registros descartáveis (%d dias).^7'):format(affectedRows, days))
+        print(('^3[Police-Bridge] Limpeza: %d evidência(s) de campo antiga(s) removida(s).^7'):format(affectedRows))
     end
 end
 

@@ -277,7 +277,10 @@ lib.callback.register(resourceName .. ':server:getScenes', function(source, filt
     listValues[#listValues + 1] = offset
 
     local scenes = MySQL.query.await(([[
-        SELECT * FROM forensic_crime_scenes WHERE %s ORDER BY created_at DESC LIMIT ? OFFSET ?
+        SELECT fcs.*,
+            (SELECT COUNT(*) FROM forensic_evidence fe WHERE fe.scene_id = fcs.id) AS evidence_count
+        FROM forensic_crime_scenes fcs
+        WHERE %s ORDER BY fcs.created_at DESC LIMIT ? OFFSET ?
     ]]):format(where), listValues)
 
     return {

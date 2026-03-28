@@ -572,14 +572,16 @@ end)
 CreateThread(function()
     while true do
         local pedCoords = GetEntityCoords(PlayerPedId())
-        local nearestDistance = math.huge
-        local renderCount = 0
+        local hasNearby = false
+        local closestDist = 999.0
 
         for _, evData in pairs(worldEvidenceCache) do
             if evData.coords then
-                local dist = #(pedCoords - vec3(evData.coords.x, evData.coords.y, evData.coords.z))
-                if dist < nearestDistance then
-                    nearestDistance = dist
+                local evCoords = vec3(evData.coords.x, evData.coords.y, evData.coords.z)
+                local dist = #(pedCoords - evCoords)
+
+                if dist < closestDist then
+                    closestDist = dist
                 end
 
                 if dist <= 25.0 then
@@ -587,7 +589,7 @@ CreateThread(function()
                     local canDraw = (not visualCfg or not visualCfg.requiresReveal or evData.revealed == true or flashlightActive)
 
                     if canDraw then
-                        renderCount = renderCount + 1
+                        hasNearby = true
                         local markerType = visualCfg and visualCfg.fallbackMarker or 27
                         DrawMarker(markerType, evData.coords.x, evData.coords.y, evData.coords.z + 0.02,
                             0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -604,14 +606,15 @@ CreateThread(function()
             end
         end
 
-        if renderCount > 0 and nearestDistance <= 7.0 then
+        -- Escalonamento inteligente: só roda a 60fps quando realmente precisa desenhar markers
+        if hasNearby then
             Wait(0)
-        elseif renderCount > 0 then
-            Wait(35)
-        elseif nearestDistance <= 60.0 then
-            Wait(180)
+        elseif not next(worldEvidenceCache) or closestDist > 200.0 then
+            Wait(1000)
+        elseif closestDist > 50.0 then
+            Wait(500)
         else
-            Wait(600)
+            Wait(200)
         end
     end
 end)

@@ -215,6 +215,10 @@ lib.callback.register(resourceName .. ':server:registerBallistic', function(sour
             INSERT INTO forensic_cross_references
             (source_type, source_id, target_type, target_id, relationship, confidence, created_by, notes)
             VALUES ('ballistic', ?, 'weapon', ?, 'arma_apreendida', 'alta', ?, ?)
+            ON DUPLICATE KEY UPDATE
+                confidence = VALUES(confidence),
+                notes = VALUES(notes),
+                updated_at = NOW()
         ]], {
             ballisticId,
             weaponSerial,
@@ -228,6 +232,10 @@ lib.callback.register(resourceName .. ':server:registerBallistic', function(sour
             INSERT INTO forensic_cross_references
             (source_type, source_id, target_type, target_id, relationship, confidence, created_by, notes)
             VALUES ('ballistic', ?, 'case', ?, 'vinculo_caso', 'media', ?, ?)
+            ON DUPLICATE KEY UPDATE
+                confidence = VALUES(confidence),
+                notes = VALUES(notes),
+                updated_at = NOW()
         ]], {
             ballisticId,
             tostring(caseId),
@@ -241,6 +249,10 @@ lib.callback.register(resourceName .. ':server:registerBallistic', function(sour
             INSERT INTO forensic_cross_references
             (source_type, source_id, target_type, target_id, relationship, confidence, created_by, notes)
             VALUES ('ballistic', ?, 'report', ?, 'vinculo_relatorio', 'media', ?, ?)
+            ON DUPLICATE KEY UPDATE
+                confidence = VALUES(confidence),
+                notes = VALUES(notes),
+                updated_at = NOW()
         ]], {
             ballisticId,
             tostring(reportId),
@@ -361,6 +373,10 @@ lib.callback.register(resourceName .. ':server:ballisticComparison', function(so
             INSERT INTO forensic_cross_references
             (source_type, source_id, target_type, target_id, relationship, confidence, created_by, notes)
             VALUES ('ballistic', ?, 'weapon', ?, 'confronto_balistico', ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+                confidence = VALUES(confidence),
+                notes = VALUES(notes),
+                updated_at = NOW()
         ]], {
             ballisticId, matchedSerial,
             result == 'confirmado' and 'confirmada' or 'alta',
@@ -375,6 +391,10 @@ lib.callback.register(resourceName .. ':server:ballisticComparison', function(so
                 INSERT INTO forensic_cross_references
                 (source_type, source_id, target_type, target_id, relationship, confidence, created_by, notes)
                 VALUES ('ballistic', ?, 'citizenid', ?, 'proprietario_arma', ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    confidence = VALUES(confidence),
+                    notes = VALUES(notes),
+                    updated_at = NOW()
             ]], {
                 ballisticId, weapon.owner,
                 result == 'confirmado' and 'confirmada' or 'alta',
@@ -388,6 +408,10 @@ lib.callback.register(resourceName .. ':server:ballisticComparison', function(so
                 INSERT INTO forensic_cross_references
                 (source_type, source_id, target_type, target_id, relationship, confidence, created_by, notes)
                 VALUES ('ballistic', ?, 'case', ?, 'arma_correlacionada', ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    confidence = VALUES(confidence),
+                    notes = VALUES(notes),
+                    updated_at = NOW()
             ]], {
                 ballisticId,
                 tostring(caseId),
@@ -402,6 +426,10 @@ lib.callback.register(resourceName .. ':server:ballisticComparison', function(so
                 INSERT INTO forensic_cross_references
                 (source_type, source_id, target_type, target_id, relationship, confidence, created_by, notes)
                 VALUES ('ballistic', ?, 'report', ?, 'arma_correlacionada', ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    confidence = VALUES(confidence),
+                    notes = VALUES(notes),
+                    updated_at = NOW()
             ]], {
                 ballisticId,
                 tostring(reportId),
