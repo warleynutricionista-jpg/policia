@@ -12,6 +12,14 @@
 -- ============================================================
 
 local resourceName = GetCurrentResourceName()
+local forensicCameraMode = {
+    active = false,
+    cam = nil,
+    photosTaken = 0,
+}
+local forensicFlashlight = {
+    auxLight = false,
+}
 
 -- ============================================================
 -- MAPA DE PROPS POR ITEM (modelos nativos GTA V confiáveis)
@@ -157,6 +165,136 @@ local function notifyInfo(desc, title)
     })
 end
 
+local function stopForensicCameraMode(silent)
+    if forensicCameraMode.cam and DoesCamExist(forensicCameraMode.cam) then
+        RenderScriptCams(false, true, 200, true, true)
+        DestroyCam(forensicCameraMode.cam, false)
+    end
+
+    forensicCameraMode.active = false
+    forensicCameraMode.cam = nil
+
+    if not silent then
+        notifyInfo('Modo de documentação finalizado.', 'Câmera Forense')
+    end
+end
+
+local function captureForensicPhoto()
+    local ped = PlayerPedId()
+    local coords = GetEntityCoords(ped)
+    local heading = GetEntityHeading(ped)
+    forensicCameraMode.photosTaken = forensicCameraMode.photosTaken + 1
+
+    if ForensicParticles and ForensicParticles.cameraFlash then
+        ForensicParticles.cameraFlash()
+    end
+
+    if GetResourceState('screenshot-basic') == 'started' then
+        exports['screenshot-basic']:requestScreenshot(function()
+            TriggerServerEvent(resourceName .. ':server:forensicPhotoCaptured', {
+                photoNumber = forensicCameraMode.photosTaken,
+                via = 'screenshot-basic',
+                coords = { x = coords.x, y = coords.y, z = coords.z },
+                heading = heading,
+                capturedAt = os.time(),
+            })
+        end)
+    else
+        TriggerServerEvent(resourceName .. ':server:forensicPhotoCaptured', {
+            photoNumber = forensicCameraMode.photosTaken,
+            via = 'camera-mode',
+            coords = { x = coords.x, y = coords.y, z = coords.z },
+            heading = heading,
+            capturedAt = os.time(),
+        })
+    end
+
+    lib.notify({
+        title = 'Foto Pericial Registrada',
+        description = ('Registro #%d capturado.'):format(forensicCameraMode.photosTaken),
+        type = 'success',
+        duration = 3000,
+    })
+end
+
+local function startForensicCameraMode()
+    if forensicCameraMode.active then return end
+
+    local ped = PlayerPedId()
+    forensicCameraMode.cam = CreateCam('DEFAULT_SCRIPTED_CAMERA', true)
+    AttachCamToEntity(forensicCameraMode.cam, ped, 0.0, 0.55, 0.7, true)
+    SetCamRot(forensicCameraMode.cam, GetGameplayCamRot(2), 2)
+    SetCamFov(forensicCameraMode.cam, 45.0)
+    RenderScriptCams(true, true, 250, true, true)
+
+    forensicCameraMode.active = true
+
+    CreateThread(function()
+        while forensicCameraMode.active do
+            Wait(0)
+            HideHudAndRadarThisFrame()
+            DisableControlAction(0, 24, true)
+            DisableControlAction(0, 25, true)
+            DisableControlAction(0, 44, true)
+            DisablePlayerFiring(PlayerPedId(), true)
+
+            local gameplayRot = GetGameplayCamRot(2)
+            SetCamRot(forensicCameraMode.cam, gameplayRot.x, gameplayRot.y, gameplayRot.z, 2)
+
+            lib.showTextUI('[E] Capturar foto  •  [BACKSPACE] Sair', {
+                position = 'right-center',
+                icon = 'camera',
+            })
+
+            if IsDisabledControlJustPressed(0, 38) then
+                captureForensicPhoto()
+            elseif IsControlJustPressed(0, 177) then
+                lib.hideTextUI()
+                stopForensicCameraMode()
+                break
+            end
+        end
+
+        lib.hideTextUI()
+    end)
+end
+
+local function setForensicAuxLightEnabled(state)
+    forensicFlashlight.auxLight = state == true
+end
+
+CreateThread(function()
+    while true do
+        if forensicFlashlight.auxLight and IsForensicFlashlightActive and IsForensicFlashlightActive() then
+            Wait(0)
+            local ped = PlayerPedId()
+            if not DoesEntityExist(ped) then goto continue end
+
+            local origin = GetEntityCoords(ped)
+            local forward = GetEntityForwardVector(ped)
+            local target = origin + (forward * 12.0)
+
+            DrawSpotLight(
+                origin.x, origin.y, origin.z + 0.65,
+                forward.x, forward.y, forward.z,
+                190, 210, 255,
+                25.0, 6.0, 0.0, 22.0, 28.0
+            )
+
+            DrawLightWithRangeAndShadow(
+                target.x, target.y, target.z,
+                160, 185, 255,
+                5.0,
+                8.0,
+                1.0
+            )
+            ::continue::
+        else
+            Wait(350)
+        end
+    end
+end)
+
 -- ============================================================
 -- HELPERS LOCAIS DE FERRAMENTA EQUIPADA
 -- (delegam para ForensicState)
@@ -275,6 +413,9 @@ exports('useForensicItem', function(data, slot)
             if itemName == 'forensic_flashlight' then
                 SetFlashLightKeepOnWhileMoving(false)
                 if type(ToggleForensicFlashlight) == 'function' then ToggleForensicFlashlight(false) end
+                setForensicAuxLightEnabled(false)
+            else
+                stopForensicCameraMode(true)
             end
             notifyInfo(
                 itemName == 'forensic_camera' and 'Câmera guardada.' or 'Lanterna guardada.',
@@ -290,8 +431,11 @@ exports('useForensicItem', function(data, slot)
 
         local ok = equipTool(itemName, resolveItemProp(itemName) or ItemProps[itemName])
         if itemName == 'forensic_camera' and ok then
-            -- Flash de câmera na hora de equipar para dar feedback visual
-            ForensicParticles.cameraFlash()
+            startForensicCameraMode()
+            TriggerEvent(resourceName .. ':client:forensicCameraMode', true)
+        elseif itemName == 'forensic_flashlight' and ok then
+            setForensicAuxLightEnabled(true)
+            TriggerEvent(resourceName .. ':client:forensicFlashlightMode', true)
         end
 
         lib.notify({
@@ -562,6 +706,36 @@ exports('useForensicItem', function(data, slot)
     ForensicState.clearEquippedTool()
     notifySuccess(itemName)
     TriggerServerEvent(resourceName .. ':server:itemUsed', itemName, slot)
+end)
+
+RegisterNetEvent(resourceName .. ':client:forensicCameraMode', function(enable)
+    if enable then
+        startForensicCameraMode()
+    else
+        stopForensicCameraMode(true)
+    end
+end)
+
+RegisterNetEvent(resourceName .. ':client:forensicFlashlightMode', function(enable)
+    local state = enable == true
+    setForensicAuxLightEnabled(state)
+    if type(ToggleForensicFlashlight) == 'function' then
+        ToggleForensicFlashlight(state)
+    end
+end)
+
+exports('toggleForensicFlashlight', function(enable)
+    TriggerEvent(resourceName .. ':client:forensicFlashlightMode', enable == true)
+end)
+
+exports('openForensicCameraMode', function()
+    TriggerEvent(resourceName .. ':client:forensicCameraMode', true)
+end)
+
+AddEventHandler('onResourceStop', function(resource)
+    if resource ~= resourceName then return end
+    setForensicAuxLightEnabled(false)
+    stopForensicCameraMode(true)
 end)
 
 -- ============================================================
