@@ -53,6 +53,7 @@ files {
     'html/images/evidence/*.svg',
     'html/images/evidence/*.webp',
     'data/*.lua',
+    'items/*.lua',
     'locales/*.lua',
     'sql/*.sql',
     'sql/migrations/*.lua',
