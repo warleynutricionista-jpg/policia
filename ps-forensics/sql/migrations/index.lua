@@ -9,4 +9,5 @@ return {
     '2026-03-26_forensics_deduplication_and_integrity.sql',
     '2026-03-27_forensics_world_evidence.sql',
     '2026-03-27_forensics_aggressive_mdt_bridge.sql',
+    '2026-03-28_forensics_mdt_perf_guards.sql',
 }

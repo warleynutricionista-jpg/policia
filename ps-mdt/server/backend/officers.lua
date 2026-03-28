@@ -92,7 +92,13 @@ ps.registerCallback(resourceName .. ':server:getUnitLocation', function(source, 
     if not QBCore then return {} end
     local Player = QBCore.Functions.GetPlayerByCitizenId(cid)
     if Player then
-        local coords = GetEntityCoords(GetPlayerPed(Player.PlayerData.source))
+        local targetSource = tonumber(Player.PlayerData and Player.PlayerData.source)
+        if not targetSource then return {} end
+        local ped = GetPlayerPed(targetSource)
+        if not ped or ped == 0 or not DoesEntityExist(ped) then
+            return {}
+        end
+        local coords = GetEntityCoords(ped)
         return { x = coords.x, y = coords.y, z = coords.z }
     end
 
