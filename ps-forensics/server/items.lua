@@ -155,6 +155,9 @@ lib.callback.register(resourceName .. ':server:executeItemUse', function(source,
         UpdateWorldEvidenceById(evId, { revealed = true, revealedBy = src, revealedAt = os.time() })
     elseif usageCfg.effect == 'place_marker' and type(SpawnManualWorldEvidence) == 'function' then
         local playerPed = GetPlayerPed(src)
+        if not playerPed or playerPed == 0 or not DoesEntityExist(playerPed) then
+            return { success = false, error = 'Ped do jogador não está disponível para posicionar marcador.' }
+        end
         local pcoords = GetEntityCoords(playerPed)
         SpawnManualWorldEvidence(src, {
             type = 'marcador_cena',

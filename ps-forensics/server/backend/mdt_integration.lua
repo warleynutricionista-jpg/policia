@@ -364,16 +364,29 @@ lib.callback.register(resourceName .. ':server:getForensicStats', function(sourc
     if not hasMDTAccess(src) then return nil end
 
     return fetchCached('stats', 10, function()
+    local row = MySQL.single.await([[
+        SELECT
+            (SELECT COUNT(*) FROM forensic_crime_scenes) AS total_scenes,
+            (SELECT COUNT(*) FROM forensic_crime_scenes WHERE status <> 'finalizada') AS active_scenes,
+            (SELECT COUNT(*) FROM forensic_evidence) AS total_evidence,
+            (SELECT COUNT(*) FROM forensic_lab_tests WHERE status IN ('solicitado', 'em_andamento')) AS pending_tests,
+            (SELECT COUNT(*) FROM forensic_lab_tests WHERE status = 'concluido') AS completed_tests,
+            (SELECT COUNT(*) FROM forensic_autopsy) AS total_autopsies,
+            (SELECT COUNT(*) FROM forensic_reports) AS total_reports,
+            (SELECT COUNT(*) FROM forensic_fingerprints_collected WHERE match_status = 'positiva') AS fingerprint_matches,
+            (SELECT COUNT(*) FROM forensic_dna_samples WHERE match_status = 'compativel') AS dna_matches
+    ]]) or {}
+
     local stats = {
-        total_scenes = MySQL.scalar.await('SELECT COUNT(*) FROM forensic_crime_scenes') or 0,
-        active_scenes = MySQL.scalar.await("SELECT COUNT(*) FROM forensic_crime_scenes WHERE status != 'finalizada'") or 0,
-        total_evidence = MySQL.scalar.await('SELECT COUNT(*) FROM forensic_evidence') or 0,
-        pending_tests = MySQL.scalar.await("SELECT COUNT(*) FROM forensic_lab_tests WHERE status IN ('solicitado', 'em_andamento')") or 0,
-        completed_tests = MySQL.scalar.await("SELECT COUNT(*) FROM forensic_lab_tests WHERE status = 'concluido'") or 0,
-        total_autopsies = MySQL.scalar.await('SELECT COUNT(*) FROM forensic_autopsy') or 0,
-        total_reports = MySQL.scalar.await('SELECT COUNT(*) FROM forensic_reports') or 0,
-        fingerprint_matches = MySQL.scalar.await("SELECT COUNT(*) FROM forensic_fingerprints_collected WHERE match_status = 'positiva'") or 0,
-        dna_matches = MySQL.scalar.await("SELECT COUNT(*) FROM forensic_dna_samples WHERE match_status = 'compativel'") or 0,
+        total_scenes = tonumber(row.total_scenes) or 0,
+        active_scenes = tonumber(row.active_scenes) or 0,
+        total_evidence = tonumber(row.total_evidence) or 0,
+        pending_tests = tonumber(row.pending_tests) or 0,
+        completed_tests = tonumber(row.completed_tests) or 0,
+        total_autopsies = tonumber(row.total_autopsies) or 0,
+        total_reports = tonumber(row.total_reports) or 0,
+        fingerprint_matches = tonumber(row.fingerprint_matches) or 0,
+        dna_matches = tonumber(row.dna_matches) or 0,
     }
 
     return stats

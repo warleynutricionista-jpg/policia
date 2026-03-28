@@ -377,6 +377,51 @@ function EnsureMdtSchema(force)
         ensureIndex('mdt_reports_warrants', 'idx_mdt_reports_warrants_citizen_expiry', "INDEX `idx_mdt_reports_warrants_citizen_expiry` (`citizenid`, `expirydate`)", { 'citizenid', 'expirydate' })
         ensureIndex('mdt_profiles', 'idx_mdt_profiles_citizenid', "INDEX `idx_mdt_profiles_citizenid` (`citizenid`)", { 'citizenid' })
 
+        if not tableExists('mdt_prison_history') then
+            MySQL.query.await([[
+                CREATE TABLE IF NOT EXISTS `mdt_prison_history` (
+                    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                    `citizenid` VARCHAR(64) NOT NULL,
+                    `identifier` VARCHAR(64) DEFAULT NULL,
+                    `action` VARCHAR(40) NOT NULL,
+                    `reason` TEXT NULL,
+                    `report_id` INT UNSIGNED NULL,
+                    `case_id` INT UNSIGNED NULL,
+                    `warrant_report_id` INT UNSIGNED NULL,
+                    `time_before` INT NOT NULL DEFAULT 0,
+                    `time_after` INT NOT NULL DEFAULT 0,
+                    `applied_by` VARCHAR(100) NULL,
+                    `released_by` VARCHAR(100) NULL,
+                    `changed_by` VARCHAR(100) NULL,
+                    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (`id`),
+                    KEY `idx_mdt_prison_history_citizen_created` (`citizenid`, `created_at`),
+                    KEY `idx_mdt_prison_history_created` (`created_at`),
+                    KEY `idx_mdt_prison_history_report` (`report_id`),
+                    KEY `idx_mdt_prison_history_case` (`case_id`),
+                    KEY `idx_mdt_prison_history_warrant_report` (`warrant_report_id`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            ]])
+            schemaState.tableCache['mdt_prison_history'] = true
+            invalidateTableColumns('mdt_prison_history')
+        end
+
+        ensureColumn('mdt_prison_history', 'action', { definition = "`action` VARCHAR(40) NOT NULL DEFAULT 'jail'", after = 'identifier' })
+        ensureColumn('mdt_prison_history', 'reason', { definition = '`reason` TEXT NULL', after = 'action' })
+        ensureColumn('mdt_prison_history', 'report_id', { definition = '`report_id` INT UNSIGNED NULL', after = 'reason' })
+        ensureColumn('mdt_prison_history', 'case_id', { definition = '`case_id` INT UNSIGNED NULL', after = 'report_id' })
+        ensureColumn('mdt_prison_history', 'warrant_report_id', { definition = '`warrant_report_id` INT UNSIGNED NULL', after = 'case_id' })
+        ensureColumn('mdt_prison_history', 'applied_by', { definition = '`applied_by` VARCHAR(100) NULL', after = 'time_after' })
+        ensureColumn('mdt_prison_history', 'released_by', { definition = '`released_by` VARCHAR(100) NULL', after = 'applied_by' })
+        ensureColumn('mdt_prison_history', 'changed_by', { definition = '`changed_by` VARCHAR(100) NULL', after = 'released_by' })
+        ensureColumn('mdt_prison_history', 'created_at', { definition = '`created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP', after = 'changed_by' })
+
+        ensureIndex('mdt_prison_history', 'idx_mdt_prison_history_citizen_created', "INDEX `idx_mdt_prison_history_citizen_created` (`citizenid`, `created_at`)", { 'citizenid', 'created_at' })
+        ensureIndex('mdt_prison_history', 'idx_mdt_prison_history_created', "INDEX `idx_mdt_prison_history_created` (`created_at`)", { 'created_at' })
+        ensureIndex('mdt_prison_history', 'idx_mdt_prison_history_report', "INDEX `idx_mdt_prison_history_report` (`report_id`)", { 'report_id' })
+        ensureIndex('mdt_prison_history', 'idx_mdt_prison_history_case', "INDEX `idx_mdt_prison_history_case` (`case_id`)", { 'case_id' })
+        ensureIndex('mdt_prison_history', 'idx_mdt_prison_history_warrant_report', "INDEX `idx_mdt_prison_history_warrant_report` (`warrant_report_id`)", { 'warrant_report_id' })
+
         if tableExists('mdt_bolos') and columnExists('mdt_bolos', 'status') then
             MySQL.update.await("UPDATE mdt_bolos SET status = 'active' WHERE status IS NULL OR status = ''")
         end

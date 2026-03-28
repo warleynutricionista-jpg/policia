@@ -1,5 +1,10 @@
 local resourceName = tostring(GetCurrentResourceName())
 local prisonResource = 'pickle_prisons'
+local PRISON_HISTORY_TABLE = 'mdt_prison_history'
+local prisonHistoryTableAvailable = nil
+local prisonHistoryLastCheck = 0
+local prisonStatusCache = {}
+local PRISON_STATUS_CACHE_TTL_MS = 2500
 
 local function trim(value)
     if value == nil then return '' end
@@ -75,6 +80,13 @@ local function getCitizenProfile(citizenid)
 end
 
 local function getLatestPrisonEvents(citizenid)
+    if not citizenid or citizenid == '' then
+        return nil, nil, {}
+    end
+    if prisonHistoryTableAvailable == false then
+        return nil, nil, {}
+    end
+
     local rows = MySQL.query.await([[
         SELECT action, reason, report_id, case_id, warrant_report_id, applied_by, released_by, changed_by, time_after, created_at
         FROM mdt_prison_history
@@ -114,6 +126,71 @@ local function getLatestPrisonEvents(citizenid)
     return latestJail, latestRelease, timeline
 end
 
+local function ensurePrisonHistoryTable()
+    local now = GetGameTimer()
+    if prisonHistoryTableAvailable ~= nil and (now - prisonHistoryLastCheck) < 60000 then
+        return prisonHistoryTableAvailable
+    end
+
+    prisonHistoryLastCheck = now
+
+    local ok, exists = pcall(function()
+        return MySQL.scalar.await([[
+            SELECT COUNT(*)
+            FROM information_schema.tables
+            WHERE table_schema = DATABASE()
+              AND table_name = ?
+        ]], { PRISON_HISTORY_TABLE })
+    end)
+
+    if not ok then
+        prisonHistoryTableAvailable = false
+        ps.warn(('[%s] Falha ao validar schema da tabela %s: %s'):format(resourceName, PRISON_HISTORY_TABLE, tostring(exists)))
+        return false
+    end
+
+    if (tonumber(exists) or 0) > 0 then
+        prisonHistoryTableAvailable = true
+        return true
+    end
+
+    local createOk, createErr = pcall(function()
+        MySQL.query.await([[
+            CREATE TABLE IF NOT EXISTS `mdt_prison_history` (
+                `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                `citizenid` VARCHAR(64) NOT NULL,
+                `identifier` VARCHAR(64) DEFAULT NULL,
+                `action` VARCHAR(40) NOT NULL,
+                `reason` TEXT NULL,
+                `report_id` INT UNSIGNED NULL,
+                `case_id` INT UNSIGNED NULL,
+                `warrant_report_id` INT UNSIGNED NULL,
+                `time_before` INT NOT NULL DEFAULT 0,
+                `time_after` INT NOT NULL DEFAULT 0,
+                `applied_by` VARCHAR(100) NULL,
+                `released_by` VARCHAR(100) NULL,
+                `changed_by` VARCHAR(100) NULL,
+                `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (`id`),
+                KEY `idx_mdt_prison_history_citizen_created` (`citizenid`, `created_at`),
+                KEY `idx_mdt_prison_history_created` (`created_at`),
+                KEY `idx_mdt_prison_history_report` (`report_id`),
+                KEY `idx_mdt_prison_history_case` (`case_id`),
+                KEY `idx_mdt_prison_history_warrant_report` (`warrant_report_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ]])
+    end)
+
+    prisonHistoryTableAvailable = createOk == true
+    if not createOk then
+        ps.warn(('[%s] Não foi possível criar a tabela %s em runtime: %s'):format(resourceName, PRISON_HISTORY_TABLE, tostring(createErr)))
+    else
+        ps.warn(('[%s] Tabela %s criada automaticamente em runtime.'):format(resourceName, PRISON_HISTORY_TABLE))
+    end
+
+    return prisonHistoryTableAvailable
+end
+
 local function fetchCaseIdByReport(reportId)
     if not reportId then return nil end
     return tonumber(MySQL.scalar.await('SELECT case_id FROM mdt_case_reports WHERE report_id = ? ORDER BY case_id DESC LIMIT 1', { reportId })) or nil
@@ -121,37 +198,47 @@ end
 
 local function addPrisonHistory(entry)
     if not entry or not entry.citizenid then return end
+    if not ensurePrisonHistoryTable() then return end
 
-    MySQL.insert.await([[
-        INSERT INTO mdt_prison_history (
-            citizenid,
-            identifier,
-            action,
-            reason,
-            report_id,
-            case_id,
-            warrant_report_id,
-            time_before,
-            time_after,
-            applied_by,
-            released_by,
-            changed_by
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ]], {
-        entry.citizenid,
-        entry.identifier,
-        entry.action,
-        entry.reason,
-        entry.reportId,
-        entry.caseId,
-        entry.warrantReportId,
-        entry.timeBefore,
-        entry.timeAfter,
-        entry.appliedBy,
-        entry.releasedBy,
-        entry.changedBy,
-    })
+    local ok, err = pcall(function()
+        MySQL.insert.await([[
+            INSERT INTO mdt_prison_history (
+                citizenid,
+                identifier,
+                action,
+                reason,
+                report_id,
+                case_id,
+                warrant_report_id,
+                time_before,
+                time_after,
+                applied_by,
+                released_by,
+                changed_by
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ]], {
+            entry.citizenid,
+            entry.identifier,
+            entry.action,
+            entry.reason,
+            entry.reportId,
+            entry.caseId,
+            entry.warrantReportId,
+            entry.timeBefore,
+            entry.timeAfter,
+            entry.appliedBy,
+            entry.releasedBy,
+            entry.changedBy,
+        })
+    end)
+
+    if not ok then
+        ps.warn(('[%s] Falha ao inserir histórico prisional para %s: %s'):format(resourceName, tostring(entry.citizenid), tostring(err)))
+        return
+    end
+
+    prisonStatusCache[tostring(entry.citizenid)] = nil
 end
 
 local function getOfficerLabel(source)
@@ -207,6 +294,25 @@ local function getOnlinePrisonTargets(query)
 end
 
 local function getPrisonStatusPayload(citizenid, targetSource)
+    if not citizenid or trim(citizenid) == '' then
+        return {
+            source = targetSource,
+            citizenid = citizenid,
+            jailTime = 0,
+            status = 'Livre',
+            history = {},
+        }
+    end
+
+    local cacheKey = tostring(citizenid)
+    local now = GetGameTimer()
+    local cached = prisonStatusCache[cacheKey]
+    if cached and (now - cached.at) <= PRISON_STATUS_CACHE_TTL_MS then
+        local payload = cached.payload
+        payload.source = targetSource or payload.source
+        return payload
+    end
+
     local identifier = getIdentifierFromCitizenId(citizenid)
     local getStatus = getPrisonExport('GetPrisonStatus')
 
@@ -220,9 +326,10 @@ local function getPrisonStatusPayload(citizenid, targetSource)
 
     local jailTime = tonumber(prisonStatus and prisonStatus.time) or tonumber(targetSource and ps.getMetadata(targetSource, 'injail') or 0) or 0
     local status = jailTime > 0 and 'Preso' or 'Livre'
+    ensurePrisonHistoryTable()
     local latestJail, latestRelease, timeline = getLatestPrisonEvents(citizenid)
 
-    return {
+    local payload = {
         source = targetSource,
         citizenid = citizenid,
         jailTime = jailTime,
@@ -238,6 +345,13 @@ local function getPrisonStatusPayload(citizenid, targetSource)
         warrantReportId = latestJail and tonumber(latestJail.warrant_report_id) or nil,
         history = timeline,
     }
+
+    prisonStatusCache[cacheKey] = {
+        at = now,
+        payload = payload,
+    }
+
+    return payload
 end
 
 local function jailCitizen(source, payload)

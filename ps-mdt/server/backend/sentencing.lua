@@ -65,7 +65,7 @@ ps.registerCallback(resourceName .. ':server:sendToJail', function(source, paylo
 
     local officerLabel = (ps.getName and ps.getName(src) or GetPlayerName(src) or 'Oficial') .. ' (' .. tostring(ps.getIdentifier(src) or src) .. ')'
     local reason = type(payload.reason) == 'string' and payload.reason:gsub('^%s+', ''):gsub('%s+$', '') or nil
-    pcall(function()
+    local historyOk, historyErr = pcall(function()
         MySQL.insert.await([[
             INSERT INTO mdt_prison_history (
                 citizenid, identifier, action, reason, report_id, case_id, time_before, time_after, applied_by, changed_by
@@ -83,6 +83,9 @@ ps.registerCallback(resourceName .. ':server:sendToJail', function(source, paylo
             officerLabel,
         })
     end)
+    if not historyOk and ps and ps.warn then
+        ps.warn(('Falha ao registrar mdt_prison_history para %s: %s'):format(tostring(citizenId), tostring(historyErr)))
+    end
 
     -- Process fine if applicable
     if fine > 0 and QBCore then
