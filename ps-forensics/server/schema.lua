@@ -5,6 +5,13 @@
 
 local resourceName = GetCurrentResourceName()
 
+local function isIgnorableSqlError(err)
+    local message = tostring(err or ''):lower()
+    return message:find('duplicate column name', 1, true) ~= nil
+        or message:find('1060', 1, true) ~= nil
+        or message:find('already exists', 1, true) ~= nil
+end
+
 local function executeSqlStatements(sqlBlob, sourceLabel)
     local statements = {}
 
@@ -26,8 +33,13 @@ local function executeSqlStatements(sqlBlob, sourceLabel)
             if ok then
                 success = success + 1
             else
-                failed = failed + 1
-                print(('[%s] ^1Erro SQL (%s): %s^0'):format(resourceName, sourceLabel, tostring(err)))
+                if isIgnorableSqlError(err) then
+                    success = success + 1
+                    print(('[%s] Aviso SQL ignorado (%s): %s'):format(resourceName, sourceLabel, tostring(err)))
+                else
+                    failed = failed + 1
+                    print(('[%s] ^1Erro SQL (%s): %s^0'):format(resourceName, sourceLabel, tostring(err)))
+                end
             end
         end
     end
