@@ -30,6 +30,9 @@ shared_scripts {
 }
 
 client_scripts {
+    'client/helpers/animations.lua',
+    'client/helpers/state.lua',
+    'client/helpers/particles.lua',
     'client/items.lua',
     'client/access.lua',
     'client/main.lua',
