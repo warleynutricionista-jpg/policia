@@ -134,7 +134,9 @@ ps.registerCallback(resourceName .. ':server:getActiveWarrants', function(source
             r.datecreated,
             ri.citizenid
         FROM mdt_reports r
-        LEFT JOIN mdt_reports_involved ri ON ri.reportid = r.id
+        LEFT JOIN mdt_reports_involved ri
+            ON ri.reportid = r.id
+            AND LOWER(COALESCE(ri.type, '')) IN ('suspect', 'accused', 'culpado', 'acusado')
         WHERE r.report_status NOT IN ('archived')
         ORDER BY r.datecreated DESC
     ]]) or {}
