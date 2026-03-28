@@ -170,6 +170,15 @@ return {
         close = true,
         client = { export = 'ps-forensics.useForensicItem' },
     },
+    ['forensic_photo'] = {
+        label = 'Foto Pericial',
+        description = 'Registro fotográfico de evidência, com visualização da imagem capturada.',
+        weight = 5,
+        stack = false,
+        consume = 0,
+        close = false,
+        client = { export = 'ps-forensics.useForensicItem' },
+    },
     ['forensic_tablet'] = {
         label = 'Tablet Pericial',
         description = 'Terminal móvel para consulta e operações do sistema forense.',

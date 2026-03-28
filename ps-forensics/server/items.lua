@@ -114,6 +114,96 @@ RegisterNetEvent(resourceName .. ':server:itemUsed', function(itemName, slot)
     })
 end)
 
+
+local function getPhotoTimestamp(ts)
+    local value = tonumber(ts)
+    if value and value > 0 then return value end
+    return os.time()
+end
+
+local function addForensicPhotoToInventory(src, payload)
+    if GetResourceState('ox_inventory') ~= 'started' then
+        return false, 'ox_inventory não iniciado'
+    end
+
+    local imageData = payload.imageData
+    if type(imageData) ~= 'string' or imageData == '' then
+        imageData = payload.url
+    end
+
+    local coords = type(payload.coords) == 'table' and payload.coords or {}
+    local photoNumber = tonumber(payload.photoNumber) or 1
+    local photoTimestamp = getPhotoTimestamp(payload.capturedAt)
+
+    local metadata = {
+        id = 'forensic_photo',
+        label = ('Foto Pericial #%d'):format(photoNumber),
+        description = 'Registro fotográfico pericial coletado em campo.',
+        type = 'forensic_photo',
+        captured_at = photoTimestamp,
+        photo_number = photoNumber,
+        captured_by = GetPlayerName(src) or ('ID %s'):format(src),
+        coords = {
+            x = tonumber(coords.x) or 0.0,
+            y = tonumber(coords.y) or 0.0,
+            z = tonumber(coords.z) or 0.0,
+        },
+        heading = tonumber(payload.heading) or 0.0,
+        image = imageData,
+        imageUrl = imageData,
+        url = imageData,
+    }
+
+    local ok = exports.ox_inventory:AddItem(src, 'photo', 1, metadata)
+    if ok then
+        return true
+    end
+
+    ok = exports.ox_inventory:AddItem(src, 'forensic_photo', 1, metadata)
+    if ok then
+        return true
+    end
+
+    return false, 'Nenhum item de foto disponível (photo/forensic_photo)'
+end
+
+local function persistForensicPhotoEvidence(src, payload)
+    local playerData = GetPlayerData and GetPlayerData(src) or nil
+    if not playerData or not playerData.citizenid then return nil end
+
+    local coords = type(payload.coords) == 'table' and payload.coords or {}
+    local imageData = payload.imageData
+    if type(imageData) ~= 'string' or imageData == '' then
+        imageData = payload.url
+    end
+
+    local photoNumber = tonumber(payload.photoNumber) or 1
+    local evidenceId = MySQL.insert.await([[
+        INSERT INTO forensic_evidence
+        (evidence_number, category, type, subtype, description,
+         collection_location, collection_x, collection_y, collection_z,
+         collected_by, collected_by_name, collection_method, status, photo_url)
+        VALUES ('', 'documental', 'fotografia', 'camera_forense', ?, ?, ?, ?, ?, ?, ?, 'Câmera forense', 'coletada', ?)
+    ]], {
+        ('Foto pericial #%d registrada automaticamente pela câmera.'):format(photoNumber),
+        'Registro fotográfico de campo',
+        tonumber(coords.x) or 0.0,
+        tonumber(coords.y) or 0.0,
+        tonumber(coords.z) or 0.0,
+        playerData.citizenid,
+        playerData.name,
+        imageData,
+    })
+
+    if evidenceId then
+        local evidenceNumber = ForensicUtils.GenerateEvidenceNumber(evidenceId)
+        MySQL.update.await('UPDATE forensic_evidence SET evidence_number = ? WHERE id = ?', { evidenceNumber, evidenceId })
+        return evidenceId, evidenceNumber
+    end
+
+    return nil
+end
+
 RegisterNetEvent(resourceName .. ':server:forensicPhotoCaptured', function(payload)
     local src = source
     if not src then return end
@@ -121,12 +211,18 @@ RegisterNetEvent(resourceName .. ':server:forensicPhotoCaptured', function(paylo
 
     payload = type(payload) == 'table' and payload or {}
 
-    ForensicAuditLog(src, 'forensic_photo_captured', 'evidence', 0, {
+    local inventoryStored, inventoryError = addForensicPhotoToInventory(src, payload)
+    local evidenceId, evidenceNumber = persistForensicPhotoEvidence(src, payload)
+
+    ForensicAuditLog(src, 'forensic_photo_captured', 'evidence', evidenceId or 0, {
         via = payload.via or 'camera-mode',
         photoNumber = tonumber(payload.photoNumber) or 1,
         heading = tonumber(payload.heading) or 0.0,
         coords = payload.coords or {},
-        capturedAt = tonumber(payload.capturedAt) or os.time(),
+        capturedAt = getPhotoTimestamp(payload.capturedAt),
+        inventoryStored = inventoryStored,
+        inventoryError = inventoryError,
+        evidenceNumber = evidenceNumber,
     })
 end)
 

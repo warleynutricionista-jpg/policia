@@ -207,10 +207,11 @@ local function captureForensicPhoto()
     local capturedAt = getCaptureTimestamp()
 
     if GetResourceState('screenshot-basic') == 'started' then
-        exports['screenshot-basic']:requestScreenshot(function()
+        exports['screenshot-basic']:requestScreenshot(function(imageData)
             TriggerServerEvent(resourceName .. ':server:forensicPhotoCaptured', {
                 photoNumber = forensicCameraMode.photosTaken,
                 via = 'screenshot-basic',
+                imageData = imageData,
                 coords = { x = coords.x, y = coords.y, z = coords.z },
                 heading = heading,
                 capturedAt = capturedAt,
