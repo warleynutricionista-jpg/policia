@@ -5,11 +5,27 @@
 
 local resourceName = GetCurrentResourceName()
 
+local function getMDTCaseOptions()
+    local rows = lib.callback.await(resourceName .. ':server:getMDTCases', false, { limit = 200 })
+    local options = {
+        { value = '', label = L('common.optional') }
+    }
+
+    local caseRows = rows and rows.success and rows.data or {}
+    for _, caseRow in ipairs(caseRows or {}) do
+        local label = ('#%s | %s'):format(caseRow.id or '?', caseRow.title or L('labels.unknown'))
+        options[#options + 1] = { value = tostring(caseRow.id), label = label }
+    end
+
+    return options
+end
+
 -- ============================================================
 -- MENU: CRIAR CENA DE CRIME
 -- ============================================================
 function OpenCreateSceneMenu()
     local classOptions = ForensicUtils.GetSceneClassificationOptions()
+    local caseOptions = getMDTCaseOptions()
 
     local input = lib.inputDialog(L('scene.title'), {
         { type = 'select', label = L('form.scene.classification'), options = classOptions, required = true },
@@ -17,7 +33,7 @@ function OpenCreateSceneMenu()
         { type = 'number', label = L('form.scene.perimeter_radius'), default = 50, min = 10, max = 200 },
         { type = 'input', label = L('form.scene.weather'), placeholder = L('form.scene.weather_placeholder') },
         { type = 'input', label = L('form.scene.lighting'), placeholder = L('form.scene.lighting_placeholder') },
-        { type = 'input', label = L('form.scene.case_id'), placeholder = L('common.optional') },
+        { type = 'select', label = L('form.scene.case_id'), options = caseOptions, required = false },
         { type = 'input', label = L('form.scene.report_id'), placeholder = L('common.optional') },
     })
 

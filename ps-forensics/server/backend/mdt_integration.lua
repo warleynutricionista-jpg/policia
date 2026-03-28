@@ -8,6 +8,7 @@ local INTEGRATION_CACHE_PREFIX = 'forensics:mdt:'
 
 local function hasMDTAccess(src)
     if not CheckForensicAuth(src) then return false end
+    if CheckForensicPermission(src, 'canCollectEvidence') then return true end
     return CheckForensicPermission(src, 'canRunLabTests')
         or CheckForensicPermission(src, 'canEmitReport')
         or CheckForensicPermission(src, 'canPerformAutopsy')
@@ -48,6 +49,35 @@ local function fetchCached(key, ttlSeconds, fetcher)
     end
     return fetcher()
 end
+
+lib.callback.register(resourceName .. ':server:getMDTCases', function(source, filters)
+    local src = source
+    if not hasMDTAccess(src) then return { success = false, data = {} } end
+
+    filters = type(filters) == 'table' and filters or {}
+    local limit = clampLimit(filters.limit, 150, 500)
+    local status = normalizeLikeQuery(filters.status)
+    local query = [[
+        SELECT c.id, c.case_number, c.title, c.status, c.created_at, c.updated_at,
+               COUNT(cr.id) AS involved_count
+        FROM mdt_cases c
+        LEFT JOIN mdt_case_reports cr ON cr.case_id = c.id
+    ]]
+    local where = {}
+    local values = {}
+    if status then
+        where[#where + 1] = 'c.status = ?'
+        values[#values + 1] = status
+    end
+    if #where > 0 then
+        query = query .. ' WHERE ' .. table.concat(where, ' AND ')
+    end
+    query = query .. ' GROUP BY c.id, c.case_number, c.title, c.status, c.created_at, c.updated_at ORDER BY c.created_at DESC LIMIT ?'
+    values[#values + 1] = limit
+
+    local rows = safeQuery(query, values)
+    return { success = true, data = rows }
+end)
 
 -- ============================================================
 -- BUSCAR DADOS FORENSES POR CASO (para exibir no MDT)

@@ -60,10 +60,6 @@ lib.callback.register(resourceName .. ':server:registerFingerprint', function(so
     if not citizenid then return { success = false, error = L('fingerprints.errors.citizenid_required') } end
     citizenid = tostring(citizenid)
 
-    if not IsCitizenInInvestigativeBase(citizenid) then
-        return { success = false, error = 'Cidadão fora da base investigativa criminal.' }
-    end
-
     -- Verificar se já existe
     local existing = MySQL.single.await('SELECT id, fingerprint_hash, fingerprint_code FROM forensic_fingerprint_profiles WHERE citizenid = ?', { citizenid })
     if existing then
@@ -79,6 +75,8 @@ lib.callback.register(resourceName .. ':server:registerFingerprint', function(so
     local playerData = GetPlayerData(src)
     local resolvedName = citizenName or getCitizenNameFromMDT(citizenid) or L('labels.unknown')
     local actorCitizenId = playerData and playerData.citizenid or 'system'
+
+    EnsureInvestigativeSubject(citizenid, 'Inclusão automática para cadastro de digital', 'forensic_fingerprint_profile', nil, actorCitizenId)
 
     local insertedId = MySQL.insert.await([[
         INSERT INTO forensic_fingerprint_profiles (citizenid, citizen_name, fingerprint_hash, registered_by, created_by)

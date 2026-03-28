@@ -297,6 +297,86 @@ local function syncMDTCustody(mdtId, fromCitizenId, toCitizenId, action, notes)
     ]], { mdtId, fromCitizenId, toCitizenId, action, notes or '' })
 end
 
+local function getOrCreateDefaultDeposit(src, playerData)
+    local code = 'DEP-PADRAO'
+    local existing = MySQL.single.await(
+        'SELECT id, deposit_code, name FROM forensic_evidence_deposits WHERE deposit_code = ? LIMIT 1',
+        { code }
+    )
+    if existing then return existing end
+
+    local actor = (playerData and playerData.citizenid) or (GetPlayerData(src) and GetPlayerData(src).citizenid) or 'system'
+    local insertedId = MySQL.insert.await([[
+        INSERT INTO forensic_evidence_deposits
+        (deposit_code, name, location_label, is_active, created_by)
+        VALUES (?, ?, ?, 1, ?)
+    ]], { code, 'Depósito Central de Evidências', 'Central Forense', actor })
+
+    return MySQL.single.await('SELECT id, deposit_code, name FROM forensic_evidence_deposits WHERE id = ?', { insertedId })
+end
+
+local function autoStoreEvidenceInDeposit(src, evidenceId, evidenceNumber, actorData, noteOverride)
+    local evidenceRow = MySQL.single.await('SELECT id, mdt_evidence_id FROM forensic_evidence WHERE id = ?', { evidenceId })
+    if not evidenceRow then
+        return false, 'Evidência não encontrada para armazenamento.'
+    end
+
+    local deposit = getOrCreateDefaultDeposit(src, actorData)
+    if not deposit or not deposit.id then
+        return false, 'Falha ao resolver depósito de evidências.'
+    end
+
+    local locationLabel = ('%s (%s)'):format(deposit.name or 'Depósito', deposit.deposit_code or '')
+    MySQL.update.await([[
+        UPDATE forensic_evidence
+        SET status = 'armazenada',
+            storage_location = ?,
+            deposit_id = ?,
+            current_holder_citizenid = ?,
+            current_holder_name = ?
+        WHERE id = ?
+    ]], {
+        locationLabel,
+        deposit.id,
+        actorData and actorData.citizenid or nil,
+        actorData and actorData.name or nil,
+        evidenceId
+    })
+
+    MySQL.insert.await([[
+        INSERT INTO forensic_evidence_storage_events
+        (evidence_id, deposit_id, action, action_by, action_by_name, notes)
+        VALUES (?, ?, 'stored', ?, ?, ?)
+    ]], {
+        evidenceId,
+        deposit.id,
+        actorData and actorData.citizenid or 'system',
+        actorData and actorData.name or 'Sistema',
+        noteOverride or ('Evidência %s armazenada automaticamente no depósito %s'):format(evidenceNumber or tostring(evidenceId), deposit.deposit_code or '')
+    })
+
+    recordCustody(
+        evidenceId,
+        'armazenada',
+        actorData and actorData.citizenid or nil,
+        actorData and actorData.name or nil,
+        actorData and actorData.citizenid or nil,
+        actorData and actorData.name or nil,
+        locationLabel,
+        ('Vínculo automático ao depósito %s'):format(deposit.deposit_code or '')
+    )
+
+    syncMDTCustody(
+        evidenceRow.mdt_evidence_id,
+        actorData and actorData.citizenid or nil,
+        actorData and actorData.citizenid or nil,
+        'stored',
+        ('Armazenada no depósito %s'):format(deposit.deposit_code or '')
+    )
+
+    return true, deposit
+end
+
 -- ============================================================
 -- COLETAR EVIDÊNCIA
 -- ============================================================
@@ -323,6 +403,7 @@ lib.callback.register(resourceName .. ':server:collectEvidence', function(source
     local description = data.description and tostring(data.description):sub(1, 1000) or ''
     local locationName = data.location_name and tostring(data.location_name):sub(1, 200) or ''
     local photoUrl = data.photo_url and tostring(data.photo_url):sub(1, 255) or nil
+    local autoStore = data.auto_store == true
 
     if not evidenceEntry then
         return { success = false, error = L('evidence.errors.invalid_type') }
@@ -519,6 +600,13 @@ lib.callback.register(resourceName .. ':server:collectEvidence', function(source
         mdtEvidenceId = mdtEvidenceId,
     })
 
+    if autoStore then
+        local okStore, storeResult = autoStoreEvidenceInDeposit(src, evidenceId, evidenceNumber, playerData, 'Armazenada automaticamente no momento da coleta.')
+        if not okStore then
+            return { success = false, error = storeResult or 'Falha ao armazenar evidência no depósito.' }
+        end
+    end
+
     return {
         success = true,
         evidenceId = evidenceId,
@@ -685,6 +773,13 @@ lib.callback.register(resourceName .. ':server:updateEvidence', function(source,
         end
     end
 
+    if data.status == 'armazenada' then
+        local okStore, storeResult = autoStoreEvidenceInDeposit(src, evidenceId, evidence.evidence_number, playerData, data.notes)
+        if not okStore then
+            return { success = false, error = storeResult or 'Falha ao armazenar evidência no depósito.' }
+        end
+    end
+
     if (data.status == 'em_analise' or data.status == 'analisada') and (not data.notes or data.notes == '') then
         return { success = false, error = L('evidence.errors.analysis_notes_required') }
     end
@@ -710,7 +805,7 @@ lib.callback.register(resourceName .. ':server:updateEvidence', function(source,
     MySQL.update.await(('UPDATE forensic_evidence SET %s WHERE id = ?'):format(table.concat(updates, ', ')), values)
 
     -- Registrar mudança de status na cadeia de custódia
-    if data.status then
+    if data.status and data.status ~= 'armazenada' then
         local action = actionByStatus[data.status] or 'transferida'
         local custodyNotes = data.notes or ('Status alterado para: ' .. data.status)
         if evidence.seal_number and evidence.seal_number ~= '' then

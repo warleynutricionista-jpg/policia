@@ -72,10 +72,6 @@ lib.callback.register(resourceName .. ':server:registerDNAProfile', function(sou
     if not citizenid then return { success = false, error = L('dna.errors.citizenid_required') } end
     citizenid = tostring(citizenid)
 
-    if not IsCitizenInInvestigativeBase(citizenid) then
-        return { success = false, error = 'Cidadão fora da base investigativa criminal.' }
-    end
-
     local existing = MySQL.single.await('SELECT id, dna_hash, dna_code FROM forensic_dna_profiles WHERE citizenid = ?', { citizenid })
     if existing then
         if not existing.dna_code or existing.dna_code == '' then
@@ -91,6 +87,7 @@ lib.callback.register(resourceName .. ':server:registerDNAProfile', function(sou
     local resolvedName = citizenName or getCitizenNameFromMDT(citizenid) or L('labels.unknown')
 
     local actorCitizenId = playerData and playerData.citizenid or 'system'
+    EnsureInvestigativeSubject(citizenid, 'Inclusão automática para cadastro de DNA', 'forensic_dna_profile', nil, actorCitizenId)
     local insertedId = MySQL.insert.await([[
         INSERT INTO forensic_dna_profiles (citizenid, citizen_name, dna_hash, blood_type, registered_by, created_by)
         VALUES (?, ?, ?, ?, ?, ?)

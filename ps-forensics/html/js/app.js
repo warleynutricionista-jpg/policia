@@ -7,6 +7,7 @@ let playerRole = 'policial';
 let playerPermissions = {};
 let playerName = '';
 let availableTabs = [];
+let cachedMDTCases = [];
 
 const UI = window.ForensicsUI || {
     escapeHTML: (v) => String(v ?? ''),
@@ -123,6 +124,50 @@ function asArrayResponse(response) {
     return [];
 }
 
+function formatCaseDate(caseRow) {
+    const raw = caseRow?.created_at || caseRow?.updated_at;
+    if (!raw) return 'Sem data';
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) return String(raw);
+    return date.toLocaleString('pt-BR');
+}
+
+function formatCaseOptionLabel(caseRow) {
+    const involved = Number(caseRow?.involved_count || 0);
+    const involvedLabel = involved > 0 ? `${involved} envolvido(s)` : 'Sem envolvidos';
+    return `#${caseRow.id} • ${caseRow.title || 'Sem título'} • ${formatCaseDate(caseRow)} • ${involvedLabel}`;
+}
+
+async function fetchMDTCases(forceReload = false) {
+    if (!forceReload && cachedMDTCases.length > 0) return cachedMDTCases;
+    const response = await fetchNUI('getMDTCases', { limit: 250 });
+    const rows = asArrayResponse(response);
+    cachedMDTCases = Array.isArray(rows) ? rows : [];
+    return cachedMDTCases;
+}
+
+function buildCaseOptionsHTML(cases, placeholder = 'Selecione um caso MDT (opcional)') {
+    const options = [`<option value="">${placeholder}</option>`];
+    (cases || []).forEach((row) => {
+        options.push(`<option value="${row.id}">${formatCaseOptionLabel(row)}</option>`);
+    });
+    return options.join('');
+}
+
+async function hydrateCaseSelect(selectId, hintId) {
+    const select = getEl(selectId);
+    const hint = hintId ? getEl(hintId) : null;
+    if (!select) return;
+
+    const rows = await fetchMDTCases(true);
+    select.innerHTML = buildCaseOptionsHTML(rows);
+    if (hint) {
+        hint.textContent = rows.length > 0
+            ? `Casos carregados: ${rows.length}. Ordenação: mais recente → mais antigo.`
+            : 'Nenhum caso MDT ativo/encontrado. Continue sem vínculo de caso.';
+    }
+}
+
 // ============================================================
 // NUI MESSAGE HANDLER
 // ============================================================
@@ -135,6 +180,7 @@ window.addEventListener('message', function(event) {
         playerPermissions = data.permissions || {};
         playerName = data.playerName || 'Oficial';
         availableTabs = Array.isArray(data.availableTabs) ? data.availableTabs : [];
+        cachedMDTCases = [];
 
         const playerInfo = getEl('playerInfo');
         if (playerInfo) playerInfo.textContent = `${playerName} | ${data.playerJob || ''} | Grade ${data.playerGrade || 0}`;
@@ -461,8 +507,10 @@ function showCreateScene() {
         <div class="form-group"><label>Raio do Perímetro (m)</label><input type="number" id="scenePerimeter" value="50" min="10" max="500"></div>
         <div class="form-group"><label>Condições Climáticas</label><input type="text" id="sceneWeather" placeholder="Ex: Chuvoso, Ensolarado..."></div>
         <div class="form-group"><label>Iluminação</label><input type="text" id="sceneLighting" placeholder="Ex: Boa, Precária, Noturna..."></div>
-        <div class="form-group"><label>ID do Caso (MDT) - opcional</label><input type="number" id="sceneCaseId" placeholder="Número do caso no MDT"></div>
+        <div class="form-group"><label>Caso MDT (opcional)</label><select id="sceneCaseId"></select></div>
+        <div id="sceneCaseHint" class="lookup-hint">Carregando casos do MDT...</div>
     `, `<button class="btn-primary" onclick="doCreateScene()"><i class="fas fa-plus"></i> Criar Cena</button>`);
+    hydrateCaseSelect('sceneCaseId', 'sceneCaseHint');
 }
 
 async function doCreateScene() {
@@ -747,11 +795,13 @@ function showRegisterDrugAnalysis() {
         </div>
         <div class="form-group"><label>ID da Evidência (opcional)</label>
             <input type="number" id="drugEvidenceId" placeholder="ID da evidência associada"></div>
-        <div class="form-group"><label>ID do Caso MDT (opcional)</label>
-            <input type="number" id="drugCaseId" placeholder="Número do caso"></div>
+        <div class="form-group"><label>Caso MDT (opcional)</label>
+            <select id="drugCaseId"></select></div>
+        <div id="drugCaseHint" class="lookup-hint">Carregando casos do MDT...</div>
         <div class="form-group"><label>Observações</label>
             <textarea id="drugNotes" rows="2" placeholder="Observações iniciais..."></textarea></div>
     `, `<button class="btn-primary" onclick="doRegisterDrugAnalysis()"><i class="fas fa-plus"></i> Registrar</button>`);
+    hydrateCaseSelect('drugCaseId', 'drugCaseHint');
 }
 
 async function doRegisterDrugAnalysis() {
@@ -1536,9 +1586,11 @@ function showCreateAutopsy() {
         <div class="form-group"><label>Descrição dos Ferimentos</label><textarea id="autopsyWoundsDesc" rows="2" placeholder="Descreva os ferimentos..."></textarea></div>
         <div class="form-group"><label>Descrição do Trauma</label><textarea id="autopsyTraumaDesc" rows="2" placeholder="Descreva o trauma..."></textarea></div>
         <div class="form-group"><label>ID da Cena (opcional)</label><input type="number" id="autopsySceneId" placeholder="ID da cena de crime"></div>
-        <div class="form-group"><label>ID do Caso MDT (opcional)</label><input type="number" id="autopsyCaseId" placeholder="Número do caso"></div>
+        <div class="form-group"><label>Caso MDT (opcional)</label><select id="autopsyCaseId"></select></div>
+        <div id="autopsyCaseHint" class="lookup-hint">Carregando casos do MDT...</div>
     `, `<button class="btn-primary" onclick="doCreateAutopsy()"><i class="fas fa-plus"></i> Criar Necropsia</button>`);
     initCitizenAutofill('autopsyVictimCid', 'autopsyVictimName', 'autopsyVictimLookupHint');
+    hydrateCaseSelect('autopsyCaseId', 'autopsyCaseHint');
 }
 
 function showQuickBallisticRegister() {
@@ -1636,9 +1688,10 @@ function showCreateReport() {
                     <div class="form-group"><label>ID da Cena (opcional)</label><input type="number" id="reportSceneId" placeholder="ID da cena"></div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group"><label>ID do Caso MDT (opcional)</label><input type="number" id="reportCaseId" placeholder="Número do caso"></div>
+                    <div class="form-group"><label>Caso MDT (opcional)</label><select id="reportCaseId"></select></div>
                     <div class="form-group"><label>ID do Relatório MDT (opcional)</label><input type="number" id="reportMdtId" placeholder="ID do relatório MDT"></div>
                 </div>
+                <div id="reportCaseHint" class="lookup-hint">Carregando casos do MDT...</div>
                 <div class="form-group"><label>Título</label><input type="text" id="reportTitle" placeholder="Título do laudo"></div>
                 <div class="form-group"><label>Resumo</label><textarea id="reportSummary" rows="2" placeholder="Resumo executivo..."></textarea></div>
                 <div class="form-group"><label>Corpo do Laudo</label><textarea id="reportBody" rows="4" placeholder="Detalhamento técnico..."></textarea></div>
@@ -1758,6 +1811,7 @@ function showCreateReport() {
     initCitizenAutofill('reportFpCitizen', 'reportFpName', 'reportFpLookupHint');
     initCitizenAutofill('reportDnaCitizen', 'reportDnaName', 'reportDnaLookupHint');
     initWeaponSerialAutofill('reportBallisticSerial', 'reportBallisticSerialHint');
+    hydrateCaseSelect('reportCaseId', 'reportCaseHint');
 }
 
 function toggleReportSection(sectionId, visible) {
@@ -1803,6 +1857,7 @@ async function doCreateReport() {
             linked_weapon_serial: getEl('reportEvidenceWeaponSerial')?.value?.trim() || null,
             linked_vehicle_plate: getEl('reportEvidenceVehicle')?.value?.trim() || null,
             collection_method: 'Fluxo integrado de laudo',
+            auto_store: getEl('reportEvidenceStore')?.value === 'sim',
         };
 
         const evidenceResult = await fetchNUI('collectEvidence', evidencePayload);
@@ -1817,13 +1872,7 @@ async function doCreateReport() {
         appendUnique(linkedVehiclePlates, [evidencePayload.linked_vehicle_plate]);
         operationNotes.push(`Evidência ${evidenceResult.evidenceNumber} criada automaticamente.`);
 
-        if (getEl('reportEvidenceStore')?.value === 'sim') {
-            await fetchNUI('updateEvidence', {
-                id: evidenceResult.evidenceId,
-                status: 'armazenada',
-                storage_location: 'Armário de evidências',
-                notes: 'Movida para armazenamento automaticamente na criação do laudo.',
-            });
+        if (evidencePayload.auto_store) {
             operationNotes.push(`Evidência ${evidenceResult.evidenceNumber} enviada ao armário de evidências.`);
         }
     }
@@ -1844,6 +1893,21 @@ async function doCreateReport() {
         }
         appendUnique(linkedCitizenIds, [fpCitizen]);
         operationNotes.push(`Perfil digital ${fpResult.code || ''} cadastrado automaticamente.`);
+        if (evidenceIds.length > 0) {
+            const fpCollect = await fetchNUI('collectFingerprint', {
+                evidence_id: evidenceIds[0],
+                scene_id: reportContext.scene_id,
+                source_type: 'objeto',
+                source_description: `Coleta integrada no laudo ${title}`,
+                linked_citizenid: fpCitizen,
+                notes: 'Coletado automaticamente no fluxo de criação de laudo.',
+            });
+            if (!fpCollect?.success) {
+                showNotification(fpCollect?.error || 'Falha ao coletar impressão digital', 'error');
+                return;
+            }
+            operationNotes.push(`Coleta de digital registrada (#${fpCollect.id}).`);
+        }
     }
 
     if (getEl('reportEnableDNA')?.checked) {
@@ -1863,6 +1927,21 @@ async function doCreateReport() {
         }
         appendUnique(linkedCitizenIds, [dnaCitizen]);
         operationNotes.push(`Perfil de DNA ${dnaResult.code || ''} cadastrado automaticamente.`);
+        if (evidenceIds.length > 0) {
+            const dnaCollect = await fetchNUI('collectDNA', {
+                evidence_id: evidenceIds[0],
+                scene_id: reportContext.scene_id,
+                source_type: 'tecido',
+                source_description: `Coleta integrada no laudo ${title}`,
+                linked_citizenid: dnaCitizen,
+                notes: 'Coletado automaticamente no fluxo de criação de laudo.',
+            });
+            if (!dnaCollect?.success) {
+                showNotification(dnaCollect?.error || 'Falha ao coletar DNA', 'error');
+                return;
+            }
+            operationNotes.push(`Coleta de DNA registrada (#${dnaCollect.id}).`);
+        }
     }
 
     if (getEl('reportEnableBallistic')?.checked) {
@@ -1961,6 +2040,7 @@ function showReportWizard() {
     initCitizenAutofill('reportFpCitizen', 'reportFpName', 'reportFpLookupHint');
     initCitizenAutofill('reportDnaCitizen', 'reportDnaName', 'reportDnaLookupHint');
     initWeaponSerialAutofill('reportBallisticSerial', 'reportBallisticSerialHint');
+    hydrateCaseSelect('reportCaseId', 'reportCaseHint');
 }
 
 function cancelReportWizard() {
