@@ -26,7 +26,7 @@ local forensicFlashlight = {
 -- ============================================================
 local ItemProps = {
     forensic_kit        = 'prop_ld_case_01',
-    disposable_gloves   = 'prop_amb_cash_note_01',
+    disposable_gloves   = 'prop_cs_gloves_01',
     evidence_bag        = 'prop_evidence_bag_01',       -- fallback: xm3_prop_xm3_evidence_case_01a
     evidence_seal       = 'prop_notepad_01',
     evidence_tag        = 'prop_notepad_01',
@@ -42,7 +42,7 @@ local ItemProps = {
     evidence_marker     = 'prop_mp_num_6',
     medical_exam_case   = 'prop_ld_case_01',
     body_bag            = 'prop_ld_case_01',
-    forensic_flashlight = 'w_am_digiflashlight',
+    forensic_flashlight = 'prop_cs_police_torch',
     ballistic_kit       = 'prop_idol_case_01',
     forensic_tablet     = 'prop_cs_tablet',
 }
@@ -51,6 +51,8 @@ local ItemProps = {
 local ItemPropFallback = {
     evidence_bag        = 'xm3_prop_xm3_evidence_case_01a',
     medical_exam_case   = 'xm_prop_smug_crate_s_medical',
+    forensic_flashlight = 'w_me_flashlight',
+    forensic_camera     = 'prop_pap_camera_01',
 }
 
 local function resolveItemProp(itemName)

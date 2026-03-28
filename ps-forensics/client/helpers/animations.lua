@@ -58,6 +58,17 @@ local AnimCatalog = {
         propOffset = vec3(0.12, 0.02, -0.02),
         propRot = vec3(-85.0, 0.0, 5.0),
     },
+    tablet_use = {
+        dict = 'amb@world_human_seat_wall_tablet@female@base',
+        clip = 'base',
+        flag = 49,
+        blendIn = 4.0,
+        blendOut = 2.0,
+        label = 'Consultando sistema forense...',
+        propBone = 60309,
+        propOffset = vec3(0.03, 0.02, 0.0),
+        propRot = vec3(10.0, 160.0, 0.0),
+    },
     clipboard = {
         dict = 'amb@world_human_clipboard@male@base',
         clip = 'base',
@@ -113,6 +124,17 @@ local AnimCatalog = {
         propOffset = vec3(0.03, 0.03, 0.02),
         propRot = vec3(30.0, 10.0, 140.0),
     },
+    flashlight_hold = {
+        dict = 'missfbi4prepp1',
+        clip = '_idle_d',
+        flag = 49,
+        blendIn = 4.0,
+        blendOut = 2.0,
+        label = 'Equipando lanterna...',
+        propBone = 57005,
+        propOffset = vec3(0.08, 0.02, -0.02),
+        propRot = vec3(-90.0, 0.0, 0.0),
+    },
 }
 
 -- Fallback universal
@@ -125,7 +147,7 @@ local ItemAnimCategory = {
     forensic_kit        = 'kit_open',
     forensic_tablet     = 'tablet_use',    -- tratado separado
     forensic_camera     = 'camera_use',
-    forensic_flashlight = 'standing_tool', -- equip rápido
+    forensic_flashlight = 'flashlight_hold',
     forensic_tweezers   = 'field_crouch',
     disposable_gloves   = 'standing_tool',
     dna_swab            = 'field_crouch',
