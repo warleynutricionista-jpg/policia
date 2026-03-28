@@ -114,6 +114,22 @@ RegisterNetEvent(resourceName .. ':server:itemUsed', function(itemName, slot)
     })
 end)
 
+RegisterNetEvent(resourceName .. ':server:forensicPhotoCaptured', function(payload)
+    local src = source
+    if not src then return end
+    if not CheckForensicAuth(src) then return end
+
+    payload = type(payload) == 'table' and payload or {}
+
+    ForensicAuditLog(src, 'forensic_photo_captured', 'evidence', 0, {
+        via = payload.via or 'camera-mode',
+        photoNumber = tonumber(payload.photoNumber) or 1,
+        heading = tonumber(payload.heading) or 0.0,
+        coords = payload.coords or {},
+        capturedAt = tonumber(payload.capturedAt) or os.time(),
+    })
+end)
+
 lib.callback.register(resourceName .. ':server:executeItemUse', function(source, payload)
     local src = source
     if not CheckForensicAuth(src) then
