@@ -361,14 +361,15 @@ lib.callback.register(resourceName .. ':server:collectWorldEvidence', function(s
     -- Inserir em forensic_evidence
     local evidenceId = MySQL.insert.await([[
         INSERT INTO forensic_evidence
-        (evidence_number, category, type, description,
+        (evidence_number, category, type, subtype, description,
          collection_location, collection_x, collection_y, collection_z,
          collected_by, collected_by_name, collection_method, seal_number, status,
          linked_vehicle_plate, linked_weapon_serial, collection_source, world_evidence_id)
-        VALUES ('', ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Campo - Auto', ?, 'coletada', ?, ?, 'campo', ?)
+        VALUES ('', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Campo - Auto', ?, 'coletada', ?, ?, 'campo', ?)
     ]], {
         evData.category,
         evData.type,
+        (evData.type == 'pegada' and evData.shoe_model and tostring(evData.shoe_model)) or nil,
         (function()
             local desc = ('Vestígio de campo: %s | Origem: %s'):format(evData.type, evData.source_type)
             if evData.shoe_model then
