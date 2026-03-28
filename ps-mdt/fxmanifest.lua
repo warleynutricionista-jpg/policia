@@ -35,7 +35,8 @@ server_scripts {
 
 files {
   'web/dist/index.html',
-  'web/dist/**/*'
+  'web/dist/**/*',
+  'items/*.lua',
 }
 
 data_file 'DLC_ITYP_REQUEST' 'stream/ps-mdt.ytyp'

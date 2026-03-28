@@ -79,7 +79,6 @@ ForensicItemUsageMap = {
     forensic_flashlight = { action = 'scene_dark_search', serverValidate = true, requiresTarget = false, effect = 'flashlight' },
     ballistic_kit = { action = 'collect_ballistic', serverValidate = true, requiresTarget = true, allowedTypes = { capsula = true, projetil = true, buraco_de_bala = true }, effect = 'analyze' },
     forensic_tablet = { action = 'open_tablet', serverValidate = true, requiresTarget = false, effect = 'ui' },
-    mdtcitation = { action = 'issue_citation', serverValidate = false, requiresTarget = false, effect = 'mdt' },
 }
 
 ForensicEvidenceVisualMap = {
