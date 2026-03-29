@@ -232,6 +232,13 @@ Config.Notifications = {
     duration = 5000,
 }
 
+Config.DisposableGlovesOutfit = {
+    Enabled = true,
+    ComponentId = 3,
+    Male = { drawable = 86, texture = 0 },
+    Female = { drawable = 109, texture = 0 },
+}
+
 -- ============================================================
 -- EVIDÊNCIAS DE MUNDO (auto-spawn por eventos de jogo)
 -- Inspirado nos padrões do script evidences (noobsystems) e renzu_evidence

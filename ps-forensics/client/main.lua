@@ -27,6 +27,31 @@ local function resolvePlayerJob()
     return '', 0, ''
 end
 
+
+function IsWithinActiveCrimeScene(coords)
+    local targetCoords = coords
+    if not targetCoords then
+        local ped = PlayerPedId()
+        if ped and ped > 0 then
+            targetCoords = GetEntityCoords(ped)
+        end
+    end
+
+    if not targetCoords then return false end
+
+    for _, scene in pairs(activeScenes) do
+        if scene and scene.x and scene.y and scene.z then
+            local radius = tonumber(scene.perimeter_radius) or 50.0
+            local distance = #(vec3(scene.x, scene.y, scene.z) - vec3(targetCoords.x, targetCoords.y, targetCoords.z))
+            if distance <= radius then
+                return true, scene.id
+            end
+        end
+    end
+
+    return false
+end
+
 -- ============================================================
 -- ABRIR INTERFACE FORENSE (NUI)
 -- ============================================================
@@ -95,6 +120,12 @@ function OpenForensicsUI(tab)
         and (charinfo.firstname .. ' ' .. charinfo.lastname)
         or L('ui.officer_fallback_name')
 
+    pcall(function()
+        if GetResourceState('ox_inventory') == 'started' and exports.ox_inventory then
+            exports.ox_inventory:closeInventory()
+        end
+    end)
+
     SetNuiFocus(true, true)
     isForensicsOpen = true
 
@@ -144,10 +175,39 @@ RegisterNetEvent(resourceName .. ':client:sceneCreated', function(scene)
 end)
 
 RegisterNetEvent(resourceName .. ':client:sceneUpdated', function(sceneId, data)
-    if data.status == 'finalizada' and sceneBlips[sceneId] then
-        RemoveBlip(sceneBlips[sceneId])
-        sceneBlips[sceneId] = nil
+    if not sceneId then return end
+
+    if data and data.status == 'finalizada' then
+        if sceneBlips[sceneId] then
+            RemoveBlip(sceneBlips[sceneId])
+            sceneBlips[sceneId] = nil
+        end
         activeScenes[sceneId] = nil
+        return
+    end
+
+    if activeScenes[sceneId] and data then
+        for k, v in pairs(data) do
+            activeScenes[sceneId][k] = v
+        end
+    end
+end)
+
+CreateThread(function()
+    Wait(1500)
+    local scenes = lib.callback.await(resourceName .. ':server:getActiveScenePerimeters', false)
+    if type(scenes) == 'table' then
+        for _, scene in ipairs(scenes) do
+            activeScenes[scene.id] = {
+                id = scene.id,
+                sceneNumber = scene.scene_number,
+                status = scene.status,
+                x = scene.location_x,
+                y = scene.location_y,
+                z = scene.location_z,
+                perimeter_radius = scene.perimeter_radius,
+            }
+        end
     end
 end)
 

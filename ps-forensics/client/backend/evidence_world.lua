@@ -83,6 +83,15 @@ local function canCollect()
         or false
 end
 
+local function canInspectSceneEvidence(coords)
+    if type(IsWithinActiveCrimeScene) ~= 'function' then
+        return true
+    end
+
+    local inside = IsWithinActiveCrimeScene(coords)
+    return inside == true
+end
+
 -- ============================================================
 -- HELPER: ARMA BLACKLISTADA
 -- Inspirado em lsn-evidence: WhitelistedWeapons
@@ -188,11 +197,18 @@ local function createEvidenceZone(evData)
     }
     local icon  = iconMap[evData.category] or 'fa-solid fa-circle-dot'
     local label = ('[Vestígio] %s'):format(evData.type or 'Evidência')
+    local radius = 1.0
+
+    if evData.type == 'pegada' then
+        icon = 'fa-solid fa-shoe-prints'
+        label = '[Vestígio] Pegada - Coletar com kit'
+        radius = 1.35
+    end
 
     local ok, zoneId = pcall(function()
         return exports.ox_target:addSphereZone({
             coords  = vec3(evData.coords.x, evData.coords.y, evData.coords.z),
-            radius  = 1.0,
+            radius  = radius,
             options = {
                 {
                     name        = ('psf_wev_%s'):format(evData.id),
@@ -203,7 +219,7 @@ local function createEvidenceZone(evData)
                         collectWorldEvidence(evData.id)
                     end,
                     canInteract = function()
-                        return canCollect()
+                        return canCollect() and canInspectSceneEvidence(evData.coords)
                     end,
                 },
             },
@@ -459,6 +475,52 @@ AddEventHandler('baseevents:enteredVehicle', function(vehicle, seat, _modelName)
     })
 end)
 
+
+-- ============================================================
+-- CONTATO COM CORPOS (gera digital quando tocar sem luvas)
+-- ============================================================
+local lastBodyContactPrint = 0
+
+CreateThread(function()
+    while true do
+        Wait(250)
+        if not Config.WorldEvidence or not Config.WorldEvidence.Enabled then goto continue end
+        if hasGloves() then goto continue end
+
+        local ped = PlayerPedId()
+        local pCoords = GetEntityCoords(ped)
+        local closestPed, closestDist = nil, 2.0
+
+        for _, targetPed in ipairs(GetGamePool('CPed')) do
+            if targetPed ~= ped and DoesEntityExist(targetPed) and IsEntityDead(targetPed) then
+                local d = #(pCoords - GetEntityCoords(targetPed))
+                if d < closestDist then
+                    closestDist = d
+                    closestPed = targetPed
+                end
+            end
+        end
+
+        if closestPed and IsControlJustReleased(0, 38) then
+            local now = GetGameTimer()
+            if (now - lastBodyContactPrint) < 3000 then goto continue end
+            if not rollChance('impressao_digital') then goto continue end
+
+            lastBodyContactPrint = now
+            local coords = GetEntityCoords(closestPed)
+            TriggerServerEvent(resourceName .. ':world:spawnEvidence', {
+                type = 'impressao_digital',
+                category = 'digital_impressao',
+                coords = { x = coords.x, y = coords.y, z = coords.z + 0.2 },
+                location = getStreetName(coords),
+                source_type = 'body_contact',
+            })
+        end
+
+        ::continue::
+    end
+end)
+
 -- ============================================================
 -- GAME EVENT: CÁPSULA EJETA (disparo detectado por ammo decrease)
 -- Baseado no padrão do evidences/client/evidences/registry/magazine.lua
@@ -584,7 +646,7 @@ CreateThread(function()
                     closestDist = dist
                 end
 
-                if dist <= 25.0 then
+                if dist <= 25.0 and canInspectSceneEvidence(evData.coords) then
                     local visualCfg = getEvidenceVisual(evData.type)
                     local canDraw = (not visualCfg or not visualCfg.requiresReveal or evData.revealed == true or flashlightActive)
 
