@@ -40,8 +40,8 @@ function OpenCreateSceneMenu()
     if not input then return end
 
     local coords = GetEntityCoords(PlayerPedId())
-    local streetHash, _ = GetStreetNameAtCoord(coords.x, coords.y, coords.z)
-    local streetName = GetStreetNameFromHashKey(streetHash)
+    local streetHash = select(1, GetStreetNameAtCoord(coords.x, coords.y, coords.z))
+    local streetName = (streetHash and streetHash ~= 0) and GetStreetNameFromHashKey(streetHash) or nil
 
     local result = lib.callback.await(resourceName .. ':server:createScene', false, {
         classification = input[1],
@@ -97,7 +97,7 @@ function OpenCollectEvidenceMenu()
     if not input then return end
 
     local coords = GetEntityCoords(PlayerPedId())
-    local streetHash, _ = GetStreetNameAtCoord(coords.x, coords.y, coords.z)
+    local streetHash = select(1, GetStreetNameAtCoord(coords.x, coords.y, coords.z))
 
     -- Animação de coleta
     lib.requestAnimDict('anim@gangops@facility@servers@bodysearch@')
@@ -120,7 +120,7 @@ function OpenCollectEvidenceMenu()
             collection_method = input[5] or 'Manual',
             scene_id = input[6] and input[6] > 0 and input[6] or nil,
             priority = input[7] or 'media',
-            location_name = GetStreetNameFromHashKey(streetHash) or '',
+            location_name = ((streetHash and streetHash ~= 0) and GetStreetNameFromHashKey(streetHash)) or '',
             x = coords.x, y = coords.y, z = coords.z,
         })
 

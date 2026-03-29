@@ -62,6 +62,25 @@ local function getCitizenNameFromMDT(citizenid)
     return nil
 end
 
+local function normalizeBloodType(bloodType)
+    local raw = tostring(bloodType or ''):upper():gsub('%s+', '')
+    local aliases = {
+        ['A+'] = 'A+',
+        ['A-'] = 'A-',
+        ['B+'] = 'B+',
+        ['B-'] = 'B-',
+        ['AB+'] = 'AB+',
+        ['AB-'] = 'AB-',
+        ['O+'] = 'O+',
+        ['O-'] = 'O-',
+        DESCONHECIDO = 'UNK',
+        DESCONHECIDA = 'UNK',
+        UNKNOWN = 'UNK',
+        UNK = 'UNK',
+    }
+    return aliases[raw] or 'UNK'
+end
+
 -- ============================================================
 -- REGISTRAR PERFIL GENÉTICO DE CIDADÃO
 -- ============================================================
@@ -93,13 +112,14 @@ lib.callback.register(resourceName .. ':server:registerDNAProfile', function(sou
         print(('[%s] AVISO: EnsureInvestigativeSubject falhou (DNA): %s'):format(resourceName, tostring(err1)))
     end
 
-    print(('[%s] registerDNAProfile: Inserindo perfil para citizenid=%s, nome=%s, blood=%s'):format(
-        resourceName, citizenid, resolvedName, tostring(bloodType)))
+    local normalizedBloodType = normalizeBloodType(bloodType)
+    print(('[%s] registerDNAProfile: Inserindo perfil para citizenid=%s, nome=%s, blood=%s (normalizado=%s)'):format(
+        resourceName, citizenid, resolvedName, tostring(bloodType), normalizedBloodType))
 
     local insertOk, insertedId = pcall(MySQL.insert.await, [[
         INSERT INTO forensic_dna_profiles (citizenid, citizen_name, dna_hash, blood_type, registered_by, created_by)
         VALUES (?, ?, ?, ?, ?, ?)
-    ]], { citizenid, resolvedName, hash, bloodType or L('labels.unknown'), actorCitizenId, actorCitizenId })
+    ]], { citizenid, resolvedName, hash, normalizedBloodType, actorCitizenId, actorCitizenId })
 
     if not insertOk then
         print(('[%s] ERRO SQL registerDNAProfile INSERT: %s'):format(resourceName, tostring(insertedId)))
@@ -181,6 +201,10 @@ lib.callback.register(resourceName .. ':server:collectDNASample', function(sourc
         if not linkedCitizenId and evidence.linked_citizenid then
             linkedCitizenId = evidence.linked_citizenid
         end
+    end
+
+    if not sceneId then
+        return { success = false, error = 'Amostras de DNA devem ser vinculadas a uma cena de crime.' }
     end
 
     if sceneId then
