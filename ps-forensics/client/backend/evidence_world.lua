@@ -188,11 +188,18 @@ local function createEvidenceZone(evData)
     }
     local icon  = iconMap[evData.category] or 'fa-solid fa-circle-dot'
     local label = ('[Vestígio] %s'):format(evData.type or 'Evidência')
+    local radius = 1.0
+
+    if evData.type == 'pegada' then
+        icon = 'fa-solid fa-shoe-prints'
+        label = '[Vestígio] Pegada - Coletar com kit'
+        radius = 1.35
+    end
 
     local ok, zoneId = pcall(function()
         return exports.ox_target:addSphereZone({
             coords  = vec3(evData.coords.x, evData.coords.y, evData.coords.z),
-            radius  = 1.0,
+            radius  = radius,
             options = {
                 {
                     name        = ('psf_wev_%s'):format(evData.id),

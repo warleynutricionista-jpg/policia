@@ -12,4 +12,5 @@ return {
     '2026-03-28_forensics_mdt_perf_guards.sql',
     '2026-03-28_forensics_evidence_deposit_automation.sql',
     '2026-03-28_forensics_column_safety.sql',
+    '2026-03-28_forensics_footwear_and_photo_inventory.sql',
 }

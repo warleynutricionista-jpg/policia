@@ -21,6 +21,65 @@ local forensicFlashlight = {
     auxLight = false,
 }
 
+local glovesVisualState = {
+    applied = false,
+    componentId = nil,
+    drawable = nil,
+    texture = nil,
+}
+
+local function getGloveOutfitConfig(ped)
+    local cfg = Config.DisposableGlovesOutfit or {}
+    if cfg.Enabled == false then return nil end
+
+    local model = GetEntityModel(ped)
+    local variant = cfg.Female
+    if model == `mp_m_freemode_01` then
+        variant = cfg.Male
+    elseif model == `mp_f_freemode_01` then
+        variant = cfg.Female
+    end
+
+    if not variant or variant.drawable == nil then return nil end
+
+    return {
+        componentId = tonumber(cfg.ComponentId) or 3,
+        drawable = tonumber(variant.drawable),
+        texture = tonumber(variant.texture) or 0,
+    }
+end
+
+local function applyDisposableGlovesVisual()
+    local ped = PlayerPedId()
+    if not DoesEntityExist(ped) then return end
+
+    local outfit = getGloveOutfitConfig(ped)
+    if not outfit then return end
+
+    glovesVisualState.componentId = outfit.componentId
+    glovesVisualState.drawable = GetPedDrawableVariation(ped, outfit.componentId)
+    glovesVisualState.texture = GetPedTextureVariation(ped, outfit.componentId)
+
+    SetPedComponentVariation(ped, outfit.componentId, outfit.drawable, outfit.texture, 0)
+    glovesVisualState.applied = true
+end
+
+local function clearDisposableGlovesVisual()
+    if not glovesVisualState.applied then return end
+
+    local ped = PlayerPedId()
+    if not DoesEntityExist(ped) then return end
+
+    if glovesVisualState.componentId ~= nil and glovesVisualState.drawable ~= nil and glovesVisualState.texture ~= nil then
+        SetPedComponentVariation(ped, glovesVisualState.componentId, glovesVisualState.drawable, glovesVisualState.texture, 0)
+    end
+
+    glovesVisualState.applied = false
+    glovesVisualState.componentId = nil
+    glovesVisualState.drawable = nil
+    glovesVisualState.texture = nil
+end
+
 -- ============================================================
 -- MAPA DE PROPS POR ITEM (modelos nativos GTA V confiáveis)
 -- ============================================================
@@ -207,10 +266,11 @@ local function captureForensicPhoto()
     local capturedAt = getCaptureTimestamp()
 
     if GetResourceState('screenshot-basic') == 'started' then
-        exports['screenshot-basic']:requestScreenshot(function()
+        exports['screenshot-basic']:requestScreenshot(function(imageData)
             TriggerServerEvent(resourceName .. ':server:forensicPhotoCaptured', {
                 photoNumber = forensicCameraMode.photosTaken,
                 via = 'screenshot-basic',
+                imageData = imageData,
                 coords = { x = coords.x, y = coords.y, z = coords.z },
                 heading = heading,
                 capturedAt = capturedAt,
@@ -497,6 +557,7 @@ local function handleForensicItemUse(data, slot)
         end
 
         ForensicState.setGloves(true)
+        applyDisposableGlovesVisual()
         notifySuccess('disposable_gloves')
         TriggerServerEvent(resourceName .. ':server:itemUsed', itemName, slot)
         return
@@ -776,4 +837,24 @@ AddEventHandler('onResourceStop', function(resource)
     if resource ~= resourceName then return end
     ForensicState.clearEquippedTool()
     ForensicState.clearAllMarkers()
+end)
+
+
+CreateThread(function()
+    local wasUsingGloves = false
+    while true do
+        Wait(1000)
+        local has = ForensicState.hasGloves()
+        if has then
+            wasUsingGloves = true
+        elseif wasUsingGloves then
+            clearDisposableGlovesVisual()
+            wasUsingGloves = false
+        end
+    end
+end)
+
+AddEventHandler('onResourceStop', function(resourceNameStopped)
+    if resourceNameStopped ~= resourceName then return end
+    clearDisposableGlovesVisual()
 end)
