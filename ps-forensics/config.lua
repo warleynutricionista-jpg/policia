@@ -162,6 +162,7 @@ Config.Items = {
     body_bag              = 'body_bag',
     forensic_flashlight   = 'forensic_flashlight',
     ballistic_kit         = 'ballistic_kit',
+    forensic_photo        = 'forensic_photo',
     forensic_tablet       = 'forensic_tablet',
     mdtcitation           = 'mdtcitation',
 }
@@ -319,6 +320,11 @@ Config.WorldEvidence = {
     -- ============================================================
     -- Habilitar sistema de pegadas automáticas ao correr
     AllowFootprints = true,
+
+    -- Evita contaminação de cena por equipe policial/pericial.
+    -- Quando true, jobs listados em FootprintBlockedJobs não geram pegadas automáticas.
+    DisablePoliceFootprints = true,
+    FootprintBlockedJobs = ForensicShared.Jobs.Police,
 
     -- Velocidade mínima do ped para gerar pegada (m/s) — corre ≈ 7, caminha ≈ 1.5
     FootprintMinSpeed = 6.5,

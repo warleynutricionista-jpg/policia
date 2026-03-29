@@ -83,6 +83,30 @@ local function canCollect()
         or false
 end
 
+local function isFootprintBlockedForCurrentJob()
+    if not Config.WorldEvidence or Config.WorldEvidence.DisablePoliceFootprints ~= true then
+        return false
+    end
+
+    local jobName = ''
+    if ForensicsAccess and ForensicsAccess.getPlayerJob then
+        jobName = select(1, ForensicsAccess.getPlayerJob()) or ''
+    elseif type(getPlayerJob) == 'function' then
+        jobName = select(1, getPlayerJob()) or ''
+    end
+
+    if jobName == '' then return false end
+
+    local blocked = Config.WorldEvidence.FootprintBlockedJobs or Config.PoliceJobs or {}
+    for _, blockedJob in ipairs(blocked) do
+        if blockedJob == jobName then
+            return true
+        end
+    end
+
+    return false
+end
+
 local function canInspectSceneEvidence(coords)
     if type(IsWithinActiveCrimeScene) ~= 'function' then
         return true
@@ -779,6 +803,7 @@ AddEventHandler('CEventFootStepHeard', function(witnesses, ped)
     if not ped or ped == 0 or not DoesEntityExist(ped) then return end
     if ped ~= PlayerPedId() then return end
     if IsPedSwimming(ped) or IsEntityDead(ped) then return end
+    if isFootprintBlockedForCurrentJob() then return end
 
     -- Apenas quando correndo (velocidade mínima configurável)
     local minSpeed = Config.WorldEvidence.FootprintMinSpeed or 6.5

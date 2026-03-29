@@ -143,6 +143,7 @@ local function addForensicPhotoToInventory(src, payload)
     if GetResourceState('ox_inventory') ~= 'started' then
         return false, 'ox_inventory não iniciado'
     end
+    local photoItem = (Config.Items and Config.Items.forensic_photo) or 'forensic_photo'
 
     local coords = type(payload.coords) == 'table' and payload.coords or {}
     local photoNumber = tonumber(payload.photoNumber) or 1
@@ -161,16 +162,16 @@ local function addForensicPhotoToInventory(src, payload)
         image_url = normalizePhotoUrl(payload.url) or normalizePhotoUrl(payload.imageData),
     }
 
-    if not exports.ox_inventory:CanCarryItem(src, 'photo', 1, metadata) then
+    if not exports.ox_inventory:CanCarryItem(src, photoItem, 1, metadata) then
         return false, 'Inventário cheio para receber a foto.'
     end
 
-    local ok, response = exports.ox_inventory:AddItem(src, 'photo', 1, metadata)
+    local ok, response = exports.ox_inventory:AddItem(src, photoItem, 1, metadata)
     if ok then
         return true
     end
 
-    return false, response or 'Falha ao adicionar item photo no ox_inventory.'
+    return false, response or ('Falha ao adicionar item %s no ox_inventory.'):format(photoItem)
 end
 
 local function persistForensicPhotoEvidence(src, payload)
@@ -214,11 +215,12 @@ RegisterNetEvent(resourceName .. ':server:forensicPhotoCaptured', function(paylo
 
     payload = type(payload) == 'table' and payload or {}
 
+    local photoItem = (Config.Items and Config.Items.forensic_photo) or 'forensic_photo'
     local inventoryStored, inventoryError = addForensicPhotoToInventory(src, payload)
     local evidenceId, evidenceNumber = persistForensicPhotoEvidence(src, payload)
 
     if inventoryStored then
-        notifyPhotoResult(src, true, 'Foto adicionada ao inventário (item: photo).')
+        notifyPhotoResult(src, true, ('Foto adicionada ao inventário (item: %s).'):format(photoItem))
     else
         notifyPhotoResult(src, false, inventoryError or 'Não foi possível adicionar a foto ao inventário.')
     end
