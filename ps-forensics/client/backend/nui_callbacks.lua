@@ -124,8 +124,9 @@ RegisterNUICallback('createScene', function(data, cb)
         local coords = GetEntityCoords(PlayerPedId())
         payload.x, payload.y, payload.z = coords.x, coords.y, coords.z
 
-        local streetHash = GetStreetNameAtCoord(coords.x, coords.y, coords.z)
-        payload.location_name = payload.location_name or GetStreetNameFromHashKey(streetHash) or L('scene.unknown_location')
+        local streetHash = select(1, GetStreetNameAtCoord(coords.x, coords.y, coords.z))
+        local streetName = (streetHash and streetHash ~= 0) and GetStreetNameFromHashKey(streetHash) or nil
+        payload.location_name = payload.location_name or streetName or L('scene.unknown_location')
 
         print(('[%s] NUI createScene -> enviando ao server: classification=%s, location=%s'):format(
             resourceName, tostring(payload.classification), tostring(payload.location_name)))
@@ -161,8 +162,9 @@ end, function(data)
     local coords = GetEntityCoords(PlayerPedId())
     payload.x, payload.y, payload.z = coords.x, coords.y, coords.z
 
-    local streetHash = GetStreetNameAtCoord(coords.x, coords.y, coords.z)
-    payload.location_name = payload.location_name or GetStreetNameFromHashKey(streetHash) or ''
+    local streetHash = select(1, GetStreetNameAtCoord(coords.x, coords.y, coords.z))
+    local streetName = (streetHash and streetHash ~= 0) and GetStreetNameFromHashKey(streetHash) or nil
+    payload.location_name = payload.location_name or streetName or ''
 
     return serverCall('collectEvidence', payload)
 end))

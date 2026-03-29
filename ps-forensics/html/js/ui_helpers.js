@@ -17,7 +17,8 @@ window.ForensicsUI = (function () {
             [...node.attributes].forEach((attr) => {
                 const name = attr.name.toLowerCase();
                 const value = String(attr.value || '').trim().toLowerCase();
-                if (name.startsWith('on')) node.removeAttribute(attr.name);
+                // Mantemos atributos on* porque a interface usa handlers inline
+                // (ex.: onclick="doCreateScene()") em diversos botões dinâmicos.
                 if ((name === 'src' || name === 'href') && value.startsWith('javascript:')) {
                     node.removeAttribute(attr.name);
                 }

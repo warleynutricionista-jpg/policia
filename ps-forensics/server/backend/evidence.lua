@@ -431,6 +431,10 @@ lib.callback.register(resourceName .. ':server:collectEvidence', function(source
         return { success = false, error = itemValidation.error or L('evidence.errors.missing_required_item', 'item') }
     end
 
+    if not sceneId then
+        return { success = false, error = 'Toda evidência coletada deve estar vinculada a uma cena de crime.' }
+    end
+
     if sceneId then
         local scene = MySQL.single.await('SELECT id, status, case_id, report_id, location_x, location_y, location_z FROM forensic_crime_scenes WHERE id = ?', { sceneId })
         if not scene then
@@ -450,8 +454,8 @@ lib.callback.register(resourceName .. ':server:collectEvidence', function(source
             end
         end
 
-        if not caseId and scene.case_id then caseId = scene.case_id end
-        if not reportId and scene.report_id then reportId = scene.report_id end
+        caseId = scene.case_id or caseId
+        reportId = scene.report_id or reportId
     end
 
     local linksOk, linksError = validateCaseAndReport(caseId, reportId)

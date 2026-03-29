@@ -448,7 +448,7 @@ function ForensicEnsureCitizenForensicProfiles(citizenid, actorCitizenId, reason
         MySQL.insert.await([[
             INSERT INTO forensic_dna_profiles (citizenid, citizen_name, dna_hash, blood_type, registered_by, created_by)
             VALUES (?, ?, ?, ?, ?, ?)
-        ]], { citizenid, getCitizenName(citizenid) or 'Desconhecido', ForensicUtils.GenerateDNAHash(citizenid), 'DESCONHECIDO', actorCitizenId or 'system', actorCitizenId or 'system' })
+        ]], { citizenid, getCitizenName(citizenid) or 'Desconhecido', ForensicUtils.GenerateDNAHash(citizenid), 'UNK', actorCitizenId or 'system', actorCitizenId or 'system' })
         createdDNA = true
     end
 

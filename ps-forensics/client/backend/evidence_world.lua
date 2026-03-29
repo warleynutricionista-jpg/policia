@@ -168,7 +168,10 @@ end
 -- HELPER: NOME DA RUA
 -- ============================================================
 local function getStreetName(coords)
-    local streetHash = GetStreetNameAtCoord(coords.x, coords.y, coords.z)
+    local streetHash = select(1, GetStreetNameAtCoord(coords.x, coords.y, coords.z))
+    if not streetHash or streetHash == 0 then
+        return ''
+    end
     return GetStreetNameFromHashKey(streetHash) or ''
 end
 

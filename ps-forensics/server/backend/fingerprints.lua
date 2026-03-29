@@ -173,6 +173,10 @@ lib.callback.register(resourceName .. ':server:collectFingerprint', function(sou
         end
     end
 
+    if not sceneId then
+        return { success = false, error = 'Coletas de impressão digital devem ser vinculadas a uma cena de crime.' }
+    end
+
     if sceneId then
         local scene = MySQL.single.await('SELECT id, status, location_x, location_y, location_z FROM forensic_crime_scenes WHERE id = ?', { sceneId })
         if not scene then
