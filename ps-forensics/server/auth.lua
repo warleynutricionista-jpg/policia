@@ -56,6 +56,7 @@ function GetPlayerData(src)
             citizenid = pd.citizenid,
             name = (pd.charinfo and pd.charinfo.firstname or '') .. ' ' .. (pd.charinfo and pd.charinfo.lastname or ''),
             job = pd.job and pd.job.name or '',
+            jobType = pd.job and pd.job.type or '',
             grade = pd.job and pd.job.grade and pd.job.grade.level or 0,
             jobLabel = pd.job and pd.job.label or '',
             gradeLabel = pd.job and pd.job.grade and pd.job.grade.name or '',

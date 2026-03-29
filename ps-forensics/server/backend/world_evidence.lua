@@ -68,13 +68,19 @@ local function getMinDistance()
     return (Config.WorldEvidence and Config.WorldEvidence.MinDistanceBetweenSameType) or 2.0
 end
 
-local function isFootprintBlockedForJob(jobName)
+local function isFootprintBlockedForJob(jobName, jobType)
     if not Config.WorldEvidence or Config.WorldEvidence.DisablePoliceFootprints ~= true then
         return false
     end
-    if not jobName or jobName == '' then return false end
 
-    local normalizedJob = tostring(jobName):lower():gsub('[%s_-]+', '')
+    local normalizedType = tostring(jobType or ''):lower():gsub('[%s_-]+', '')
+    if normalizedType == 'leo' or normalizedType == 'police' then
+        return true
+    end
+
+    local normalizedJob = tostring(jobName or ''):lower():gsub('[%s_-]+', '')
+    if normalizedJob == '' then return false end
+
     local blockedJobs = (Config.WorldEvidence and Config.WorldEvidence.FootprintBlockedJobs) or Config.PoliceJobs or {}
     for _, blocked in ipairs(blockedJobs) do
         local normalizedBlocked = tostring(blocked):lower():gsub('[%s_-]+', '')
@@ -84,6 +90,14 @@ local function isFootprintBlockedForJob(jobName)
     end
 
     if ForensicUtils and ForensicUtils.IsPoliceJob and ForensicUtils.IsPoliceJob(jobName) then
+        return true
+    end
+
+    if normalizedJob:find('police', 1, true)
+        or normalizedJob:find('policia', 1, true)
+        or normalizedJob:find('sheriff', 1, true)
+        or normalizedJob:find('trooper', 1, true)
+    then
         return true
     end
 
@@ -269,7 +283,7 @@ RegisterNetEvent(resourceName .. ':world:spawnEvidence', function(data)
         return
     end
 
-    if data.type == 'pegada' and isFootprintBlockedForJob(playerData.job) then
+    if data.type == 'pegada' and isFootprintBlockedForJob(playerData.job, playerData.jobType) then
         if Config.Debug then
             print(('[%s] WorldEvidence: pegada bloqueada para job "%s" (src=%s)'):format(
                 resourceName, tostring(playerData.job), tostring(src)
