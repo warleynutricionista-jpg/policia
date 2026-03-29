@@ -8,6 +8,9 @@ let playerPermissions = {};
 let playerName = '';
 let availableTabs = [];
 let cachedMDTCases = [];
+let cachedScenes = [];
+const pendingRequests = new Map();
+const actionLocks = new Set();
 
 const UI = window.ForensicsUI || {
     escapeHTML: (v) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])),
@@ -171,6 +174,56 @@ async function hydrateCaseSelect(selectId, hintId) {
     }
 }
 
+
+async function fetchSceneOptions(forceReload = false) {
+    if (!forceReload && cachedScenes.length > 0) return cachedScenes;
+    const response = await fetchNUI('getScenes', { status: '', search: '' });
+    const rows = asArrayResponse(response);
+    cachedScenes = Array.isArray(rows) ? rows : [];
+    return cachedScenes;
+}
+
+function formatSceneOptionLabel(sceneRow) {
+    const sceneNumber = sceneRow?.scene_number || `Cena #${sceneRow?.id ?? 'N/D'}`;
+    const status = statusLabels?.[sceneRow?.status] || sceneRow?.status || 'Sem status';
+    const classification = sceneRow?.classification || 'Sem classificação';
+    return `${sceneNumber} • ${classification} • ${status}`;
+}
+
+function buildSceneOptionsHTML(scenes, placeholder = 'Selecione uma cena (opcional)') {
+    const options = [`<option value="">${placeholder}</option>`];
+    (scenes || []).forEach((row) => {
+        options.push(`<option value="${row.id}">${formatSceneOptionLabel(row)}</option>`);
+    });
+    return options.join('');
+}
+
+async function hydrateSceneSelect(selectId, hintId, preferredSceneId = null) {
+    const select = getEl(selectId);
+    const hint = hintId ? getEl(hintId) : null;
+    if (!select) return;
+
+    const rows = await fetchSceneOptions(true);
+    const selected = preferredSceneId ?? select.value ?? '';
+    select.innerHTML = buildSceneOptionsHTML(rows);
+    if (selected) {
+        select.value = String(selected);
+    }
+
+    if (hint) {
+        hint.textContent = rows.length > 0
+            ? `Cenas carregadas: ${rows.length}. Utilize a cena para centralizar coletas e análises.`
+            : 'Nenhuma cena encontrada. Crie uma cena antes de registrar coletas vinculadas.';
+    }
+}
+
+function getNormalizedSceneId(fieldId) {
+    const raw = getEl(fieldId)?.value;
+    if (raw === undefined || raw === null || String(raw).trim() === '') return null;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? String(parsed) : null;
+}
+
 // ============================================================
 // NUI MESSAGE HANDLER
 // ============================================================
@@ -184,6 +237,7 @@ window.addEventListener('message', function(event) {
         playerName = data.playerName || 'Oficial';
         availableTabs = Array.isArray(data.availableTabs) ? data.availableTabs : [];
         cachedMDTCases = [];
+        cachedScenes = [];
 
         const playerInfo = getEl('playerInfo');
         if (playerInfo) playerInfo.textContent = `${playerName} | ${data.playerJob || ''} | Grade ${data.playerGrade || 0}`;
@@ -230,31 +284,57 @@ window.addEventListener('message', function(event) {
 // FETCH NUI
 // ============================================================
 async function fetchNUI(event, data = {}, timeoutMs = 30000) {
+    const requestKey = `${event}:${JSON.stringify(data || {})}`;
+    if (pendingRequests.has(requestKey)) {
+        return pendingRequests.get(requestKey);
+    }
+
+    const shouldLog = event !== 'close';
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-    try {
-        console.log(`[ps-forensics] fetchNUI -> ${event}`, JSON.stringify(data).substring(0, 200));
-        const resp = await fetch(`https://ps-forensics/${event}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
-            signal: controller.signal,
-        });
-        const result = await resp.json();
-        console.log(`[ps-forensics] fetchNUI <- ${event}`, result?.success !== undefined ? `success=${result.success}` : 'raw response');
-        return result;
-    } catch (e) {
-        if (e.name === 'AbortError') {
-            console.error(`[ps-forensics] fetchNUI timeout (${timeoutMs}ms): ${event}`);
-            showNotification(`Tempo limite excedido ao processar: ${event}`, 'error');
-            return { success: false, error: 'Tempo limite excedido. Tente novamente.' };
+    const requestPromise = (async () => {
+        try {
+            if (shouldLog) {
+                console.log(`[ps-forensics] fetchNUI -> ${event}`, JSON.stringify(data).substring(0, 200));
+            }
+
+            const resp = await fetch(`https://ps-forensics/${event}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+                signal: controller.signal,
+            });
+
+            const result = await resp.json();
+
+            if (shouldLog) {
+                if (result === null || result === undefined) {
+                    console.warn(`[ps-forensics] fetchNUI <- ${event} empty response`);
+                } else if (result?.success !== undefined) {
+                    console.log(`[ps-forensics] fetchNUI <- ${event} success=${result.success}`);
+                } else {
+                    console.log(`[ps-forensics] fetchNUI <- ${event} ok`);
+                }
+            }
+
+            return result;
+        } catch (e) {
+            if (e.name === 'AbortError') {
+                console.error(`[ps-forensics] fetchNUI timeout (${timeoutMs}ms): ${event}`);
+                showNotification(`Tempo limite excedido ao processar: ${event}`, 'error');
+                return { success: false, error: 'Tempo limite excedido. Tente novamente.' };
+            }
+            console.error(`[ps-forensics] fetchNUI error (${event}):`, e);
+            return null;
+        } finally {
+            clearTimeout(timer);
+            pendingRequests.delete(requestKey);
         }
-        console.error(`[ps-forensics] fetchNUI error (${event}):`, e);
-        return null;
-    } finally {
-        clearTimeout(timer);
-    }
+    })();
+
+    pendingRequests.set(requestKey, requestPromise);
+    return requestPromise;
 }
 
 // ============================================================
@@ -443,6 +523,20 @@ async function loadScenes() {
 function searchScenes() { loadScenes(); }
 function filterScenes() { loadScenes(); }
 
+async function runLockedAction(lockKey, fn) {
+    if (actionLocks.has(lockKey)) {
+        showNotification('Ação já está em andamento. Aguarde...', 'warning');
+        return null;
+    }
+
+    actionLocks.add(lockKey);
+    try {
+        return await fn();
+    } finally {
+        actionLocks.delete(lockKey);
+    }
+}
+
 async function viewScene(sceneId) {
     const scene = await fetchNUI('getScene', { id: sceneId });
     if (!scene) return;
@@ -492,14 +586,16 @@ async function viewScene(sceneId) {
 }
 
 async function updateSceneStatus(sceneId, status) {
-    const result = await fetchNUI('updateScene', { id: sceneId, status });
-    if (result && result.success) {
-        showNotification(`Status da cena atualizado para: ${statusLabels[status] || status}`, 'success');
-        await loadScenes();
-        await viewScene(sceneId);
-    } else {
-        showNotification(result?.error || 'Erro ao atualizar status da cena', 'error');
-    }
+    await runLockedAction(`scene:${sceneId}:${status}`, async () => {
+        const result = await fetchNUI('updateScene', { id: sceneId, status });
+        if (result && result.success) {
+            showNotification(`Status da cena atualizado para: ${statusLabels[status] || status}`, 'success');
+            await loadScenes();
+            await viewScene(sceneId);
+        } else {
+            showNotification(result?.error || 'Erro ao atualizar status da cena', 'error');
+        }
+    });
 }
 
 function showCreateScene() {
@@ -1111,14 +1207,16 @@ async function performToxicology(autopsyId) {
 }
 
 async function completeAutopsy(autopsyId) {
-    const result = await fetchNUI('updateAutopsy', { id: autopsyId, status: 'concluido' });
-    if (result && result.success) {
-        showNotification('Necropsia concluída com sucesso. Laudo gerado automaticamente.', 'success');
-        await loadAutopsies();
-        await viewAutopsy(autopsyId);
-    } else {
-        showNotification(result?.error || 'Erro ao concluir necropsia', 'error');
-    }
+    await runLockedAction(`autopsy:${autopsyId}:complete`, async () => {
+        const result = await fetchNUI('updateAutopsy', { id: autopsyId, status: 'concluido' });
+        if (result && result.success) {
+            showNotification('Necropsia concluída com sucesso. Laudo gerado automaticamente.', 'success');
+            await loadAutopsies();
+            await viewAutopsy(autopsyId);
+        } else {
+            showNotification(result?.error || 'Erro ao concluir necropsia', 'error');
+        }
+    });
 }
 
 // ============================================================
@@ -1199,25 +1297,29 @@ async function viewReport(reportId) {
 }
 
 async function finalizeReport(reportId) {
-    const result = await fetchNUI('finalizeReport', { id: reportId });
-    if (result && result.success) {
-        showNotification('Laudo finalizado com sucesso', 'success');
-        await loadReports();
-        await viewReport(reportId);
-    } else {
-        showNotification(result?.error || 'Erro ao finalizar laudo', 'error');
-    }
+    await runLockedAction(`report:${reportId}:finalize`, async () => {
+        const result = await fetchNUI('finalizeReport', { id: reportId });
+        if (result && result.success) {
+            showNotification('Laudo finalizado com sucesso', 'success');
+            await loadReports();
+            await viewReport(reportId);
+        } else {
+            showNotification(result?.error || 'Erro ao finalizar laudo', 'error');
+        }
+    });
 }
 
 async function attachToMDT(reportId) {
-    const result = await fetchNUI('attachReportToMDT', { id: reportId });
-    if (result && result.success) {
-        showNotification('Laudo anexado ao MDT com sucesso', 'success');
-        await loadReports();
-        await viewReport(reportId);
-    } else {
-        showNotification(result?.error || 'Erro ao anexar ao MDT', 'error');
-    }
+    await runLockedAction(`report:${reportId}:attach`, async () => {
+        const result = await fetchNUI('attachReportToMDT', { id: reportId });
+        if (result && result.success) {
+            showNotification('Laudo anexado ao MDT com sucesso', 'success');
+            await loadReports();
+            await viewReport(reportId);
+        } else {
+            showNotification(result?.error || 'Erro ao anexar ao MDT', 'error');
+        }
+    });
 }
 
 // ============================================================
@@ -1641,12 +1743,14 @@ function showCreateAutopsy() {
         <div class="form-group"><label>Nº de Ferimentos</label><input type="number" id="autopsyWoundsCount" value="0" min="0"></div>
         <div class="form-group"><label>Descrição dos Ferimentos</label><textarea id="autopsyWoundsDesc" rows="2" placeholder="Descreva os ferimentos..."></textarea></div>
         <div class="form-group"><label>Descrição do Trauma</label><textarea id="autopsyTraumaDesc" rows="2" placeholder="Descreva o trauma..."></textarea></div>
-        <div class="form-group"><label>ID da Cena (opcional)</label><input type="number" id="autopsySceneId" placeholder="ID da cena de crime"></div>
+        <div class="form-group"><label>ID da Cena (opcional)</label><select id="autopsySceneId"></select></div>
+        <div id="autopsySceneHint" class="lookup-hint">Carregando cenas...</div>
         <div class="form-group"><label>Caso MDT (opcional)</label><select id="autopsyCaseId"></select></div>
         <div id="autopsyCaseHint" class="lookup-hint">Carregando casos do MDT...</div>
     `, `<button class="btn-primary" onclick="doCreateAutopsy()"><i class="fas fa-plus"></i> Criar Necropsia</button>`);
     initCitizenAutofill('autopsyVictimCid', 'autopsyVictimName', 'autopsyVictimLookupHint');
     hydrateCaseSelect('autopsyCaseId', 'autopsyCaseHint');
+    hydrateSceneSelect('autopsySceneId', 'autopsySceneHint');
 }
 
 function showQuickBallisticRegister() {
@@ -1665,10 +1769,12 @@ function showQuickBallisticRegister() {
             <div class="form-group"><label>Modelo</label><input type="text" id="quickBallisticModel" placeholder="Modelo"></div>
             <div class="form-group"><label>Calibre</label><input type="text" id="quickBallisticCaliber" placeholder="Ex: 9mm"></div>
         </div>
-        <div class="form-group"><label>ID da Cena (opcional)</label><input type="number" id="quickBallisticSceneId" placeholder="ID da cena"></div>
+        <div class="form-group"><label>ID da Cena (opcional)</label><select id="quickBallisticSceneId"></select></div>
+        <div id="quickBallisticSceneHint" class="lookup-hint">Carregando cenas...</div>
         <div class="form-group"><label>Observações</label><textarea id="quickBallisticNotes" rows="2" placeholder="Detalhes da coleta..."></textarea></div>
     `, `<button class="btn-primary" onclick="doQuickBallisticRegister()"><i class="fas fa-plus"></i> Registrar</button>`);
     initWeaponSerialAutofill('quickBallisticSerial', 'quickBallisticHint');
+    hydrateSceneSelect('quickBallisticSceneId', 'quickBallisticSceneHint');
 }
 
 async function doQuickBallisticRegister() {
@@ -1677,7 +1783,7 @@ async function doQuickBallisticRegister() {
         weapon_serial: getEl('quickBallisticSerial')?.value?.trim() || null,
         weapon_model: getEl('quickBallisticModel')?.value?.trim() || null,
         caliber: getEl('quickBallisticCaliber')?.value?.trim() || null,
-        scene_id: getEl('quickBallisticSceneId')?.value || null,
+        scene_id: getNormalizedSceneId('quickBallisticSceneId'),
         notes: getEl('quickBallisticNotes')?.value || '',
     };
     const result = await fetchNUI('registerBallistic', payload);
@@ -1706,7 +1812,7 @@ async function doCreateAutopsy() {
         wounds_count: parseInt(getEl('autopsyWoundsCount')?.value) || 0,
         wounds_description: getEl('autopsyWoundsDesc')?.value || '',
         trauma_description: getEl('autopsyTraumaDesc')?.value || '',
-        scene_id: getEl('autopsySceneId')?.value || null,
+        scene_id: getNormalizedSceneId('autopsySceneId'),
         case_id: getEl('autopsyCaseId')?.value || null,
     };
     const result = await fetchNUI('createAutopsy', data);
@@ -1741,12 +1847,13 @@ function showCreateReport() {
                             <option value="laudo_drogas">Laudo Drogas</option>
                         </select>
                     </div>
-                    <div class="form-group"><label>ID da Cena (opcional)</label><input type="number" id="reportSceneId" placeholder="ID da cena"></div>
+                    <div class="form-group"><label>ID da Cena (opcional)</label><select id="reportSceneId"></select></div>
                 </div>
                 <div class="form-row">
                     <div class="form-group"><label>Caso MDT (opcional)</label><select id="reportCaseId"></select></div>
                     <div class="form-group"><label>ID do Relatório MDT (opcional)</label><input type="number" id="reportMdtId" placeholder="ID do relatório MDT"></div>
                 </div>
+                <div id="reportSceneHint" class="lookup-hint">Carregando cenas...</div>
                 <div id="reportCaseHint" class="lookup-hint">Carregando casos do MDT...</div>
                 <div class="form-group"><label>Título</label><input type="text" id="reportTitle" placeholder="Título do laudo"></div>
                 <div class="form-group"><label>Resumo</label><textarea id="reportSummary" rows="2" placeholder="Resumo executivo..."></textarea></div>
@@ -1868,6 +1975,7 @@ function showCreateReport() {
     initCitizenAutofill('reportDnaCitizen', 'reportDnaName', 'reportDnaLookupHint');
     initWeaponSerialAutofill('reportBallisticSerial', 'reportBallisticSerialHint');
     hydrateCaseSelect('reportCaseId', 'reportCaseHint');
+    hydrateSceneSelect('reportSceneId', 'reportSceneHint');
 }
 
 function toggleReportSection(sectionId, visible) {
@@ -1884,14 +1992,23 @@ function appendUnique(target, values) {
 }
 
 async function doCreateReport() {
+    if (reportSubmitInFlight) {
+        showNotification('Aguarde, o laudo está sendo processado.', 'warning');
+        return;
+    }
+
     const title = getEl('reportTitle')?.value;
     if (!title) {
         showNotification('Título do laudo é obrigatório', 'error');
         return;
     }
 
+    reportSubmitInFlight = true;
+    getEl('btnWizardSubmit')?.setAttribute('disabled', 'disabled');
+
+    try {
     const reportContext = {
-        scene_id: getEl('reportSceneId')?.value || null,
+        scene_id: getNormalizedSceneId('reportSceneId'),
         case_id: getEl('reportCaseId')?.value || null,
         report_id: null,
     };
@@ -1901,6 +2018,18 @@ async function doCreateReport() {
     const linkedWeaponSerials = [];
     const linkedVehiclePlates = [];
     const operationNotes = [];
+
+    const hasIntegratedCollections = [
+        'reportEnableEvidence',
+        'reportEnableFingerprint',
+        'reportEnableDNA',
+        'reportEnableBallistic',
+    ].some((id) => getEl(id)?.checked);
+
+    if (hasIntegratedCollections && !reportContext.scene_id) {
+        showNotification('Selecione a cena da ocorrência antes de executar coletas integradas.', 'error');
+        return;
+    }
 
     if (getEl('reportEnableEvidence')?.checked) {
         const evidencePayload = {
@@ -2043,6 +2172,10 @@ async function doCreateReport() {
     } else {
         showNotification(result?.error || 'Erro ao criar laudo', 'error');
     }
+    } finally {
+        reportSubmitInFlight = false;
+        getEl('btnWizardSubmit')?.removeAttribute('disabled');
+    }
 }
 
 // ============================================================
@@ -2085,6 +2218,7 @@ function switchAnalysisSubTab(subTab) {
 // REPORT WIZARD
 // ============================================================
 let currentWizardStep = 1;
+let reportSubmitInFlight = false;
 
 function showReportWizard() {
     currentWizardStep = 1;
@@ -2097,6 +2231,7 @@ function showReportWizard() {
     initCitizenAutofill('reportDnaCitizen', 'reportDnaName', 'reportDnaLookupHint');
     initWeaponSerialAutofill('reportBallisticSerial', 'reportBallisticSerialHint');
     hydrateCaseSelect('reportCaseId', 'reportCaseHint');
+    hydrateSceneSelect('reportSceneId', 'reportSceneHint');
 }
 
 function cancelReportWizard() {
