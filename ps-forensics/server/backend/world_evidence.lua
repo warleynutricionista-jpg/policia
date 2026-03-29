@@ -68,6 +68,28 @@ local function getMinDistance()
     return (Config.WorldEvidence and Config.WorldEvidence.MinDistanceBetweenSameType) or 2.0
 end
 
+local function isFootprintBlockedForJob(jobName)
+    if not Config.WorldEvidence or Config.WorldEvidence.DisablePoliceFootprints ~= true then
+        return false
+    end
+    if not jobName or jobName == '' then return false end
+
+    local normalizedJob = tostring(jobName):lower():gsub('[%s_-]+', '')
+    local blockedJobs = (Config.WorldEvidence and Config.WorldEvidence.FootprintBlockedJobs) or Config.PoliceJobs or {}
+    for _, blocked in ipairs(blockedJobs) do
+        local normalizedBlocked = tostring(blocked):lower():gsub('[%s_-]+', '')
+        if normalizedBlocked == normalizedJob then
+            return true
+        end
+    end
+
+    if ForensicUtils and ForensicUtils.IsPoliceJob and ForensicUtils.IsPoliceJob(jobName) then
+        return true
+    end
+
+    return false
+end
+
 -- ID único para cada vestígio de campo
 local function generateWorldEvidenceId()
     evidenceSeq = evidenceSeq + 1
@@ -244,6 +266,15 @@ RegisterNetEvent(resourceName .. ':world:spawnEvidence', function(data)
     if not playerData then return end
 
     if type(data) ~= 'table' or type(data.type) ~= 'string' then
+        return
+    end
+
+    if data.type == 'pegada' and isFootprintBlockedForJob(playerData.job) then
+        if Config.Debug then
+            print(('[%s] WorldEvidence: pegada bloqueada para job "%s" (src=%s)'):format(
+                resourceName, tostring(playerData.job), tostring(src)
+            ))
+        end
         return
     end
 

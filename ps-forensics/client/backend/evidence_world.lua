@@ -98,10 +98,15 @@ local function isFootprintBlockedForCurrentJob()
     if jobName == '' then return false end
 
     local blocked = Config.WorldEvidence.FootprintBlockedJobs or Config.PoliceJobs or {}
+
+    local normalizedJob = tostring(jobName):lower():gsub('[%s_-]+', '')
     for _, blockedJob in ipairs(blocked) do
-        if blockedJob == jobName then
-            return true
-        end
+        local normalizedBlocked = tostring(blockedJob):lower():gsub('[%s_-]+', '')
+        if normalizedBlocked == normalizedJob then return true end
+    end
+
+    if ForensicUtils and ForensicUtils.IsPoliceJob and ForensicUtils.IsPoliceJob(jobName) then
+        return true
     end
 
     return false
