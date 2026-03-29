@@ -162,6 +162,7 @@ Config.Items = {
     body_bag              = 'body_bag',
     forensic_flashlight   = 'forensic_flashlight',
     ballistic_kit         = 'ballistic_kit',
+    forensic_photo        = 'forensic_photo',
     forensic_tablet       = 'forensic_tablet',
     mdtcitation           = 'mdtcitation',
 }
