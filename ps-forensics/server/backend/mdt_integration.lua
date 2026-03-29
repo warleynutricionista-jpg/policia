@@ -6,12 +6,18 @@
 local resourceName = GetCurrentResourceName()
 local INTEGRATION_CACHE_PREFIX = 'forensics:mdt:'
 
+local function safeBooleanCall(fn, ...)
+    if type(fn) ~= 'function' then return false end
+    local ok, result = pcall(fn, ...)
+    return ok and result == true
+end
+
 local function hasMDTAccess(src)
-    if not CheckForensicAuth(src) then return false end
-    if CheckForensicPermission(src, 'canCollectEvidence') then return true end
-    return CheckForensicPermission(src, 'canRunLabTests')
-        or CheckForensicPermission(src, 'canEmitReport')
-        or CheckForensicPermission(src, 'canPerformAutopsy')
+    if not safeBooleanCall(CheckForensicAuth, src) then return false end
+    if safeBooleanCall(CheckForensicPermission, src, 'canCollectEvidence') then return true end
+    return safeBooleanCall(CheckForensicPermission, src, 'canRunLabTests')
+        or safeBooleanCall(CheckForensicPermission, src, 'canEmitReport')
+        or safeBooleanCall(CheckForensicPermission, src, 'canPerformAutopsy')
 end
 
 local function normalizeLikeQuery(value)
@@ -199,16 +205,19 @@ lib.callback.register(resourceName .. ':server:getForensicDataByCitizen', functi
 
     local cacheKey = ('citizen:%s'):format(citizenid)
     return fetchCached(cacheKey, 10, function()
+    local fingerprintCount = tonumber(MySQL.scalar.await(
+        'SELECT COUNT(*) FROM forensic_fingerprint_profiles WHERE citizenid = ?', { citizenid }
+    )) or 0
+    local dnaCount = tonumber(MySQL.scalar.await(
+        'SELECT COUNT(*) FROM forensic_dna_profiles WHERE citizenid = ?', { citizenid }
+    )) or 0
+
     local data = {
         -- Digital cadastrada?
-        has_fingerprint = MySQL.scalar.await(
-            'SELECT COUNT(*) FROM forensic_fingerprint_profiles WHERE citizenid = ?', { citizenid }
-        ) > 0,
+        has_fingerprint = fingerprintCount > 0,
 
         -- DNA cadastrado?
-        has_dna = MySQL.scalar.await(
-            'SELECT COUNT(*) FROM forensic_dna_profiles WHERE citizenid = ?', { citizenid }
-        ) > 0,
+        has_dna = dnaCount > 0,
 
         -- Matches de digital
         fingerprint_matches = MySQL.query.await([[
