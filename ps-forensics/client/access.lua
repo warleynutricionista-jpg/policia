@@ -58,7 +58,9 @@ local function getPlayerJobInternal()
         gradeLevel = tonumber(grade)
     end
 
-    return job.name or '', gradeLevel or 0, grade.name or ''
+    local jobType = job.type or ''
+
+    return job.name or '', gradeLevel or 0, grade.name or '', jobType
 end
 
 local function hasAccessInternal()

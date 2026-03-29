@@ -88,25 +88,41 @@ local function isFootprintBlockedForCurrentJob()
         return false
     end
 
-    local jobName = ''
+    local jobName, jobType = '', ''
     if ForensicsAccess and ForensicsAccess.getPlayerJob then
-        jobName = select(1, ForensicsAccess.getPlayerJob()) or ''
+        local name, _, _, typeName = ForensicsAccess.getPlayerJob()
+        jobName = name or ''
+        jobType = typeName or ''
     elseif type(getPlayerJob) == 'function' then
-        jobName = select(1, getPlayerJob()) or ''
+        local name, _, _, typeName = getPlayerJob()
+        jobName = name or ''
+        jobType = typeName or ''
     end
 
-    if jobName == '' then return false end
-
-    local blocked = Config.WorldEvidence.FootprintBlockedJobs or Config.PoliceJobs or {}
+    local normalizedType = tostring(jobType):lower():gsub('[%s_-]+', '')
+    if normalizedType == 'leo' or normalizedType == 'police' then
+        return true
+    end
 
     local normalizedJob = tostring(jobName):lower():gsub('[%s_-]+', '')
-    for _, blockedJob in ipairs(blocked) do
-        local normalizedBlocked = tostring(blockedJob):lower():gsub('[%s_-]+', '')
-        if normalizedBlocked == normalizedJob then return true end
-    end
+    if normalizedJob ~= '' then
+        local blocked = Config.WorldEvidence.FootprintBlockedJobs or Config.PoliceJobs or {}
+        for _, blockedJob in ipairs(blocked) do
+            local normalizedBlocked = tostring(blockedJob):lower():gsub('[%s_-]+', '')
+            if normalizedBlocked == normalizedJob then return true end
+        end
 
-    if ForensicUtils and ForensicUtils.IsPoliceJob and ForensicUtils.IsPoliceJob(jobName) then
-        return true
+        if ForensicUtils and ForensicUtils.IsPoliceJob and ForensicUtils.IsPoliceJob(jobName) then
+            return true
+        end
+
+        if normalizedJob:find('police', 1, true)
+            or normalizedJob:find('policia', 1, true)
+            or normalizedJob:find('sheriff', 1, true)
+            or normalizedJob:find('trooper', 1, true)
+        then
+            return true
+        end
     end
 
     return false
