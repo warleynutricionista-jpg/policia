@@ -121,14 +121,27 @@ local function getPhotoTimestamp(ts)
     return os.time()
 end
 
+local function normalizePhotoUrl(raw)
+    if type(raw) ~= 'string' or raw == '' then return nil end
+    local trimmed = raw:match('^%s*(.-)%s*$')
+    if trimmed == '' then return nil end
+    if trimmed:find('^https?://') then
+        return trimmed
+    end
+    return nil
+end
+
+local function notifyPhotoResult(src, ok, message)
+    TriggerClientEvent('ox_lib:notify', src, {
+        title = 'Câmera Forense',
+        description = message,
+        type = ok and 'success' or 'error',
+    })
+end
+
 local function addForensicPhotoToInventory(src, payload)
     if GetResourceState('ox_inventory') ~= 'started' then
         return false, 'ox_inventory não iniciado'
-    end
-
-    local imageData = payload.imageData
-    if type(imageData) ~= 'string' or imageData == '' then
-        imageData = payload.url
     end
 
     local coords = type(payload.coords) == 'table' and payload.coords or {}
@@ -136,35 +149,28 @@ local function addForensicPhotoToInventory(src, payload)
     local photoTimestamp = getPhotoTimestamp(payload.capturedAt)
 
     local metadata = {
-        id = 'forensic_photo',
-        label = ('Foto Pericial #%d'):format(photoNumber),
-        description = 'Registro fotográfico pericial coletado em campo.',
+        id = 'photo',
         type = 'forensic_photo',
         captured_at = photoTimestamp,
         photo_number = photoNumber,
         captured_by = GetPlayerName(src) or ('ID %s'):format(src),
-        coords = {
-            x = tonumber(coords.x) or 0.0,
-            y = tonumber(coords.y) or 0.0,
-            z = tonumber(coords.z) or 0.0,
-        },
         heading = tonumber(payload.heading) or 0.0,
-        image = imageData,
-        imageUrl = imageData,
-        url = imageData,
+        coords_x = tonumber(coords.x) or 0.0,
+        coords_y = tonumber(coords.y) or 0.0,
+        coords_z = tonumber(coords.z) or 0.0,
+        image_url = normalizePhotoUrl(payload.url) or normalizePhotoUrl(payload.imageData),
     }
 
-    local ok = exports.ox_inventory:AddItem(src, 'photo', 1, metadata)
+    if not exports.ox_inventory:CanCarryItem(src, 'photo', 1, metadata) then
+        return false, 'Inventário cheio para receber a foto.'
+    end
+
+    local ok, response = exports.ox_inventory:AddItem(src, 'photo', 1, metadata)
     if ok then
         return true
     end
 
-    ok = exports.ox_inventory:AddItem(src, 'forensic_photo', 1, metadata)
-    if ok then
-        return true
-    end
-
-    return false, 'Nenhum item de foto disponível (photo/forensic_photo)'
+    return false, response or 'Falha ao adicionar item photo no ox_inventory.'
 end
 
 local function persistForensicPhotoEvidence(src, payload)
@@ -172,10 +178,7 @@ local function persistForensicPhotoEvidence(src, payload)
     if not playerData or not playerData.citizenid then return nil end
 
     local coords = type(payload.coords) == 'table' and payload.coords or {}
-    local imageData = payload.imageData
-    if type(imageData) ~= 'string' or imageData == '' then
-        imageData = payload.url
-    end
+    local imageData = normalizePhotoUrl(payload.url) or normalizePhotoUrl(payload.imageData)
 
     local photoNumber = tonumber(payload.photoNumber) or 1
     local evidenceId = MySQL.insert.await([[
@@ -213,6 +216,12 @@ RegisterNetEvent(resourceName .. ':server:forensicPhotoCaptured', function(paylo
 
     local inventoryStored, inventoryError = addForensicPhotoToInventory(src, payload)
     local evidenceId, evidenceNumber = persistForensicPhotoEvidence(src, payload)
+
+    if inventoryStored then
+        notifyPhotoResult(src, true, 'Foto adicionada ao inventário (item: photo).')
+    else
+        notifyPhotoResult(src, false, inventoryError or 'Não foi possível adicionar a foto ao inventário.')
+    end
 
     ForensicAuditLog(src, 'forensic_photo_captured', 'evidence', evidenceId or 0, {
         via = payload.via or 'camera-mode',
