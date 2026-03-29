@@ -8,6 +8,7 @@ if not Config.Commands.Open.enabled then
 end
 
 local cmd = Config.Commands.Open.command
+local defaultKey = Config.Commands.Open.defaultKey or 'F12'
 
 RegisterCommand(cmd, function()
     OpenForensicsUI()
@@ -15,4 +16,4 @@ end, false)
 
 TriggerEvent('chat:addSuggestion', '/' .. cmd, 'Abrir o Painel de Perícia Criminal')
 
-RegisterKeyMapping(cmd, 'Abrir Painel de Perícia', 'keyboard', 'F12')
+RegisterKeyMapping(cmd, 'Abrir Painel de Perícia', 'keyboard', defaultKey)

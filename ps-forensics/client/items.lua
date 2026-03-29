@@ -476,7 +476,7 @@ local function handleForensicItemUse(data, slot)
     if itemName == 'forensic_tablet' then
         ForensicState.clearEquippedTool()
         if ForensicAnims.playItemAnimation(itemName, resolveItemProp(itemName), ItemDuration[itemName]) then
-            OpenForensicsUI('scenes')
+            OpenForensicsUI('dashboard')
         end
         return
     end

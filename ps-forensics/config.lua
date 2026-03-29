@@ -117,6 +117,7 @@ Config.Commands = {
     Open = {
         enabled = true,
         command = 'pericia',
+        defaultKey = 'F12',
     },
 }
 
