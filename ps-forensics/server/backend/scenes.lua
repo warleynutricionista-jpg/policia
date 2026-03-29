@@ -387,3 +387,19 @@ lib.callback.register(resourceName .. ':server:addScenePhoto', function(source, 
 
     return { success = true, id = photoId }
 end)
+
+-- ============================================================
+-- CENAS ATIVAS (perímetro) para controle visual de vestígios
+-- ============================================================
+lib.callback.register(resourceName .. ':server:getActiveScenePerimeters', function(source)
+    local src = source
+    if not CheckForensicAuth(src) then return {} end
+
+    return MySQL.query.await([[
+        SELECT id, scene_number, status, location_x, location_y, location_z, perimeter_radius
+        FROM forensic_crime_scenes
+        WHERE status IN ('aberta', 'em_andamento')
+        ORDER BY created_at DESC
+        LIMIT 200
+    ]]) or {}
+end)

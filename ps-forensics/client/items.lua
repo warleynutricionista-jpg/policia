@@ -858,3 +858,20 @@ AddEventHandler('onResourceStop', function(resourceNameStopped)
     if resourceNameStopped ~= resourceName then return end
     clearDisposableGlovesVisual()
 end)
+
+-- Exports de compatibilidade para itens apontando para exports legados no ox_inventory
+local function useNamedForensicItem(itemName, data, slot)
+    data = data or {}
+    data.name = itemName
+    return handleForensicItemUse(data, slot)
+end
+
+exports('useForensicTablet', function(data, slot) return useNamedForensicItem('forensic_tablet', data, slot) end)
+exports('useEvidenceTag', function(data, slot) return useNamedForensicItem('evidence_tag', data, slot) end)
+exports('useEvidenceBag', function(data, slot) return useNamedForensicItem('evidence_bag', data, slot) end)
+exports('useEvidenceSeal', function(data, slot) return useNamedForensicItem('evidence_seal', data, slot) end)
+exports('useForensicCamera', function(data, slot) return useNamedForensicItem('forensic_camera', data, slot) end)
+exports('useForensicFlashlight', function(data, slot) return useNamedForensicItem('forensic_flashlight', data, slot) end)
+exports('useFingerprintPowder', function(data, slot) return useNamedForensicItem('fingerprint_powder', data, slot) end)
+exports('useFingerprintTape', function(data, slot) return useNamedForensicItem('fingerprint_tape', data, slot) end)
+exports('useDNAKit', function(data, slot) return useNamedForensicItem('dna_swab', data, slot) end)
