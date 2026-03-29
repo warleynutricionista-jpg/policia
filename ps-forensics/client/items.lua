@@ -875,3 +875,8 @@ exports('useForensicFlashlight', function(data, slot) return useNamedForensicIte
 exports('useFingerprintPowder', function(data, slot) return useNamedForensicItem('fingerprint_powder', data, slot) end)
 exports('useFingerprintTape', function(data, slot) return useNamedForensicItem('fingerprint_tape', data, slot) end)
 exports('useDNAKit', function(data, slot) return useNamedForensicItem('dna_swab', data, slot) end)
+
+
+exports('useEvidenceMarker', function(data, slot) return useNamedForensicItem('evidence_marker', data, slot) end)
+exports('useGsrKit', function(data, slot) return useNamedForensicItem('gsr_kit', data, slot) end)
+exports('useForensicKit', function(data, slot) return useNamedForensicItem('forensic_kit', data, slot) end)
