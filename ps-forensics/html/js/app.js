@@ -9,6 +9,8 @@ let playerName = '';
 let availableTabs = [];
 let cachedMDTCases = [];
 let cachedScenes = [];
+const pendingRequests = new Map();
+const actionLocks = new Set();
 
 const UI = window.ForensicsUI || {
     escapeHTML: (v) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])),
@@ -282,31 +284,57 @@ window.addEventListener('message', function(event) {
 // FETCH NUI
 // ============================================================
 async function fetchNUI(event, data = {}, timeoutMs = 30000) {
+    const requestKey = `${event}:${JSON.stringify(data || {})}`;
+    if (pendingRequests.has(requestKey)) {
+        return pendingRequests.get(requestKey);
+    }
+
+    const shouldLog = event !== 'close';
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-    try {
-        console.log(`[ps-forensics] fetchNUI -> ${event}`, JSON.stringify(data).substring(0, 200));
-        const resp = await fetch(`https://ps-forensics/${event}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
-            signal: controller.signal,
-        });
-        const result = await resp.json();
-        console.log(`[ps-forensics] fetchNUI <- ${event}`, result?.success !== undefined ? `success=${result.success}` : 'raw response');
-        return result;
-    } catch (e) {
-        if (e.name === 'AbortError') {
-            console.error(`[ps-forensics] fetchNUI timeout (${timeoutMs}ms): ${event}`);
-            showNotification(`Tempo limite excedido ao processar: ${event}`, 'error');
-            return { success: false, error: 'Tempo limite excedido. Tente novamente.' };
+    const requestPromise = (async () => {
+        try {
+            if (shouldLog) {
+                console.log(`[ps-forensics] fetchNUI -> ${event}`, JSON.stringify(data).substring(0, 200));
+            }
+
+            const resp = await fetch(`https://ps-forensics/${event}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+                signal: controller.signal,
+            });
+
+            const result = await resp.json();
+
+            if (shouldLog) {
+                if (result === null || result === undefined) {
+                    console.warn(`[ps-forensics] fetchNUI <- ${event} empty response`);
+                } else if (result?.success !== undefined) {
+                    console.log(`[ps-forensics] fetchNUI <- ${event} success=${result.success}`);
+                } else {
+                    console.log(`[ps-forensics] fetchNUI <- ${event} ok`);
+                }
+            }
+
+            return result;
+        } catch (e) {
+            if (e.name === 'AbortError') {
+                console.error(`[ps-forensics] fetchNUI timeout (${timeoutMs}ms): ${event}`);
+                showNotification(`Tempo limite excedido ao processar: ${event}`, 'error');
+                return { success: false, error: 'Tempo limite excedido. Tente novamente.' };
+            }
+            console.error(`[ps-forensics] fetchNUI error (${event}):`, e);
+            return null;
+        } finally {
+            clearTimeout(timer);
+            pendingRequests.delete(requestKey);
         }
-        console.error(`[ps-forensics] fetchNUI error (${event}):`, e);
-        return null;
-    } finally {
-        clearTimeout(timer);
-    }
+    })();
+
+    pendingRequests.set(requestKey, requestPromise);
+    return requestPromise;
 }
 
 // ============================================================
@@ -495,6 +523,20 @@ async function loadScenes() {
 function searchScenes() { loadScenes(); }
 function filterScenes() { loadScenes(); }
 
+async function runLockedAction(lockKey, fn) {
+    if (actionLocks.has(lockKey)) {
+        showNotification('Ação já está em andamento. Aguarde...', 'warning');
+        return null;
+    }
+
+    actionLocks.add(lockKey);
+    try {
+        return await fn();
+    } finally {
+        actionLocks.delete(lockKey);
+    }
+}
+
 async function viewScene(sceneId) {
     const scene = await fetchNUI('getScene', { id: sceneId });
     if (!scene) return;
@@ -544,14 +586,16 @@ async function viewScene(sceneId) {
 }
 
 async function updateSceneStatus(sceneId, status) {
-    const result = await fetchNUI('updateScene', { id: sceneId, status });
-    if (result && result.success) {
-        showNotification(`Status da cena atualizado para: ${statusLabels[status] || status}`, 'success');
-        await loadScenes();
-        await viewScene(sceneId);
-    } else {
-        showNotification(result?.error || 'Erro ao atualizar status da cena', 'error');
-    }
+    await runLockedAction(`scene:${sceneId}:${status}`, async () => {
+        const result = await fetchNUI('updateScene', { id: sceneId, status });
+        if (result && result.success) {
+            showNotification(`Status da cena atualizado para: ${statusLabels[status] || status}`, 'success');
+            await loadScenes();
+            await viewScene(sceneId);
+        } else {
+            showNotification(result?.error || 'Erro ao atualizar status da cena', 'error');
+        }
+    });
 }
 
 function showCreateScene() {
@@ -1163,14 +1207,16 @@ async function performToxicology(autopsyId) {
 }
 
 async function completeAutopsy(autopsyId) {
-    const result = await fetchNUI('updateAutopsy', { id: autopsyId, status: 'concluido' });
-    if (result && result.success) {
-        showNotification('Necropsia concluída com sucesso. Laudo gerado automaticamente.', 'success');
-        await loadAutopsies();
-        await viewAutopsy(autopsyId);
-    } else {
-        showNotification(result?.error || 'Erro ao concluir necropsia', 'error');
-    }
+    await runLockedAction(`autopsy:${autopsyId}:complete`, async () => {
+        const result = await fetchNUI('updateAutopsy', { id: autopsyId, status: 'concluido' });
+        if (result && result.success) {
+            showNotification('Necropsia concluída com sucesso. Laudo gerado automaticamente.', 'success');
+            await loadAutopsies();
+            await viewAutopsy(autopsyId);
+        } else {
+            showNotification(result?.error || 'Erro ao concluir necropsia', 'error');
+        }
+    });
 }
 
 // ============================================================
@@ -1251,25 +1297,29 @@ async function viewReport(reportId) {
 }
 
 async function finalizeReport(reportId) {
-    const result = await fetchNUI('finalizeReport', { id: reportId });
-    if (result && result.success) {
-        showNotification('Laudo finalizado com sucesso', 'success');
-        await loadReports();
-        await viewReport(reportId);
-    } else {
-        showNotification(result?.error || 'Erro ao finalizar laudo', 'error');
-    }
+    await runLockedAction(`report:${reportId}:finalize`, async () => {
+        const result = await fetchNUI('finalizeReport', { id: reportId });
+        if (result && result.success) {
+            showNotification('Laudo finalizado com sucesso', 'success');
+            await loadReports();
+            await viewReport(reportId);
+        } else {
+            showNotification(result?.error || 'Erro ao finalizar laudo', 'error');
+        }
+    });
 }
 
 async function attachToMDT(reportId) {
-    const result = await fetchNUI('attachReportToMDT', { id: reportId });
-    if (result && result.success) {
-        showNotification('Laudo anexado ao MDT com sucesso', 'success');
-        await loadReports();
-        await viewReport(reportId);
-    } else {
-        showNotification(result?.error || 'Erro ao anexar ao MDT', 'error');
-    }
+    await runLockedAction(`report:${reportId}:attach`, async () => {
+        const result = await fetchNUI('attachReportToMDT', { id: reportId });
+        if (result && result.success) {
+            showNotification('Laudo anexado ao MDT com sucesso', 'success');
+            await loadReports();
+            await viewReport(reportId);
+        } else {
+            showNotification(result?.error || 'Erro ao anexar ao MDT', 'error');
+        }
+    });
 }
 
 // ============================================================
