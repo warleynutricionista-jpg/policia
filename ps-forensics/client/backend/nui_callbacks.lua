@@ -77,6 +77,7 @@ local directCallbacks = {
     { nui = 'getCrossRefByCitizen', server = 'getCrossRefByCitizen', args = function(data) return { data.citizenid } end },
     { nui = 'getCrossRefByWeapon', server = 'getCrossRefByWeapon', args = function(data) return { data.serial } end },
     { nui = 'getCrossRefByVehicle', server = 'getCrossRefByVehicle', args = function(data) return { data.plate } end },
+    { nui = 'compareSceneEvidenceWithKnownCriminals', server = 'compareSceneEvidenceWithKnownCriminals', args = function(data) return { data.sceneId } end },
     { nui = 'getInvestigationDashboard', server = 'getInvestigationDashboard', args = function(data) return { data.citizenid } end },
 
     { nui = 'getForensicDataByCase', server = 'getForensicDataByCase', args = function(data) return { data.caseId } end },

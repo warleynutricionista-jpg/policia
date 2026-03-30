@@ -91,7 +91,7 @@ ForensicEvidenceVisualMap = {
     projetil = { dict = 'casings', texture = 'casings', fallbackMarker = 2 },
     buraco_de_bala = { dict = 'bullethole', texture = 'bullethole', fallbackMarker = 1 },
     fragmento_veiculo = { dict = 'bullethole', texture = 'bullethole', fallbackMarker = 1 },
-    impressao_digital = { dict = 'fingerprints', texture = 'fingerprints', fallbackMarker = 28, requiresReveal = true },
-    pegada = { dict = 'footprint', texture = 'footprint', fallbackMarker = 28, requiresReveal = true },
+    impressao_digital = { dict = 'fingerprints', texture = 'fingerprints', fallbackMarker = 28, requiresReveal = false },
+    pegada = { dict = 'footprint', texture = 'footprint', fallbackMarker = 28, requiresReveal = false },
     marcador_cena = { dict = 'interact', texture = 'interact', fallbackMarker = 6 },
 }

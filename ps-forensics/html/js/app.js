@@ -1413,7 +1413,7 @@ async function attachToMDT(reportId) {
 // CROSSREF
 // ============================================================
 async function searchCrossRefCitizen() {
-    const citizenid = document.getElementById('crossrefCitizenId').value;
+    const citizenid = (document.getElementById('crossrefCitizenId').value || '').trim();
     if (!citizenid) return;
 
     const result = await fetchNUI('getInvestigationDashboard', { citizenid });
@@ -1443,7 +1443,7 @@ async function loadCrossRefDashboard() {
 }
 
 async function searchCrossRefWeapon() {
-    const serial = document.getElementById('crossrefWeaponSerial').value;
+    const serial = (document.getElementById('crossrefWeaponSerial').value || '').trim();
     if (!serial) return;
 
     const result = await fetchNUI('getCrossRefByWeapon', { serial });
@@ -1451,11 +1451,189 @@ async function searchCrossRefWeapon() {
 }
 
 async function searchCrossRefVehicle() {
-    const plate = document.getElementById('crossrefVehiclePlate').value;
+    const plate = (document.getElementById('crossrefVehiclePlate').value || '').trim();
     if (!plate) return;
 
     const result = await fetchNUI('getCrossRefByVehicle', { plate });
     renderCrossRefList(result || []);
+}
+
+async function searchCrossRefFull() {
+    const citizenid = (document.getElementById('crossrefCitizenId')?.value || '').trim();
+    const serial = (document.getElementById('crossrefWeaponSerial')?.value || '').trim();
+    const plate = (document.getElementById('crossrefVehiclePlate')?.value || '').trim();
+    const container = document.getElementById('crossrefResults');
+
+    if (!citizenid && !serial && !plate) {
+        showNotification('Informe ao menos CitizenID, serial da arma ou placa para cruzar.', 'warning');
+        return;
+    }
+
+    let html = `<div style="grid-column:1/-1;">`;
+
+    if (citizenid) {
+        const profile = await fetchNUI('lookupCitizenProfile', { query: citizenid });
+        const dashboard = await fetchNUI('getInvestigationDashboard', { citizenid });
+
+        html += `<div class="detail-section"><h3><i class="fas fa-user-secret"></i> Suspeito / Perfil</h3>`;
+        if (profile && profile.success && profile.data) {
+            const p = profile.data;
+            html += `<div class="card" style="margin-bottom:8px;cursor:default;">
+                <div class="card-body">
+                    <div class="card-row"><span class="card-label">Nome</span><span class="card-value">${h(p.name || 'N/D')}</span></div>
+                    <div class="card-row"><span class="card-label">CitizenID</span><span class="card-value">${h(p.citizenid || citizenid)}</span></div>
+                    <div class="card-row"><span class="card-label">Status ID</span><span class="card-value">${h(p.identification_status || 'N/D')}</span></div>
+                </div>
+            </div>`;
+        }
+
+        if (dashboard) {
+            const cards = [];
+            const fpCount = (dashboard.fingerprints || []).length;
+            const dnaCount = (dashboard.dna_matches || []).length;
+            const scenesCount = (dashboard.scenes_involved || []).length;
+            cards.push(`<div class="card"><div class="card-body">
+                <div class="card-row"><span class="card-label">Digitais</span><span class="card-value">${fpCount}</span></div>
+                <div class="card-row"><span class="card-label">DNA</span><span class="card-value">${dnaCount}</span></div>
+                <div class="card-row"><span class="card-label">Cenas relacionadas</span><span class="card-value">${scenesCount}</span></div>
+            </div></div>`);
+            html += cards.join('');
+
+            if (dashboard.scenes_involved && dashboard.scenes_involved.length > 0) {
+                html += `<div class="card" style="margin-top:8px;cursor:default;"><div class="card-body">
+                    <div class="card-row"><span class="card-label">Ocorrências/Cenas relacionadas</span><span class="card-value">${dashboard.scenes_involved.map((s) => h(s.scene_number || `Cena #${s.id || '?'}`)).join(', ')}</span></div>
+                </div></div>`;
+            }
+
+            if (dashboard.cross_references && dashboard.cross_references.length > 0) {
+                html += `<div class="card" style="margin-top:8px;cursor:default;"><div class="card-body">
+                    <div class="card-row"><span class="card-label">Relações encontradas</span><span class="card-value">${dashboard.cross_references.length}</span></div>
+                    <div class="card-row"><span class="card-label">Última relação</span><span class="card-value">${h(dashboard.cross_references[0].relationship || 'N/D')}</span></div>
+                </div></div>`;
+            }
+        }
+        html += `</div>`;
+    }
+
+    if (serial) {
+        const weaponHistory = await fetchNUI('getWeaponBallisticHistory', { serial });
+        const weaponRefs = await fetchNUI('getCrossRefByWeapon', { serial });
+
+        html += `<div class="detail-section"><h3><i class="fas fa-crosshairs"></i> Arma / Balística</h3>`;
+        html += `<div class="card" style="margin-bottom:8px;cursor:default;">
+            <div class="card-body">
+                <div class="card-row"><span class="card-label">Serial consultado</span><span class="card-value">${h(serial)}</span></div>
+                <div class="card-row"><span class="card-label">Registros balísticos</span><span class="card-value">${(weaponHistory && weaponHistory.length) || 0}</span></div>
+                <div class="card-row"><span class="card-label">Referências cruzadas</span><span class="card-value">${(weaponRefs && weaponRefs.length) || 0}</span></div>
+            </div>
+        </div>`;
+        html += `</div>`;
+    }
+
+    if (plate) {
+        const vehicleRefs = await fetchNUI('getCrossRefByVehicle', { plate });
+        html += `<div class="detail-section"><h3><i class="fas fa-car"></i> Veículo</h3>`;
+        html += `<div class="card" style="margin-bottom:8px;cursor:default;">
+            <div class="card-body">
+                <div class="card-row"><span class="card-label">Placa consultada</span><span class="card-value">${h(plate)}</span></div>
+                <div class="card-row"><span class="card-label">Referências encontradas</span><span class="card-value">${(vehicleRefs && vehicleRefs.length) || 0}</span></div>
+            </div>
+        </div>`;
+        html += `</div>`;
+    }
+
+    html += `</div>`;
+    container.innerHTML = html;
+}
+
+async function compareSceneEvidenceKnownCriminals() {
+    const sceneId = Number((document.getElementById('crossrefSceneId')?.value || '').trim());
+    if (!sceneId || sceneId <= 0) {
+        showNotification('Informe um ID de cena válido para comparação.', 'warning');
+        return;
+    }
+
+    const result = await fetchNUI('compareSceneEvidenceWithKnownCriminals', { sceneId });
+    const container = document.getElementById('crossrefResults');
+
+    if (!result || !result.success || !result.data) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-triangle-exclamation"></i><p>Não foi possível comparar a cena com a base criminal.</p></div>';
+        return;
+    }
+
+    const data = result.data;
+    const scene = data.scene || {};
+    const evidenceCount = (data.evidence || []).length;
+    const suspects = data.suspect_matches || [];
+    const ballistic = data.ballistic || [];
+    const standardReport = data.standardized_report || '';
+
+    let html = `<div style="grid-column:1/-1;">`;
+    html += `<div class="detail-section"><h3><i class="fas fa-map-marked-alt"></i> Cena ${h(scene.scene_number || `#${scene.id || sceneId}`)} | Evidências ${evidenceCount}</h3>
+        <div class="card" style="margin-bottom:8px;cursor:default;">
+            <div class="card-body">
+                <div class="card-row"><span class="card-label">Classificação</span><span class="card-value">${h(scene.classification || 'N/D')}</span></div>
+                <div class="card-row"><span class="card-label">Status</span>${getStatusBadge(scene.status || 'aberta')}</div>
+                <div class="card-row"><span class="card-label">Suspeitos conhecidos relacionados</span><span class="card-value">${suspects.length}</span></div>
+            </div>
+        </div>`;
+
+    if (suspects.length > 0) {
+        suspects.forEach((s) => {
+            html += `<div class="card" style="margin-bottom:8px;cursor:default;">
+                <div class="card-body">
+                    <div class="card-row"><span class="card-label">Suspeito</span><span class="card-value">${h(s.name || 'N/D')} (${h(s.citizenid || 'N/D')})</span></div>
+                    <div class="card-row"><span class="card-label">Base de conhecidos</span><span class="card-value">${s.known_criminal ? 'SIM' : 'NÃO'}</span></div>
+                    <div class="card-row"><span class="card-label">Mandados ativos</span><span class="card-value">${Number(s.active_warrants || 0)}</span></div>
+                    <div class="card-row"><span class="card-label">Prisões</span><span class="card-value">${Number(s.arrests || 0)}</span></div>
+                    ${s.reason ? `<div class="card-row"><span class="card-label">Motivo da base</span><span class="card-value">${h(s.reason)}</span></div>` : ''}
+                </div>
+            </div>`;
+        });
+    } else {
+        html += `<div class="empty-state"><i class="fas fa-user-slash"></i><p>Nenhum suspeito da cena foi encontrado na base de criminosos conhecidos.</p></div>`;
+    }
+
+    if (ballistic.length > 0) {
+        html += `<div class="detail-section"><h3><i class="fas fa-crosshairs"></i> Balística da Cena (${ballistic.length})</h3>`;
+        ballistic.forEach((b) => {
+            html += `<div class="card" style="margin-bottom:8px;cursor:default;">
+                <div class="card-body">
+                    <div class="card-row"><span class="card-label">Serial</span><span class="card-value">${h(b.weapon_serial || b.matched_weapon_serial || 'N/D')}</span></div>
+                    <div class="card-row"><span class="card-label">Calibre</span><span class="card-value">${h(b.caliber || 'N/D')}</span></div>
+                    <div class="card-row"><span class="card-label">Modelo</span><span class="card-value">${h(b.weapon_model || 'N/D')}</span></div>
+                </div>
+            </div>`;
+        });
+        html += `</div>`;
+    }
+
+    if (standardReport) {
+        html += `<div class="detail-section"><h3><i class="fas fa-file-lines"></i> Relatório Padronizado (Auto)</h3>
+            <div class="card" style="margin-bottom:8px;cursor:default;">
+                <div class="card-body">
+                    <textarea id="sceneStandardReport" rows="10" style="width:100%;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:8px;padding:10px;" readonly>${standardReport}</textarea>
+                    <div class="tab-actions" style="margin-top:8px;">
+                        <button class="btn-primary" onclick="copySceneStandardReport()"><i class="fas fa-copy"></i> Copiar Relatório</button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    html += `</div></div>`;
+    container.innerHTML = html;
+}
+
+function copySceneStandardReport() {
+    const reportEl = document.getElementById('sceneStandardReport');
+    if (!reportEl || !reportEl.value) {
+        showNotification('Relatório padronizado não disponível.', 'warning');
+        return;
+    }
+    reportEl.select();
+    document.execCommand('copy');
+    showNotification('Relatório padronizado copiado para área de transferência.', 'success');
 }
 
 function renderCrossRefResults(dashboard) {
