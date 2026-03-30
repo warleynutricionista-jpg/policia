@@ -9,6 +9,11 @@ local function isIgnorableSqlError(err)
     local message = tostring(err or ''):lower()
     return message:find('duplicate column name', 1, true) ~= nil
         or message:find('1060', 1, true) ~= nil
+        or message:find('duplicate key name', 1, true) ~= nil
+        or message:find('1061', 1, true) ~= nil
+        or message:find('duplicate foreign key constraint name', 1, true) ~= nil
+        or message:find('errno: 121', 1, true) ~= nil
+        or message:find('errno 121', 1, true) ~= nil
         or message:find('already exists', 1, true) ~= nil
 end
 
