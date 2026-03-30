@@ -299,7 +299,7 @@ Config.WorldEvidence = {
     -- Chance de spawn por tipo (0-100%)
     -- Baseado no modelo de probabilidade do renzu_evidence
     Chances = {
-        sangue            = 65,  -- Alto: sangue é frequente em confrontos
+        sangue            = 100, -- Garantir queda de sangue sempre que houver ferimento válido
         impressao_digital = 60,  -- Médio-alto: depende de luvas
         capsula           = 45,  -- Médio: nem todo projétil gera cápsula visível
         residuo_polvora   = 35,  -- Mais raro, requer análise específica

@@ -39,6 +39,9 @@
             <button class="nav-btn" data-tab="reports" onclick="switchTab('reports')">
                 <i class="fas fa-file-medical"></i> Laudos
             </button>
+            <button class="nav-btn" data-tab="crossref" onclick="switchTab('crossref')">
+                <i class="fas fa-diagram-project"></i> Comparações
+            </button>
         </div>
 
         <!-- Content Area -->
@@ -526,6 +529,42 @@
                 </div><!-- /reportWizard -->
 
             </div><!-- /tab-reports -->
+
+            <!-- COMPARAÇÕES E CRUZAMENTO -->
+            <div id="tab-crossref" class="tab-content">
+                <div class="tab-header">
+                    <h2><i class="fas fa-diagram-project"></i> Comparações e Busca Integrada</h2>
+                    <div class="tab-actions">
+                        <button class="btn-secondary" onclick="loadCrossRefDashboard()"><i class="fas fa-sync-alt"></i> Atualizar</button>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3><i class="fas fa-user-secret"></i> Suspeito: Genética, Digitais e Pegadas</h3>
+                    <div class="wf-row-3">
+                        <div class="wf-field">
+                            <label>CitizenID do suspeito</label>
+                            <input type="text" id="crossrefCitizenId" placeholder="Ex: ABC12345">
+                        </div>
+                        <div class="wf-field">
+                            <label>Serial da arma apreendida</label>
+                            <input type="text" id="crossrefWeaponSerial" placeholder="Serial da arma">
+                        </div>
+                        <div class="wf-field">
+                            <label>Placa (opcional)</label>
+                            <input type="text" id="crossrefVehiclePlate" placeholder="ABC1234">
+                        </div>
+                    </div>
+                    <div class="tab-actions" style="margin-top:8px;">
+                        <button class="btn-primary" onclick="searchCrossRefCitizen()"><i class="fas fa-user-magnifying-glass"></i> Buscar Suspeito</button>
+                        <button class="btn-secondary" onclick="searchCrossRefWeapon()"><i class="fas fa-crosshairs"></i> Cruzar Arma</button>
+                        <button class="btn-secondary" onclick="searchCrossRefVehicle()"><i class="fas fa-car"></i> Cruzar Veículo</button>
+                        <button class="btn-primary" onclick="searchCrossRefFull()"><i class="fas fa-network-wired"></i> Comparação Completa</button>
+                    </div>
+                </div>
+
+                <div id="crossrefResults" class="items-grid"></div>
+            </div><!-- /tab-crossref -->
 
         </div><!-- /forensics-content -->
 
