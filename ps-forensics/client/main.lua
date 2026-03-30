@@ -289,6 +289,37 @@ CreateThread(function()
             }
         })
     end
+
+    if Config.ForensicShop and Config.ForensicShop.enabled then
+        local shop = Config.ForensicShop
+        exports.ox_target:addSphereZone({
+            coords = shop.coords,
+            radius = shop.radius or 2.0,
+            options = {
+                {
+                    name = 'open_forensic_shop',
+                    icon = shop.targetIcon or 'fa-solid fa-cart-shopping',
+                    label = shop.targetLabel or 'Abrir loja forense',
+                    onSelect = function()
+                        local shopId = shop.id or 'forensics_supply_shop'
+                        exports.ox_inventory:openInventory('shop', { type = shopId })
+                    end,
+                    canInteract = function() return hasForensicsAccess() end,
+                }
+            }
+        })
+
+        if shop.blip and shop.blip.enabled then
+            local blip = AddBlipForCoord(shop.coords.x, shop.coords.y, shop.coords.z)
+            SetBlipSprite(blip, shop.blip.sprite or 59)
+            SetBlipColour(blip, shop.blip.color or 38)
+            SetBlipScale(blip, shop.blip.scale or 0.75)
+            SetBlipAsShortRange(blip, true)
+            BeginTextCommandSetBlipName('STRING')
+            AddTextComponentSubstringPlayerName(shop.blip.label or 'Loja Forense')
+            EndTextCommandSetBlipName(blip)
+        end
+    end
 end)
 
 CreateThread(function()

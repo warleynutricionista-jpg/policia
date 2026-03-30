@@ -115,9 +115,52 @@ Config.Locations = {
 -- ============================================================
 Config.Commands = {
     Open = {
-        enabled = true,
+        enabled = false, -- Desativado: abertura agora ocorre somente via item forensic_tablet
         command = 'pericia',
         defaultKey = 'F12',
+    },
+}
+
+-- ============================================================
+-- LOJA FORENSE (ox_inventory + ox_target)
+-- Posicione livremente pelo painel de configuração deste arquivo
+-- ============================================================
+Config.ForensicShop = {
+    enabled = true,
+    id = 'forensics_supply_shop',
+    label = 'Loja de Materiais Forenses',
+    targetIcon = 'fa-solid fa-cart-shopping',
+    targetLabel = 'Abrir loja forense',
+    radius = 2.0,
+    coords = vector3(452.48, -980.08, 30.69),
+    blip = {
+        enabled = true,
+        sprite = 59,
+        color = 38,
+        scale = 0.75,
+        label = 'Loja Forense',
+    },
+    prices = {
+        forensic_kit = 600,
+        disposable_gloves = 30,
+        evidence_bag = 40,
+        evidence_seal = 20,
+        dna_swab = 25,
+        fingerprint_kit = 500,
+        fingerprint_powder = 75,
+        fingerprint_tape = 20,
+        blood_reagent = 120,
+        gsr_kit = 180,
+        drug_test_kit = 220,
+        forensic_tweezers = 95,
+        forensic_camera = 900,
+        evidence_marker = 40,
+        evidence_tag = 15,
+        medical_exam_case = 1500,
+        body_bag = 120,
+        forensic_flashlight = 180,
+        ballistic_kit = 1300,
+        forensic_tablet = 3000,
     },
 }
 
