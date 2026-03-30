@@ -344,7 +344,7 @@ end)
 -- ============================================================
 -- CALLBACK: Coletar vestígio de campo e persistir no banco
 -- ============================================================
-lib.callback.register(resourceName .. ':server:collectWorldEvidence', function(source, evId)
+lib.callback.register(resourceName .. ':server:collectWorldEvidence', function(source, evId, sceneId)
     local src = source
 
     -- Autenticação forense
@@ -371,6 +371,30 @@ lib.callback.register(resourceName .. ':server:collectWorldEvidence', function(s
     local playerData = GetPlayerData(src)
     if not playerData then
         return { success = false, error = L('scene.errors.player_data_unavailable') }
+    end
+
+    sceneId = sceneId and tonumber(sceneId) or nil
+    local caseId, reportId
+    if sceneId then
+        local scene = MySQL.single.await('SELECT id, status, case_id, report_id, location_x, location_y, location_z FROM forensic_crime_scenes WHERE id = ?', { sceneId })
+        if not scene then
+            return { success = false, error = L('scene.errors.not_found') }
+        end
+        if scene.status == 'finalizada' then
+            return { success = false, error = L('scene.errors.scene_closed_for_collection') }
+        end
+
+        local ped = GetPlayerPed(src)
+        if ped and ped > 0 and scene.location_x and scene.location_y and scene.location_z then
+            local pCoords = GetEntityCoords(ped)
+            local distance = #(vector3(scene.location_x, scene.location_y, scene.location_z) - pCoords)
+            if distance > 150.0 then
+                return { success = false, error = L('evidence.errors.too_far_from_scene') }
+            end
+        end
+
+        caseId = scene.case_id or nil
+        reportId = scene.report_id or nil
     end
 
     local actionName = 'collect_evidence'
@@ -409,8 +433,9 @@ lib.callback.register(resourceName .. ':server:collectWorldEvidence', function(s
         (evidence_number, category, type, subtype, description,
          collection_location, collection_x, collection_y, collection_z,
          collected_by, collected_by_name, collection_method, seal_number, status,
-         linked_vehicle_plate, linked_weapon_serial, collection_source, world_evidence_id)
-        VALUES ('', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Campo - Auto', ?, 'coletada', ?, ?, 'campo', ?)
+         linked_vehicle_plate, linked_weapon_serial, collection_source, world_evidence_id,
+         scene_id, case_id, report_id)
+        VALUES ('', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Campo - Auto', ?, 'coletada', ?, ?, 'campo', ?, ?, ?, ?)
     ]], {
         evData.category,
         evData.type,
@@ -434,6 +459,9 @@ lib.callback.register(resourceName .. ':server:collectWorldEvidence', function(s
         evData.linked_vehicle_plate or nil,
         evData.linked_weapon_serial or nil,
         evId,
+        sceneId,
+        caseId,
+        reportId,
     })
 
     if not evidenceId then
