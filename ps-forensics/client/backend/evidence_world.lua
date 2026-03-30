@@ -290,7 +290,7 @@ local function createEvidenceZone(evData)
         radius = 1.35
     elseif evData.type == 'impressao_digital' then
         icon = 'fa-solid fa-fingerprint'
-        label = '[Vestígio] Digital - Coletar com kit'
+        label = '[Vestígio] Coletar Digitais'
         radius = 1.2
     end
 
@@ -391,7 +391,15 @@ function collectWorldEvidence(evId)
         return
     end
 
-    local result = lib.callback.await(resourceName .. ':server:collectWorldEvidence', false, evId)
+    local sceneId = nil
+    if type(IsWithinActiveCrimeScene) == 'function' then
+        local inside, activeSceneId = IsWithinActiveCrimeScene(evData.coords)
+        if inside and activeSceneId then
+            sceneId = activeSceneId
+        end
+    end
+
+    local result = lib.callback.await(resourceName .. ':server:collectWorldEvidence', false, evId, sceneId)
 
     if result and result.success then
         removeEvidenceZone(evId)

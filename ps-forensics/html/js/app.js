@@ -1413,7 +1413,7 @@ async function attachToMDT(reportId) {
 // CROSSREF
 // ============================================================
 async function searchCrossRefCitizen() {
-    const citizenid = document.getElementById('crossrefCitizenId').value;
+    const citizenid = (document.getElementById('crossrefCitizenId').value || '').trim();
     if (!citizenid) return;
 
     const result = await fetchNUI('getInvestigationDashboard', { citizenid });
@@ -1443,7 +1443,7 @@ async function loadCrossRefDashboard() {
 }
 
 async function searchCrossRefWeapon() {
-    const serial = document.getElementById('crossrefWeaponSerial').value;
+    const serial = (document.getElementById('crossrefWeaponSerial').value || '').trim();
     if (!serial) return;
 
     const result = await fetchNUI('getCrossRefByWeapon', { serial });
@@ -1451,11 +1451,99 @@ async function searchCrossRefWeapon() {
 }
 
 async function searchCrossRefVehicle() {
-    const plate = document.getElementById('crossrefVehiclePlate').value;
+    const plate = (document.getElementById('crossrefVehiclePlate').value || '').trim();
     if (!plate) return;
 
     const result = await fetchNUI('getCrossRefByVehicle', { plate });
     renderCrossRefList(result || []);
+}
+
+async function searchCrossRefFull() {
+    const citizenid = (document.getElementById('crossrefCitizenId')?.value || '').trim();
+    const serial = (document.getElementById('crossrefWeaponSerial')?.value || '').trim();
+    const plate = (document.getElementById('crossrefVehiclePlate')?.value || '').trim();
+    const container = document.getElementById('crossrefResults');
+
+    if (!citizenid && !serial && !plate) {
+        showNotification('Informe ao menos CitizenID, serial da arma ou placa para cruzar.', 'warning');
+        return;
+    }
+
+    let html = `<div style="grid-column:1/-1;">`;
+
+    if (citizenid) {
+        const profile = await fetchNUI('lookupCitizenProfile', { query: citizenid });
+        const dashboard = await fetchNUI('getInvestigationDashboard', { citizenid });
+
+        html += `<div class="detail-section"><h3><i class="fas fa-user-secret"></i> Suspeito / Perfil</h3>`;
+        if (profile && profile.success && profile.data) {
+            const p = profile.data;
+            html += `<div class="card" style="margin-bottom:8px;cursor:default;">
+                <div class="card-body">
+                    <div class="card-row"><span class="card-label">Nome</span><span class="card-value">${h(p.name || 'N/D')}</span></div>
+                    <div class="card-row"><span class="card-label">CitizenID</span><span class="card-value">${h(p.citizenid || citizenid)}</span></div>
+                    <div class="card-row"><span class="card-label">Status ID</span><span class="card-value">${h(p.identification_status || 'N/D')}</span></div>
+                </div>
+            </div>`;
+        }
+
+        if (dashboard) {
+            const cards = [];
+            const fpCount = (dashboard.fingerprints || []).length;
+            const dnaCount = (dashboard.dna_matches || []).length;
+            const scenesCount = (dashboard.scenes_involved || []).length;
+            cards.push(`<div class="card"><div class="card-body">
+                <div class="card-row"><span class="card-label">Digitais</span><span class="card-value">${fpCount}</span></div>
+                <div class="card-row"><span class="card-label">DNA</span><span class="card-value">${dnaCount}</span></div>
+                <div class="card-row"><span class="card-label">Cenas relacionadas</span><span class="card-value">${scenesCount}</span></div>
+            </div></div>`);
+            html += cards.join('');
+
+            if (dashboard.scenes_involved && dashboard.scenes_involved.length > 0) {
+                html += `<div class="card" style="margin-top:8px;cursor:default;"><div class="card-body">
+                    <div class="card-row"><span class="card-label">Ocorrências/Cenas relacionadas</span><span class="card-value">${dashboard.scenes_involved.map((s) => h(s.scene_number || `Cena #${s.id || '?'}`)).join(', ')}</span></div>
+                </div></div>`;
+            }
+
+            if (dashboard.cross_references && dashboard.cross_references.length > 0) {
+                html += `<div class="card" style="margin-top:8px;cursor:default;"><div class="card-body">
+                    <div class="card-row"><span class="card-label">Relações encontradas</span><span class="card-value">${dashboard.cross_references.length}</span></div>
+                    <div class="card-row"><span class="card-label">Última relação</span><span class="card-value">${h(dashboard.cross_references[0].relationship || 'N/D')}</span></div>
+                </div></div>`;
+            }
+        }
+        html += `</div>`;
+    }
+
+    if (serial) {
+        const weaponHistory = await fetchNUI('getWeaponBallisticHistory', { serial });
+        const weaponRefs = await fetchNUI('getCrossRefByWeapon', { serial });
+
+        html += `<div class="detail-section"><h3><i class="fas fa-crosshairs"></i> Arma / Balística</h3>`;
+        html += `<div class="card" style="margin-bottom:8px;cursor:default;">
+            <div class="card-body">
+                <div class="card-row"><span class="card-label">Serial consultado</span><span class="card-value">${h(serial)}</span></div>
+                <div class="card-row"><span class="card-label">Registros balísticos</span><span class="card-value">${(weaponHistory && weaponHistory.length) || 0}</span></div>
+                <div class="card-row"><span class="card-label">Referências cruzadas</span><span class="card-value">${(weaponRefs && weaponRefs.length) || 0}</span></div>
+            </div>
+        </div>`;
+        html += `</div>`;
+    }
+
+    if (plate) {
+        const vehicleRefs = await fetchNUI('getCrossRefByVehicle', { plate });
+        html += `<div class="detail-section"><h3><i class="fas fa-car"></i> Veículo</h3>`;
+        html += `<div class="card" style="margin-bottom:8px;cursor:default;">
+            <div class="card-body">
+                <div class="card-row"><span class="card-label">Placa consultada</span><span class="card-value">${h(plate)}</span></div>
+                <div class="card-row"><span class="card-label">Referências encontradas</span><span class="card-value">${(vehicleRefs && vehicleRefs.length) || 0}</span></div>
+            </div>
+        </div>`;
+        html += `</div>`;
+    }
+
+    html += `</div>`;
+    container.innerHTML = html;
 }
 
 function renderCrossRefResults(dashboard) {
