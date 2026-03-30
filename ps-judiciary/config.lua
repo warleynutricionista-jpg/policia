@@ -3,6 +3,15 @@ Config = Config or {}
 Config.Debug = false
 Config.Command = 'tribunal'
 Config.OpenKeybind = 'F10'
+Config.EnableCommandOpen = false
+Config.TabletItem = 'judiciary_tablet'
+
+Config.JudiciaryGroupName = 'juridico'
+Config.JudiciaryRoles = {
+    'juiz',
+    'promotor',
+    'advogado',
+}
 
 Config.CaseTrigger = {
     defaultRequiredCases = 3,

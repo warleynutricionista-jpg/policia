@@ -66,6 +66,22 @@ local function getPlayerSourceByCitizenId(citizenid)
     return nil
 end
 
+local function hasJudiciaryTablet(src)
+    if not Config.TabletItem or Config.TabletItem == '' then
+        return true
+    end
+
+    if GetResourceState('ox_inventory') ~= 'started' then
+        return true
+    end
+
+    local ok, count = pcall(function()
+        return exports.ox_inventory:Search(src, 'count', Config.TabletItem)
+    end)
+
+    return ok and (tonumber(count) or 0) > 0
+end
+
 local function resolveRole(src)
     for roleName, roleData in pairs(Config.Roles or {}) do
         for _, ace in ipairs(roleData.aces or {}) do
@@ -319,6 +335,10 @@ lib.callback.register('ps-judiciary:server:getBootstrap', function(source)
     local access, err = ensureAccess(source, 'view')
     if not access then
         return { success = false, error = err }
+    end
+
+    if not hasJudiciaryTablet(source) then
+        return { success = false, error = ('Tablet jurídico obrigatório (%s).'):format(Config.TabletItem or 'judiciary_tablet') }
     end
 
     local requiredCases = math.floor(getSettingNumber('required_criminal_cases', Config.CaseTrigger.defaultRequiredCases or 3))
@@ -699,4 +719,10 @@ end)
 CreateThread(function()
     ensureSchema()
     debugLog('schema ensured')
+
+    if GetResourceState('ox_inventory') == 'started' and Config.TabletItem and Config.TabletItem ~= '' then
+        exports.ox_inventory:RegisterUsableItem(Config.TabletItem, function(source)
+            TriggerClientEvent('ps-judiciary:client:openFromTablet', source)
+        end)
+    end
 end)

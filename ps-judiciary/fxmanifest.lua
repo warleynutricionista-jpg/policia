@@ -34,5 +34,6 @@ files {
     'html/index.html',
     'html/css/style.css',
     'html/js/app.js',
+    'items/items.lua',
     'sql/*.sql',
 }

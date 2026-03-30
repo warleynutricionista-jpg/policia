@@ -25,17 +25,23 @@ local function closePanel()
     SendNUIMessage({ action = 'close' })
 end
 
-RegisterCommand(Config.Command or 'tribunal', function()
-    if isOpen then
-        closePanel()
-    else
-        openPanel()
-    end
-end, false)
+if Config.EnableCommandOpen then
+    RegisterCommand(Config.Command or 'tribunal', function()
+        if isOpen then
+            closePanel()
+        else
+            openPanel()
+        end
+    end, false)
 
-if Config.OpenKeybind then
-    RegisterKeyMapping(Config.Command or 'tribunal', 'Abrir Painel Jurídico', 'keyboard', Config.OpenKeybind)
+    if Config.OpenKeybind then
+        RegisterKeyMapping(Config.Command or 'tribunal', 'Abrir Painel Jurídico', 'keyboard', Config.OpenKeybind)
+    end
 end
+
+RegisterNetEvent('ps-judiciary:client:openFromTablet', function()
+    openPanel()
+end)
 
 RegisterNUICallback('close', function(_, cb)
     closePanel()
