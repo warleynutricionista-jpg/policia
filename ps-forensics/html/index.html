@@ -555,10 +555,17 @@
                             <input type="text" id="crossrefVehiclePlate" placeholder="ABC1234">
                         </div>
                     </div>
+                    <div class="wf-row">
+                        <div class="wf-field">
+                            <label>ID da cena para comparar todas as provas</label>
+                            <input type="number" id="crossrefSceneId" placeholder="Ex: 12">
+                        </div>
+                    </div>
                     <div class="tab-actions" style="margin-top:8px;">
                         <button class="btn-primary" onclick="searchCrossRefCitizen()"><i class="fas fa-user-magnifying-glass"></i> Buscar Suspeito</button>
                         <button class="btn-secondary" onclick="searchCrossRefWeapon()"><i class="fas fa-crosshairs"></i> Cruzar Arma</button>
                         <button class="btn-secondary" onclick="searchCrossRefVehicle()"><i class="fas fa-car"></i> Cruzar Veículo</button>
+                        <button class="btn-secondary" onclick="compareSceneEvidenceKnownCriminals()"><i class="fas fa-users-viewfinder"></i> Comparar Cena x Base Criminal</button>
                         <button class="btn-primary" onclick="searchCrossRefFull()"><i class="fas fa-network-wired"></i> Comparação Completa</button>
                     </div>
                 </div>

@@ -1546,6 +1546,71 @@ async function searchCrossRefFull() {
     container.innerHTML = html;
 }
 
+async function compareSceneEvidenceKnownCriminals() {
+    const sceneId = Number((document.getElementById('crossrefSceneId')?.value || '').trim());
+    if (!sceneId || sceneId <= 0) {
+        showNotification('Informe um ID de cena válido para comparação.', 'warning');
+        return;
+    }
+
+    const result = await fetchNUI('compareSceneEvidenceWithKnownCriminals', { sceneId });
+    const container = document.getElementById('crossrefResults');
+
+    if (!result || !result.success || !result.data) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-triangle-exclamation"></i><p>Não foi possível comparar a cena com a base criminal.</p></div>';
+        return;
+    }
+
+    const data = result.data;
+    const scene = data.scene || {};
+    const evidenceCount = (data.evidence || []).length;
+    const suspects = data.suspect_matches || [];
+    const ballistic = data.ballistic || [];
+
+    let html = `<div style="grid-column:1/-1;">`;
+    html += `<div class="detail-section"><h3><i class="fas fa-map-marked-alt"></i> Cena ${h(scene.scene_number || `#${scene.id || sceneId}`)} | Evidências ${evidenceCount}</h3>
+        <div class="card" style="margin-bottom:8px;cursor:default;">
+            <div class="card-body">
+                <div class="card-row"><span class="card-label">Classificação</span><span class="card-value">${h(scene.classification || 'N/D')}</span></div>
+                <div class="card-row"><span class="card-label">Status</span>${getStatusBadge(scene.status || 'aberta')}</div>
+                <div class="card-row"><span class="card-label">Suspeitos conhecidos relacionados</span><span class="card-value">${suspects.length}</span></div>
+            </div>
+        </div>`;
+
+    if (suspects.length > 0) {
+        suspects.forEach((s) => {
+            html += `<div class="card" style="margin-bottom:8px;cursor:default;">
+                <div class="card-body">
+                    <div class="card-row"><span class="card-label">Suspeito</span><span class="card-value">${h(s.name || 'N/D')} (${h(s.citizenid || 'N/D')})</span></div>
+                    <div class="card-row"><span class="card-label">Base de conhecidos</span><span class="card-value">${s.known_criminal ? 'SIM' : 'NÃO'}</span></div>
+                    <div class="card-row"><span class="card-label">Mandados ativos</span><span class="card-value">${Number(s.active_warrants || 0)}</span></div>
+                    <div class="card-row"><span class="card-label">Prisões</span><span class="card-value">${Number(s.arrests || 0)}</span></div>
+                    ${s.reason ? `<div class="card-row"><span class="card-label">Motivo da base</span><span class="card-value">${h(s.reason)}</span></div>` : ''}
+                </div>
+            </div>`;
+        });
+    } else {
+        html += `<div class="empty-state"><i class="fas fa-user-slash"></i><p>Nenhum suspeito da cena foi encontrado na base de criminosos conhecidos.</p></div>`;
+    }
+
+    if (ballistic.length > 0) {
+        html += `<div class="detail-section"><h3><i class="fas fa-crosshairs"></i> Balística da Cena (${ballistic.length})</h3>`;
+        ballistic.forEach((b) => {
+            html += `<div class="card" style="margin-bottom:8px;cursor:default;">
+                <div class="card-body">
+                    <div class="card-row"><span class="card-label">Serial</span><span class="card-value">${h(b.weapon_serial || b.matched_weapon_serial || 'N/D')}</span></div>
+                    <div class="card-row"><span class="card-label">Calibre</span><span class="card-value">${h(b.caliber || 'N/D')}</span></div>
+                    <div class="card-row"><span class="card-label">Modelo</span><span class="card-value">${h(b.weapon_model || 'N/D')}</span></div>
+                </div>
+            </div>`;
+        });
+        html += `</div>`;
+    }
+
+    html += `</div></div>`;
+    container.innerHTML = html;
+}
+
 function renderCrossRefResults(dashboard) {
     const container = document.getElementById('crossrefResults');
 
