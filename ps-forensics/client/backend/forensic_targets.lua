@@ -26,6 +26,19 @@ local function hasItem(itemName)
     return count and count > 0
 end
 
+local function getActiveSceneIdAtCoords(coords)
+    if type(IsWithinActiveCrimeScene) ~= 'function' then
+        return nil
+    end
+
+    local inside, sceneId = IsWithinActiveCrimeScene(coords)
+    if inside and sceneId then
+        return sceneId
+    end
+
+    return nil
+end
+
 -- ============================================================
 -- HELPER: Executar ação forense com animação + server callback
 -- ============================================================
@@ -443,6 +456,17 @@ CreateThread(function()
             label = 'Inspecionar Veículo (Perícia)',
             distance = 3.0,
             onSelect = function(data)
+                local coords = GetEntityCoords(data.entity)
+                local sceneId = getActiveSceneIdAtCoords(coords)
+                if not sceneId then
+                    lib.notify({
+                        title = 'Cena Necessária',
+                        description = 'Para coleta direta, esteja dentro de uma cena de crime ativa.',
+                        type = 'error',
+                    })
+                    return
+                end
+
                 if ForensicAnims and ForensicAnims.playItemAnimation then
                     if not ForensicAnims.playItemAnimation('forensic_flashlight', nil, 800) then return end
                 end
@@ -450,16 +474,55 @@ CreateThread(function()
                 local plate = GetVehicleNumberPlateText(data.entity)
                 if plate then plate = plate:gsub('^%s*(.-)%s*$', '%1') end
 
-                lib.notify({
-                    title = 'Veículo Inspecionado',
-                    description = ('Placa: %s. Abra o sistema forense para registrar achados.'):format(plate or 'N/D'),
-                    type = 'success', duration = 5000,
+                local exec = lib.callback.await(resourceName .. ':server:executeItemUse', false, {
+                    itemName = 'evidence_bag',
+                    action = 'collect_evidence',
+                    coords = GetEntityCoords(PlayerPedId()),
+                })
+                if not exec or not exec.success then
+                    lib.notify({
+                        title = 'Erro',
+                        description = exec and exec.error or 'Falha ao preparar coleta de evidência.',
+                        type = 'error',
+                    })
+                    return
+                end
+
+                local result = lib.callback.await(resourceName .. ':server:collectEvidence', false, {
+                    scene_id = sceneId,
+                    category = 'veiculo',
+                    type = 'veiculo_cena',
+                    subtype = 'inspecao_veiculo',
+                    description = ('Vestígio coletado em veículo placa %s via coleta direta da cena.'):format(plate or 'N/D'),
+                    location_name = ('Veículo em cena ativa | Placa: %s'):format(plate or 'N/D'),
+                    linked_vehicle_plate = plate,
+                    x = coords.x,
+                    y = coords.y,
+                    z = coords.z,
                 })
 
-                OpenForensicsUI('evidence')
+                if result and result.success then
+                    lib.notify({
+                        title = 'Coleta Registrada',
+                        description = ('Evidência %s registrada automaticamente no sistema.'):format(result.evidenceNumber or 'N/D'),
+                        type = 'success',
+                        duration = 6000,
+                    })
+                else
+                    lib.notify({
+                        title = 'Erro',
+                        description = result and result.error or 'Falha ao registrar evidência do veículo.',
+                        type = 'error',
+                    })
+                end
             end,
-            canInteract = function()
-                return isForensicOfficer() and (hasItem('forensic_kit') or hasItem('forensic_flashlight'))
+            canInteract = function(entity, _, coords)
+                local targetCoords = coords or (entity and GetEntityCoords(entity)) or nil
+                local sceneId = targetCoords and getActiveSceneIdAtCoords(targetCoords) or nil
+                return isForensicOfficer()
+                    and sceneId ~= nil
+                    and hasItem('forensic_kit')
+                    and hasItem('evidence_bag')
             end,
         },
         {
