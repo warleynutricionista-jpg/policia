@@ -250,6 +250,12 @@ window.addEventListener('message', function(event) {
             if (btnAutopsy) btnAutopsy.style.display = 'none';
         }
 
+        const canManageShop = !!playerPermissions.canFinalizeReport;
+        const createShopBtn = getEl('btnCreateForensicShop');
+        const moveShopBtn = getEl('btnMoveForensicShop');
+        if (createShopBtn) createShopBtn.classList.toggle('hidden', !canManageShop);
+        if (moveShopBtn) moveShopBtn.classList.toggle('hidden', !canManageShop);
+
         // Restringir abas por permissão
         const tabRules = {
             dashboard: !!playerPermissions.canRunBasicTests || !!playerPermissions.canEmitReport,
@@ -395,6 +401,21 @@ async function loadTabData(tab) {
 // ============================================================
 // DASHBOARD
 // ============================================================
+
+async function saveForensicShopPosition(mode = 'move') {
+    const actionLabel = mode === 'create' ? 'criar' : 'reposicionar';
+    const result = await fetchNUI('saveForensicShopPosition', { mode });
+
+    if (result && result.success) {
+        const coords = result.coords || {};
+        showNotification(`Loja forense atualizada com sucesso (${actionLabel}) em X:${Number(coords.x || 0).toFixed(2)} Y:${Number(coords.y || 0).toFixed(2)} Z:${Number(coords.z || 0).toFixed(2)}.`, 'success');
+        await loadDashboard();
+        return;
+    }
+
+    showNotification(result?.error || 'Não foi possível atualizar a loja forense.', 'error');
+}
+
 async function loadDashboard() {
     const statsEl  = getEl('dashboardStats');
     const recentEl = getEl('dashboardRecent');
@@ -452,7 +473,12 @@ async function loadDashboard() {
             alertsHTML = '<div class="dashboard-alert alert-success"><i class="fas fa-check-circle"></i> Nenhum alerta ativo no momento</div>';
         }
 
-        recentEl.innerHTML = `<div class="detail-section"><h3><i class="fas fa-bell"></i> Alertas e Pendências</h3>${alertsHTML}</div>`;
+        const shopConfig = await fetchNUI('getForensicShopConfig', {});
+        const shopInfo = shopConfig && shopConfig.success && shopConfig.data
+            ? `<div class="dashboard-alert alert-info"><i class="fas fa-store"></i> Loja forense em X:${Number(shopConfig.data.coords?.x || 0).toFixed(2)} Y:${Number(shopConfig.data.coords?.y || 0).toFixed(2)} Z:${Number(shopConfig.data.coords?.z || 0).toFixed(2)}</div>`
+            : '<div class="dashboard-alert alert-warning"><i class="fas fa-store-slash"></i> Loja forense ainda não configurada.</div>';
+
+        recentEl.innerHTML = `<div class="detail-section"><h3><i class="fas fa-bell"></i> Alertas e Pendências</h3>${alertsHTML}${shopInfo}</div>`;
     }
 }
 
