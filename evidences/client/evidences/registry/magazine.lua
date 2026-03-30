@@ -52,7 +52,7 @@ AddEventHandler("ox_inventory:currentWeapon", function(weapon)
             local naturallySpawnedMagazine <const> = getNaturallySpawnedMagazine(magazineModel)
             if naturallySpawnedMagazine then
 
-                if cache.vehicle and cache.seat and not IsPedOnAnyBike(ped) then -- vehicle magazine
+                if cache.vehicle and cache.seat and not IsPedOnAnyBike(cache.ped) then -- vehicle magazine
                     SetEntityAsMissionEntity(naturallySpawnedMagazine)
                     DeleteObject(naturallySpawnedMagazine)
 
@@ -60,7 +60,8 @@ AddEventHandler("ox_inventory:currentWeapon", function(weapon)
                         "atVehicleSeat", NetworkGetNetworkIdFromEntity(cache.vehicle), cache.seat, {
                             plate = GetVehicleNumberPlateText(cache.vehicle),
                             weaponLabel = weapon.label or "unknown",
-                            serialNumber = weapon.metadata.serial
+                            serialNumber = weapon.metadata.serial,
+                            fingerprintOwner = cache.serverId
                         })
 
                 else -- ground magazine
@@ -90,7 +91,8 @@ AddEventHandler("ox_inventory:currentWeapon", function(weapon)
                                 weaponLabel = weapon.label or "unknown",
                                 serialNumber = weapon.metadata.serial,
                                 magazineModel = magazineModel,
-                                magazineRotation = result.rotation
+                                magazineRotation = result.rotation,
+                                fingerprintOwner = cache.serverId
                             })
                     end
                 end
