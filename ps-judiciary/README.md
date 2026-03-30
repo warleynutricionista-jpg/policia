@@ -9,6 +9,9 @@ Painel jurídico separado para RP de tribunal, integrado com `ps-mdt` e `ps-fore
   - **Promotor**: cria processo e lança andamentos/audiência.
   - **Advogado**: visualiza e registra manifestações de defesa.
 - Gatilho configurável (aba Configurações): acusado elegível após **N** casos criminais vinculados (padrão 3).
+- Abrange **vara de família**, **vara trabalhista** e **processos gerais** (além de criminal), com abertura livre pelo advogado.
+- Fluxo documental inicial: o **juiz aceita ou rejeita** a entrada do caso.
+- Custas judiciais automáticas para a parte perdedora: **R$ 200.000**.
 - Busca dados do acusado:
   - Identificação (`mdt_profiles`)
   - Ficha criminal resumida (prisões + mandados)

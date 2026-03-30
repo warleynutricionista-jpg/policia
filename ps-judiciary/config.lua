@@ -10,6 +10,17 @@ Config.CaseTrigger = {
     max = 10,
 }
 
+Config.CourtCosts = {
+    loserPays = 200000,
+}
+
+Config.CaseAreas = {
+    familia = 'Vara de Família',
+    trabalhista = 'Vara Trabalhista',
+    geral = 'Processos Gerais',
+    criminal = 'Vara Criminal',
+}
+
 Config.Roles = {
     judge = {
         label = 'Juiz',
@@ -40,11 +51,12 @@ Config.Roles = {
         aces = { 'judiciary.role.advogado', 'judiciary.role.lawyer' },
         can = {
             view = true,
-            create = false,
+            create = true,
             schedule = false,
             verdict = false,
             settings = false,
             defenseNotes = true,
+            submitAnyCause = true,
         }
     }
 }
@@ -56,6 +68,8 @@ Config.RoleByJob = {
 }
 
 Config.Statuses = {
+    'aguardando_aceite',
+    'rejeitado_entrada',
     'triagem',
     'audiencia_marcada',
     'em_julgamento',

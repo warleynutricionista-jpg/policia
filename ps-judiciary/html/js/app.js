@@ -91,6 +91,7 @@ function renderProcesses() {
       <h3>${p.process_number}</h3>
       <p><b>Réu:</b> ${p.defendant_name || p.citizenid}</p>
       <p><b>Status:</b> ${p.status}</p>
+      <p><b>Vara:</b> ${p.case_area || 'geral'} | <b>Causa:</b> ${p.claim_type || 'Não informada'}</p>
       <p><b>Origem:</b> ${p.origin_type}</p>
       <div class="actions">
         <button class="btn-open">Abrir</button>
@@ -114,10 +115,13 @@ async function openProcess(id) {
   processDetailEl.innerHTML = `
     <h3>${p.process_number} — ${p.defendant_name || p.citizenid}</h3>
     <p><b>Status:</b> ${p.status}</p>
+    <p><b>Vara:</b> ${p.case_area || 'geral'}</p>
+    <p><b>Tipo da causa:</b> ${p.claim_type || 'Não informado'}</p>
+    <p><b>Autor:</b> ${p.plaintiff_name || '-'} (${p.plaintiff_citizenid || '-'})</p>
     <p><b>Casos vinculados:</b> ${(p.linked_case_ids || []).join(', ') || 'Nenhum'}</p>
     <p><b>Resumo:</b></p>
     <pre>${p.summary || 'Sem resumo.'}</pre>
-    <p><b>Sentença:</b></p>
+    <p><b>Sentença / custas:</b></p>
     <pre>${p.sentence_text || 'Não definida.'}</pre>
 
     <h4>Andamentos</h4>
@@ -125,6 +129,8 @@ async function openProcess(id) {
 
     <div class="actions">
       ${can('schedule') ? '<button id="btnAddEvent">Adicionar andamento</button>' : ''}
+      ${can('verdict') ? '<button id="btnReviewAccept">Aceitar entrada</button>' : ''}
+      ${can('verdict') ? '<button id="btnReviewReject">Rejeitar entrada</button>' : ''}
       ${can('verdict') ? '<button id="btnAddVerdict">Registrar sentença</button>' : ''}
       ${can('defenseNotes') ? '<button id="btnDefense">Manifestação da defesa</button>' : ''}
     </div>
@@ -144,16 +150,31 @@ async function openProcess(id) {
   }
 
   if (can('verdict')) {
+    document.getElementById('btnReviewAccept').addEventListener('click', async () => {
+      const reason = prompt('Justificativa do aceite documental:') || 'Documentação completa.';
+      const resp = await postNui('reviewIntake', { processId: p.id, accepted: true, reason });
+      if (!resp.success) return alert(resp.error || 'Erro ao aceitar entrada.');
+      await refresh();
+      openProcess(p.id);
+    });
+
+    document.getElementById('btnReviewReject').addEventListener('click', async () => {
+      const reason = prompt('Justificativa da rejeição documental:');
+      if (!reason) return;
+      const resp = await postNui('reviewIntake', { processId: p.id, accepted: false, reason });
+      if (!resp.success) return alert(resp.error || 'Erro ao rejeitar entrada.');
+      await refresh();
+      openProcess(p.id);
+    });
+
     document.getElementById('btnAddVerdict').addEventListener('click', async () => {
       const sentenceText = prompt('Texto da sentença:');
       if (!sentenceText) return;
-      const resp = await postNui('addEvent', {
+      const loserParty = prompt('Parte perdedora (autor/reu/nenhum):', 'reu') || 'reu';
+      const resp = await postNui('finalizeJudgment', {
         processId: p.id,
-        title: 'Sentença judicial',
-        description: sentenceText,
         sentenceText,
-        status: 'sentenciado',
-        eventType: 'sentenca',
+        loserParty,
       });
       if (!resp.success) return alert(resp.error || 'Erro ao registrar sentença.');
       await refresh();
@@ -249,6 +270,39 @@ document.getElementById('btnSaveSettings').addEventListener('click', async () =>
   state.settings.requiredCriminalCases = result.requiredCriminalCases;
   state.candidates = result.candidates || [];
   renderAll();
+});
+
+document.getElementById('btnNewProcess').addEventListener('click', async () => {
+  if (!can('create')) {
+    return alert('Seu perfil não pode distribuir processo.');
+  }
+
+  const caseArea = (prompt('Vara (familia/trabalhista/geral/criminal):', 'geral') || 'geral').toLowerCase();
+  const claimType = prompt('Tipo da causa (livre):') || 'Causa geral';
+  const plaintiffCitizenid = prompt('CitizenID do autor (opcional):') || '';
+  const plaintiffName = prompt('Nome do autor (opcional):') || '';
+  const citizenid = prompt('CitizenID do réu/acusado:');
+  if (!citizenid) return;
+  const summary = prompt('Resumo do caso:') || '';
+
+  const result = await postNui('createProcess', {
+    caseArea,
+    claimType,
+    plaintiffCitizenid,
+    plaintiffName,
+    citizenid,
+    summary,
+    originType: caseArea === 'criminal' ? 'criminal' : 'civil',
+    linkedCases: [],
+  });
+
+  if (!result.success) {
+    return alert(result.error || 'Erro ao criar processo.');
+  }
+
+  await refresh();
+  switchTab('processes');
+  openProcess(result.process.id);
 });
 
 document.addEventListener('keyup', (ev) => {

@@ -71,3 +71,13 @@ RegisterNUICallback('addDefenseNote', function(data, cb)
     local result = lib.callback.await('ps-judiciary:server:addDefenseNote', false, data)
     cb(result or { success = false, error = 'defense_failed' })
 end)
+
+RegisterNUICallback('reviewIntake', function(data, cb)
+    local result = lib.callback.await('ps-judiciary:server:reviewIntake', false, data)
+    cb(result or { success = false, error = 'review_failed' })
+end)
+
+RegisterNUICallback('finalizeJudgment', function(data, cb)
+    local result = lib.callback.await('ps-judiciary:server:finalizeJudgment', false, data)
+    cb(result or { success = false, error = 'judgment_failed' })
+end)

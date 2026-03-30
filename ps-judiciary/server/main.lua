@@ -76,11 +76,17 @@ local function ensureSchema()
             process_number VARCHAR(32) NOT NULL,
             citizenid VARCHAR(64) NOT NULL,
             defendant_name VARCHAR(120) NULL,
+            plaintiff_citizenid VARCHAR(64) NULL,
+            plaintiff_name VARCHAR(120) NULL,
+            case_area ENUM('familia','trabalhista','geral','criminal') NOT NULL DEFAULT 'geral',
+            claim_type VARCHAR(120) NULL,
             linked_case_ids LONGTEXT NULL,
-            status ENUM('triagem','audiencia_marcada','em_julgamento','sentenciado','arquivado') NOT NULL DEFAULT 'triagem',
+            status ENUM('aguardando_aceite','rejeitado_entrada','triagem','audiencia_marcada','em_julgamento','sentenciado','arquivado') NOT NULL DEFAULT 'aguardando_aceite',
             origin_type ENUM('criminal','civil','administrativo') NOT NULL DEFAULT 'criminal',
             summary TEXT NULL,
             sentence_text LONGTEXT NULL,
+            loser_party ENUM('autor','reu','nenhum') NOT NULL DEFAULT 'nenhum',
+            court_costs INT UNSIGNED NOT NULL DEFAULT 200000,
             created_by VARCHAR(64) NOT NULL,
             created_by_name VARCHAR(120) NOT NULL,
             updated_by VARCHAR(64) NULL,
@@ -93,6 +99,15 @@ local function ensureSchema()
             KEY idx_judiciary_process_status (status, updated_at)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ]])
+
+    MySQL.query.await("ALTER TABLE judiciary_processes MODIFY COLUMN status ENUM('aguardando_aceite','rejeitado_entrada','triagem','audiencia_marcada','em_julgamento','sentenciado','arquivado') NOT NULL DEFAULT 'aguardando_aceite'")
+    MySQL.query.await("ALTER TABLE judiciary_processes MODIFY COLUMN case_area ENUM('familia','trabalhista','geral','criminal') NOT NULL DEFAULT 'geral'")
+    MySQL.query.await('ALTER TABLE judiciary_processes ADD COLUMN IF NOT EXISTS plaintiff_citizenid VARCHAR(64) NULL AFTER defendant_name')
+    MySQL.query.await('ALTER TABLE judiciary_processes ADD COLUMN IF NOT EXISTS plaintiff_name VARCHAR(120) NULL AFTER plaintiff_citizenid')
+    MySQL.query.await("ALTER TABLE judiciary_processes ADD COLUMN IF NOT EXISTS case_area ENUM('familia','trabalhista','geral','criminal') NOT NULL DEFAULT 'geral' AFTER plaintiff_name")
+    MySQL.query.await('ALTER TABLE judiciary_processes ADD COLUMN IF NOT EXISTS claim_type VARCHAR(120) NULL AFTER case_area')
+    MySQL.query.await("ALTER TABLE judiciary_processes ADD COLUMN IF NOT EXISTS loser_party ENUM('autor','reu','nenhum') NOT NULL DEFAULT 'nenhum' AFTER sentence_text")
+    MySQL.query.await('ALTER TABLE judiciary_processes ADD COLUMN IF NOT EXISTS court_costs INT UNSIGNED NOT NULL DEFAULT 200000 AFTER loser_party')
 
     MySQL.query.await([[
         CREATE TABLE IF NOT EXISTS judiciary_process_events (
@@ -113,6 +128,11 @@ local function ensureSchema()
         INSERT IGNORE INTO judiciary_settings (setting_key, setting_value)
         VALUES ('required_criminal_cases', ?)
     ]], { tostring(Config.CaseTrigger.defaultRequiredCases or 3) })
+
+    MySQL.insert.await([[
+        INSERT IGNORE INTO judiciary_settings (setting_key, setting_value)
+        VALUES ('court_costs_loser', ?)
+    ]], { tostring((Config.CourtCosts and Config.CourtCosts.loserPays) or 200000) })
 end
 
 local function getSettingNumber(key, fallback)
@@ -133,13 +153,6 @@ end
 local function buildProcessNumber(id)
     return ('PROC-%s-%05d'):format(os.date('%Y'), id)
 end
-
-local SUSPECT_TYPES = {
-    suspect = true,
-    accused = true,
-    culpado = true,
-    acusado = true,
-}
 
 local function getEligibleDefendants(requiredCases)
     local rows = MySQL.query.await([[
@@ -215,7 +228,8 @@ end
 local function getProcessList()
     local rows = MySQL.query.await([[
         SELECT id, process_number, citizenid, defendant_name, linked_case_ids, status,
-               origin_type, summary, sentence_text, created_by_name, updated_by_name,
+               plaintiff_citizenid, plaintiff_name, case_area, claim_type, origin_type,
+               summary, sentence_text, loser_party, court_costs, created_by_name, updated_by_name,
                created_at, updated_at
         FROM judiciary_processes
         ORDER BY updated_at DESC
@@ -233,7 +247,8 @@ end
 local function getProcessById(processId)
     local row = MySQL.single.await([[
         SELECT id, process_number, citizenid, defendant_name, linked_case_ids, status,
-               origin_type, summary, sentence_text, created_by_name, updated_by_name,
+               plaintiff_citizenid, plaintiff_name, case_area, claim_type, origin_type,
+               summary, sentence_text, loser_party, court_costs, created_by_name, updated_by_name,
                created_at, updated_at
         FROM judiciary_processes
         WHERE id = ?
@@ -346,6 +361,11 @@ lib.callback.register('ps-judiciary:server:createProcess', function(source, payl
         return { success = false, error = 'CitizenID é obrigatório.' }
     end
 
+    local caseArea = trim(payload.caseArea) or 'criminal'
+    if caseArea ~= 'criminal' and caseArea ~= 'familia' and caseArea ~= 'trabalhista' and caseArea ~= 'geral' then
+        caseArea = 'geral'
+    end
+
     local existing = MySQL.single.await('SELECT id, process_number FROM judiciary_processes WHERE citizenid = ? AND status <> ? LIMIT 1', {
         citizenid, 'arquivado'
     })
@@ -379,18 +399,26 @@ lib.callback.register('ps-judiciary:server:createProcess', function(source, payl
 
     local actorName = getActorName(source)
     local profile = MySQL.single.await('SELECT fullname FROM mdt_profiles WHERE citizenid = ? LIMIT 1', { citizenid })
+    local plaintiffCitizenId = trim(payload.plaintiffCitizenid)
+    local plaintiffName = trim(payload.plaintiffName)
+    local loserCosts = getSettingNumber('court_costs_loser', (Config.CourtCosts and Config.CourtCosts.loserPays) or 200000)
 
     local processId = MySQL.insert.await([[
         INSERT INTO judiciary_processes
-            (process_number, citizenid, defendant_name, linked_case_ids, status, origin_type, summary, created_by, created_by_name)
+            (process_number, citizenid, defendant_name, plaintiff_citizenid, plaintiff_name, case_area, claim_type, linked_case_ids, status, origin_type, summary, loser_party, court_costs, created_by, created_by_name)
         VALUES
-            ('', ?, ?, ?, 'triagem', ?, ?, ?, ?)
+            ('', ?, ?, ?, ?, ?, ?, ?, 'aguardando_aceite', ?, ?, 'nenhum', ?, ?, ?)
     ]], {
         citizenid,
         profile and profile.fullname or citizenid,
+        plaintiffCitizenId,
+        plaintiffName,
+        caseArea,
+        trim(payload.claimType) or 'Causa geral',
         json.encode(linkedCases),
         trim(payload.originType) or 'criminal',
         trim(payload.summary) or 'Processo criado automaticamente a partir do critério configurado.',
+        loserCosts,
         tostring(source),
         actorName,
     })
@@ -403,7 +431,7 @@ lib.callback.register('ps-judiciary:server:createProcess', function(source, payl
         VALUES (?, 'criacao', 'Processo distribuído', ?, ?, ?)
     ]], {
         processId,
-        ('Processo %s aberto para %s.'):format(processNumber, profile and profile.fullname or citizenid),
+        ('Processo %s aberto para %s (%s). Aguardando aceite do juiz.'):format(processNumber, profile and profile.fullname or citizenid, caseArea),
         tostring(source),
         actorName,
     })
@@ -412,6 +440,85 @@ lib.callback.register('ps-judiciary:server:createProcess', function(source, payl
         success = true,
         process = getProcessById(processId),
     }
+end)
+
+lib.callback.register('ps-judiciary:server:reviewIntake', function(source, payload)
+    local access, err = ensureAccess(source, 'verdict')
+    if not access then return { success = false, error = err } end
+
+    payload = payload or {}
+    local processId = tonumber(payload.processId)
+    if not processId then return { success = false, error = 'Processo inválido.' } end
+
+    local accepted = payload.accepted == true
+    local reason = trim(payload.reason) or 'Sem justificativa.'
+    local actorName = getActorName(source)
+    local newStatus = accepted and 'triagem' or 'rejeitado_entrada'
+    local eventTitle = accepted and 'Entrada documental aceita' or 'Entrada documental rejeitada'
+
+    MySQL.insert.await([[
+        INSERT INTO judiciary_process_events (process_id, event_type, title, description, created_by, created_by_name)
+        VALUES (?, 'triagem_documental', ?, ?, ?, ?)
+    ]], {
+        processId,
+        eventTitle,
+        reason,
+        tostring(source),
+        actorName,
+    })
+
+    MySQL.update.await([[
+        UPDATE judiciary_processes
+        SET status = ?, updated_by = ?, updated_by_name = ?
+        WHERE id = ?
+    ]], { newStatus, tostring(source), actorName, processId })
+
+    return { success = true, process = getProcessById(processId) }
+end)
+
+lib.callback.register('ps-judiciary:server:finalizeJudgment', function(source, payload)
+    local access, err = ensureAccess(source, 'verdict')
+    if not access then return { success = false, error = err } end
+
+    payload = payload or {}
+    local processId = tonumber(payload.processId)
+    if not processId then return { success = false, error = 'Processo inválido.' } end
+
+    local loserParty = trim(payload.loserParty) or 'nenhum'
+    if loserParty ~= 'autor' and loserParty ~= 'reu' and loserParty ~= 'nenhum' then
+        loserParty = 'nenhum'
+    end
+
+    local baseSentence = trim(payload.sentenceText) or 'Sem detalhamento de sentença.'
+    local costs = getSettingNumber('court_costs_loser', (Config.CourtCosts and Config.CourtCosts.loserPays) or 200000)
+    local sentence = baseSentence
+    if loserParty ~= 'nenhum' then
+        sentence = sentence .. ('\\n\\nCustas judiciais: R$ %s (parte perdedora: %s).'):format(costs, loserParty)
+    end
+
+    local actorName = getActorName(source)
+    MySQL.update.await([[
+        UPDATE judiciary_processes
+        SET status = 'sentenciado',
+            loser_party = ?,
+            sentence_text = ?,
+            court_costs = ?,
+            updated_by = ?,
+            updated_by_name = ?
+        WHERE id = ?
+    ]], { loserParty, sentence, costs, tostring(source), actorName, processId })
+
+    MySQL.insert.await([[
+        INSERT INTO judiciary_process_events (process_id, event_type, title, description, created_by, created_by_name)
+        VALUES (?, 'sentenca_final', 'Sentença final publicada', ?, ?, ?)
+    ]], {
+        processId,
+        sentence,
+        tostring(source),
+        actorName,
+    })
+
+    return { success = true, process = getProcessById(processId) }
 end)
 
 lib.callback.register('ps-judiciary:server:addEvent', function(source, payload)
@@ -449,7 +556,7 @@ lib.callback.register('ps-judiciary:server:addEvent', function(source, payload)
     }
     local values = { tostring(source), actorName }
 
-    if status and (status == 'triagem' or status == 'audiencia_marcada' or status == 'em_julgamento' or status == 'sentenciado' or status == 'arquivado') then
+    if status and (status == 'aguardando_aceite' or status == 'rejeitado_entrada' or status == 'triagem' or status == 'audiencia_marcada' or status == 'em_julgamento' or status == 'sentenciado' or status == 'arquivado') then
         updates[#updates + 1] = 'status = ?'
         values[#values + 1] = status
     end
