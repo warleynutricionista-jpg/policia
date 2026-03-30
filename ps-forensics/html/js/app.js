@@ -1566,6 +1566,7 @@ async function compareSceneEvidenceKnownCriminals() {
     const evidenceCount = (data.evidence || []).length;
     const suspects = data.suspect_matches || [];
     const ballistic = data.ballistic || [];
+    const standardReport = data.standardized_report || '';
 
     let html = `<div style="grid-column:1/-1;">`;
     html += `<div class="detail-section"><h3><i class="fas fa-map-marked-alt"></i> Cena ${h(scene.scene_number || `#${scene.id || sceneId}`)} | Evidências ${evidenceCount}</h3>
@@ -1607,8 +1608,32 @@ async function compareSceneEvidenceKnownCriminals() {
         html += `</div>`;
     }
 
+    if (standardReport) {
+        html += `<div class="detail-section"><h3><i class="fas fa-file-lines"></i> Relatório Padronizado (Auto)</h3>
+            <div class="card" style="margin-bottom:8px;cursor:default;">
+                <div class="card-body">
+                    <textarea id="sceneStandardReport" rows="10" style="width:100%;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:8px;padding:10px;" readonly>${standardReport}</textarea>
+                    <div class="tab-actions" style="margin-top:8px;">
+                        <button class="btn-primary" onclick="copySceneStandardReport()"><i class="fas fa-copy"></i> Copiar Relatório</button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }
+
     html += `</div></div>`;
     container.innerHTML = html;
+}
+
+function copySceneStandardReport() {
+    const reportEl = document.getElementById('sceneStandardReport');
+    if (!reportEl || !reportEl.value) {
+        showNotification('Relatório padronizado não disponível.', 'warning');
+        return;
+    }
+    reportEl.select();
+    document.execCommand('copy');
+    showNotification('Relatório padronizado copiado para área de transferência.', 'success');
 }
 
 function renderCrossRefResults(dashboard) {

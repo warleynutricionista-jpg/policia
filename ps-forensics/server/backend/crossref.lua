@@ -284,6 +284,43 @@ lib.callback.register(resourceName .. ':server:compareSceneEvidenceWithKnownCrim
         LIMIT 120
     ]], { sceneId }) or {}
 
+    local reportLines = {
+        'RELATÓRIO PADRONIZADO DE ACHADOS FORENSES',
+        ('Cena: %s (ID %s)'):format(scene.scene_number or ('Cena #' .. tostring(scene.id or sceneId)), tostring(scene.id or sceneId)),
+        ('Classificação: %s | Status: %s'):format(scene.classification or 'N/D', scene.status or 'N/D'),
+        ('Total de provas analisadas: %d'):format(#evidences),
+        ('Suspeitos com vínculo em base criminal: %d'):format(#matches),
+        ('Registros balísticos na cena: %d'):format(#ballisticInScene),
+        '--- ACHADOS ---',
+    }
+
+    if #matches == 0 then
+        reportLines[#reportLines + 1] = '• Nenhum suspeito da cena foi localizado na base de criminosos conhecidos.'
+    else
+        for _, match in ipairs(matches) do
+            reportLines[#reportLines + 1] = ('• %s (%s) | base=%s | mandados=%d | prisões=%d'):format(
+                match.name and match.name ~= '' and match.name or 'Sem nome',
+                match.citizenid or 'N/D',
+                match.known_criminal and 'SIM' or 'NÃO',
+                tonumber(match.active_warrants) or 0,
+                tonumber(match.arrests) or 0
+            )
+        end
+    end
+
+    if #ballisticInScene > 0 then
+        reportLines[#reportLines + 1] = '--- BALÍSTICA ---'
+        for _, bal in ipairs(ballisticInScene) do
+            reportLines[#reportLines + 1] = ('• Serial: %s | Calibre: %s | Modelo: %s'):format(
+                bal.weapon_serial or bal.matched_weapon_serial or 'N/D',
+                bal.caliber or 'N/D',
+                bal.weapon_model or 'N/D'
+            )
+        end
+    end
+
+    local standardizedReport = table.concat(reportLines, '\n')
+
     return {
         success = true,
         data = {
@@ -291,6 +328,7 @@ lib.callback.register(resourceName .. ':server:compareSceneEvidenceWithKnownCrim
             evidence = evidences,
             suspect_matches = matches,
             ballistic = ballisticInScene,
+            standardized_report = standardizedReport,
         }
     }
 end)
