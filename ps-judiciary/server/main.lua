@@ -41,6 +41,31 @@ local function getJobName(src)
     return nil
 end
 
+local function getPlayerSourceByCitizenId(citizenid)
+    if not citizenid then return nil end
+
+    if GetResourceState('qbx_core') == 'started' then
+        local ok, player = pcall(function()
+            return exports.qbx_core:GetPlayerByCitizenId(citizenid)
+        end)
+        if ok and player then
+            return player.PlayerData and player.PlayerData.source or player.source
+        end
+    end
+
+    if GetResourceState('qb-core') == 'started' then
+        local ok, core = pcall(function() return exports['qb-core']:GetCoreObject() end)
+        if ok and core then
+            local player = core.Functions.GetPlayerByCitizenId(citizenid)
+            if player and player.PlayerData then
+                return player.PlayerData.source
+            end
+        end
+    end
+
+    return nil
+end
+
 local function resolveRole(src)
     for roleName, roleData in pairs(Config.Roles or {}) do
         for _, ace in ipairs(roleData.aces or {}) do
@@ -519,6 +544,69 @@ lib.callback.register('ps-judiciary:server:finalizeJudgment', function(source, p
     })
 
     return { success = true, process = getProcessById(processId) }
+end)
+
+lib.callback.register('ps-judiciary:server:scheduleDirectPrison', function(source, payload)
+    local access, err = ensureAccess(source, 'verdict')
+    if not access then return { success = false, error = err } end
+
+    payload = payload or {}
+    local processId = tonumber(payload.processId)
+    local sentence = tonumber(payload.sentence) or 0
+    if not processId then return { success = false, error = 'Processo inválido.' } end
+    if sentence <= 0 then return { success = false, error = 'Tempo de prisão inválido.' } end
+
+    local process = MySQL.single.await('SELECT id, citizenid, defendant_name FROM judiciary_processes WHERE id = ? LIMIT 1', { processId })
+    if not process then
+        return { success = false, error = 'Processo não encontrado.' }
+    end
+
+    local actorName = getActorName(source)
+    local reason = trim(payload.reason) or 'Execução de ordem judicial de prisão.'
+    local delayMs = 5 * 60 * 1000
+
+    MySQL.insert.await([[
+        INSERT INTO judiciary_process_events (process_id, event_type, title, description, created_by, created_by_name)
+        VALUES (?, 'prisao_agendada', 'Prisão direta agendada (5 minutos)', ?, ?, ?)
+    ]], {
+        processId,
+        ('Ordem de prisão registrada. Execução automática em 5 minutos para permitir condução até cela/sala. Motivo: %s'):format(reason),
+        tostring(source),
+        actorName,
+    })
+
+    SetTimeout(delayMs, function()
+        local targetSource = getPlayerSourceByCitizenId(process.citizenid)
+        local executionNote = ''
+
+        if not targetSource then
+            executionNote = 'Execução automática não concluída: réu offline no momento da ordem.'
+        elseif GetResourceState('pickle_prisons') ~= 'started' then
+            executionNote = 'Execução automática não concluída: pickle_prisons não iniciado.'
+        else
+            local ok, jailErr = pcall(function()
+                exports['pickle_prisons']:JailPlayer(targetSource, sentence, 'default')
+            end)
+
+            if ok then
+                executionNote = ('Réu enviado diretamente para prisão após delay de 5 minutos. Tempo aplicado: %s.'):format(sentence)
+            else
+                executionNote = ('Falha ao executar prisão automática: %s'):format(tostring(jailErr))
+            end
+        end
+
+        MySQL.insert.await([[
+            INSERT INTO judiciary_process_events (process_id, event_type, title, description, created_by, created_by_name)
+            VALUES (?, 'prisao_execucao', 'Resultado da ordem de prisão direta', ?, ?, ?)
+        ]], {
+            processId,
+            executionNote,
+            tostring(source),
+            actorName,
+        })
+    end)
+
+    return { success = true, message = 'Prisão direta agendada para execução em 5 minutos.' }
 end)
 
 lib.callback.register('ps-judiciary:server:addEvent', function(source, payload)

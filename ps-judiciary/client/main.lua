@@ -81,3 +81,8 @@ RegisterNUICallback('finalizeJudgment', function(data, cb)
     local result = lib.callback.await('ps-judiciary:server:finalizeJudgment', false, data)
     cb(result or { success = false, error = 'judgment_failed' })
 end)
+
+RegisterNUICallback('scheduleDirectPrison', function(data, cb)
+    local result = lib.callback.await('ps-judiciary:server:scheduleDirectPrison', false, data)
+    cb(result or { success = false, error = 'direct_prison_failed' })
+end)

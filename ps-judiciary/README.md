@@ -12,6 +12,7 @@ Painel jurídico separado para RP de tribunal, integrado com `ps-mdt` e `ps-fore
 - Abrange **vara de família**, **vara trabalhista** e **processos gerais** (além de criminal), com abertura livre pelo advogado.
 - Fluxo documental inicial: o **juiz aceita ou rejeita** a entrada do caso.
 - Custas judiciais automáticas para a parte perdedora: **R$ 200.000**.
+- Ordem de **prisão direta pelo juiz** com delay de **5 minutos** (tempo para conduzir o réu até cela/sala antes da execução automática).
 - Busca dados do acusado:
   - Identificação (`mdt_profiles`)
   - Ficha criminal resumida (prisões + mandados)

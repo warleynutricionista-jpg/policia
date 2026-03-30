@@ -132,8 +132,10 @@ async function openProcess(id) {
       ${can('verdict') ? '<button id="btnReviewAccept">Aceitar entrada</button>' : ''}
       ${can('verdict') ? '<button id="btnReviewReject">Rejeitar entrada</button>' : ''}
       ${can('verdict') ? '<button id="btnAddVerdict">Registrar sentença</button>' : ''}
+      ${can('verdict') ? '<button id="btnDirectPrison">Enviar direto à prisão (delay 5 min)</button>' : ''}
       ${can('defenseNotes') ? '<button id="btnDefense">Manifestação da defesa</button>' : ''}
     </div>
+    ${can('verdict') ? '<p class="muted">Atenção Juiz: ao clicar em \"Enviar direto à prisão\", o sistema aguardará 5 minutos para dar tempo de conduzir o réu até uma cela/sala, e só então executará a prisão automática.</p>' : ''}
   `;
 
   if (can('schedule')) {
@@ -177,6 +179,21 @@ async function openProcess(id) {
         loserParty,
       });
       if (!resp.success) return alert(resp.error || 'Erro ao registrar sentença.');
+      await refresh();
+      openProcess(p.id);
+    });
+
+    document.getElementById('btnDirectPrison').addEventListener('click', async () => {
+      const sentence = Number(prompt('Tempo de prisão para execução automática (ex: 30):', '30'));
+      if (!sentence || sentence <= 0) return;
+      const reason = prompt('Motivo da prisão direta:') || 'Ordem judicial imediata.';
+      const resp = await postNui('scheduleDirectPrison', {
+        processId: p.id,
+        sentence,
+        reason,
+      });
+      if (!resp.success) return alert(resp.error || 'Erro ao agendar prisão direta.');
+      alert('Prisão direta agendada. Execução automática em 5 minutos.');
       await refresh();
       openProcess(p.id);
     });
