@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import useLuaCallback from "@/hooks/useLuaCallback";
 import { Sidebar, SidebarItem, SidebarSection } from "./Sidebar";
 import type { Evidence, EvidenceDetails } from "@/types/evidence.type";
@@ -20,6 +20,7 @@ interface EvidenceSidebarProps {
 
 export default function EvidenceSidebar(props: EvidenceSidebarProps) {
     const { t } = useTranslation();
+    const [selectedScene, setSelectedScene] = useState<string | null>(null);
 
     const { trigger, data: inventories, setData: setInventories, loading } = useLuaCallback<{ type: "fingerprint" | "dna" }, InventoriesType<{ identifier: string, analysed: boolean }>>({
         name: "evidences:getPlayersItemsWithBiometricData",
@@ -71,9 +72,48 @@ export default function EvidenceSidebar(props: EvidenceSidebarProps) {
 
         return () => {
             window.removeEventListener("message", handleMessage);
-            window.removeEventListener("evidence:analysed", handleAnalysed);
+            window.removeEventListener("evidences:analysed", handleAnalysed);
         };
     }, []);
+
+    const evidencesByScene = useMemo(() => {
+        return (inventories || []).reduce((acc, inventory) => {
+            inventory.items.forEach((item) => {
+                const sceneName = (item.details?.crimeScene || "").trim() || t("laptop.desktop_screen.common.crime_scene_placeholder");
+
+                if (!acc[sceneName]) {
+                    acc[sceneName] = [];
+                }
+
+                acc[sceneName].push({
+                    ...item,
+                    inventory: inventory.inventory,
+                    inventoryLabel: inventory.label
+                });
+            });
+
+            return acc;
+        }, {} as Record<string, Array<InventoriesType<{ identifier: string, analysed: boolean }>[number]["items"][number] & { inventory: number | string, inventoryLabel: string }>>);
+    }, [inventories, t]);
+
+    const sceneNames = useMemo(() => Object.keys(evidencesByScene), [evidencesByScene]);
+
+    useEffect(() => {
+        if (sceneNames.length === 0) {
+            setSelectedScene(null);
+            return;
+        }
+
+        setSelectedScene((current) => {
+            if (current && evidencesByScene[current]) {
+                return current;
+            }
+
+            return sceneNames[0];
+        });
+    }, [sceneNames, evidencesByScene]);
+
+    const selectedSceneEvidences = selectedScene ? evidencesByScene[selectedScene] || [] : [];
 
     return <Sidebar className="w-70 h-full shrink-0">
         {(!inventories || (inventories.length == 0 && !loading))
@@ -84,25 +124,41 @@ export default function EvidenceSidebar(props: EvidenceSidebarProps) {
                 ? <div className="w-full h-full flex justify-center items-center">
                     <p className="text-20 leading-none text-center">{t("laptop.desktop_screen.common.statuses.loading")}</p>
                 </div>
-                : inventories && inventories.map((inventory) => (
-                    <SidebarSection title={inventory.label}>
-                        {inventory.items.map((item) => {
+                : <>
+                    <SidebarSection title={t("laptop.desktop_screen.common.crime_scene_placeholder")}>
+                        {sceneNames.map((sceneName) => (
+                            <SidebarItem
+                                key={sceneName}
+                                active={sceneName === selectedScene}
+                                description={`${evidencesByScene[sceneName].length} ${t("laptop.desktop_screen.common.evidence_placeholder")}`}
+                                onClick={() => setSelectedScene(sceneName)}
+                            >
+                                {sceneName}
+                            </SidebarItem>
+                        ))}
+                    </SidebarSection>
+
+                    {selectedScene && <SidebarSection title={`${selectedScene} (${selectedSceneEvidences.length})`}>
+                        {selectedSceneEvidences.map((item) => {
                             const active = props.evidence
-                                && inventory.inventory == props.evidence.inventory
+                                && item.inventory == props.evidence.inventory
                                 && item.slot == props.evidence.slot
                                 && item.additionalData.identifier == props.evidence.identifier
 
                             return <SidebarItem
+                                key={`${item.inventory}-${item.slot}-${item.additionalData.identifier}`}
                                 active={!!active}
                                 imagePath={item.imagePath}
-                                description={item.additionalData.analysed ? t("laptop.desktop_screen.common.statuses.analysed") : undefined}
-                                onClick={() => props.onEvidenceSelection(item.label, item.imagePath, inventory.inventory, item.slot, item.additionalData.identifier, item.additionalData.analysed, item.details)}
+                                description={item.additionalData.analysed
+                                    ? `${t("laptop.desktop_screen.common.statuses.analysed")} • ${item.inventoryLabel}`
+                                    : item.inventoryLabel}
+                                onClick={() => props.onEvidenceSelection(item.label, item.imagePath, item.inventory, item.slot, item.additionalData.identifier, item.additionalData.analysed, item.details)}
                             >
                                 {item.label}
                             </SidebarItem>
                         })}
-                    </SidebarSection>
-                ))
+                    </SidebarSection>}
+                </>
         }
     </Sidebar>
 }

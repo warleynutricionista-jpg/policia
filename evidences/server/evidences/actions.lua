@@ -3,6 +3,7 @@ local framework <const> = require "common.frameworks.framework"
 local evidenceTypes <const> = require "common.evidence_types"
 local api <const> = require "server.evidences.api"
 local logger <const> = require "server.logger"
+local biometricsProvider <const> = require "server.biometrics.biometrics_provider"
 
 local actions = {}
 
@@ -70,6 +71,19 @@ function actions.collect(source, evidenceType, owner, remove, metadata)
     end
 
     metadata = metadata or {}
+
+    if metadata.fingerprint and metadata.fingerprint.owner then
+        if type(metadata.fingerprint.owner) == "number" then
+            metadata.fingerprint.owner = biometricsProvider.getFingerprint(metadata.fingerprint.owner)
+        end
+
+        if not metadata.fingerprint.owner then
+            metadata.fingerprint = nil
+        else
+            metadata.fingerprint.analysed = metadata.fingerprint.analysed or false
+        end
+    end
+
     metadata.description = require "server.evidences.evidence_information"(metadata.information or {})
 
     object:atItem(source, response[1].slot, metadata)

@@ -13,7 +13,7 @@ local function createMetadata(evidenceType, data, coords, holder)
         additionalData = locale("evidences.information.at_player")
     end
 
-    return {
+    local metadata = {
         information = {
             collectionTime = utils.getFormatedDateTime(),
             crimeScene = utils.getStreetName(coords),
@@ -22,6 +22,15 @@ local function createMetadata(evidenceType, data, coords, holder)
             serialNumber = data.serialNumber
         }
     }
+
+    if data.fingerprintOwner then
+        metadata.fingerprint = {
+            owner = data.fingerprintOwner,
+            analysed = false
+        }
+    end
+
+    return metadata
 end
 
 return {
