@@ -6,6 +6,8 @@ local resourceName = GetCurrentResourceName()
 local isForensicsOpen = false
 local activeScenes = {}
 local sceneBlips = {}
+local forensicShopZone = nil
+local forensicShopBlip = nil
 
 local function hasForensicsAccess()
     if ForensicsAccess and ForensicsAccess.hasAccess then
@@ -211,6 +213,74 @@ CreateThread(function()
     end
 end)
 
+
+local function resolveShopCoords(coords)
+    if not coords then return nil end
+    if type(coords) == 'vector3' then return coords end
+
+    local x = tonumber(coords.x)
+    local y = tonumber(coords.y)
+    local z = tonumber(coords.z)
+    if not x or not y or not z then return nil end
+    return vector3(x, y, z)
+end
+
+local function applyForensicShop(shop)
+    if forensicShopZone then
+        pcall(function() exports.ox_target:removeZone(forensicShopZone) end)
+        forensicShopZone = nil
+    end
+
+    if forensicShopBlip then
+        RemoveBlip(forensicShopBlip)
+        forensicShopBlip = nil
+    end
+
+    local shopCoords = resolveShopCoords(shop and shop.coords)
+    if not shop or not shop.enabled or not shopCoords then
+        return
+    end
+
+    forensicShopZone = exports.ox_target:addSphereZone({
+        coords = shopCoords,
+        radius = shop.radius or 2.0,
+        options = {
+            {
+                name = 'open_forensic_shop',
+                icon = shop.targetIcon or 'fa-solid fa-cart-shopping',
+                label = shop.targetLabel or 'Abrir loja forense',
+                onSelect = function()
+                    local shopId = shop.id or 'forensics_supply_shop'
+                    exports.ox_inventory:openInventory('shop', { type = shopId })
+                end,
+                canInteract = function() return hasForensicsAccess() end,
+            }
+        }
+    })
+
+    if shop.blip and shop.blip.enabled then
+        forensicShopBlip = AddBlipForCoord(shopCoords.x, shopCoords.y, shopCoords.z)
+        SetBlipSprite(forensicShopBlip, shop.blip.sprite or 59)
+        SetBlipColour(forensicShopBlip, shop.blip.color or 38)
+        SetBlipScale(forensicShopBlip, shop.blip.scale or 0.75)
+        SetBlipAsShortRange(forensicShopBlip, true)
+        BeginTextCommandSetBlipName('STRING')
+        AddTextComponentSubstringPlayerName(shop.blip.label or 'Loja Forense')
+        EndTextCommandSetBlipName(forensicShopBlip)
+    end
+end
+
+RegisterNetEvent(resourceName .. ':client:updateForensicShop', function(shopData)
+    if type(shopData) ~= 'table' then return end
+
+    Config.ForensicShop = Config.ForensicShop or {}
+    for key, value in pairs(shopData) do
+        Config.ForensicShop[key] = value
+    end
+
+    applyForensicShop(Config.ForensicShop)
+end)
+
 -- ============================================================
 -- TARGETS (ox_target) - Laboratório e IML
 -- ============================================================
@@ -289,6 +359,16 @@ CreateThread(function()
             }
         })
     end
+
+    local shopState = lib.callback.await(resourceName .. ':server:getForensicShopConfig', false)
+    if shopState and shopState.success and shopState.data then
+        Config.ForensicShop = Config.ForensicShop or {}
+        for key, value in pairs(shopState.data) do
+            Config.ForensicShop[key] = value
+        end
+    end
+
+    applyForensicShop(Config.ForensicShop)
 end)
 
 CreateThread(function()

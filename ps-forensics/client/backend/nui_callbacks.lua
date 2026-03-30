@@ -89,6 +89,7 @@ local directCallbacks = {
     { nui = 'searchForensicGlobal', server = 'searchForensicGlobal', args = function(data) return { data } end },
     { nui = 'getMDTIntegrationBundle', server = 'getMDTIntegrationBundle', args = function(data) return { data } end },
     { nui = 'getForensicStats', server = 'getForensicStats', args = function(_) return {} end },
+    { nui = 'getForensicShopConfig', server = 'getForensicShopConfig', args = function(_) return {} end },
     { nui = 'addScenePhoto', server = 'addScenePhoto', args = function(data) return { data.sceneId, data.photo } end },
 }
 
@@ -242,3 +243,24 @@ RegisterNUICallback('performToxicology', withProgress(function()
         disable = { car = true, move = true, combat = true },
     }
 end, function(data) return serverCall('performToxicology', data.id) end))
+
+
+RegisterNUICallback('saveForensicShopPosition', function(data, cb)
+    local ok, result = pcall(function()
+        local ped = PlayerPedId()
+        local coords = GetEntityCoords(ped)
+        return serverCall('saveForensicShopPosition', {
+            mode = data and data.mode or 'move',
+            x = coords.x,
+            y = coords.y,
+            z = coords.z,
+        })
+    end)
+
+    if not ok then
+        print(('[%s] NUI callback "saveForensicShopPosition" falhou: %s'):format(resourceName, tostring(result)))
+        return respond(cb, { success = false, error = 'Falha ao salvar posição da loja.' })
+    end
+
+    respond(cb, result)
+end)
