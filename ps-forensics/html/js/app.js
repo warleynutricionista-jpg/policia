@@ -9,6 +9,7 @@ let playerName = '';
 let availableTabs = [];
 let cachedMDTCases = [];
 let cachedScenes = [];
+let activeSceneContext = null;
 const pendingRequests = new Map();
 const actionLocks = new Set();
 
@@ -224,6 +225,50 @@ function getNormalizedSceneId(fieldId) {
     return Number.isFinite(parsed) && parsed > 0 ? String(parsed) : null;
 }
 
+function getActiveSceneId() {
+    return activeSceneContext && activeSceneContext.id
+        ? String(activeSceneContext.id)
+        : null;
+}
+
+async function loadSceneEvidences(sceneId) {
+    const response = await fetchNUI('getEvidenceList', {
+        scene_id: sceneId,
+        category: '',
+        status: '',
+        search: '',
+        page: 1,
+        limit: 100,
+    });
+
+    if (!response?.success || !response?.data?.items) return [];
+    return response.data.items;
+}
+
+function renderSceneEvidenceRows(items) {
+    if (!items || items.length === 0) {
+        return `<div class="empty-state"><i class="fas fa-fingerprint"></i><p>Nenhuma prova coletada nesta cena até o momento.</p></div>`;
+    }
+
+    return items.map((ev) => `
+        <div class="card card-with-thumb priority-${h(ev.priority || 'media')}" onclick="viewEvidence(${ev.id})">
+            ${evidenceThumb(ev.type, ev.category)}
+            <div class="card-main">
+                <div class="card-header">
+                    <span class="card-title">${h(ev.evidence_number || 'EV-???')}</span>
+                    ${getStatusBadge(ev.status)}
+                </div>
+                <div class="card-body">
+                    <div class="card-row"><span class="card-label">Tipo</span><span class="card-value">${h(ev.type || 'N/D')}</span></div>
+                    <div class="card-row"><span class="card-label">Categoria</span><span class="card-value">${h(ev.category || 'N/D')}</span></div>
+                    <div class="card-row"><span class="card-label">Coletada por</span><span class="card-value">${h(ev.collected_by_name || 'N/D')}</span></div>
+                    <div class="card-row"><span class="card-label">Data</span><span class="card-value">${formatDate(ev.collection_time || ev.created_at)}</span></div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
 // ============================================================
 // NUI MESSAGE HANDLER
 // ============================================================
@@ -238,6 +283,7 @@ window.addEventListener('message', function(event) {
         availableTabs = Array.isArray(data.availableTabs) ? data.availableTabs : [];
         cachedMDTCases = [];
         cachedScenes = [];
+        activeSceneContext = null;
 
         const playerInfo = getEl('playerInfo');
         if (playerInfo) playerInfo.textContent = `${playerName} | ${data.playerJob || ''} | Grade ${data.playerGrade || 0}`;
@@ -283,6 +329,7 @@ window.addEventListener('message', function(event) {
 
     if (data.action === 'close') {
         safeClassList('forensics-app')?.add('hidden');
+        activeSceneContext = null;
     }
 });
 
@@ -567,6 +614,13 @@ async function viewScene(sceneId) {
     const scene = await fetchNUI('getScene', { id: sceneId });
     if (!scene) return;
 
+    activeSceneContext = {
+        id: scene.id,
+        sceneNumber: scene.scene_number || `Cena #${scene.id}`,
+    };
+
+    const sceneEvidences = await loadSceneEvidences(scene.id);
+
     const detail = document.getElementById('sceneDetail');
     detail.classList.remove('hidden');
 
@@ -579,6 +633,7 @@ async function viewScene(sceneId) {
                     <button class="btn-secondary" onclick="updateSceneStatus(${scene.id}, 'em_processamento')">Processar</button>
                     <button class="btn-success" onclick="updateSceneStatus(${scene.id}, 'finalizada')">Finalizar</button>
                 ` : ''}
+                <button class="btn-primary" onclick="showCreateReport()">Coletar nesta cena</button>
                 <button class="btn-secondary" onclick="document.getElementById('sceneDetail').classList.add('hidden')"><i class="fas fa-times"></i></button>
             </div>
         </div>
@@ -608,6 +663,12 @@ async function viewScene(sceneId) {
                 `).join('')}
             </div>
         ` : ''}
+        <div class="detail-section">
+            <h3><i class="fas fa-box-archive"></i> Provas Coletadas no Perímetro (${sceneEvidences.length})</h3>
+            <div class="cards-grid">
+                ${renderSceneEvidenceRows(sceneEvidences)}
+            </div>
+        </div>
     `;
 }
 
@@ -1776,7 +1837,7 @@ function showCreateAutopsy() {
     `, `<button class="btn-primary" onclick="doCreateAutopsy()"><i class="fas fa-plus"></i> Criar Necropsia</button>`);
     initCitizenAutofill('autopsyVictimCid', 'autopsyVictimName', 'autopsyVictimLookupHint');
     hydrateCaseSelect('autopsyCaseId', 'autopsyCaseHint');
-    hydrateSceneSelect('autopsySceneId', 'autopsySceneHint');
+    hydrateSceneSelect('autopsySceneId', 'autopsySceneHint', getActiveSceneId());
 }
 
 function showQuickBallisticRegister() {
@@ -1800,7 +1861,7 @@ function showQuickBallisticRegister() {
         <div class="form-group"><label>Observações</label><textarea id="quickBallisticNotes" rows="2" placeholder="Detalhes da coleta..."></textarea></div>
     `, `<button class="btn-primary" onclick="doQuickBallisticRegister()"><i class="fas fa-plus"></i> Registrar</button>`);
     initWeaponSerialAutofill('quickBallisticSerial', 'quickBallisticHint');
-    hydrateSceneSelect('quickBallisticSceneId', 'quickBallisticSceneHint');
+    hydrateSceneSelect('quickBallisticSceneId', 'quickBallisticSceneHint', getActiveSceneId());
 }
 
 async function doQuickBallisticRegister() {
@@ -2001,7 +2062,7 @@ function showCreateReport() {
     initCitizenAutofill('reportDnaCitizen', 'reportDnaName', 'reportDnaLookupHint');
     initWeaponSerialAutofill('reportBallisticSerial', 'reportBallisticSerialHint');
     hydrateCaseSelect('reportCaseId', 'reportCaseHint');
-    hydrateSceneSelect('reportSceneId', 'reportSceneHint');
+    hydrateSceneSelect('reportSceneId', 'reportSceneHint', getActiveSceneId());
 }
 
 function toggleReportSection(sectionId, visible) {
