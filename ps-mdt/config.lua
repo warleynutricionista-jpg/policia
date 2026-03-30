@@ -316,6 +316,12 @@ Config.ManagementPermissions = {
     'forensics_autopsy',
     'forensics_custody',
     'forensics_crossref',
+    -- Judiciary (tribunal RP)
+    'judiciary_view',
+    'judiciary_submit_case',
+    'judiciary_schedule_hearing',
+    'judiciary_record_verdict',
+    'judiciary_close_case',
 }
 
 Config.PoliceHierarchy = {
@@ -408,6 +414,7 @@ local policePermissionTiers = {
         'forensics_view',
         'forensics_collect',
         'forensics_lab_basic',
+        'judiciary_view',
     },
     [1] = {
         'bolos_create',
@@ -420,6 +427,7 @@ local policePermissionTiers = {
         'evidence_upload',
         'forensics_lab_advanced',
         'forensics_reports',
+        'judiciary_submit_case',
     },
     [3] = {
         'cases_create',
@@ -427,6 +435,7 @@ local policePermissionTiers = {
         'roster_manage_certifications',
         'forensics_crossref',
         'management_activity',
+        'judiciary_schedule_hearing',
     },
     [4] = {
         'cases_edit',
@@ -441,6 +450,8 @@ local policePermissionTiers = {
         'warrants_close',
         'management_bulletins',
         'management_activity',
+        'judiciary_record_verdict',
+        'judiciary_close_case',
     },
     [6] = {
         'reports_delete',

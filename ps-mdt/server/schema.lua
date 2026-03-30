@@ -357,6 +357,83 @@ function EnsureMdtSchema(force)
             schemaState.tableCache['mdt_permission_roles'] = true
         end
 
+        if not tableExists('mdt_judicial_cases') then
+            MySQL.query.await([[
+                CREATE TABLE IF NOT EXISTS `mdt_judicial_cases` (
+                    `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+                    `court_number` VARCHAR(32) NOT NULL,
+                    `case_id` INT(10) UNSIGNED NOT NULL,
+                    `status` ENUM('submitted','screening','hearing_scheduled','in_trial','awaiting_verdict','sentenced','archived','rejected') NOT NULL DEFAULT 'submitted',
+                    `priority` ENUM('low','medium','high','urgent') NOT NULL DEFAULT 'medium',
+                    `court_branch` VARCHAR(64) NOT NULL DEFAULT 'tribunal_criminal',
+                    `prosecutor_citizenid` VARCHAR(64) NOT NULL,
+                    `prosecutor_name` VARCHAR(100) NOT NULL,
+                    `judge_citizenid` VARCHAR(64) NULL,
+                    `judge_name` VARCHAR(100) NULL,
+                    `defendant_summary` TEXT NULL,
+                    `prosecutor_summary` TEXT NULL,
+                    `defense_summary` TEXT NULL,
+                    `verdict` ENUM('pending','guilty','not_guilty','dismissed','plea_deal') NOT NULL DEFAULT 'pending',
+                    `sentence_json` LONGTEXT NULL,
+                    `notes` LONGTEXT NULL,
+                    `filed_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    `closed_at` TIMESTAMP NULL DEFAULT NULL,
+                    PRIMARY KEY (`id`),
+                    UNIQUE KEY `uniq_mdt_judicial_cases_court_number` (`court_number`),
+                    UNIQUE KEY `uniq_mdt_judicial_cases_case_id` (`case_id`),
+                    KEY `idx_mdt_judicial_cases_status_priority` (`status`, `priority`),
+                    KEY `idx_mdt_judicial_cases_filed_at` (`filed_at`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            ]])
+            schemaState.tableCache['mdt_judicial_cases'] = true
+            invalidateTableColumns('mdt_judicial_cases')
+        end
+
+        if not tableExists('mdt_judicial_hearings') then
+            MySQL.query.await([[
+                CREATE TABLE IF NOT EXISTS `mdt_judicial_hearings` (
+                    `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+                    `judicial_case_id` INT(10) UNSIGNED NOT NULL,
+                    `hearing_type` ENUM('preliminary','custody','instruction','trial','sentencing','appeal') NOT NULL DEFAULT 'preliminary',
+                    `scheduled_for` DATETIME NOT NULL,
+                    `location` VARCHAR(100) NULL,
+                    `status` ENUM('scheduled','in_progress','completed','cancelled') NOT NULL DEFAULT 'scheduled',
+                    `presiding_judge` VARCHAR(100) NULL,
+                    `created_by` VARCHAR(64) NOT NULL,
+                    `created_by_name` VARCHAR(100) NOT NULL,
+                    `outcome_notes` LONGTEXT NULL,
+                    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    PRIMARY KEY (`id`),
+                    KEY `idx_mdt_judicial_hearings_case_date` (`judicial_case_id`, `scheduled_for`),
+                    KEY `idx_mdt_judicial_hearings_status` (`status`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            ]])
+            schemaState.tableCache['mdt_judicial_hearings'] = true
+            invalidateTableColumns('mdt_judicial_hearings')
+        end
+
+        if not tableExists('mdt_judicial_decisions') then
+            MySQL.query.await([[
+                CREATE TABLE IF NOT EXISTS `mdt_judicial_decisions` (
+                    `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+                    `judicial_case_id` INT(10) UNSIGNED NOT NULL,
+                    `decision_type` ENUM('screening','intermediate_order','verdict','sentence','archival') NOT NULL DEFAULT 'intermediate_order',
+                    `decision_text` LONGTEXT NOT NULL,
+                    `verdict` ENUM('pending','guilty','not_guilty','dismissed','plea_deal') NOT NULL DEFAULT 'pending',
+                    `sentence_json` LONGTEXT NULL,
+                    `decided_by` VARCHAR(64) NOT NULL,
+                    `decided_by_name` VARCHAR(100) NOT NULL,
+                    `decided_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (`id`),
+                    KEY `idx_mdt_judicial_decisions_case_date` (`judicial_case_id`, `decided_at`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            ]])
+            schemaState.tableCache['mdt_judicial_decisions'] = true
+            invalidateTableColumns('mdt_judicial_decisions')
+        end
+
         ensureColumn('player_vehicles', 'mdt_vehicle_information', { definition = '`mdt_vehicle_information` TEXT NULL', after = 'vehicle' })
         ensureColumn('player_vehicles', 'mdt_vehicle_points', { definition = '`mdt_vehicle_points` INT(11) NOT NULL DEFAULT 0', after = 'mdt_vehicle_information' })
         ensureColumn('player_vehicles', 'mdt_vehicle_status', { definition = "`mdt_vehicle_status` ENUM('valid','suspended','expired','impounded') NOT NULL DEFAULT 'valid'", after = 'mdt_vehicle_points' })
