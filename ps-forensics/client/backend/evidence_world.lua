@@ -137,6 +137,43 @@ local function canInspectSceneEvidence(coords)
     return inside == true
 end
 
+local function getCollectionActionForEvidenceType(evidenceType)
+    if evidenceType == 'sangue' then
+        return 'collect_biological'
+    elseif evidenceType == 'impressao_digital' then
+        return 'collect_fingerprint_sequence'
+    elseif evidenceType == 'capsula' or evidenceType == 'projetil' then
+        return 'collect_ballistic'
+    elseif evidenceType == 'residuo_polvora' then
+        return 'run_gsr_test'
+    elseif evidenceType == 'residuo_droga' or evidenceType == 'substancia_po' then
+        return 'run_drug_test'
+    end
+
+    return 'collect_evidence'
+end
+
+local function hasRequiredItemsForAction(actionName)
+    local actionCfg = ForensicItemActions and ForensicItemActions[actionName]
+    local required = actionCfg and actionCfg.required or nil
+    if type(required) ~= 'table' or #required == 0 then
+        return true
+    end
+
+    if GetResourceState('ox_inventory') ~= 'started' or not exports.ox_inventory then
+        return true
+    end
+
+    for _, itemName in ipairs(required) do
+        local count = exports.ox_inventory:Search('count', itemName) or 0
+        if count < 1 then
+            return false
+        end
+    end
+
+    return true
+end
+
 -- ============================================================
 -- HELPER: ARMA BLACKLISTADA
 -- Inspirado em lsn-evidence: WhitelistedWeapons
@@ -251,6 +288,10 @@ local function createEvidenceZone(evData)
         icon = 'fa-solid fa-shoe-prints'
         label = '[Vestígio] Pegada - Coletar com kit'
         radius = 1.35
+    elseif evData.type == 'impressao_digital' then
+        icon = 'fa-solid fa-fingerprint'
+        label = '[Vestígio] Digital - Coletar com kit'
+        radius = 1.2
     end
 
     local ok, zoneId = pcall(function()
@@ -267,7 +308,10 @@ local function createEvidenceZone(evData)
                         collectWorldEvidence(evData.id)
                     end,
                     canInteract = function()
-                        return canCollect() and canInspectSceneEvidence(evData.coords)
+                        local actionName = getCollectionActionForEvidenceType(evData.type)
+                        return canCollect()
+                            and canInspectSceneEvidence(evData.coords)
+                            and hasRequiredItemsForAction(actionName)
                     end,
                 },
             },
@@ -701,14 +745,25 @@ CreateThread(function()
                     if canDraw then
                         hasNearby = true
                         local markerType = visualCfg and visualCfg.fallbackMarker or 27
+                        local markerScale = (evData.type == 'capsula' and 0.24)
+                            or (evData.type == 'impressao_digital' and 0.24)
+                            or 0.18
                         DrawMarker(markerType, evData.coords.x, evData.coords.y, evData.coords.z + 0.02,
                             0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                            0.18, 0.18, 0.18, 255, 255, 255, 100, false, true, 2, nil, nil, false)
+                            markerScale, markerScale, markerScale, 255, 255, 255, 120, false, true, 2, nil, nil, false)
 
                         local dictLoaded = visualCfg and visualCfg.dict and ensureTextureDict(visualCfg.dict)
                         if dictLoaded then
+                            local spriteW = (evData.type == 'capsula' and 0.032)
+                                or (evData.type == 'impressao_digital' and 0.036)
+                                or (evData.type == 'pegada' and 0.034)
+                                or 0.025
+                            local spriteH = (evData.type == 'capsula' and 0.056)
+                                or (evData.type == 'impressao_digital' and 0.056)
+                                or (evData.type == 'pegada' and 0.058)
+                                or 0.045
                             SetDrawOrigin(evData.coords.x, evData.coords.y, evData.coords.z + 0.05, 0)
-                            DrawSprite(visualCfg.dict, visualCfg.texture or visualCfg.dict, 0.0, 0.0, 0.025, 0.045, 0.0, 255, 255, 255, 225)
+                            DrawSprite(visualCfg.dict, visualCfg.texture or visualCfg.dict, 0.0, 0.0, spriteW, spriteH, 0.0, 255, 255, 255, 235)
                             ClearDrawOrigin()
                         end
                     end
