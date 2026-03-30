@@ -71,9 +71,26 @@ export default function EvidenceSidebar(props: EvidenceSidebarProps) {
 
         return () => {
             window.removeEventListener("message", handleMessage);
-            window.removeEventListener("evidence:analysed", handleAnalysed);
+            window.removeEventListener("evidences:analysed", handleAnalysed);
         };
     }, []);
+
+    const evidencesByScene = (inventories || []).reduce((acc, inventory) => {
+        inventory.items.forEach((item) => {
+            const sceneName = (item.details?.crimeScene || "").trim() || t("laptop.desktop_screen.common.crime_scene_placeholder");
+
+            if (!acc[sceneName]) {
+                acc[sceneName] = [];
+            }
+
+            acc[sceneName].push({
+                ...item,
+                inventory: inventory.inventory
+            });
+        });
+
+        return acc;
+    }, {} as Record<string, Array<InventoriesType<{ identifier: string, analysed: boolean }>[number]["items"][number] & { inventory: number | string }>>);
 
     return <Sidebar className="w-70 h-full shrink-0">
         {(!inventories || (inventories.length == 0 && !loading))
@@ -84,19 +101,20 @@ export default function EvidenceSidebar(props: EvidenceSidebarProps) {
                 ? <div className="w-full h-full flex justify-center items-center">
                     <p className="text-20 leading-none text-center">{t("laptop.desktop_screen.common.statuses.loading")}</p>
                 </div>
-                : inventories && inventories.map((inventory) => (
-                    <SidebarSection title={inventory.label}>
-                        {inventory.items.map((item) => {
+                : Object.entries(evidencesByScene).map(([sceneName, items]) => (
+                    <SidebarSection key={sceneName} title={sceneName}>
+                        {items.map((item) => {
                             const active = props.evidence
-                                && inventory.inventory == props.evidence.inventory
+                                && item.inventory == props.evidence.inventory
                                 && item.slot == props.evidence.slot
                                 && item.additionalData.identifier == props.evidence.identifier
 
                             return <SidebarItem
+                                key={`${item.inventory}-${item.slot}-${item.additionalData.identifier}`}
                                 active={!!active}
                                 imagePath={item.imagePath}
                                 description={item.additionalData.analysed ? t("laptop.desktop_screen.common.statuses.analysed") : undefined}
-                                onClick={() => props.onEvidenceSelection(item.label, item.imagePath, inventory.inventory, item.slot, item.additionalData.identifier, item.additionalData.analysed, item.details)}
+                                onClick={() => props.onEvidenceSelection(item.label, item.imagePath, item.inventory, item.slot, item.additionalData.identifier, item.additionalData.analysed, item.details)}
                             >
                                 {item.label}
                             </SidebarItem>
