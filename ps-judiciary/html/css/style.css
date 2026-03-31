@@ -1,0 +1,26 @@
+* { box-sizing: border-box; font-family: Arial, sans-serif; }
+body { margin: 0; background: transparent; }
+#app { width: 85vw; height: 85vh; margin: 7vh auto; background: #0f172a; color: #e2e8f0; border-radius: 14px; border: 1px solid #334155; display: flex; flex-direction: column; }
+.hidden { display: none !important; }
+header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid #334155; }
+h1 { margin: 0; font-size: 20px; }
+#roleBadge { margin: 4px 0 0; color: #93c5fd; }
+.header-actions { display: flex; gap: 8px; }
+button { background: #1e293b; color: #e2e8f0; border: 1px solid #475569; border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+button:hover { background: #334155; }
+button.danger { border-color: #ef4444; color: #fecaca; }
+main { display: grid; grid-template-columns: 180px 1fr; height: 100%; min-height: 0; }
+aside { border-right: 1px solid #334155; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.tab.active { background: #1d4ed8; border-color: #2563eb; }
+.content { padding: 16px; overflow: auto; }
+.panel { display: none; }
+.panel.active { display: block; }
+.muted { color: #94a3b8; font-size: 13px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; margin-top: 12px; }
+.card { background: #111827; border: 1px solid #334155; border-radius: 10px; padding: 12px; }
+.card h3 { margin: 0 0 8px; font-size: 16px; }
+.row { display: flex; gap: 8px; align-items: center; margin: 10px 0; }
+input, textarea, select { width: 100%; padding: 8px; background: #0b1220; color: #e2e8f0; border: 1px solid #334155; border-radius: 8px; }
+.detail { margin-top: 12px; background: #111827; border: 1px solid #334155; border-radius: 10px; padding: 12px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+pre { white-space: pre-wrap; background: #0b1220; border: 1px solid #334155; border-radius: 8px; padding: 8px; }
