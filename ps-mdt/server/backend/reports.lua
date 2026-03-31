@@ -430,6 +430,215 @@ local function collectCitizenIds(reportData)
     return citizenids
 end
 
+local function ensureCaseForReport(reportId, src, title, summary)
+    if not reportId then
+        return nil, nil
+    end
+
+    local existing = MySQL.single.await([[
+        SELECT mc.id, mc.case_number
+        FROM mdt_case_reports mcr
+        INNER JOIN mdt_cases mc ON mc.id = mcr.case_id
+        WHERE mcr.report_id = ?
+        LIMIT 1
+    ]], { reportId })
+
+    if existing and existing.id then
+        return tonumber(existing.id), existing.case_number
+    end
+
+    local citizenid = ps.getIdentifier(src) or 'system'
+    local createdByName = ps.getPlayerName(src) or 'Sistema MDT'
+    local caseTitle = normalizeSearchTerm(title)
+    if caseTitle == '' then
+        caseTitle = ('Caso automático do relatório #%s'):format(tostring(reportId))
+    end
+
+    local caseSummary = normalizeSearchTerm(summary)
+    if caseSummary == '' then
+        caseSummary = ('Caso criado automaticamente ao iniciar o relatório #%s.'):format(tostring(reportId))
+    end
+
+    local caseId = MySQL.insert.await([[
+        INSERT INTO mdt_cases
+        (case_number, title, summary, status, priority, assigned_department, created_by, created_by_name)
+        VALUES ('', ?, ?, 'open', 'medium', ?, ?, ?)
+    ]], {
+        caseTitle,
+        caseSummary,
+        ps.getJobName(src) or ((Config and Config.PoliceJobs and Config.PoliceJobs[1]) or 'police'),
+        citizenid,
+        createdByName
+    })
+
+    if not caseId then
+        return nil, nil
+    end
+
+    local caseNumber = ('CASE-%s-%05d'):format(os.date('%Y'), caseId)
+    MySQL.update.await('UPDATE mdt_cases SET case_number = ? WHERE id = ?', { caseNumber, caseId })
+    MySQL.insert.await([[
+        INSERT IGNORE INTO mdt_case_reports (case_id, report_id, linked_by)
+        VALUES (?, ?, ?)
+    ]], { caseId, reportId, citizenid })
+
+    if ps.auditLog then
+        ps.auditLog(src, 'case_created', 'case', caseId, {
+            caseNumber = caseNumber,
+            source = 'report_auto_bootstrap',
+            reportId = reportId,
+        })
+    end
+
+    return caseId, caseNumber
+end
+
+local function buildAutoEvidenceNotes(reportData)
+    local suspectNames = {}
+    local vehiclePlates = {}
+
+    if type(reportData) == 'table' then
+        for _, involved in ipairs(reportData.involved or {}) do
+            local involvedType = normalizeSearchTerm(involved and involved.type):lower()
+            if involvedType == 'suspect' then
+                local name = normalizeSearchTerm((involved and involved.name) or (involved and involved.citizenid))
+                if name ~= '' then
+                    suspectNames[#suspectNames + 1] = name
+                end
+            end
+        end
+
+        for _, vehicle in ipairs(reportData.vehicles or {}) do
+            local plate = normalizeSearchTerm(vehicle and vehicle.plate)
+            if plate ~= '' then
+                vehiclePlates[#vehiclePlates + 1] = plate
+            end
+        end
+    end
+
+    local lines = {
+        'Evidência criada automaticamente no início do relatório.',
+    }
+
+    if #suspectNames > 0 then
+        lines[#lines + 1] = ('Suspeitos vinculados: %s'):format(table.concat(suspectNames, ', '))
+    end
+
+    if #vehiclePlates > 0 then
+        lines[#lines + 1] = ('Veículos vinculados: %s'):format(table.concat(vehiclePlates, ', '))
+    end
+
+    return table.concat(lines, '\n')
+end
+
+local function ensureAutoEvidenceForReport(reportId, caseId, reportData, src, title)
+    if not reportId then
+        return nil
+    end
+
+    local marker = ('AUTO-RPT-%s'):format(tostring(reportId))
+    local evidenceTitle = normalizeSearchTerm(title)
+    if evidenceTitle == '' then
+        evidenceTitle = ('Evidência automática do relatório #%s'):format(tostring(reportId))
+    else
+        evidenceTitle = ('%s [Auto]'):format(evidenceTitle)
+    end
+
+    local notes = buildAutoEvidenceNotes(reportData)
+    local existing = MySQL.single.await([[
+        SELECT id
+        FROM mdt_evidence_items
+        WHERE report_id = ?
+          AND stash_id = ?
+        LIMIT 1
+    ]], { reportId, marker })
+
+    if existing and existing.id then
+        MySQL.update.await([[
+            UPDATE mdt_evidence_items
+            SET case_id = ?, title = ?, notes = ?, type = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ]], { caseId, evidenceTitle, notes, 'Digital', existing.id })
+        return tonumber(existing.id)
+    end
+
+    local evidenceId = MySQL.insert.await([[
+        INSERT INTO mdt_evidence_items
+        (case_id, report_id, title, type, serial, notes, location, stash_id, stored, last_holder, created_by)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ]], {
+        caseId,
+        reportId,
+        evidenceTitle,
+        'Digital',
+        ('RPT-%s'):format(tostring(reportId)),
+        notes,
+        'Auto-gerado pelo MDT',
+        marker,
+        1,
+        ps.getIdentifier(src),
+        ps.getIdentifier(src),
+    })
+
+    return evidenceId and tonumber(evidenceId) or nil
+end
+
+local function ensureAutoBolo(typeValue, subjectId, subjectName, reportId, notes)
+    if not typeValue or not subjectId then
+        return
+    end
+
+    local existing = MySQL.single.await([[
+        SELECT id
+        FROM mdt_bolos
+        WHERE type = ? AND subject_id = ? AND reportId = ? AND status = 'active'
+        LIMIT 1
+    ]], { typeValue, subjectId, reportId })
+
+    if existing and existing.id then
+        return
+    end
+
+    MySQL.insert.await([[
+        INSERT INTO mdt_bolos (type, subject_id, subject_name, reportId, notes, status)
+        VALUES (?, ?, ?, ?, ?, 'active')
+    ]], {
+        typeValue,
+        subjectId,
+        subjectName,
+        reportId,
+        notes
+    })
+end
+
+local function ensureAutoWantedFromReport(reportId, reportData, reportTitle)
+    if not reportId or type(reportData) ~= 'table' then
+        return
+    end
+
+    local note = ('Procurado automaticamente a partir do relatório #%s - %s'):format(
+        tostring(reportId),
+        normalizeSearchTerm(reportTitle) ~= '' and normalizeSearchTerm(reportTitle) or 'Sem título'
+    )
+
+    for _, involved in ipairs(reportData.involved or {}) do
+        local involvedType = normalizeSearchTerm(involved and involved.type):lower()
+        local citizenId = normalizeSearchTerm(involved and involved.citizenid)
+        if involvedType == 'suspect' and citizenId ~= '' then
+            local name = normalizeSearchTerm((involved and involved.name) or citizenId)
+            ensureAutoBolo('citizen', citizenId, name, reportId, note)
+        end
+    end
+
+    for _, vehicle in ipairs(reportData.vehicles or {}) do
+        local plate = normalizeSearchTerm(vehicle and vehicle.plate)
+        if plate ~= '' then
+            local vehicleName = normalizeSearchTerm((vehicle and vehicle.vehicle_label) or plate)
+            ensureAutoBolo('vehicle', plate, vehicleName, reportId, note)
+        end
+    end
+end
+
 local function checkReportAccess(src, reportId)
     if not src or not reportId then
         return false
@@ -1223,6 +1432,15 @@ ps.registerCallback(resourceName..':server:saveReport', function(source, reportD
         MySQL.transaction.await(warrantQueries)
     end
 
+    local autoCaseId, autoCaseNumber = ensureCaseForReport(
+        reportId,
+        src,
+        title,
+        reportData and reportData.report and reportData.report.content or nil
+    )
+    local autoEvidenceId = ensureAutoEvidenceForReport(reportId, autoCaseId, reportData, src, title)
+    ensureAutoWantedFromReport(reportId, reportData, title)
+
     Cache.invalidatePrefix('reports:analytics:')
 
     if ps.auditLog then
@@ -1238,6 +1456,9 @@ ps.registerCallback(resourceName..':server:saveReport', function(source, reportD
     return {
         success = true,
         reportId = reportId,
+        caseId = autoCaseId,
+        caseNumber = autoCaseNumber,
+        evidenceId = autoEvidenceId,
         message = reportId and "Report updated successfully" or "Report created successfully"
     }
 end)
@@ -1315,9 +1536,16 @@ ps.registerCallback(resourceName..':server:updateReportContent', function(source
             insertResult
         })
 
+        local autoCaseId, autoCaseNumber = ensureCaseForReport(insertResult, src, title, nil)
+        local autoEvidenceId = ensureAutoEvidenceForReport(insertResult, autoCaseId, reportData, src, title)
+        ensureAutoWantedFromReport(insertResult, reportData, title)
+
         return {
             success = true,
             reportId = insertResult,
+            caseId = autoCaseId,
+            caseNumber = autoCaseNumber,
+            evidenceId = autoEvidenceId,
             message = "Conteúdo salvo com sucesso",
             isNewReport = true
         }
