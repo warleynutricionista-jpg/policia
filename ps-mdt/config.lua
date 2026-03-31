@@ -8,6 +8,7 @@ Config.Debug = false -- Enable/disable debug mode (boolean)
 Config.OnlyShowOnDuty = true -- Only allow the MDT to be opened when on duty (boolean)
 Config.RequireVehicle = false -- Only allow MDT to be opened inside a vehicle (realistic laptop usage)
 Config.RequireOnFoot = false -- Only allow MDT to be opened on foot (tablet mode)
+Config.TabletOnlyAccess = true -- When true, MDT can only be opened through an inventory tablet item
 
 -- Time and Date Settings
 Config.DateTime = {
@@ -63,7 +64,7 @@ Config.Sharing = {
 Config.Keys = {
     -- https://docs.fivem.net/docs/game-references/controls/ | Default QWERTY
     OpenMDT = {
-        enabled = true, -- Enable/disable keybind (boolean)
+        enabled = false, -- Enable/disable keybind (boolean)
         key = 'F11', -- Key to open MDT (string)
     },
 }
@@ -71,7 +72,7 @@ Config.Keys = {
 -- Commands
 Config.Commands = {
     Open = {
-        enabled = true, -- Enable/disable command (boolean)
+        enabled = false, -- Enable/disable command (boolean)
         command = 'mdt', -- Command to open MDT (string)
     },
     MessageOfTheDay = {
@@ -316,6 +317,12 @@ Config.ManagementPermissions = {
     'forensics_autopsy',
     'forensics_custody',
     'forensics_crossref',
+    -- Judiciary (tribunal RP)
+    'judiciary_view',
+    'judiciary_submit_case',
+    'judiciary_schedule_hearing',
+    'judiciary_record_verdict',
+    'judiciary_close_case',
 }
 
 Config.PoliceHierarchy = {
@@ -408,6 +415,7 @@ local policePermissionTiers = {
         'forensics_view',
         'forensics_collect',
         'forensics_lab_basic',
+        'judiciary_view',
     },
     [1] = {
         'bolos_create',
@@ -420,6 +428,7 @@ local policePermissionTiers = {
         'evidence_upload',
         'forensics_lab_advanced',
         'forensics_reports',
+        'judiciary_submit_case',
     },
     [3] = {
         'cases_create',
@@ -427,6 +436,7 @@ local policePermissionTiers = {
         'roster_manage_certifications',
         'forensics_crossref',
         'management_activity',
+        'judiciary_schedule_hearing',
     },
     [4] = {
         'cases_edit',
@@ -441,6 +451,8 @@ local policePermissionTiers = {
         'warrants_close',
         'management_bulletins',
         'management_activity',
+        'judiciary_record_verdict',
+        'judiciary_close_case',
     },
     [6] = {
         'reports_delete',
