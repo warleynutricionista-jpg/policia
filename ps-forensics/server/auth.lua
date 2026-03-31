@@ -109,6 +109,12 @@ function CheckForensicAuth(src)
     return true
 end
 
+-- Callback de autenticação para uso de itens (tablet forense)
+-- Necessário para fluxos do ox_inventory/client export useForensicTablet.
+lib.callback.register(resourceName .. ':server:checkAuth', function(source)
+    return CheckForensicAuth(source) == true
+end)
+
 -- Verificar permissão específica forense
 function CheckForensicPermission(src, permission)
     local data = GetPlayerData(src)
