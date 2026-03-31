@@ -474,6 +474,12 @@ local function handleForensicItemUse(data, slot)
 
     -- ── 3. Fluxo especial: tablet ─────────────────────────────
     if itemName == 'forensic_tablet' then
+        local hasAccess = lib.callback.await(resourceName .. ':server:checkAuth', false)
+        if not hasAccess then
+            notifyError('Você não tem acesso ao tablet forense.', 'Acesso negado')
+            return
+        end
+
         ForensicState.clearEquippedTool()
         if ForensicAnims.playItemAnimation(itemName, resolveItemProp(itemName), ItemDuration[itemName]) then
             OpenForensicsUI('dashboard')

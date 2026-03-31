@@ -339,6 +339,14 @@ Config.WorldEvidence = {
     -- Protege contra injeção client-side de evidências em pontos remotos.
     MaxSpawnDistanceFromPlayer = 20.0,
 
+    -- Distância máxima por tipo (override opcional).
+    -- Útil para balística, pois o impacto do projétil pode ocorrer longe do ped
+    -- devido ao raycast do cliente.
+    MaxSpawnDistanceByType = {
+        buraco_de_bala = 220.0,
+        fragmento_veiculo = 220.0,
+    },
+
     -- Limite mínimo (ms) entre solicitações de spawn por jogador no servidor.
     ServerSpawnRateLimitMs = 250,
 
