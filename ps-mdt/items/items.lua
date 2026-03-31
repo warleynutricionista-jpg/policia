@@ -1,12 +1,15 @@
 return {
     ['mdttablet'] = {
-        label = 'Tablet MDT',
+        label = 'Tablet Policial',
         description = 'Tablet oficial para acessar o painel MDT.',
         weight = 650,
         stack = false,
         consume = 0,
         close = true,
-        client = { export = 'ps-mdt.OpenMDT' },
+        client = {
+            image = 'police_tablet.png',
+            export = 'ps-mdt.OpenMDT'
+        },
     },
     ['mdtcitation'] = {
         label = 'Bloco de Citação MDT',
