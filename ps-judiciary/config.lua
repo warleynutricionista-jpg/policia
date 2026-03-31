@@ -76,6 +76,22 @@ Config.RoleByJob = {
     advogado = 'lawyer',
 }
 
+Config.RoleByJobGrade = {
+    juridico = {
+        byLevel = {
+            [0] = 'lawyer',
+            [1] = 'prosecutor',
+            [2] = 'judge',
+        },
+        byName = {
+            advogado = 'lawyer',
+            promotor = 'prosecutor',
+            juiz = 'judge',
+        },
+        fallback = 'lawyer',
+    },
+}
+
 Config.Statuses = {
     'aguardando_aceite',
     'rejeitado_entrada',

@@ -33,6 +33,11 @@ Também existe fallback por job em `config.lua` (`Config.RoleByJob`).
 ## Grupo e cargos (para criar no servidor)
 - **Grupo sugerido:** `juridico` (`Config.JudiciaryGroupName`)
 - **Cargos sugeridos:** `juiz`, `promotor`, `advogado` (`Config.JudiciaryRoles`)
+- Configuração pronta para o cenário do seu print:
+  - `job = juridico`
+  - `grade 0 = advogado`
+  - `grade 1 = promotor`
+  - `grade 2 = juiz`
 - Mapeamento padrão de job para role:
   - job `juiz` -> role `judge`
   - job `promotor` -> role `prosecutor`

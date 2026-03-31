@@ -1,4 +1,5 @@
 local RESOURCE = GetCurrentResourceName()
+local CORE = nil
 
 local function debugLog(...)
     if Config.Debug then
@@ -13,32 +14,52 @@ local function trim(v)
     return s
 end
 
-local function getJobName(src)
-    if GetResourceState('qbx_core') == 'started' then
-        local ok, player = pcall(exports.qbx_core.GetPlayer, exports.qbx_core, src)
-        if ok and player and player.PlayerData and player.PlayerData.job then
-            return player.PlayerData.job.name
-        end
+local function ensureCore()
+    if CORE then return CORE end
+
+    local okQbx, qbx = pcall(function() return exports['qbx_core']:GetCoreObject() end)
+    if okQbx and qbx then
+        CORE = qbx
+        return CORE
     end
 
-    if GetResourceState('qb-core') == 'started' then
-        local ok, core = pcall(function() return exports['qb-core']:GetCoreObject() end)
-        if ok and core then
-            local player = core.Functions.GetPlayer(src)
-            if player and player.PlayerData and player.PlayerData.job then
-                return player.PlayerData.job.name
+    local okQb, qb = pcall(function() return exports['qb-core']:GetCoreObject() end)
+    if okQb and qb then
+        CORE = qb
+        return CORE
+    end
+
+    return nil
+end
+
+local function getJobContext(src)
+    local jobName, gradeName, gradeLevel
+
+    local core = ensureCore()
+    if core and core.Functions and core.Functions.GetPlayer then
+        local player = core.Functions.GetPlayer(src)
+        if player and player.PlayerData and player.PlayerData.job then
+            local job = player.PlayerData.job
+            jobName = job.name
+            if type(job.grade) == 'table' then
+                gradeName = job.grade.name or job.grade.label
+                gradeLevel = tonumber(job.grade.level or job.grade.grade or job.grade.value)
+            else
+                gradeLevel = tonumber(job.grade)
             end
         end
     end
 
-    if GetResourceState('es_extended') == 'started' then
+    if (not jobName) and GetResourceState('es_extended') == 'started' then
         local ok, xPlayer = pcall(function() return exports.es_extended:getPlayerFromId(src) end)
         if ok and xPlayer and xPlayer.job then
-            return xPlayer.job.name
+            jobName = xPlayer.job.name
+            gradeName = xPlayer.job.grade_name
+            gradeLevel = tonumber(xPlayer.job.grade)
         end
     end
 
-    return nil
+    return jobName, gradeName, gradeLevel
 end
 
 local function getPlayerSourceByCitizenId(citizenid)
@@ -91,7 +112,28 @@ local function resolveRole(src)
         end
     end
 
-    local jobName = trim(getJobName(src))
+    local jobName, gradeName, gradeLevel = getJobContext(src)
+    jobName = trim(jobName)
+    gradeName = trim(gradeName)
+
+    if jobName and Config.RoleByJobGrade and Config.RoleByJobGrade[jobName] then
+        local route = Config.RoleByJobGrade[jobName]
+        local roleName = nil
+
+        if gradeLevel ~= nil and route.byLevel then
+            roleName = route.byLevel[tonumber(gradeLevel)]
+        end
+
+        if not roleName and gradeName and route.byName then
+            roleName = route.byName[tostring(gradeName):lower()]
+        end
+
+        roleName = roleName or route.fallback
+        if roleName and Config.Roles[roleName] then
+            return roleName, Config.Roles[roleName]
+        end
+    end
+
     if jobName and Config.RoleByJob[jobName] then
         local roleName = Config.RoleByJob[jobName]
         return roleName, Config.Roles[roleName]
