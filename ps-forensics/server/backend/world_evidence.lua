@@ -40,7 +40,28 @@ local function sanitizeWorldCoords(coords)
     return { x = x, y = y, z = z }
 end
 
-local function isSpawnPlausibleForSource(src, coords)
+local function getMaxSpawnDistanceForType(evidenceType)
+    local worldCfg = Config.WorldEvidence or {}
+    local defaultMax = tonumber(worldCfg.MaxSpawnDistanceFromPlayer) or 20.0
+    local byType = worldCfg.MaxSpawnDistanceByType
+
+    if type(byType) == 'table' then
+        local specific = tonumber(byType[evidenceType or ''])
+        if specific and specific > 0 then
+            return specific
+        end
+    end
+
+    -- Fallback seguro para evidências balísticas de longo alcance.
+    -- Buraco/fragmento podem ocorrer distante do ped devido ao raycast.
+    if evidenceType == 'buraco_de_bala' or evidenceType == 'fragmento_veiculo' then
+        return math.max(defaultMax, 180.0)
+    end
+
+    return defaultMax
+end
+
+local function isSpawnPlausibleForSource(src, evidenceType, coords)
     if not coords then return false end
 
     local ped = GetPlayerPed(src)
@@ -54,7 +75,7 @@ local function isSpawnPlausibleForSource(src, coords)
     local dz = pedCoords.z - coords.z
 
     local dist = math.sqrt(dx * dx + dy * dy + dz * dz)
-    local maxDistance = (Config.WorldEvidence and Config.WorldEvidence.MaxSpawnDistanceFromPlayer) or 20.0
+    local maxDistance = getMaxSpawnDistanceForType(evidenceType)
 
     return dist <= maxDistance
 end
@@ -305,7 +326,7 @@ RegisterNetEvent(resourceName .. ':world:spawnEvidence', function(data)
         return
     end
 
-    if not isSpawnPlausibleForSource(src, data.coords) then
+    if not isSpawnPlausibleForSource(src, data.type, data.coords) then
         print(('[%s] WorldEvidence: spawn rejeitado por distância inválida (src=%s, type=%s)'):format(resourceName, tostring(src), tostring(data.type)))
         return
     end
