@@ -20,6 +20,8 @@ let state = {
   processes: [],
   onlineMembers: [],
 };
+let processViewTab = 'ongoing';
+let processSearchTerm = '';
 
 const toastEl = document.getElementById('toast');
 
@@ -79,6 +81,9 @@ function showModal(config) {
       } else if (field.type === 'select') {
         input = document.createElement('select');
         input.innerHTML = field.options || '';
+      } else if (field.type === 'citizen-search') {
+        input = document.createElement('input');
+        input.type = 'text';
       } else {
         input = document.createElement('input');
         input.type = field.type || 'text';
@@ -89,6 +94,51 @@ function showModal(config) {
       if (field.placeholder) input.placeholder = field.placeholder;
       if (field.min !== undefined) input.min = field.min;
       wrapper.appendChild(input);
+
+      if (field.type === 'citizen-search') {
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.id = `modal_${field.id}_selected`;
+        wrapper.appendChild(hidden);
+
+        const results = document.createElement('div');
+        results.className = 'field-results hidden';
+        results.id = `modal_${field.id}_results`;
+        wrapper.appendChild(results);
+
+        let timer = null;
+        input.addEventListener('input', () => {
+          clearTimeout(timer);
+          const q = input.value || '';
+          hidden.value = '';
+          if (q.length < 2) {
+            results.innerHTML = '';
+            results.classList.add('hidden');
+            return;
+          }
+          timer = setTimeout(async () => {
+            const resp = await postNui('searchCitizens', { query: q });
+            const list = resp && resp.success ? (resp.data || []) : [];
+            results.innerHTML = '';
+            if (!list.length) {
+              results.classList.add('hidden');
+              return;
+            }
+            list.forEach((cit) => {
+              const btn = document.createElement('button');
+              btn.type = 'button';
+              btn.textContent = `${cit.fullname || cit.citizenid} (${cit.citizenid})`;
+              btn.addEventListener('click', () => {
+                input.value = cit.fullname || cit.citizenid;
+                hidden.value = cit.citizenid;
+                results.classList.add('hidden');
+              });
+              results.appendChild(btn);
+            });
+            results.classList.remove('hidden');
+          }, 250);
+        });
+      }
       modalFields.appendChild(wrapper);
     });
 
@@ -98,7 +148,12 @@ function showModal(config) {
       const values = {};
       (config.fields || []).forEach((field) => {
         const el = document.getElementById(`modal_${field.id}`);
-        values[field.id] = el ? el.value : null;
+        const selected = document.getElementById(`modal_${field.id}_selected`);
+        if (field.type === 'citizen-search') {
+          values[field.id] = selected && selected.value ? selected.value : (el ? el.value : null);
+        } else {
+          values[field.id] = el ? el.value : null;
+        }
       });
       cleanup();
       resolve({ confirmed: true, values });
@@ -173,12 +228,27 @@ function renderCandidates() {
 
 function renderProcesses() {
   processListEl.innerHTML = '';
-  if (!state.processes.length) {
+  const filtered = (state.processes || []).filter((p) => {
+    const concluded = p.status === 'sentenciado' || p.status === 'arquivado' || p.status === 'rejeitado_entrada';
+    if (processViewTab === 'ongoing' && concluded) return false;
+    if (processViewTab === 'done' && !concluded) return false;
+
+    if (!processSearchTerm) return true;
+    const t = processSearchTerm.toLowerCase();
+    return (
+      String(p.process_number || '').toLowerCase().includes(t) ||
+      String(p.defendant_name || p.citizenid || '').toLowerCase().includes(t) ||
+      String(p.claim_type || '').toLowerCase().includes(t) ||
+      String(p.case_area || '').toLowerCase().includes(t)
+    );
+  });
+
+  if (!filtered.length) {
     processListEl.innerHTML = '<p class="muted">Nenhum processo cadastrado.</p>';
     return;
   }
 
-  state.processes.forEach((p) => {
+  filtered.forEach((p) => {
     const card = document.createElement('div');
     card.className = 'card';
     card.innerHTML = `
@@ -415,9 +485,9 @@ document.getElementById('btnNewProcess').addEventListener('click', async () => {
     fields: [
       { id: 'caseArea', label: 'Vara', type: 'select', options: '<option value="geral">Processo Geral</option><option value="familia">Família</option><option value="trabalhista">Trabalhista</option><option value="criminal">Criminal</option>' },
       { id: 'claimType', label: 'Tipo da causa', type: 'text', value: 'Causa geral' },
-      { id: 'plaintiffCitizenid', label: 'CitizenID do autor (opcional)', type: 'text' },
-      { id: 'plaintiffName', label: 'Nome do autor (opcional)', type: 'text' },
-      { id: 'citizenid', label: 'CitizenID do réu/acusado', type: 'text' },
+      { id: 'plaintiffCitizenid', label: 'Autor (pesquisar player/cidadão)', type: 'citizen-search', placeholder: 'Digite nome ou citizenid...' },
+      { id: 'plaintiffName', label: 'Nome do autor (preenchimento manual opcional)', type: 'text' },
+      { id: 'citizenid', label: 'Acusado/Réu (pesquisar player/cidadão)', type: 'citizen-search', placeholder: 'Digite nome ou citizenid...' },
       { id: 'summary', label: 'Resumo do caso', type: 'textarea' },
     ],
   });
@@ -449,4 +519,23 @@ document.addEventListener('keyup', (ev) => {
       postNui('close');
     }
   }
+});
+
+document.getElementById('procTabOngoing')?.addEventListener('click', () => {
+  processViewTab = 'ongoing';
+  document.getElementById('procTabOngoing').classList.add('active');
+  document.getElementById('procTabDone').classList.remove('active');
+  renderProcesses();
+});
+
+document.getElementById('procTabDone')?.addEventListener('click', () => {
+  processViewTab = 'done';
+  document.getElementById('procTabDone').classList.add('active');
+  document.getElementById('procTabOngoing').classList.remove('active');
+  renderProcesses();
+});
+
+document.getElementById('processSearch')?.addEventListener('input', (e) => {
+  processSearchTerm = (e.target.value || '').trim();
+  renderProcesses();
 });

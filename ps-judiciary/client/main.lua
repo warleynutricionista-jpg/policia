@@ -105,3 +105,8 @@ RegisterNUICallback('assignProcessParties', function(data, cb)
     local result = lib.callback.await('ps-judiciary:server:assignProcessParties', false, data)
     cb(result or { success = false, error = 'assign_parties_failed' })
 end)
+
+RegisterNUICallback('searchCitizens', function(data, cb)
+    local result = lib.callback.await('ps-judiciary:server:searchCitizens', false, data and data.query)
+    cb(result or { success = false, data = {} })
+end)

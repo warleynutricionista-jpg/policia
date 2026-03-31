@@ -16,6 +16,11 @@ Painel jurídico separado para RP de tribunal, integrado com `ps-mdt` e `ps-fore
 - Ordem de **prisão direta pelo juiz** com delay de **5 minutos** (tempo para conduzir o réu até cela/sala antes da execução automática).
 - Painel sem `prompt` externo do sistema: todas as ações são feitas dentro da NUI no jogo.
 - O painel já puxa os membros online do grupo jurídico para o juiz atribuir partes rapidamente.
+- Guia **Processos** com duas abas internas:
+  - Em andamento
+  - Concluídos / Sentenciados
+- Barra de busca na guia de processos (nº do processo, nome do acusado e tipo/vara do processo).
+- Formulário de nova causa com busca de cidadão/player para Autor e Acusado (vínculo direto por citizenid).
 - Regra de atribuição:
   - se a causa foi aberta por advogado, o juiz atribui somente o promotor;
   - se não houve advogado na causa, o juiz pode atribuir promotor e advogado.

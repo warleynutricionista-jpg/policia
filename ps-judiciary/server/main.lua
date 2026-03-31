@@ -475,6 +475,27 @@ lib.callback.register('ps-judiciary:server:getProcess', function(source, process
     return { success = true, process = process }
 end)
 
+lib.callback.register('ps-judiciary:server:searchCitizens', function(source, query)
+    local access, err = ensureAccess(source, 'view')
+    if not access then return { success = false, error = err, data = {} } end
+
+    local term = trim(query)
+    if not term or #term < 2 then
+        return { success = true, data = {} }
+    end
+
+    local like = ('%%%s%%'):format(term)
+    local rows = MySQL.query.await([[
+        SELECT citizenid, fullname
+        FROM mdt_profiles
+        WHERE citizenid LIKE ? OR fullname LIKE ?
+        ORDER BY fullname ASC
+        LIMIT 15
+    ]], { like, like }) or {}
+
+    return { success = true, data = rows }
+end)
+
 lib.callback.register('ps-judiciary:server:updateSettings', function(source, payload)
     local access, err = ensureAccess(source, 'settings')
     if not access then return { success = false, error = err } end

@@ -13,6 +13,7 @@ button.danger { border-color: #ef4444; color: #fecaca; }
 main { display: grid; grid-template-columns: 220px 1fr; height: 100%; min-height: 0; }
 aside { border-right: 1px solid #223247; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
 .tab.active { background: #1d4ed8; border-color: #2563eb; }
+.mini-tab.active { background: #1d4ed8; border-color: #2563eb; }
 .content { padding: 16px; overflow: auto; }
 .panel { display: none; }
 .panel.active { display: block; }
@@ -22,6 +23,9 @@ aside { border-right: 1px solid #223247; padding: 12px; display: flex; flex-dire
 .card h3 { margin: 0 0 8px; font-size: 16px; }
 .row { display: flex; gap: 8px; align-items: center; margin: 10px 0; }
 input, textarea, select { width: 100%; padding: 10px; background: #0b1220; color: #e2e8f0; border: 1px solid #334155; border-radius: 10px; }
+.field-results { margin-top: 6px; border: 1px solid #334155; border-radius: 10px; max-height: 130px; overflow: auto; }
+.field-results button { width: 100%; text-align: left; border: 0; border-bottom: 1px solid #243244; border-radius: 0; background: #0b1220; }
+.field-results button:last-child { border-bottom: 0; }
 .detail { margin-top: 12px; background: rgba(17,24,39,.95); border: 1px solid #2d4057; border-radius: 12px; padding: 14px; }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 pre { white-space: pre-wrap; background: #0b1220; border: 1px solid #334155; border-radius: 10px; padding: 10px; max-height: 230px; overflow: auto; }
