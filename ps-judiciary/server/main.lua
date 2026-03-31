@@ -386,6 +386,52 @@ local function getProcessById(processId)
     return row
 end
 
+local function getDashboardSummary()
+    local totals = MySQL.single.await([[
+        SELECT
+            COUNT(*) AS total_processes,
+            SUM(CASE WHEN status IN ('aguardando_aceite','triagem','audiencia_marcada','em_julgamento') THEN 1 ELSE 0 END) AS ongoing_processes,
+            SUM(CASE WHEN status = 'sentenciado' THEN 1 ELSE 0 END) AS sentenced_processes,
+            SUM(CASE WHEN status = 'rejeitado_entrada' THEN 1 ELSE 0 END) AS rejected_processes,
+            SUM(CASE WHEN status = 'arquivado' THEN 1 ELSE 0 END) AS archived_processes
+        FROM judiciary_processes
+    ]]) or {}
+
+    local byAreaRows = MySQL.query.await([[
+        SELECT case_area, COUNT(*) AS total
+        FROM judiciary_processes
+        GROUP BY case_area
+        ORDER BY total DESC
+    ]]) or {}
+
+    local byStatusRows = MySQL.query.await([[
+        SELECT status, COUNT(*) AS total
+        FROM judiciary_processes
+        GROUP BY status
+    ]]) or {}
+
+    local monthlyRows = MySQL.query.await([[
+        SELECT DATE_FORMAT(created_at, '%Y-%m') AS period, COUNT(*) AS total
+        FROM judiciary_processes
+        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+        GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+        ORDER BY period ASC
+    ]]) or {}
+
+    return {
+        totals = {
+            total = tonumber(totals.total_processes) or 0,
+            ongoing = tonumber(totals.ongoing_processes) or 0,
+            sentenced = tonumber(totals.sentenced_processes) or 0,
+            rejected = tonumber(totals.rejected_processes) or 0,
+            archived = tonumber(totals.archived_processes) or 0,
+        },
+        byArea = byAreaRows,
+        byStatus = byStatusRows,
+        monthly = monthlyRows,
+    }
+end
+
 local function getActorName(src)
     return GetPlayerName(src) or ('ID ' .. tostring(src))
 end
@@ -452,6 +498,7 @@ lib.callback.register('ps-judiciary:server:getBootstrap', function(source)
             minRequiredCases = Config.CaseTrigger.min or 1,
             maxRequiredCases = Config.CaseTrigger.max or 10,
         },
+        dashboard = getDashboardSummary(),
         onlineMembers = getOnlineJudicialMembers(),
         candidates = getEligibleDefendants(requiredCases),
         processes = getProcessList(),

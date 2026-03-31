@@ -29,7 +29,24 @@
 
       <section class="content">
         <div id="dashboard" class="panel active">
-          <h2>Réus elegíveis para tribunal criminal</h2>
+          <h2>Dashboard Jurídico (BI)</h2>
+          <div id="dashboardSummary" class="cards"></div>
+          <div class="row">
+            <div class="detail" style="flex:1;">
+              <h3>Distribuição por Vara</h3>
+              <div id="chartByArea"></div>
+            </div>
+            <div class="detail" style="flex:1;">
+              <h3>Status dos Processos</h3>
+              <div id="chartByStatus"></div>
+            </div>
+          </div>
+          <div class="detail">
+            <h3>Evolução mensal (últimos 6 meses)</h3>
+            <div id="chartMonthly"></div>
+          </div>
+
+          <h2 style="margin-top:16px;">Réus elegíveis para tribunal criminal</h2>
           <p class="muted">Critério: mínimo de <span id="requiredCasesLabel">3</span> casos vinculados.</p>
           <div class="actions">
             <button id="btnNewProcess">Nova causa (família/trabalhista/geral/criminal)</button>

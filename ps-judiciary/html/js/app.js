@@ -16,6 +16,7 @@ const modalCancel = document.getElementById('modalCancel');
 let state = {
   role: null,
   settings: null,
+  dashboard: null,
   candidates: [],
   processes: [],
   onlineMembers: [],
@@ -226,6 +227,40 @@ function renderCandidates() {
   });
 }
 
+function renderChart(containerId, rows, labelKey = 'label') {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const data = rows || [];
+  if (!data.length) {
+    container.innerHTML = '<p class=\"muted\">Sem dados.</p>';
+    return;
+  }
+  const max = Math.max(...data.map((r) => Number(r.total || 0)), 1);
+  container.innerHTML = data.map((r) => {
+    const total = Number(r.total || 0);
+    const width = Math.max(4, Math.round((total / max) * 100));
+    const label = r[labelKey] || r.status || r.case_area || r.period || '-';
+    return `<div class=\"chart-row\"><div class=\"chart-label\">${label}</div><div class=\"chart-bar-wrap\"><div class=\"chart-bar\" style=\"width:${width}%\"></div></div><div class=\"chart-value\">${total}</div></div>`;
+  }).join('');
+}
+
+function renderDashboard() {
+  const summaryEl = document.getElementById('dashboardSummary');
+  const totals = state.dashboard?.totals || { total: 0, ongoing: 0, sentenced: 0, rejected: 0, archived: 0 };
+  if (summaryEl) {
+    summaryEl.innerHTML = `
+      <div class=\"card\"><h3>Total de processos</h3><p>${totals.total}</p></div>
+      <div class=\"card\"><h3>Em andamento</h3><p>${totals.ongoing}</p></div>
+      <div class=\"card\"><h3>Sentenciados</h3><p>${totals.sentenced}</p></div>
+      <div class=\"card\"><h3>Rejeitados na entrada</h3><p>${totals.rejected}</p></div>
+      <div class=\"card\"><h3>Arquivados</h3><p>${totals.archived}</p></div>
+    `;
+  }
+  renderChart('chartByArea', state.dashboard?.byArea || [], 'case_area');
+  renderChart('chartByStatus', state.dashboard?.byStatus || [], 'status');
+  renderChart('chartMonthly', state.dashboard?.monthly || [], 'period');
+}
+
 function renderProcesses() {
   processListEl.innerHTML = '';
   const filtered = (state.processes || []).filter((p) => {
@@ -423,6 +458,7 @@ function renderSettings() {
 
 function renderAll() {
   roleBadge.textContent = `${state.role.label} (${state.role.name})`;
+  renderDashboard();
   renderCandidates();
   renderProcesses();
   renderSettings();
@@ -435,6 +471,7 @@ async function refresh() {
   state = {
     role: response.role,
     settings: response.settings,
+    dashboard: response.dashboard || null,
     candidates: response.candidates || [],
     processes: response.processes || [],
     onlineMembers: response.onlineMembers || [],
@@ -449,6 +486,7 @@ window.addEventListener('message', (event) => {
     state = {
       role: payload.role,
       settings: payload.settings,
+      dashboard: payload.dashboard || null,
       candidates: payload.candidates || [],
       processes: payload.processes || [],
       onlineMembers: payload.onlineMembers || [],

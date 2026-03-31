@@ -21,6 +21,11 @@ Painel jurídico separado para RP de tribunal, integrado com `ps-mdt` e `ps-fore
   - Concluídos / Sentenciados
 - Barra de busca na guia de processos (nº do processo, nome do acusado e tipo/vara do processo).
 - Formulário de nova causa com busca de cidadão/player para Autor e Acusado (vínculo direto por citizenid).
+- Dashboard em formato BI com KPIs e gráficos resumidos:
+  - total / em andamento / sentenciados / rejeitados / arquivados
+  - distribuição por vara
+  - distribuição por status
+  - evolução mensal de processos
 - Regra de atribuição:
   - se a causa foi aberta por advogado, o juiz atribui somente o promotor;
   - se não houve advogado na causa, o juiz pode atribuir promotor e advogado.
