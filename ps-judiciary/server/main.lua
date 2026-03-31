@@ -719,10 +719,4 @@ end)
 CreateThread(function()
     ensureSchema()
     debugLog('schema ensured')
-
-    if GetResourceState('ox_inventory') == 'started' and Config.TabletItem and Config.TabletItem ~= '' then
-        exports.ox_inventory:RegisterUsableItem(Config.TabletItem, function(source)
-            TriggerClientEvent('ps-judiciary:client:openFromTablet', source)
-        end)
-    end
 end)

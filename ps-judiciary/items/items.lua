@@ -1,10 +1,14 @@
 return {
-    judiciary_tablet = {
-        name = 'judiciary_tablet',
+    ['judiciary_tablet'] = {
         label = 'Tablet Jurídico',
-        weight = 600,
+        weight = 700,
         stack = false,
+        consume = 0,
         close = true,
-        description = 'Acesso ao painel jurídico (Juiz/Promotor/Advogado).'
-    }
+        description = 'Tablet utilizado para consulta, tramitação e gestão jurídica no tribunal.',
+        client = {
+            image = 'judiciary_tablet.png',
+            export = 'ps-judiciary.useJudiciaryTablet'
+        }
+    },
 }

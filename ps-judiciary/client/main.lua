@@ -43,6 +43,10 @@ RegisterNetEvent('ps-judiciary:client:openFromTablet', function()
     openPanel()
 end)
 
+exports('useJudiciaryTablet', function()
+    openPanel()
+end)
+
 RegisterNUICallback('close', function(_, cb)
     closePanel()
     cb({ ok = true })

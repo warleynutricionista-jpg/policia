@@ -41,8 +41,25 @@ Também existe fallback por job em `config.lua` (`Config.RoleByJob`).
 ## Item do tablet jurídico
 - Nome do item: **`judiciary_tablet`** (`Config.TabletItem`)
 - Arquivo de referência para cadastro do item: `items/items.lua`
-- Com `ox_inventory` iniciado, o uso do item abre o painel automaticamente.
-- O painel também valida a posse do tablet ao abrir.
+- O painel valida a posse do tablet ao abrir.
+- Modelo de item (ox_inventory) no mesmo padrão do forensics:
+
+```lua
+['judiciary_tablet'] = {
+    label = 'Tablet Jurídico',
+    weight = 700,
+    stack = false,
+    consume = 0,
+    close = true,
+    description = 'Tablet utilizado para consulta, tramitação e gestão jurídica no tribunal.',
+    client = {
+        image = 'judiciary_tablet.png',
+        export = 'ps-judiciary.useJudiciaryTablet'
+    }
+},
+```
+
+- Export client implementado no recurso: `ps-judiciary.useJudiciaryTablet`.
 
 ## Instalação
 1. Coloque a pasta `ps-judiciary` em `resources`.
