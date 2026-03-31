@@ -1,4 +1,13 @@
 return {
+    ['mdttablet'] = {
+        label = 'Tablet MDT',
+        description = 'Tablet oficial para acessar o painel MDT.',
+        weight = 650,
+        stack = false,
+        consume = 0,
+        close = true,
+        client = { export = 'ps-mdt.OpenMDT' },
+    },
     ['mdtcitation'] = {
         label = 'Bloco de Citação MDT',
         description = 'Documento físico usado no fluxo de emissão de citação via MDT.',
@@ -6,6 +15,5 @@ return {
         stack = true,
         consume = 0,
         close = false,
-        client = { export = 'ps-mdt.OpenMDT' },
     },
 }

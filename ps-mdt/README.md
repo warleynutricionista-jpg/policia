@@ -4,7 +4,7 @@ Police MDT (Mobile Data Terminal) for FiveM. Built with Svelte 5 and Lua. Works 
 
 ## What is this
 
-A full in-game law enforcement computer. Officers press F11 or type `/mdt` to open it. From there they can look up citizens, write reports, manage cases, track evidence, issue warrants, run BOLOs, look up vehicles and weapons, view security cameras and bodycam feeds, handle dispatch, and manage their department. Everything is permission-based so you control exactly what each rank has access to.
+A full in-game law enforcement computer. Officers use the **MDT Tablet item** to open it (tablet-only access). From there they can look up citizens, write reports, manage cases, track evidence, issue warrants, run BOLOs, look up vehicles and weapons, view security cameras and bodycam feeds, handle dispatch, and manage their department. Everything is permission-based so you control exactly what each rank has access to.
 
 ## Dependencies
 
@@ -91,23 +91,26 @@ Config.MedicalJobType = "ems"
 Config.MedicalJobs = { 'ambulance' }
 ```
 
-### Keybind and command
+### Tablet-only access (recommended)
 
 ```lua
 Config.OnlyShowOnDuty = true   -- false = can open off duty
+Config.TabletOnlyAccess = true -- only inventory tablet opens MDT
 
 Config.Keys = {
     OpenMDT = {
-        enabled = true,
+        enabled = false,
         key = 'F11',
     },
 }
 
 Config.Commands = {
-    Open = { enabled = true, command = 'mdt' },
+    Open = { enabled = false, command = 'mdt' },
     MessageOfTheDay = { enabled = true, command = 'motd' },
 }
 ```
+
+Import `items/items.lua` into your inventory so officers receive/use the `mdttablet` item.
 
 ### Data sharing between departments
 
