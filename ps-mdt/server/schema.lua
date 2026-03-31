@@ -315,6 +315,7 @@ function EnsureMdtSchema(force)
         ensureColumn('mdt_reports_restrictions', 'type', { definition = '`type` VARCHAR(32) NULL', after = 'reportid' })
         ensureColumn('mdt_reports_restrictions', 'identifier', { definition = '`identifier` VARCHAR(64) NULL', after = 'type' })
         ensureIndex('mdt_reports_restrictions', 'idx_mdt_reports_restrictions_type_identifier', "INDEX `idx_mdt_reports_restrictions_type_identifier` (`type`, `identifier`)", { 'type', 'identifier' })
+        ensureIndex('mdt_reports_restrictions', 'idx_mdt_reports_restrictions_report_type_identifier', "INDEX `idx_mdt_reports_restrictions_report_type_identifier` (`reportid`, `type`, `identifier`)", { 'reportid', 'type', 'identifier' })
 
         ensureColumn('mdt_tags', 'job_type', { definition = "`job_type` ENUM('leo','ems','all') NOT NULL DEFAULT 'all'", after = 'color' })
         ensureIndex('mdt_tags', 'idx_mdt_tags_job_type', "INDEX `idx_mdt_tags_job_type` (`job_type`)", { 'job_type' })

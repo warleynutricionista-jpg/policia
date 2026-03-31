@@ -3,9 +3,13 @@ local isOpen = false
 local function openPanel()
     local bootstrap = lib.callback.await('ps-judiciary:server:getBootstrap', false)
     if not bootstrap or not bootstrap.success then
+        local errorMessage = bootstrap and bootstrap.error or 'Falha ao abrir painel jurídico.'
+        if errorMessage == 'Sem acesso ao painel jurídico.' then
+            errorMessage = 'Você não tem acesso ao tablet jurídico.'
+        end
         lib.notify({
             title = 'Tribunal',
-            description = bootstrap and bootstrap.error or 'Falha ao abrir painel jurídico.',
+            description = errorMessage,
             type = 'error'
         })
         return
