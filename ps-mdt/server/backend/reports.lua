@@ -571,10 +571,32 @@ end
 local function buildReportAccessClause()
     return [[
         (
-            (mrr.reportid IS NULL AND ? = 'leo')
-            OR (mrr.type = 'citizenid' AND mrr.identifier = ?)
-            OR (mrr.type = 'job' AND mrr.identifier = ?)
-            OR (mrr.type = 'jobtype' AND mrr.identifier = ?)
+            (? = 'leo' AND NOT EXISTS (
+                SELECT 1
+                FROM mdt_reports_restrictions mrr_none
+                WHERE mrr_none.reportid = mr.id
+            ))
+            OR EXISTS (
+                SELECT 1
+                FROM mdt_reports_restrictions mrr_cit
+                WHERE mrr_cit.reportid = mr.id
+                  AND mrr_cit.type = 'citizenid'
+                  AND mrr_cit.identifier = ?
+            )
+            OR EXISTS (
+                SELECT 1
+                FROM mdt_reports_restrictions mrr_job
+                WHERE mrr_job.reportid = mr.id
+                  AND mrr_job.type = 'job'
+                  AND mrr_job.identifier = ?
+            )
+            OR EXISTS (
+                SELECT 1
+                FROM mdt_reports_restrictions mrr_jobtype
+                WHERE mrr_jobtype.reportid = mr.id
+                  AND mrr_jobtype.type = 'jobtype'
+                  AND mrr_jobtype.identifier = ?
+            )
         )
     ]]
 end
@@ -616,12 +638,8 @@ ps.registerCallback(resourceName .. ':server:getReports', function(source, page,
 			(SELECT COUNT(*) FROM mdt_reports_tags mrt WHERE mrt.reportid = mr.id) as tagCount
 		FROM
 			mdt_reports AS mr
-		LEFT JOIN
-			mdt_reports_restrictions AS mrr ON mr.id = mrr.reportid
 		WHERE
 			%s%s
-		GROUP BY
-			mr.id
 		ORDER BY
 			mr.datecreated DESC
 		LIMIT %d
@@ -636,7 +654,6 @@ ps.registerCallback(resourceName .. ':server:getReports', function(source, page,
     local countQuery = ([[
         SELECT COUNT(DISTINCT mr.id) AS total
         FROM mdt_reports AS mr
-        LEFT JOIN mdt_reports_restrictions AS mrr ON mr.id = mrr.reportid
         WHERE %s%s
     ]]):format(buildReportAccessClause(), filterClause)
     local total = MySQL.scalar.await(countQuery, params) or 0
