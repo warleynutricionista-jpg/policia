@@ -238,14 +238,12 @@ local function buildProcessNumber(id)
 end
 
 local function getEligibleDefendants(requiredCases)
-    local rows = MySQL.query.await([[
+    local okQuery, rows = pcall(MySQL.query.await, [[
         SELECT
             ri.citizenid,
             COUNT(DISTINCT cr.case_id) AS total_cases,
             MAX(mr.datecreated) AS last_report_date,
             mp.fullname,
-            mp.birthdate,
-            mp.callsign,
             (
                 SELECT COUNT(*)
                 FROM mdt_arrests ma
@@ -279,7 +277,14 @@ local function getEligibleDefendants(requiredCases)
         HAVING total_cases >= ?
         ORDER BY total_cases DESC, last_report_date DESC
         LIMIT 250
-    ]], { requiredCases }) or {}
+    ]], { requiredCases })
+
+    if not okQuery then
+        debugLog('getEligibleDefendants query failed:', tostring(rows))
+        return {}
+    end
+
+    rows = rows or {}
 
     local formatted = {}
     for i = 1, #rows do
@@ -294,7 +299,6 @@ local function getEligibleDefendants(requiredCases)
         formatted[#formatted + 1] = {
             citizenid = row.citizenid,
             fullname = row.fullname or row.citizenid,
-            birthdate = row.birthdate,
             totalCases = tonumber(row.total_cases) or 0,
             lastReportDate = row.last_report_date,
             arrests = tonumber(row.arrest_count) or 0,
