@@ -14,6 +14,11 @@ Painel jurídico separado para RP de tribunal, integrado com `ps-mdt` e `ps-fore
 - Fluxo documental inicial: o **juiz aceita ou rejeita** a entrada do caso.
 - Custas judiciais automáticas para a parte perdedora: **R$ 200.000**.
 - Ordem de **prisão direta pelo juiz** com delay de **5 minutos** (tempo para conduzir o réu até cela/sala antes da execução automática).
+- Painel sem `prompt` externo do sistema: todas as ações são feitas dentro da NUI no jogo.
+- O painel já puxa os membros online do grupo jurídico para o juiz atribuir partes rapidamente.
+- Regra de atribuição:
+  - se a causa foi aberta por advogado, o juiz atribui somente o promotor;
+  - se não houve advogado na causa, o juiz pode atribuir promotor e advogado.
 - Busca dados do acusado:
   - Identificação (`mdt_profiles`)
   - Ficha criminal resumida (prisões + mandados)

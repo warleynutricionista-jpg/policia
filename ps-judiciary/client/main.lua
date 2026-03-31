@@ -100,3 +100,8 @@ RegisterNUICallback('scheduleDirectPrison', function(data, cb)
     local result = lib.callback.await('ps-judiciary:server:scheduleDirectPrison', false, data)
     cb(result or { success = false, error = 'direct_prison_failed' })
 end)
+
+RegisterNUICallback('assignProcessParties', function(data, cb)
+    local result = lib.callback.await('ps-judiciary:server:assignProcessParties', false, data)
+    cb(result or { success = false, error = 'assign_parties_failed' })
+end)

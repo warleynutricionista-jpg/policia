@@ -62,6 +62,24 @@ local function getJobContext(src)
     return jobName, gradeName, gradeLevel
 end
 
+local function getSourceIdentity(src)
+    local name = GetPlayerName(src) or ('ID ' .. tostring(src))
+    local citizenid = nil
+
+    local core = ensureCore()
+    if core and core.Functions and core.Functions.GetPlayer then
+        local player = core.Functions.GetPlayer(src)
+        if player and player.PlayerData then
+            citizenid = player.PlayerData.citizenid
+            if player.PlayerData.charinfo and player.PlayerData.charinfo.firstname then
+                name = (player.PlayerData.charinfo.firstname or '') .. ' ' .. (player.PlayerData.charinfo.lastname or '')
+            end
+        end
+    end
+
+    return trim(citizenid), trim(name) or name
+end
+
 local function getPlayerSourceByCitizenId(citizenid)
     if not citizenid then return nil end
 
@@ -164,6 +182,11 @@ local function ensureSchema()
             case_area ENUM('familia','trabalhista','geral','criminal') NOT NULL DEFAULT 'geral',
             claim_type VARCHAR(120) NULL,
             linked_case_ids LONGTEXT NULL,
+            filed_by_role VARCHAR(32) NULL,
+            prosecutor_citizenid VARCHAR(64) NULL,
+            prosecutor_name VARCHAR(120) NULL,
+            lawyer_citizenid VARCHAR(64) NULL,
+            lawyer_name VARCHAR(120) NULL,
             status ENUM('aguardando_aceite','rejeitado_entrada','triagem','audiencia_marcada','em_julgamento','sentenciado','arquivado') NOT NULL DEFAULT 'aguardando_aceite',
             origin_type ENUM('criminal','civil','administrativo') NOT NULL DEFAULT 'criminal',
             summary TEXT NULL,
@@ -189,6 +212,11 @@ local function ensureSchema()
     MySQL.query.await('ALTER TABLE judiciary_processes ADD COLUMN IF NOT EXISTS plaintiff_name VARCHAR(120) NULL AFTER plaintiff_citizenid')
     MySQL.query.await("ALTER TABLE judiciary_processes ADD COLUMN IF NOT EXISTS case_area ENUM('familia','trabalhista','geral','criminal') NOT NULL DEFAULT 'geral' AFTER plaintiff_name")
     MySQL.query.await('ALTER TABLE judiciary_processes ADD COLUMN IF NOT EXISTS claim_type VARCHAR(120) NULL AFTER case_area')
+    MySQL.query.await('ALTER TABLE judiciary_processes ADD COLUMN IF NOT EXISTS filed_by_role VARCHAR(32) NULL AFTER linked_case_ids')
+    MySQL.query.await('ALTER TABLE judiciary_processes ADD COLUMN IF NOT EXISTS prosecutor_citizenid VARCHAR(64) NULL AFTER filed_by_role')
+    MySQL.query.await('ALTER TABLE judiciary_processes ADD COLUMN IF NOT EXISTS prosecutor_name VARCHAR(120) NULL AFTER prosecutor_citizenid')
+    MySQL.query.await('ALTER TABLE judiciary_processes ADD COLUMN IF NOT EXISTS lawyer_citizenid VARCHAR(64) NULL AFTER prosecutor_name')
+    MySQL.query.await('ALTER TABLE judiciary_processes ADD COLUMN IF NOT EXISTS lawyer_name VARCHAR(120) NULL AFTER lawyer_citizenid')
     MySQL.query.await("ALTER TABLE judiciary_processes ADD COLUMN IF NOT EXISTS loser_party ENUM('autor','reu','nenhum') NOT NULL DEFAULT 'nenhum' AFTER sentence_text")
     MySQL.query.await('ALTER TABLE judiciary_processes ADD COLUMN IF NOT EXISTS court_costs INT UNSIGNED NOT NULL DEFAULT 200000 AFTER loser_party')
 
@@ -314,7 +342,8 @@ end
 
 local function getProcessList()
     local rows = MySQL.query.await([[
-        SELECT id, process_number, citizenid, defendant_name, linked_case_ids, status,
+        SELECT id, process_number, citizenid, defendant_name, linked_case_ids, filed_by_role,
+               prosecutor_citizenid, prosecutor_name, lawyer_citizenid, lawyer_name, status,
                plaintiff_citizenid, plaintiff_name, case_area, claim_type, origin_type,
                summary, sentence_text, loser_party, court_costs, created_by_name, updated_by_name,
                created_at, updated_at
@@ -333,7 +362,8 @@ end
 
 local function getProcessById(processId)
     local row = MySQL.single.await([[
-        SELECT id, process_number, citizenid, defendant_name, linked_case_ids, status,
+        SELECT id, process_number, citizenid, defendant_name, linked_case_ids, filed_by_role,
+               prosecutor_citizenid, prosecutor_name, lawyer_citizenid, lawyer_name, status,
                plaintiff_citizenid, plaintiff_name, case_area, claim_type, origin_type,
                summary, sentence_text, loser_party, court_costs, created_by_name, updated_by_name,
                created_at, updated_at
@@ -358,6 +388,30 @@ end
 
 local function getActorName(src)
     return GetPlayerName(src) or ('ID ' .. tostring(src))
+end
+
+local function getOnlineJudicialMembers()
+    local members = {}
+    for _, src in ipairs(GetPlayers()) do
+        local srcNum = tonumber(src)
+        local roleName = nil
+        local roleData = nil
+        if srcNum then
+            roleName, roleData = resolveRole(srcNum)
+        end
+
+        if roleName and roleData then
+            local citizenid, fullName = getSourceIdentity(srcNum)
+            members[#members + 1] = {
+                source = srcNum,
+                citizenid = citizenid or ('src:' .. tostring(srcNum)),
+                name = fullName or getActorName(srcNum),
+                role = roleName,
+                roleLabel = roleData.label,
+            }
+        end
+    end
+    return members
 end
 
 local function ensureAccess(src, perm)
@@ -398,6 +452,7 @@ lib.callback.register('ps-judiciary:server:getBootstrap', function(source)
             minRequiredCases = Config.CaseTrigger.min or 1,
             maxRequiredCases = Config.CaseTrigger.max or 10,
         },
+        onlineMembers = getOnlineJudicialMembers(),
         candidates = getEligibleDefendants(requiredCases),
         processes = getProcessList(),
     }
@@ -489,6 +544,7 @@ lib.callback.register('ps-judiciary:server:createProcess', function(source, payl
     end
 
     local actorName = getActorName(source)
+    local actorCitizenid, actorFullName = getSourceIdentity(source)
     local profile = MySQL.single.await('SELECT fullname FROM mdt_profiles WHERE citizenid = ? LIMIT 1', { citizenid })
     local plaintiffCitizenId = trim(payload.plaintiffCitizenid)
     local plaintiffName = trim(payload.plaintiffName)
@@ -496,9 +552,9 @@ lib.callback.register('ps-judiciary:server:createProcess', function(source, payl
 
     local processId = MySQL.insert.await([[
         INSERT INTO judiciary_processes
-            (process_number, citizenid, defendant_name, plaintiff_citizenid, plaintiff_name, case_area, claim_type, linked_case_ids, status, origin_type, summary, loser_party, court_costs, created_by, created_by_name)
+            (process_number, citizenid, defendant_name, plaintiff_citizenid, plaintiff_name, case_area, claim_type, linked_case_ids, filed_by_role, prosecutor_citizenid, prosecutor_name, lawyer_citizenid, lawyer_name, status, origin_type, summary, loser_party, court_costs, created_by, created_by_name)
         VALUES
-            ('', ?, ?, ?, ?, ?, ?, ?, 'aguardando_aceite', ?, ?, 'nenhum', ?, ?, ?)
+            ('', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'aguardando_aceite', ?, ?, 'nenhum', ?, ?, ?)
     ]], {
         citizenid,
         profile and profile.fullname or citizenid,
@@ -507,6 +563,11 @@ lib.callback.register('ps-judiciary:server:createProcess', function(source, payl
         caseArea,
         trim(payload.claimType) or 'Causa geral',
         json.encode(linkedCases),
+        access.name,
+        nil,
+        nil,
+        access.name == 'lawyer' and actorCitizenid or nil,
+        access.name == 'lawyer' and actorFullName or nil,
         trim(payload.originType) or 'criminal',
         trim(payload.summary) or 'Processo criado automaticamente a partir do critério configurado.',
         loserCosts,
@@ -530,6 +591,75 @@ lib.callback.register('ps-judiciary:server:createProcess', function(source, payl
     return {
         success = true,
         process = getProcessById(processId),
+    }
+end)
+
+lib.callback.register('ps-judiciary:server:assignProcessParties', function(source, payload)
+    local access, err = ensureAccess(source, 'verdict')
+    if not access then return { success = false, error = err } end
+
+    payload = payload or {}
+    local processId = tonumber(payload.processId)
+    if not processId then return { success = false, error = 'Processo inválido.' } end
+
+    local process = getProcessById(processId)
+    if not process then return { success = false, error = 'Processo não encontrado.' } end
+
+    local prosecutorCitizenid = trim(payload.prosecutorCitizenid)
+    local lawyerCitizenid = trim(payload.lawyerCitizenid)
+    local members = getOnlineJudicialMembers()
+
+    local prosecutorName, lawyerName = nil, nil
+    for _, member in ipairs(members) do
+        if prosecutorCitizenid and member.citizenid == prosecutorCitizenid and member.role == 'prosecutor' then
+            prosecutorName = member.name
+        end
+        if lawyerCitizenid and member.citizenid == lawyerCitizenid and member.role == 'lawyer' then
+            lawyerName = member.name
+        end
+    end
+
+    if prosecutorCitizenid and not prosecutorName then
+        return { success = false, error = 'Promotor selecionado não está online ou não possui função válida.' }
+    end
+
+    if process.filed_by_role == 'lawyer' then
+        lawyerCitizenid = process.lawyer_citizenid
+        lawyerName = process.lawyer_name
+    elseif lawyerCitizenid and not lawyerName then
+        return { success = false, error = 'Advogado selecionado não está online ou não possui função válida.' }
+    end
+
+    local actorName = getActorName(source)
+    MySQL.update.await([[
+        UPDATE judiciary_processes
+        SET prosecutor_citizenid = COALESCE(?, prosecutor_citizenid),
+            prosecutor_name = COALESCE(?, prosecutor_name),
+            lawyer_citizenid = COALESCE(?, lawyer_citizenid),
+            lawyer_name = COALESCE(?, lawyer_name),
+            updated_by = ?,
+            updated_by_name = ?
+        WHERE id = ?
+    ]], {
+        prosecutorCitizenid,
+        prosecutorName,
+        lawyerCitizenid,
+        lawyerName,
+        tostring(source),
+        actorName,
+        processId,
+    })
+
+    local details = ('Promotor: %s | Advogado: %s'):format(prosecutorName or process.prosecutor_name or 'não atribuído', lawyerName or process.lawyer_name or 'não atribuído')
+    MySQL.insert.await([[
+        INSERT INTO judiciary_process_events (process_id, event_type, title, description, created_by, created_by_name)
+        VALUES (?, 'atribuicao_partes', 'Partes atribuídas pelo juiz', ?, ?, ?)
+    ]], { processId, details, tostring(source), actorName })
+
+    return {
+        success = true,
+        process = getProcessById(processId),
+        onlineMembers = members,
     }
 end)
 

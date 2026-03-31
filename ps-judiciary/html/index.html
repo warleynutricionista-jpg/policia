@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
+  <div id="toast" class="toast hidden"></div>
   <div id="app" class="hidden">
     <header>
       <div>
@@ -53,6 +54,17 @@
         </div>
       </section>
     </main>
+  </div>
+
+  <div id="modalOverlay" class="modal-overlay hidden">
+    <div class="modal">
+      <h3 id="modalTitle">Ação</h3>
+      <div id="modalFields"></div>
+      <div class="actions">
+        <button id="modalCancel" class="danger">Cancelar</button>
+        <button id="modalConfirm">Confirmar</button>
+      </div>
+    </div>
   </div>
 
   <script src="js/app.js"></script>
