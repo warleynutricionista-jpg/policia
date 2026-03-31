@@ -76,8 +76,7 @@ local function upsertProfileSession(src, action)
     end
 
     if action == 'login' then
-        -- Wrap all login operations in a single transaction to prevent race conditions
-        local okTx, errTx = pcall(MySQL.transaction.await, {
+        local loginTransaction = {
             {
                 query = [[
                     UPDATE mdt_profile_sessions
@@ -97,12 +96,24 @@ local function upsertProfileSession(src, action)
                 query = 'UPDATE mdt_profiles SET last_login_at = NOW() WHERE id = ?',
                 values = { profileId }
             },
-        })
+        }
+
+        local okTx, errTx = false, nil
+        for attempt = 1, 3 do
+            okTx, errTx = pcall(MySQL.transaction.await, loginTransaction)
+            if okTx then break end
+            if tostring(errTx):lower():find('deadlock', 1, true) then
+                Wait(25 * attempt)
+            else
+                break
+            end
+        end
+
         if not okTx then
             ps.warn('Failed to create login session (transaction): ' .. tostring(errTx))
         end
     elseif action == 'logout' then
-        local okTx, errTx = pcall(MySQL.transaction.await, {
+        local logoutTransaction = {
             {
                 query = [[
                     UPDATE mdt_profile_sessions
@@ -117,7 +128,19 @@ local function upsertProfileSession(src, action)
                 query = 'UPDATE mdt_profiles SET last_logout_at = NOW() WHERE id = ?',
                 values = { profileId }
             },
-        })
+        }
+
+        local okTx, errTx = false, nil
+        for attempt = 1, 3 do
+            okTx, errTx = pcall(MySQL.transaction.await, logoutTransaction)
+            if okTx then break end
+            if tostring(errTx):lower():find('deadlock', 1, true) then
+                Wait(25 * attempt)
+            else
+                break
+            end
+        end
+
         if not okTx then
             ps.warn('Failed to update logout session (transaction): ' .. tostring(errTx))
         end
