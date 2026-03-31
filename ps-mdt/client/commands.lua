@@ -1,5 +1,7 @@
 -- Command to open MDT
-if not Config.Commands.Open.enabled then
+if Config.TabletOnlyAccess then
+    ps.debug('MDT Open Command disabled because Config.TabletOnlyAccess = true.')
+elseif not Config.Commands.Open.enabled then
     ps.debug('MDT Open Command is disabled in config, skipping command registration.')
 else
     RegisterCommand(Config.Commands.Open.command, function()

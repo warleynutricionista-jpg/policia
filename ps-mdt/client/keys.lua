@@ -308,7 +308,9 @@ end)
 -- Keybinds -------------------------------------------------
 
 -- Key to open MDT
-if not Config.Keys.OpenMDT.enabled then
+if Config.TabletOnlyAccess then
+    ps.debug('MDT Open Keybind disabled because Config.TabletOnlyAccess = true.')
+elseif not Config.Keys.OpenMDT.enabled then
     ps.debug('MDT Open Keybind Disabled')
 else
     ps.debug('MDT Open Keybind Enabled: ' .. Config.Keys.OpenMDT.key)

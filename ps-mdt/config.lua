@@ -8,6 +8,7 @@ Config.Debug = false -- Enable/disable debug mode (boolean)
 Config.OnlyShowOnDuty = true -- Only allow the MDT to be opened when on duty (boolean)
 Config.RequireVehicle = false -- Only allow MDT to be opened inside a vehicle (realistic laptop usage)
 Config.RequireOnFoot = false -- Only allow MDT to be opened on foot (tablet mode)
+Config.TabletOnlyAccess = true -- When true, MDT can only be opened through an inventory tablet item
 
 -- Time and Date Settings
 Config.DateTime = {
@@ -63,7 +64,7 @@ Config.Sharing = {
 Config.Keys = {
     -- https://docs.fivem.net/docs/game-references/controls/ | Default QWERTY
     OpenMDT = {
-        enabled = true, -- Enable/disable keybind (boolean)
+        enabled = false, -- Enable/disable keybind (boolean)
         key = 'F11', -- Key to open MDT (string)
     },
 }
@@ -71,7 +72,7 @@ Config.Keys = {
 -- Commands
 Config.Commands = {
     Open = {
-        enabled = true, -- Enable/disable command (boolean)
+        enabled = false, -- Enable/disable command (boolean)
         command = 'mdt', -- Command to open MDT (string)
     },
     MessageOfTheDay = {
